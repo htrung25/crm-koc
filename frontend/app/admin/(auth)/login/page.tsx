@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createDemoSession } from "@/lib/auth/session";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -15,35 +16,20 @@ export default function AdminLoginPage() {
 
   const isVi = lang === "vi";
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailOrPhone: email, password }),
-      });
-      const result = (await response.json()) as { message?: string };
-
-      if (!response.ok) {
-        throw new Error(
-          result.message ||
-          (isVi ? "Đăng nhập không thành công" : "Unable to sign in"),
-        );
-      }
-
+      createDemoSession("ADMIN");
       router.replace("/admin/dashboard");
       router.refresh();
-    } catch (loginError) {
+    } catch {
       setError(
-        loginError instanceof Error
-          ? loginError.message
-          : isVi
-            ? "Đã xảy ra lỗi khi đăng nhập"
-            : "An unexpected sign-in error occurred",
+        isVi
+          ? "Đã xảy ra lỗi khi đăng nhập"
+          : "An unexpected sign-in error occurred",
       );
     } finally {
       setIsSubmitting(false);
