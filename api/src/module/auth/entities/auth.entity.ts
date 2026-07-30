@@ -41,9 +41,9 @@ export class AuthEntity {
   @Column({ type: 'text', nullable: true })
   statusReason!: string | null;
 
-  @CreateDateColumn({ name: 'create_at', type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'update_at', type: 'timestamptz' })
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }

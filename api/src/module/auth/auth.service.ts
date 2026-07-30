@@ -34,7 +34,7 @@ export class AuthService {
     const auth = this.authRepository.create({
       email: dto.email.trim().toLowerCase(),
       phone: dto.phone ?? null,
-      accountRole: dto.accountRole ?? EAccountRole.CREATOR,
+      accountRole: dto.accountRole ?? EAccountRole.ADMIN,
       status: EAccountStatus.PENDING,
       password: await bcrypt.hash(dto.password, BCRYPT_ROUNDS),
     });
@@ -53,6 +53,24 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  async loginAuth(auth: AuthenticatedAuth) {
+    const payload: JwtPayload = {
+      sub: auth.id,
+      email: auth.email,
+      role: auth.accountRole,
+    };
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      account: {
+        id: auth.id,
+        email: auth.email,
+        accountRole: auth.accountRole,
+        status: auth.status,
+      },
+    };
   }
 
   findByEmail(email: string): Promise<AuthEntity | null> {
@@ -90,23 +108,5 @@ export class AuthService {
 
     const { password: _password, ...result } = auth;
     return result;
-  }
-
-  async login(auth: AuthenticatedAuth) {
-    const payload: JwtPayload = {
-      sub: auth.id,
-      email: auth.email,
-      role: auth.accountRole,
-    };
-
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-      account: {
-        id: auth.id,
-        email: auth.email,
-        accountRole: auth.accountRole,
-        status: auth.status,
-      },
-    };
   }
 }
