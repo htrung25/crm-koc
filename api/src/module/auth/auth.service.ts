@@ -53,7 +53,7 @@ export class AuthService {
       email: dto.email.trim().toLowerCase(),
       phone,
       accountRole: dto.accountRole ?? EAccountRole.ADMIN,
-      status: EAccountStatus.PENDING,
+      status: EAccountStatus.ACTIVE,
       password: await bcrypt.hash(dto.password, BCRYPT_ROUNDS),
     });
 
@@ -82,6 +82,7 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: auth.id,
       email: auth.email,
+      name: auth.name,
       role: auth.accountRole,
     };
 
@@ -90,6 +91,7 @@ export class AuthService {
       account: {
         id: auth.id,
         email: auth.email,
+        name: auth.name,
         accountRole: auth.accountRole,
         status: auth.status,
       },

@@ -1,0 +1,57 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { EAccountRole } from '../../../common/enum/account-roles.enum';
+import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
+
+/** Một account admin trong danh sách. Không bao giờ chứa password. */
+export class AdminResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ enum: EAccountRole, enumName: 'EAccountRole' })
+  accountRole!: EAccountRole;
+
+  @ApiProperty({ maxLength: 255 })
+  name!: string;
+
+  @ApiProperty({ format: 'email' })
+  email!: string;
+
+  @ApiProperty({ nullable: true, type: String })
+  phone!: string | null;
+
+  @ApiProperty({ enum: EAccountStatus, enumName: 'EAccountStatus' })
+  status!: EAccountStatus;
+
+  @ApiProperty({ nullable: true, type: String })
+  statusReason!: string | null;
+
+  @ApiProperty({ nullable: true, type: String, format: 'date-time' })
+  emailVerifiedAt!: Date | null;
+
+  @ApiProperty({ nullable: true, type: String, format: 'date-time' })
+  phoneVerifiedAt!: Date | null;
+
+  @ApiProperty({ format: 'date-time' })
+  createdAt!: Date;
+
+  @ApiProperty({ format: 'date-time' })
+  updatedAt!: Date;
+}
+
+/** Bọc phân trang — khớp đúng PaginatedResult<T> mà paginate() trả về. */
+export class AdminFilterResponseDto {
+  @ApiProperty({ type: [AdminResponseDto] })
+  data!: AdminResponseDto[];
+
+  @ApiProperty({ example: 42, description: 'Total rows matching the filter' })
+  total!: number;
+
+  @ApiProperty({ example: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 20 })
+  limit!: number;
+
+  @ApiProperty({ example: 3 })
+  totalPages!: number;
+}

@@ -1,6 +1,94 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/admin/list": {
+      "get": {
+        "operationId": "AdminController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by name or email, case-insensitive",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by account status",
+            "schema": {
+              "$ref": "#/components/schemas/EAccountStatus"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EAccountSortField"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ESortOrder"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminFilterResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List admin accounts, paginated",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/admin/profile/me": {
       "get": {
         "operationId": "ProfileController_getMe",
@@ -205,6 +293,145 @@
       }
     },
     "schemas": {
+      "EAccountStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "active",
+          "suspended",
+          "banned"
+        ]
+      },
+      "EAccountSortField": {
+        "type": "string",
+        "enum": [
+          "createdAt",
+          "updatedAt",
+          "name",
+          "email",
+          "status"
+        ]
+      },
+      "ESortOrder": {
+        "type": "string",
+        "enum": [
+          "ASC",
+          "DESC"
+        ]
+      },
+      "EAccountRole": {
+        "type": "string",
+        "enum": [
+          "admin",
+          "brand",
+          "creator"
+        ]
+      },
+      "AdminResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAccountRole"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAccountStatus"
+              }
+            ]
+          },
+          "statusReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "emailVerifiedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "phoneVerifiedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountRole",
+          "name",
+          "email",
+          "phone",
+          "status",
+          "statusReason",
+          "emailVerifiedAt",
+          "phoneVerifiedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "AdminFilterResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 42,
+            "description": "Total rows matching the filter"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
       "ProfileResponseDto": {
         "type": "object",
         "properties": {
@@ -288,14 +515,6 @@
           }
         }
       },
-      "EAccountRole": {
-        "type": "string",
-        "enum": [
-          "admin",
-          "brand",
-          "creator"
-        ]
-      },
       "RegisterDto": {
         "type": "object",
         "properties": {
@@ -334,15 +553,6 @@
           "name",
           "email",
           "password"
-        ]
-      },
-      "EAccountStatus": {
-        "type": "string",
-        "enum": [
-          "pending",
-          "active",
-          "suspended",
-          "banned"
         ]
       },
       "RegisterResponseDto": {

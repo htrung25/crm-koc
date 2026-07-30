@@ -11,5 +11,6 @@ export type AuthenticatedAuth = Omit<AuthEntity, 'password'>;
 export interface JwtPayload {
   sub: string;
   email: string;
+  name: string;
   role: EAccountRole;
 }
