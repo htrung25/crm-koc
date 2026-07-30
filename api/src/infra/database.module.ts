@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from './snake-naming.strategy';
 import { DataSource } from 'typeorm';
+import { AuthEntity } from 'src/module/auth/entities/auth.entity';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { DataSource } from 'typeorm';
           return {
             type: 'postgres',
             url: databaseURL,
-            entities: [],
+            entities: [AuthEntity],
             migrations: migrationGlobals,
             migrationsRun: false,
             synchronize: false,
@@ -43,7 +44,7 @@ import { DataSource } from 'typeorm';
           username,
           password,
           database,
-          entities: [],
+          entities: [AuthEntity],
           migrations: migrationGlobals,
           migrationsRun: false,
           synchronize: false,

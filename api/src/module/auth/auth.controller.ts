@@ -8,27 +8,24 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AdminService } from '../admin/admin.service';
 import { LocalAuthGuard } from 'src/security/local-auth.guard';
-import { AuthenticatedAdmin } from './entities/authenticated-admin.entities';
+import { AuthenticatedAuth } from './entities/authenticated.entity';
+import { RegisterDto } from './dto/register.dto';
 
-@Controller('auth')
+@Controller()
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly adminService: AdminService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('/register')
-  @HttpCode(HttpStatus.OK)
-  register(@Body() adminData: any) {
-    return this.adminService.createAdmin(adminData);
+  @HttpCode(HttpStatus.CREATED)
+  register(@Body() registerDto: RegisterDto) {
+    return this.authService.createAuth(registerDto);
   }
 
   @UseGuards(LocalAuthGuard)
-  @Post('login')
+  @Post('/login')
   @HttpCode(HttpStatus.OK)
-  login(@Request() request: { user: AuthenticatedAdmin }) {
+  login(@Request() request: { user: AuthenticatedAuth }) {
     return this.authService.login(request.user);
   }
 }
