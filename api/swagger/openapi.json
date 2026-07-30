@@ -1,6 +1,83 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/admin/profile/me": {
+      "get": {
+        "operationId": "ProfileController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "404": {
+            "description": "Account has no profile yet"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Profile of the authenticated account",
+        "tags": [
+          "Admin-Profile"
+        ]
+      },
+      "patch": {
+        "operationId": "ProfileController_updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "404": {
+            "description": "Account has no profile yet"
+          },
+          "409": {
+            "description": "Email already taken by another account"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Partially update your own profile",
+        "tags": [
+          "Admin-Profile"
+        ]
+      }
+    },
     "/register": {
       "post": {
         "operationId": "AuthController_register",
@@ -27,15 +104,15 @@
             }
           },
           "400": {
-            "description": "Thiếu email hoặc password"
+            "description": "Missing name, email or password"
           },
           "409": {
-            "description": "Email hoặc phone đã tồn tại"
+            "description": "Email or phone already exists"
           }
         },
-        "summary": "Đăng ký account mới",
+        "summary": "Register a new account",
         "tags": [
-          "auth"
+          "Auth"
         ]
       }
     },
@@ -65,22 +142,55 @@
             }
           },
           "401": {
-            "description": "Sai email hoặc password"
+            "description": "Wrong email or password"
           },
           "403": {
-            "description": "Account bị suspended hoặc banned"
+            "description": "Account is suspended or banned"
           }
         },
-        "summary": "Đăng nhập, trả về JWT access token",
+        "summary": "Log in and receive a JWT access token",
         "tags": [
-          "auth"
+          "Auth"
+        ]
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Account is suspended or banned"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Account attached to the current token",
+        "tags": [
+          "Auth"
         ]
       }
     }
   },
   "info": {
     "title": "CRM KOC API",
-    "description": "API cho hệ thống CRM KOC",
+    "description": "REST API for the CRM KOC system",
     "version": "1.0",
     "contact": {}
   },
@@ -95,6 +205,89 @@
       }
     },
     "schemas": {
+      "ProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Same value as accounts.id"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "gender": {
+            "type": "number",
+            "nullable": true,
+            "description": "1 = male, 2 = female, 3 = other"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Ho_Chi_Minh"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId",
+          "name",
+          "email",
+          "avatarUrl",
+          "address",
+          "gender",
+          "timezone",
+          "updatedAt"
+        ]
+      },
+      "UpdateProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "example": "John Doe",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "example": "admin@gmail.com",
+            "format": "email"
+          },
+          "avatarUrl": {
+            "type": "object",
+            "example": "https://cdn.example.com/a.png"
+          },
+          "address": {
+            "type": "object",
+            "example": "12 Nguyen Hue St, District 1, Ho Chi Minh City"
+          },
+          "gender": {
+            "type": "number",
+            "example": 1,
+            "description": "1 = male, 2 = female, 3 = other"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Ho_Chi_Minh",
+            "maxLength": 64
+          }
+        }
+      },
       "EAccountRole": {
         "type": "string",
         "enum": [
@@ -106,21 +299,27 @@
       "RegisterDto": {
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string",
+            "example": "Huu Trung",
+            "maxLength": 255
+          },
           "email": {
             "type": "string",
-            "example": "brand01@test.com",
+            "example": "admin@gmail.com",
             "format": "email"
           },
           "password": {
             "type": "string",
-            "example": "secret123",
+            "example": "abc@123",
             "minLength": 6,
             "format": "password"
           },
           "phone": {
             "type": "string",
             "example": "0900000001",
-            "maxLength": 10
+            "maxLength": 20,
+            "description": "Vietnamese number. Accepts 0xxxxxxxxx / 84xxxxxxxxx / +84xxxxxxxxx and is normalized to E.164 (+84xxxxxxxxx) before saving."
           },
           "accountRole": {
             "default": "admin",
@@ -132,6 +331,7 @@
           }
         },
         "required": [
+          "name",
           "email",
           "password"
         ]
@@ -170,6 +370,10 @@
               }
             ]
           },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
           "phone": {
             "type": "string",
             "nullable": true
@@ -202,6 +406,7 @@
           "email",
           "accountRole",
           "status",
+          "name",
           "phone",
           "emailVerifiedAt",
           "phoneVerifiedAt",
@@ -215,12 +420,12 @@
         "properties": {
           "email": {
             "type": "string",
-            "example": "brand01@test.com",
+            "example": "admin@gmail.com",
             "format": "email"
           },
           "password": {
             "type": "string",
-            "example": "secret123",
+            "example": "abc@123",
             "format": "password"
           }
         },
@@ -229,7 +434,7 @@
           "password"
         ]
       },
-      "AuthAccountDto": {
+      "AuthResponseDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -270,7 +475,7 @@
             "description": "JWT bearer token"
           },
           "account": {
-            "$ref": "#/components/schemas/AuthAccountDto"
+            "$ref": "#/components/schemas/AuthResponseDto"
           }
         },
         "required": [

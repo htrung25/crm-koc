@@ -2,8 +2,10 @@ import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from './snake-naming.strategy';
-import { DataSource } from 'typeorm';
-import { AuthEntity } from 'src/module/auth/entities/auth.entity';
+import { DataSource, DataSourceOptions } from 'typeorm';
+import { addTransactionalDataSource } from 'typeorm-transactional';
+import { AuthEntity } from '../module/auth/entities/auth.entity';
+import { ProfileEntity } from '../module/admin/entities/profile.entity';
 
 @Module({
   imports: [
@@ -20,7 +22,7 @@ import { AuthEntity } from 'src/module/auth/entities/auth.entity';
           return {
             type: 'postgres',
             url: databaseURL,
-            entities: [AuthEntity],
+            entities: [AuthEntity, ProfileEntity],
             migrations: migrationGlobals,
             migrationsRun: false,
             synchronize: false,
@@ -44,7 +46,7 @@ import { AuthEntity } from 'src/module/auth/entities/auth.entity';
           username,
           password,
           database,
-          entities: [AuthEntity],
+          entities: [AuthEntity, ProfileEntity],
           migrations: migrationGlobals,
           migrationsRun: false,
           synchronize: false,
@@ -52,6 +54,16 @@ import { AuthEntity } from 'src/module/auth/entities/auth.entity';
           namingStrategy: new SnakeNamingStrategy(),
           ssl: sslEnabled ? { rejectUnauthorized: false } : false,
         };
+      },
+      // Bọc DataSource lại để typeorm-transactional lái được mọi repository
+      // vào transaction đang chạy. Thiếu bước này thì @Transactional() vô tác dụng.
+      dataSourceFactory: (options?: DataSourceOptions) => {
+        if (!options) {
+          throw new Error('Thiếu DataSourceOptions');
+        }
+        return Promise.resolve(
+          addTransactionalDataSource(new DataSource(options)),
+        );
       },
     }),
   ],

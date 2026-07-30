@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EAccountRole } from 'src/common/enum/account-roles.enum';
-import { EAccountStatus } from 'src/common/enum/account-statuses.enum';
+import { EAccountRole } from '../../../common/enum/account-roles.enum';
+import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 
 /** Account tóm tắt kèm theo token khi login — không bao giờ chứa password. */
-export class AuthAccountDto {
+export class AuthResponseDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
 
@@ -18,7 +18,10 @@ export class AuthAccountDto {
 }
 
 /** Account đầy đủ trả về sau khi register. */
-export class RegisterResponseDto extends AuthAccountDto {
+export class RegisterResponseDto extends AuthResponseDto {
+  @ApiProperty({ maxLength: 255 })
+  name!: string;
+
   @ApiProperty({ nullable: true, type: String })
   phone!: string | null;
 
@@ -42,6 +45,6 @@ export class LoginResponseDto {
   @ApiProperty({ description: 'JWT bearer token' })
   access_token!: string;
 
-  @ApiProperty({ type: AuthAccountDto })
-  account!: AuthAccountDto;
+  @ApiProperty({ type: AuthResponseDto })
+  account!: AuthResponseDto;
 }

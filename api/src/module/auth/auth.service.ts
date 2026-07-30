@@ -9,8 +9,11 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { EAccountRole } from 'src/common/enum/account-roles.enum';
-import { EAccountStatus } from 'src/common/enum/account-statuses.enum';
+import { EAccountRole } from '../../common/enum/account-roles.enum';
+import { EAccountStatus } from '../../common/enum/account-statuses.enum';
+import { Transactional } from 'typeorm-transactional';
+import { normalizePhone } from '../../common/util/phone.util';
+import { ProfileService } from '../admin/profile.service';
 import { AuthEntity } from './entities/auth.entity';
 import { AuthenticatedAuth, JwtPayload } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
@@ -24,16 +27,31 @@ export class AuthService {
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
     private readonly jwtService: JwtService,
+    private readonly profileService: ProfileService,
   ) {}
 
+  /**
+   * Tạo account + profile rỗng. @Transactional() bọc cả hai lệnh insert:
+   * nếu tạo profile lỗi thì account cũng bị rollback.
+   */
+  @Transactional()
   async createAuth(dto: RegisterDto): Promise<AuthenticatedAuth> {
-    if (!dto?.email || !dto?.password) {
-      throw new BadRequestException('email and password are required');
+    if (!dto?.email || !dto?.password || !dto?.name?.trim()) {
+      throw new BadRequestException('name, email and password are required');
+    }
+
+    let phone: string | null = null;
+    if (dto.phone?.trim()) {
+      phone = normalizePhone(dto.phone);
+      if (!phone) {
+        throw new BadRequestException('phone is not a valid Vietnam number');
+      }
     }
 
     const auth = this.authRepository.create({
+      name: dto.name.trim(),
       email: dto.email.trim().toLowerCase(),
-      phone: dto.phone ?? null,
+      phone,
       accountRole: dto.accountRole ?? EAccountRole.ADMIN,
       status: EAccountStatus.PENDING,
       password: await bcrypt.hash(dto.password, BCRYPT_ROUNDS),
@@ -41,6 +59,11 @@ export class AuthService {
 
     try {
       const saved = await this.authRepository.save(auth);
+      await this.profileService.createProfile(
+        saved.id,
+        saved.name,
+        saved.email,
+      );
       const { password: _password, ...result } = saved;
       return result;
     } catch (error) {
@@ -73,7 +96,11 @@ export class AuthService {
     };
   }
 
-  findByEmail(email: string): Promise<AuthEntity | null> {
+  findById(id: string): Promise<AuthEntity | null> {
+    return this.authRepository.findOneBy({ id });
+  }
+
+  async findByEmail(email: string): Promise<AuthEntity | null> {
     return this.authRepository.findOneBy({
       email: email.trim().toLowerCase(),
     });

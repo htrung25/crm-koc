@@ -1,4 +1,4 @@
-import { EAccountRole } from 'src/common/enum/account-roles.enum';
+import { EAccountRole } from '../../../common/enum/account-roles.enum';
 import { AuthEntity } from './auth.entity';
 
 /**

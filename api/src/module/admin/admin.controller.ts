@@ -1,4 +1,5 @@
 import { Controller } from '@nestjs/common';
-
-@Controller('admin')
+import { ApiTags } from '@nestjs/swagger';
+@ApiTags('Admin')
+@Controller()
 export class AdminController {}

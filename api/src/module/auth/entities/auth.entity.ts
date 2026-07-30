@@ -6,8 +6,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { EAccountRole } from 'src/common/enum/account-roles.enum';
-import { EAccountStatus } from 'src/common/enum/account-statuses.enum';
+import { EAccountRole } from '../../../common/enum/account-roles.enum';
+import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
+import { IsEnum } from 'class-validator';
 
 @Entity('accounts')
 export class AuthEntity {
@@ -15,13 +16,20 @@ export class AuthEntity {
   id!: string;
 
   @Index()
+  @IsEnum(EAccountRole, {
+    message: 'AccountRole must be admin, brand or creator',
+  })
   @Column({ type: 'varchar', length: 32 })
   accountRole!: EAccountRole;
+
+  @Column({ type: 'varchar', length: 255 })
+  name!: string;
 
   @Column({ type: 'citext', unique: true })
   email!: string;
 
-  @Column({ type: 'varchar', length: 10, nullable: true })
+  /** Lưu ở dạng E.164, ví dụ +84900000001 */
+  @Column({ type: 'varchar', length: 20, nullable: true })
   phone!: string | null;
 
   // select: false => password không bao giờ lọt ra ngoài trừ khi addSelect thủ công

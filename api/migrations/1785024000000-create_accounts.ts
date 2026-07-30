@@ -11,8 +11,9 @@ export class CreateAccounts1785024000000 implements MigrationInterface {
       CREATE TABLE "accounts" (
         "id"                uuid         NOT NULL DEFAULT gen_random_uuid(),
         "account_role"      varchar(32)  NOT NULL,
+        "name"              varchar(255) NOT NULL,
         "email"             citext       NOT NULL,
-        "phone"             varchar(10),
+        "phone"             varchar(20),
         "password"          text         NOT NULL,
         "email_verified_at" timestamptz,
         "phone_verified_at" timestamptz,

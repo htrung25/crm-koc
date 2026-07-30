@@ -11,7 +11,7 @@ export function setupSwagger(app: INestApplication): void {
 
   const config = new DocumentBuilder()
     .setTitle('CRM KOC API')
-    .setDescription('API cho hệ thống CRM KOC')
+    .setDescription('REST API for the CRM KOC system')
     .setVersion('1.0')
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },

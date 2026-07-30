@@ -7,7 +7,8 @@ export class CreateAccountProfiles1785024001000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "account_profiles" (
         "account_id" uuid         NOT NULL,
-        "full_name"  varchar(255),
+        "name"  varchar(255),
+        "email" citext       NOT NULL,
         "avatar_url" text,
         "address"    text,
         "gender"     smallint,

@@ -6,11 +6,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AuthEntity } from './entities/auth.entity';
-import { LocalStrategy } from 'src/passport/local.strategy';
+import { LocalStrategy } from '../../passport/local.strategy';
+import { JwtStrategy } from '../../passport/jwt.strategy';
+import { AdminModule } from '../admin/admin.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([AuthEntity]),
+    // lấy ProfileService cho bước tạo profile trong transaction register
+    AdminModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -27,7 +31,7 @@ import { LocalStrategy } from 'src/passport/local.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
