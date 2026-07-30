@@ -76,6 +76,9 @@
           },
           "401": {
             "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
           }
         },
         "security": [
@@ -166,44 +169,6 @@
         ]
       }
     },
-    "/register": {
-      "post": {
-        "operationId": "AuthController_register",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegisterResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Missing name, email or password"
-          },
-          "409": {
-            "description": "Email or phone already exists"
-          }
-        },
-        "summary": "Register a new account",
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
     "/login": {
       "post": {
         "operationId": "AuthController_login",
@@ -237,6 +202,128 @@
           }
         },
         "summary": "Log in and receive a JWT access token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/register/admin": {
+      "post": {
+        "operationId": "AuthController_registerAdmin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "409": {
+            "description": "Email or phone already exists"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Create a new admin account, admin only",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/register/brand": {
+      "post": {
+        "operationId": "AuthController_registerBrand",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing name, email or password"
+          },
+          "409": {
+            "description": "Email or phone already exists"
+          }
+        },
+        "summary": "Register a new brand account",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/register/creator": {
+      "post": {
+        "operationId": "AuthController_registerCreator",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing name, email or password"
+          },
+          "409": {
+            "description": "Email or phone already exists"
+          }
+        },
+        "summary": "Register a new creator account",
         "tags": [
           "Auth"
         ]
@@ -515,6 +602,74 @@
           }
         }
       },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@gmail.com",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "example": "abc@123",
+            "format": "password"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "accountRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAccountRole"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAccountStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "accountRole",
+          "status"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT bearer token"
+          },
+          "account": {
+            "$ref": "#/components/schemas/AuthResponseDto"
+          }
+        },
+        "required": [
+          "access_token",
+          "account"
+        ]
+      },
       "RegisterDto": {
         "type": "object",
         "properties": {
@@ -539,14 +694,6 @@
             "example": "0900000001",
             "maxLength": 20,
             "description": "Vietnamese number. Accepts 0xxxxxxxxx / 84xxxxxxxxx / +84xxxxxxxxx and is normalized to E.164 (+84xxxxxxxxx) before saving."
-          },
-          "accountRole": {
-            "default": "admin",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EAccountRole"
-              }
-            ]
           }
         },
         "required": [
@@ -623,74 +770,6 @@
           "statusReason",
           "createdAt",
           "updatedAt"
-        ]
-      },
-      "LoginDto": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "example": "admin@gmail.com",
-            "format": "email"
-          },
-          "password": {
-            "type": "string",
-            "example": "abc@123",
-            "format": "password"
-          }
-        },
-        "required": [
-          "email",
-          "password"
-        ]
-      },
-      "AuthResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "accountRole": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EAccountRole"
-              }
-            ]
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EAccountStatus"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "email",
-          "accountRole",
-          "status"
-        ]
-      },
-      "LoginResponseDto": {
-        "type": "object",
-        "properties": {
-          "access_token": {
-            "type": "string",
-            "description": "JWT bearer token"
-          },
-          "account": {
-            "$ref": "#/components/schemas/AuthResponseDto"
-          }
-        },
-        "required": [
-          "access_token",
-          "account"
         ]
       }
     }

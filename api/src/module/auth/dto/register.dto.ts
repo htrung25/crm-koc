@@ -1,15 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEmail,
-  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { EAccountRole } from '../../../common/enum/account-roles.enum';
 
+/**
+ * Lớp 1 của phòng thủ nhiều lớp: DTO chỉ khai báo đúng những field client
+ * được phép gửi. KHÔNG có accountRole và status ở đây — /register là endpoint
+ * công khai, để client tự chọn role là mở đường leo thang quyền.
+ * Việc tạo admin phải đi qua endpoint riêng do admin gọi.
+ */
 export class RegisterDto {
   @IsString()
   @IsNotEmpty()
@@ -38,15 +42,4 @@ export class RegisterDto {
       'Vietnamese number. Accepts 0xxxxxxxxx / 84xxxxxxxxx / +84xxxxxxxxx and is normalized to E.164 (+84xxxxxxxxx) before saving.',
   })
   phone?: string;
-
-  @IsOptional()
-  @IsEnum(EAccountRole, {
-    message: 'accountRole must be admin, brand or creator',
-  })
-  @ApiPropertyOptional({
-    enum: EAccountRole,
-    enumName: 'EAccountRole',
-    default: EAccountRole.ADMIN,
-  })
-  accountRole?: EAccountRole;
 }

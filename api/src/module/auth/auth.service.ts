@@ -21,6 +21,13 @@ import { RegisterDto } from './dto/register.dto';
 const BCRYPT_ROUNDS = 10;
 const PG_UNIQUE_VIOLATION = '23505';
 
+/**
+ * Role được phép tạo qua đăng ký công khai.
+ * Cố tình KHÔNG có ADMIN: truyền EAccountRole.ADMIN vào createAuth() sẽ
+ * không compile được. Admin chỉ được tạo bởi admin khác.
+ */
+export type PublicRole = EAccountRole.BRAND | EAccountRole.CREATOR;
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -30,12 +37,19 @@ export class AuthService {
     private readonly profileService: ProfileService,
   ) {}
 
-  /**
-   * Tạo account + profile rỗng. @Transactional() bọc cả hai lệnh insert:
-   * nếu tạo profile lỗi thì account cũng bị rollback.
-   */
+  createAuth(dto: RegisterDto, role: PublicRole): Promise<AuthenticatedAuth> {
+    return this.createAccount(dto, role);
+  }
+
+  createAdminAuth(dto: RegisterDto): Promise<AuthenticatedAuth> {
+    return this.createAccount(dto, EAccountRole.ADMIN);
+  }
+
   @Transactional()
-  async createAuth(dto: RegisterDto): Promise<AuthenticatedAuth> {
+  private async createAccount(
+    dto: RegisterDto,
+    role: EAccountRole,
+  ): Promise<AuthenticatedAuth> {
     if (!dto?.email || !dto?.password || !dto?.name?.trim()) {
       throw new BadRequestException('name, email and password are required');
     }
@@ -52,7 +66,9 @@ export class AuthService {
       name: dto.name.trim(),
       email: dto.email.trim().toLowerCase(),
       phone,
-      accountRole: dto.accountRole ?? EAccountRole.ADMIN,
+      // Lớp 2: role đến từ tham số do controller quyết định, KHÔNG bao giờ
+      // đọc từ dto — payload của client không được ảnh hưởng tới phân quyền.
+      accountRole: role,
       status: EAccountStatus.ACTIVE,
       password: await bcrypt.hash(dto.password, BCRYPT_ROUNDS),
     });
