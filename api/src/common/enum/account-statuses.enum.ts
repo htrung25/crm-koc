@@ -1,6 +1,6 @@
 export enum EAccountStatus {
-  PENDING = 'pending',
-  ACTIVE = 'active',
-  SUSPENDED = 'suspended',
-  BANNED = 'banned',
+  PENDING = 1,
+  ACTIVE = 2,
+  SUSPENDED = 3,
+  BANNED = 4,
 }

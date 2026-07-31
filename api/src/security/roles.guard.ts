@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { EAccountRole } from '../common/enum/account-roles.enum';
-import { AuthenticatedAuth } from '../module/auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../module/auth/entities/authenticated.entity';
 import { ROLES_KEY } from './roles.decorator';
 
 @Injectable()
@@ -28,7 +28,7 @@ export class RolesGuard implements CanActivate {
 
     const request = context
       .switchToHttp()
-      .getRequest<{ user?: AuthenticatedAuth }>();
+      .getRequest<{ user?: AuthenticatedAccount }>();
     const user = request.user;
 
     // Guard này chỉ xét role; việc xác thực là của JwtAuthGuard chạy trước nó.

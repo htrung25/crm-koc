@@ -42,8 +42,10 @@ export class AuthEntity {
   @Column({ type: 'timestamptz', nullable: true })
   phoneVerifiedAt!: Date | null;
 
+  // smallint => driver trả về number, khớp EAccountStatus (1..4).
+  // Migration không đặt DEFAULT nên mọi lệnh insert phải set status tường minh.
   @Index()
-  @Column({ type: 'varchar', length: 32, default: EAccountStatus.PENDING })
+  @Column({ type: 'smallint' })
   status!: EAccountStatus;
 
   @Column({ type: 'text', nullable: true })

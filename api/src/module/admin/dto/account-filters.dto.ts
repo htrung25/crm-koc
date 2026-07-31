@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
@@ -25,8 +25,11 @@ export class AccountFilterDto extends PaginationDto {
   search?: string;
 
   @IsOptional()
+  // query string luôn là chuỗi: '2' phải thành 2 thì @IsEnum mới pass
+  @Type(() => Number)
   @IsEnum(EAccountStatus, {
-    message: 'status must be pending, active, suspended or banned',
+    message:
+      'status must be 1 (pending), 2 (active), 3 (suspended) or 4 (banned)',
   })
   @ApiPropertyOptional({ enum: EAccountStatus, enumName: 'EAccountStatus' })
   status?: EAccountStatus;

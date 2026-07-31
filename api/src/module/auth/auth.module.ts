@@ -7,7 +7,10 @@ import { AuthEntity } from './entities/auth.entity';
 import { LocalStrategy } from '../../passport/local.strategy';
 import { JwtStrategy } from '../../passport/jwt.strategy';
 import { AdminModule } from '../admin/admin.module';
-import { SecurityModule } from 'src/security/security.module';
+import { SecurityModule } from '../../security/security.module';
+import { OtpService } from '../../security/otp.service';
+import { EmailService } from '../../common/services/email.service';
+import { RedisCacheService } from '../../common/services/redis.service';
 
 @Module({
   imports: [
@@ -17,7 +20,15 @@ import { SecurityModule } from 'src/security/security.module';
     SecurityModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
-  exports: [AuthService],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    OtpService,
+    EmailService,
+    RedisCacheService,
+  ],
+  // export để module khác dùng lại đúng instance này, không tự khai lại
+  exports: [AuthService, OtpService, EmailService, RedisCacheService],
 })
 export class AuthModule {}

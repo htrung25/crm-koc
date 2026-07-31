@@ -17,7 +17,7 @@ export class CreateAccounts1785024000000 implements MigrationInterface {
         "password"          text         NOT NULL,
         "email_verified_at" timestamptz,
         "phone_verified_at" timestamptz,
-        "status"            varchar(32)  NOT NULL DEFAULT 'pending',
+        "status"            smallint  NOT NULL ,
         "status_reason"     text,
         "created_at"         timestamptz  NOT NULL DEFAULT now(),
         "updated_at"         timestamptz  NOT NULL DEFAULT now(),

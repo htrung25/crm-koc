@@ -43,6 +43,30 @@ function toBoolean(value: boolean | string): boolean {
   return value === true || value === 'true';
 }
 
+/**
+ * Dành cho enum SỐ (EAccountStatus).
+ *
+ * Không dùng chung assertEnum được: với enum số, Object.values() trả về CẢ
+ * tên lẫn giá trị (['PENDING', ..., 1, 2, 3, 4]) do TypeScript sinh reverse
+ * mapping. Ngoài ra status từ query string là chuỗi '2' nên phải Number().
+ */
+function assertNumericEnum<T extends Record<string, string | number>>(
+  enumType: T,
+  value: unknown,
+  field: string,
+): T[keyof T] {
+  const allowed = Object.values(enumType).filter(
+    (v): v is number => typeof v === 'number',
+  );
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || !allowed.includes(parsed)) {
+    throw new BadRequestException(
+      `${field} must be one of: ${allowed.join(', ')}`,
+    );
+  }
+  return parsed as T[keyof T];
+}
+
 /** Kiểm tra giá trị có nằm trong enum không, để dùng lại cho cả 3 field. */
 function assertEnum<T extends Record<string, string>>(
   enumType: T,
@@ -78,7 +102,7 @@ export class AdminService {
     }
 
     if (query.status !== undefined) {
-      const status = assertEnum(EAccountStatus, query.status, 'status');
+      const status = assertNumericEnum(EAccountStatus, query.status, 'status');
       qb.andWhere('account.status = :status', { status });
     }
 
@@ -131,7 +155,7 @@ export class AdminService {
 
     if (query.status !== undefined) {
       qb.andWhere('account.status = :status', {
-        status: assertEnum(EAccountStatus, query.status, 'status'),
+        status: assertNumericEnum(EAccountStatus, query.status, 'status'),
       });
     }
 
@@ -199,7 +223,7 @@ export class AdminService {
       throw new NotFoundException('account not found');
     }
 
-    account.status = assertEnum(EAccountStatus, dto.status, 'status');
+    account.status = assertNumericEnum(EAccountStatus, dto.status, 'status');
     if (dto.statusReason !== undefined) {
       account.statusReason = dto.statusReason;
     }
