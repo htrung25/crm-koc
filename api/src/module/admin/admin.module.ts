@@ -6,9 +6,13 @@ import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
 import { ProfileEntity } from './entities/profile.entity';
 import { AuthEntity } from '../auth/entities/auth.entity';
+import { SecurityModule } from 'src/security/security.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProfileEntity, AuthEntity])],
+  imports: [
+    TypeOrmModule.forFeature([ProfileEntity, AuthEntity]),
+    SecurityModule,
+  ],
   controllers: [AdminController, ProfileController],
   providers: [AdminService, ProfileService],
   exports: [AdminService, ProfileService],

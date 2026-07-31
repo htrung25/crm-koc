@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EAccountRole } from '../../common/enum/account-roles.enum';
@@ -10,8 +14,34 @@ import {
   escapeLike,
   paginate,
 } from '../../common/util/pagination.util';
+import { AccountCacheService } from '../../security/account-cache.service';
 import { AuthEntity } from '../auth/entities/auth.entity';
+import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
+import { AccountFilterDto } from './dto/account-filters.dto';
 import { AdminFilters } from './dto/admin-filters.dto';
+import { BrandFilterDto } from './dto/brand-filters.dto';
+import { CreatorFilterDto } from './dto/creator-filters.dto';
+import { UpdateStatusDto } from './dto/update-status.dto';
+
+const ACCOUNT_LIST_FIELDS = [
+  'id',
+  'name',
+  'email',
+  'phone',
+  'accountRole',
+  'status',
+  'createdAt',
+] as const;
+
+/** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
+export type AccountListItem = Pick<
+  AuthEntity,
+  (typeof ACCOUNT_LIST_FIELDS)[number]
+>;
+
+function toBoolean(value: boolean | string): boolean {
+  return value === true || value === 'true';
+}
 
 /** Kiểm tra giá trị có nằm trong enum không, để dùng lại cho cả 3 field. */
 function assertEnum<T extends Record<string, string>>(
@@ -33,6 +63,7 @@ export class AdminService {
   constructor(
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
+    private readonly accountCache: AccountCacheService,
   ) {}
 
   async findAll(query: AdminFilters): Promise<PaginatedResult<AuthEntity>> {
@@ -51,8 +82,6 @@ export class AdminService {
       qb.andWhere('account.status = :status', { status });
     }
 
-    // Bắt buộc whitelist: orderBy() nhận chuỗi raw nên input client đi thẳng
-    // vào SQL. ValidationPipe đang tắt => không được dựa vào @IsEnum ở DTO.
     const sortBy =
       query.sortBy === undefined
         ? EAccountSortField.CREATED_AT
@@ -67,5 +96,118 @@ export class AdminService {
     qb.addOrderBy('account.id', ESortOrder.ASC);
 
     return paginate(qb, query);
+  }
+
+  /** Danh sách brand, phân trang + lọc. */
+  findAllBrands(
+    query: BrandFilterDto,
+  ): Promise<PaginatedResult<AccountListItem>> {
+    return this.listByRole(EAccountRole.BRAND, query);
+  }
+
+  /** Danh sách creator, phân trang + lọc. */
+  findAllCreators(
+    query: CreatorFilterDto,
+  ): Promise<PaginatedResult<AccountListItem>> {
+    return this.listByRole(EAccountRole.CREATOR, query);
+  }
+
+  private listByRole(
+    role: EAccountRole,
+    // hợp của 2 DTO con: field riêng của bên nào cũng optional nên nhánh
+    // tương ứng chỉ chạy khi client thực sự gửi
+    query: AccountFilterDto & Partial<BrandFilterDto & CreatorFilterDto>,
+  ): Promise<PaginatedResult<AccountListItem>> {
+    const qb = this.authRepository
+      .createQueryBuilder('account')
+      .select(ACCOUNT_LIST_FIELDS.map((f) => `account.${f}`))
+      .where('account.accountRole = :role', { role });
+
+    if (query.search?.trim()) {
+      qb.andWhere('(account.name ILIKE :s OR account.email ILIKE :s)', {
+        s: `%${escapeLike(query.search.trim())}%`,
+      });
+    }
+
+    if (query.status !== undefined) {
+      qb.andWhere('account.status = :status', {
+        status: assertEnum(EAccountStatus, query.status, 'status'),
+      });
+    }
+
+    if (query.emailVerified !== undefined) {
+      qb.andWhere(
+        toBoolean(query.emailVerified)
+          ? 'account.emailVerifiedAt IS NOT NULL'
+          : 'account.emailVerifiedAt IS NULL',
+      );
+    }
+
+    if (query.createdFrom) {
+      qb.andWhere('account.createdAt >= :from', { from: query.createdFrom });
+    }
+    if (query.createdTo) {
+      const to = new Date(query.createdTo);
+      to.setDate(to.getDate() + 1);
+      qb.andWhere('account.createdAt < :to', { to });
+    }
+    if (query.address?.trim() || query.gender !== undefined) {
+      qb.leftJoin(
+        'account_profiles',
+        'profile',
+        'profile.account_id = account.id',
+      );
+
+      if (query.address?.trim()) {
+        qb.andWhere('profile.address ILIKE :addr', {
+          addr: `%${escapeLike(query.address.trim())}%`,
+        });
+      }
+
+      if (query.gender !== undefined) {
+        const gender = Number(query.gender);
+        if (![1, 2, 3].includes(gender)) {
+          throw new BadRequestException('gender must be 1, 2 or 3');
+        }
+        qb.andWhere('profile.gender = :gender', { gender });
+      }
+    }
+
+    // orderBy ghép chuỗi raw vào SQL => bắt buộc whitelist, không tin input
+    const sortBy =
+      query.sortBy === undefined
+        ? EAccountSortField.CREATED_AT
+        : assertEnum(EAccountSortField, query.sortBy, 'sortBy');
+    const sortOrder =
+      query.sortOrder === undefined
+        ? ESortOrder.DESC
+        : assertEnum(ESortOrder, query.sortOrder, 'sortOrder');
+
+    qb.orderBy(`account.${sortBy}`, sortOrder);
+    // khoá thứ tự bằng id để phân trang ổn định khi trùng giá trị sort
+    qb.addOrderBy('account.id', ESortOrder.ASC);
+
+    return paginate(qb, query);
+  }
+
+  async updateStatus(
+    id: string,
+    dto: UpdateStatusDto,
+  ): Promise<AuthenticatedAccount> {
+    const account = await this.authRepository.findOneBy({ id });
+    if (!account) {
+      throw new NotFoundException('account not found');
+    }
+
+    account.status = assertEnum(EAccountStatus, dto.status, 'status');
+    if (dto.statusReason !== undefined) {
+      account.statusReason = dto.statusReason;
+    }
+
+    const saved = await this.authRepository.save(account);
+    await this.accountCache.invalidate(id);
+
+    const { password: _password, ...result } = saved;
+    return result;
   }
 }

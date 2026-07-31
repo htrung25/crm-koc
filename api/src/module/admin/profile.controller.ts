@@ -16,8 +16,8 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../security/jwt-auth.guard';
-import { AuthenticatedAuth } from '../auth/entities/authenticated.entity';
+import { JwtAuthGuard } from '../../security/jwt.guard';
+import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileResponseDto } from './dto/profile-response.dto';
@@ -36,7 +36,7 @@ export class ProfileController {
     description: 'Token is missing, invalid or expired',
   })
   @ApiNotFoundResponse({ description: 'Account has no profile yet' })
-  async getMe(@Request() request: { user: AuthenticatedAuth }) {
+  async getMe(@Request() request: { user: AuthenticatedAccount }) {
     const profile = await this.profileService.findByAccountId(request.user.id);
     if (!profile) {
       throw new NotFoundException('profile not found');
@@ -55,7 +55,7 @@ export class ProfileController {
     description: 'Email already taken by another account',
   })
   updateMe(
-    @Request() request: { user: AuthenticatedAuth },
+    @Request() request: { user: AuthenticatedAccount },
     @Body() dto: UpdateProfileDto,
   ) {
     return this.profileService.updateProfile(request.user.id, dto);

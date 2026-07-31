@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { QueryFailedError, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -15,7 +16,10 @@ import { Transactional } from 'typeorm-transactional';
 import { normalizePhone } from '../../common/util/phone.util';
 import { ProfileService } from '../admin/profile.service';
 import { AuthEntity } from './entities/auth.entity';
-import { AuthenticatedAuth, JwtPayload } from './entities/authenticated.entity';
+import {
+  AuthenticatedAccount,
+  JwtPayload,
+} from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
 
 const BCRYPT_ROUNDS = 10;
@@ -37,11 +41,14 @@ export class AuthService {
     private readonly profileService: ProfileService,
   ) {}
 
-  createAuth(dto: RegisterDto, role: PublicRole): Promise<AuthenticatedAuth> {
+  createAccountUser(
+    dto: RegisterDto,
+    role: PublicRole,
+  ): Promise<AuthenticatedAccount> {
     return this.createAccount(dto, role);
   }
 
-  createAdminAuth(dto: RegisterDto): Promise<AuthenticatedAuth> {
+  createAdminAccount(dto: RegisterDto): Promise<AuthenticatedAccount> {
     return this.createAccount(dto, EAccountRole.ADMIN);
   }
 
@@ -49,7 +56,7 @@ export class AuthService {
   private async createAccount(
     dto: RegisterDto,
     role: EAccountRole,
-  ): Promise<AuthenticatedAuth> {
+  ): Promise<AuthenticatedAccount> {
     if (!dto?.email || !dto?.password || !dto?.name?.trim()) {
       throw new BadRequestException('name, email and password are required');
     }
@@ -62,7 +69,7 @@ export class AuthService {
       }
     }
 
-    const auth = this.authRepository.create({
+    const account = this.authRepository.create({
       name: dto.name.trim(),
       email: dto.email.trim().toLowerCase(),
       phone,
@@ -74,7 +81,7 @@ export class AuthService {
     });
 
     try {
-      const saved = await this.authRepository.save(auth);
+      const saved = await this.authRepository.save(account);
       await this.profileService.createProfile(
         saved.id,
         saved.name,
@@ -94,22 +101,23 @@ export class AuthService {
     }
   }
 
-  async loginAuth(auth: AuthenticatedAuth) {
+  async loginAccount(account: AuthenticatedAccount) {
     const payload: JwtPayload = {
-      sub: auth.id,
-      email: auth.email,
-      name: auth.name,
-      role: auth.accountRole,
+      jti: randomUUID(),
+      sub: account.id,
+      email: account.email,
+      name: account.name,
+      role: account.accountRole,
     };
 
     return {
       access_token: await this.jwtService.signAsync(payload),
       account: {
-        id: auth.id,
-        email: auth.email,
-        name: auth.name,
-        accountRole: auth.accountRole,
-        status: auth.status,
+        id: account.id,
+        email: account.email,
+        name: account.name,
+        accountRole: account.accountRole,
+        status: account.status,
       },
     };
   }
@@ -127,31 +135,31 @@ export class AuthService {
   /** password bị `select: false` trên entity nên phải addSelect thủ công. */
   private findByEmailWithPassword(email: string): Promise<AuthEntity | null> {
     return this.authRepository
-      .createQueryBuilder('auth')
-      .addSelect('auth.password')
-      .where('auth.email = :email', { email: email.trim().toLowerCase() })
+      .createQueryBuilder('account')
+      .addSelect('account.password')
+      .where('account.email = :email', { email: email.trim().toLowerCase() })
       .getOne();
   }
 
-  async validateAuth(
+  async validateAccount(
     email: string,
     password: string,
-  ): Promise<AuthenticatedAuth> {
-    const auth = await this.findByEmailWithPassword(email);
-    if (!auth || !(await bcrypt.compare(password, auth.password))) {
+  ): Promise<AuthenticatedAccount> {
+    const account = await this.findByEmailWithPassword(email);
+    if (!account || !(await bcrypt.compare(password, account.password))) {
       throw new UnauthorizedException('invalid credentials');
     }
 
     if (
-      auth.status === EAccountStatus.SUSPENDED ||
-      auth.status === EAccountStatus.BANNED
+      account.status === EAccountStatus.SUSPENDED ||
+      account.status === EAccountStatus.BANNED
     ) {
       throw new ForbiddenException(
-        auth.statusReason ?? `account is ${auth.status}`,
+        account.statusReason ?? `account is ${account.status}`,
       );
     }
 
-    const { password: _password, ...result } = auth;
+    const { password: _password, ...result } = account;
     return result;
   }
 }

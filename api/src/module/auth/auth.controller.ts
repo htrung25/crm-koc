@@ -6,6 +6,7 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -22,10 +23,12 @@ import {
 import { AuthService } from './auth.service';
 import { EAccountRole } from '../../common/enum/account-roles.enum';
 import { LocalAuthGuard } from '../../security/local-auth.guard';
-import { JwtAuthGuard } from '../../security/jwt-auth.guard';
+import { JwtAuthGuard } from '../../security/jwt.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
-import { AuthenticatedAuth } from './entities/authenticated.entity';
+import { TokenBlacklistService } from '../../security/token-blacklist.service';
+import type { RequestWithToken } from '../../passport/jwt.strategy';
+import { AuthenticatedAccount } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto, RegisterResponseDto } from './dto/auth-response.dto';
@@ -33,7 +36,10 @@ import { LoginResponseDto, RegisterResponseDto } from './dto/auth-response.dto';
 @ApiTags('Auth')
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly blacklist: TokenBlacklistService,
+  ) {}
 
   @UseGuards(LocalAuthGuard)
   @Post('/login')
@@ -45,8 +51,8 @@ export class AuthController {
   @ApiOkResponse({ type: LoginResponseDto })
   @ApiUnauthorizedResponse({ description: 'Wrong email or password' })
   @ApiForbiddenResponse({ description: 'Account is suspended or banned' })
-  login(@Request() request: { user: AuthenticatedAuth }) {
-    return this.authService.loginAuth(request.user);
+  login(@Request() request: { user: AuthenticatedAccount }) {
+    return this.authService.loginAccount(request.user);
   }
 
   // Endpoint DUY NHẤT tạo được admin. Không công khai: phải là admin đã đăng
@@ -67,7 +73,7 @@ export class AuthController {
   @ApiConflictResponse({ description: 'Email or phone already exists' })
   registerAdmin(@Body() registerDto: RegisterDto) {
     // role do createAdminAuth() hardcode, body không tác động được
-    return this.authService.createAdminAuth(registerDto);
+    return this.authService.createAdminAccount(registerDto);
   }
 
   // Có 2 actor công khai nên role đến từ ROUTE, không từ body và cũng không
@@ -80,7 +86,7 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Missing name, email or password' })
   @ApiConflictResponse({ description: 'Email or phone already exists' })
   registerBrand(@Body() registerDto: RegisterDto) {
-    return this.authService.createAuth(registerDto, EAccountRole.BRAND);
+    return this.authService.createAccountUser(registerDto, EAccountRole.BRAND);
   }
 
   @Post('/register/creator')
@@ -91,7 +97,30 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Missing name, email or password' })
   @ApiConflictResponse({ description: 'Email or phone already exists' })
   registerCreator(@Body() registerDto: RegisterDto) {
-    return this.authService.createAuth(registerDto, EAccountRole.CREATOR);
+    return this.authService.createAccountUser(
+      registerDto,
+      EAccountRole.CREATOR,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Revoke the current access token' })
+  @ApiOkResponse({ description: 'Token revoked until it expires' })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  async logout(@Request() request: RequestWithToken) {
+    // payload gốc do JwtStrategy gắn lên request; request.user chỉ có account
+    const payload = request.tokenPayload;
+    if (!payload) {
+      throw new UnauthorizedException('token payload missing');
+    }
+
+    const revoked = await this.blacklist.revoke(payload.jti, payload.exp);
+    return { revoked, expiresAt: new Date(payload.exp * 1000).toISOString() };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -103,7 +132,7 @@ export class AuthController {
     description: 'Token is missing, invalid or expired',
   })
   @ApiForbiddenResponse({ description: 'Account is suspended or banned' })
-  me(@Request() request: { user: AuthenticatedAuth }) {
+  me(@Request() request: { user: AuthenticatedAccount }) {
     // JwtStrategy.validate() đã nạp sẵn account vào request.user
     return request.user;
   }

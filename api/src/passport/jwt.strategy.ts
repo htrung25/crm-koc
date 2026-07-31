@@ -6,49 +6,72 @@ import {
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Request } from 'express';
 import { EAccountStatus } from '../common/enum/account-statuses.enum';
 import { AuthService } from '../module/auth/auth.service';
+import { AccountCacheService } from '../security/account-cache.service';
+import { TokenBlacklistService } from '../security/token-blacklist.service';
 import {
-  AuthenticatedAuth,
-  JwtPayload,
+  AuthenticatedAccount,
+  VerifiedJwtPayload,
 } from '../module/auth/entities/authenticated.entity';
+
+/** Request đã qua JwtStrategy có thêm payload gốc để controller dùng khi logout. */
+export interface RequestWithToken extends Request {
+  tokenPayload?: VerifiedJwtPayload;
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     config: ConfigService,
     private readonly authService: AuthService,
+    private readonly blacklist: TokenBlacklistService,
+    private readonly accountCache: AccountCacheService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
+      // cần req để gắn payload lên request cho /logout đọc lại jti + exp
+      passReqToCallback: true,
     });
   }
 
-  /**
-   * Chỉ được gọi sau khi chữ ký và hạn token đã hợp lệ.
-   *
-   * Vẫn phải truy vấn DB: token sống tới 1 tiếng, trong khoảng đó account có
-   * thể đã bị xoá hoặc bị ban. Nếu chỉ tin payload thì họ vẫn dùng được API.
-   */
-  async validate(payload: JwtPayload): Promise<AuthenticatedAuth> {
-    const auth = await this.authService.findById(payload.sub);
-    if (!auth) {
-      throw new UnauthorizedException('account no longer exists');
+  async validate(
+    request: RequestWithToken,
+    payload: VerifiedJwtPayload,
+  ): Promise<AuthenticatedAccount> {
+    // 1. Blacklist trước tiên — token đã logout thì không cần đụng tới DB
+    if (payload.jti && (await this.blacklist.isRevoked(payload.jti))) {
+      throw new UnauthorizedException('token has been revoked');
+    }
+
+    request.tokenPayload = payload;
+
+    // 2. Cache-aside: cache miss mới xuống DB. Ban account sẽ xoá key này
+    //    nên thay đổi trạng thái có hiệu lực ngay, không chờ TTL.
+    let account = await this.accountCache.get(payload.sub);
+    if (!account) {
+      const auth = await this.authService.findById(payload.sub);
+      if (!auth) {
+        throw new UnauthorizedException('account no longer exists');
+      }
+      // password đã bị select: false nên không có trong kết quả
+      const { password: _password, ...result } = auth;
+      account = result;
+      await this.accountCache.set(account);
     }
 
     if (
-      auth.status === EAccountStatus.SUSPENDED ||
-      auth.status === EAccountStatus.BANNED
+      account.status === EAccountStatus.SUSPENDED ||
+      account.status === EAccountStatus.BANNED
     ) {
       throw new ForbiddenException(
-        auth.statusReason ?? `account is ${auth.status}`,
+        account.statusReason ?? `account is ${account.status}`,
       );
     }
 
-    // password đã bị select: false nên không có trong kết quả
-    const { password: _password, ...result } = auth;
-    return result;
+    return account;
   }
 }
