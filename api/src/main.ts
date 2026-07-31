@@ -1,5 +1,5 @@
 import { initializeTransactionalContext } from 'typeorm-transactional';
-// import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { setupSwagger } from './infra/swagger';
@@ -44,13 +44,13 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  // app.useGlobalPipes(
-  //   new ValidationPipe({
-  //     whitelist: true,
-  //     forbidNonWhitelisted: true,
-  //     transform: true,
-  //   }),
-  // );
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   setupSwagger(app);
   await app.listen(process.env.PORT ?? 3000);

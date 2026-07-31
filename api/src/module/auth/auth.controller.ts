@@ -1,8 +1,11 @@
 import {
   Controller,
+  ForbiddenException,
   Get,
   Post,
   Body,
+  HttpException,
+  Logger,
   Request,
   HttpCode,
   HttpStatus,
@@ -18,10 +21,20 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { EAccountRole } from '../../common/enum/account-roles.enum';
+import { EAccountStatus } from '../../common/enum/account-statuses.enum';
+import { EOtpResult } from '../../common/enum/otp-result.enum';
+import { OtpService } from '../../security/otp.service';
+import { EmailService } from '../../common/services/email.service';
+import {
+  LoginPendingResponseDto,
+  ResendOtpDto,
+  VerifyOtpDto,
+} from '../admin/dto/verify-otp.dto';
 import { LocalAuthGuard } from '../../security/local-auth.guard';
 import { JwtAuthGuard } from '../../security/jwt.guard';
 import { RolesGuard } from '../../security/roles.guard';
@@ -36,23 +49,158 @@ import { LoginResponseDto, RegisterResponseDto } from './dto/auth-response.dto';
 @ApiTags('Auth')
 @Controller()
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly blacklist: TokenBlacklistService,
+    private readonly otpService: OtpService,
+    private readonly emailService: EmailService,
   ) {}
 
   @UseGuards(LocalAuthGuard)
   @Post('/login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Log in and receive a JWT access token' })
+  @ApiOperation({
+    summary:
+      'Log in. Admin accounts receive an OTP instead of a token; other roles get the token directly',
+  })
   // LocalAuthGuard đọc body trực tiếp qua passport nên không có @Body();
   // khai báo @ApiBody để Swagger vẫn mô tả đúng request shape.
   @ApiBody({ type: LoginDto })
-  @ApiOkResponse({ type: LoginResponseDto })
+  @ApiOkResponse({
+    description:
+      'LoginResponseDto for brand/creator, LoginPendingResponseDto for admin',
+    type: LoginResponseDto,
+  })
   @ApiUnauthorizedResponse({ description: 'Wrong email or password' })
-  @ApiForbiddenResponse({ description: 'Account is suspended or banned' })
-  login(@Request() request: { user: AuthenticatedAccount }) {
-    return this.authService.loginAccount(request.user);
+  @ApiForbiddenResponse({
+    description: 'Account is suspended, banned, or OTP is locked',
+  })
+  async login(
+    @Request() request: { user: AuthenticatedAccount },
+  ): Promise<LoginResponseDto | LoginPendingResponseDto> {
+    const account = request.user;
+
+    // Chỉ admin mới qua bước OTP. brand/creator giữ nguyên luồng cũ.
+    if (account.accountRole !== EAccountRole.ADMIN) {
+      return this.authService.loginAccount(account);
+    }
+
+    const result = await this.otpService.generateAndStore(account.id);
+    if (result === EOtpResult.LOCKED) {
+      throw new ForbiddenException('too many failed attempts, try again later');
+    }
+
+    await this.sendOtp(account.email, result.otp, account.name);
+
+    // KHÔNG trả token ở đây: mật khẩu đúng mới chỉ qua được nửa đầu.
+    return {
+      requireOtp: true,
+      message: 'OTP has been sent to your email',
+    };
+  }
+
+  @Post('/verify-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify the login OTP and receive a JWT token' })
+  @ApiOkResponse({ type: LoginResponseDto })
+  @ApiUnauthorizedResponse({ description: 'OTP is wrong or has expired' })
+  @ApiForbiddenResponse({
+    description: 'OTP is locked, or the account is suspended or banned',
+  })
+  async verifyOtp(@Body() dto: VerifyOtpDto): Promise<LoginResponseDto> {
+    const account = await this.requireAdminByEmail(dto.email);
+    const result = await this.otpService.verify(account.id, dto.otp);
+
+    if (result === EOtpResult.LOCKED) {
+      throw new ForbiddenException('too many failed attempts, try again later');
+    }
+    if (result === EOtpResult.EXPIRED) {
+      throw new UnauthorizedException('otp has expired, request a new one');
+    }
+    if (result === EOtpResult.INVALID) {
+      throw new UnauthorizedException('invalid otp');
+    }
+
+    // Trạng thái có thể đã đổi trong lúc OTP còn hiệu lực
+    this.assertUsable(account);
+
+    return this.authService.loginAccount(account);
+  }
+
+  @Post('/resend-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send a new login OTP, subject to a cooldown' })
+  @ApiOkResponse({ type: LoginPendingResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Email is not an admin account' })
+  @ApiForbiddenResponse({ description: 'OTP is locked' })
+  @ApiTooManyRequestsResponse({ description: 'Cooldown has not elapsed yet' })
+  async resendOtp(@Body() dto: ResendOtpDto): Promise<LoginPendingResponseDto> {
+    const account = await this.requireAdminByEmail(dto.email);
+    const result = await this.otpService.resend(account.id);
+
+    if (result === EOtpResult.LOCKED) {
+      throw new ForbiddenException('too many failed attempts, try again later');
+    }
+    if (result === EOtpResult.COOLDOWN) {
+      throw new HttpException(
+        'please wait before requesting another otp',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    await this.sendOtp(account.email, result.otp, account.name);
+
+    return { requireOtp: true, message: 'A new OTP has been sent' };
+  }
+
+  /**
+   * Tra account admin theo email.
+   *
+   * Email không tồn tại và email không phải admin đều trả CÙNG một lỗi
+   * `invalid otp` — nếu phân biệt, endpoint này thành công cụ dò xem email
+   * nào là tài khoản admin của hệ thống.
+   */
+  private async requireAdminByEmail(email: string) {
+    const account = await this.authService.findByEmail(email);
+    if (!account || account.accountRole !== EAccountRole.ADMIN) {
+      throw new UnauthorizedException('invalid otp');
+    }
+    this.assertUsable(account);
+
+    const { password: _password, ...result } = account;
+    return result;
+  }
+
+  private assertUsable(account: AuthenticatedAccount): void {
+    if (
+      account.status === EAccountStatus.SUSPENDED ||
+      account.status === EAccountStatus.BANNED
+    ) {
+      throw new ForbiddenException(
+        account.statusReason ?? `account is ${account.status}`,
+      );
+    }
+  }
+
+  /**
+   * Gửi mail nhưng không để lỗi gửi làm hỏng cả request: OTP đã nằm trong
+   * Redis rồi, chặn ở đây thì người dùng mất mã mà vẫn bị tính một lần phát.
+   * Thiếu SENDGRID_API_KEY vẫn lấy được mã qua log để thao tác trên Swagger.
+   */
+  private async sendOtp(
+    email: string,
+    otp: string,
+    name: string,
+  ): Promise<void> {
+    try {
+      await this.emailService.sendOtpEmail(email, otp, name);
+    } catch (error) {
+      this.logger.warn(
+        `Không gửi được mail OTP tới ${email}: ${(error as Error).message}. OTP = ${otp}`,
+      );
+    }
   }
 
   // Endpoint DUY NHẤT tạo được admin. Không công khai: phải là admin đã đăng

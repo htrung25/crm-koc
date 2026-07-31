@@ -17,7 +17,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "LoginResponseDto for brand/creator, LoginPendingResponseDto for admin",
             "content": {
               "application/json": {
                 "schema": {
@@ -30,10 +30,89 @@
             "description": "Wrong email or password"
           },
           "403": {
-            "description": "Account is suspended or banned"
+            "description": "Account is suspended, banned, or OTP is locked"
           }
         },
-        "summary": "Log in and receive a JWT access token",
+        "summary": "Log in. Admin accounts receive an OTP instead of a token; other roles get the token directly",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/verify-otp": {
+      "post": {
+        "operationId": "AuthController_verifyOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "OTP is wrong or has expired"
+          },
+          "403": {
+            "description": "OTP is locked, or the account is suspended or banned"
+          }
+        },
+        "summary": "Verify the login OTP and receive a JWT token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/resend-otp": {
+      "post": {
+        "operationId": "AuthController_resendOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginPendingResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Email is not an admin account"
+          },
+          "403": {
+            "description": "OTP is locked"
+          },
+          "429": {
+            "description": "Cooldown has not elapsed yet"
+          }
+        },
+        "summary": "Send a new login OTP, subject to a cooldown",
         "tags": [
           "Auth"
         ]
@@ -806,6 +885,52 @@
         "required": [
           "access_token",
           "account"
+        ]
+      },
+      "VerifyOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "otp": {
+            "type": "string",
+            "example": "384921"
+          }
+        },
+        "required": [
+          "email",
+          "otp"
+        ]
+      },
+      "ResendOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "LoginPendingResponseDto": {
+        "type": "object",
+        "properties": {
+          "requireOtp": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "OTP has been sent to your email"
+          }
+        },
+        "required": [
+          "requireOtp",
+          "message"
         ]
       },
       "RegisterDto": {
