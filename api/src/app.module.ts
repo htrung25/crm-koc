@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './infra/database.module';
 import { RedisModule } from './infra/redis.module';
+import { SecurityModule } from './security/security.module';
 import { AppThrottlerGuard } from './security/throttler.guard';
 import { AdminModule } from './module/admin/admin.module';
 import { AuthModule } from './module/auth/auth.module';
@@ -13,6 +14,8 @@ import { AuthModule } from './module/auth/auth.module';
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
     RedisModule,
+    // AppThrottlerGuard cần JwtService để đọc accountId từ token
+    SecurityModule,
     ThrottlerModule.forRoot({
       throttlers: [{ name: 'default', ttl: 60_000, limit: 100 }],
     }),

@@ -24,7 +24,10 @@ import {
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
+import {
+  AuthThrottle,
+  AUTH_THROTTLE_BLOCK_MS,
+} from '../../security/auth-throttle.decorator';
 import { AuthService } from './auth.service';
 import { EAccountRole } from '../../common/enum/account-roles.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
@@ -37,7 +40,7 @@ import {
   VerifyOtpDto,
 } from '../admin/dto/verify-otp.dto';
 import { LocalAuthGuard } from '../../security/local-auth.guard';
-import { JwtAuthGuard } from '../../security/jwt.guard';
+import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { TokenBlacklistService } from '../../security/token-blacklist.service';
@@ -59,9 +62,9 @@ export class AuthController {
     private readonly emailService: EmailService,
   ) {}
 
-  // 5 lần / phút: vừa chặn dò mật khẩu, vừa bịt đường gọi lại /login để
-  // reset bộ đếm resend OTP (generateAndStore xoá key otp:resend:).
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  // Chặn dò mật khẩu, đồng thời bịt đường gọi lại /login để reset bộ đếm
+  // resend OTP (generateAndStore xoá key otp:resend:).
+  @AuthThrottle()
   @UseGuards(LocalAuthGuard)
   @Post('/login')
   @HttpCode(HttpStatus.OK)
@@ -105,9 +108,9 @@ export class AuthController {
     };
   }
 
-  // OTP chỉ có 6 chữ số nên endpoint này là mục tiêu dò mã rõ ràng nhất.
-  // Khoá 15 phút sau khi vượt hạn, thay vì chỉ chờ hết cửa sổ 1 phút.
-  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 900_000 } })
+  // OTP chỉ có 6 chữ số nên đây là mục tiêu dò mã rõ ràng nhất: vượt hạn thì
+  // phạt 15 phút thay vì chỉ chờ hết cửa sổ 60 giây.
+  @AuthThrottle({ blockMs: AUTH_THROTTLE_BLOCK_MS })
   @Post('/verify-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify the login OTP and receive a JWT token' })
@@ -136,8 +139,8 @@ export class AuthController {
     return this.authService.loginAccount(account);
   }
 
-  // Mỗi lần gọi là một email được gửi đi: siết chặt hơn hai endpoint trên.
-  @Throttle({ default: { limit: 3, ttl: 300_000 } })
+  // Mỗi lần gọi là một email được gửi đi.
+  @AuthThrottle()
   @Post('/resend-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send a new login OTP, subject to a cooldown' })

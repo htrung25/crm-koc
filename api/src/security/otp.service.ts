@@ -16,6 +16,7 @@ export class OtpService {
   private readonly maxAttempts: number;
   private readonly resendCooldown: number;
   private readonly maxResends: number;
+  private readonly resendWindow: number;
 
   constructor(
     @Inject(REDIS_CLIENT)
@@ -30,6 +31,9 @@ export class OtpService {
       configService.get('OTP_RESEND_COOLDOWN_SECONDS', 60),
     );
     this.maxResends = Number(configService.get('OTP_MAX_RESENDS', 5));
+    this.resendWindow = Number(
+      configService.get('OTP_RESEND_WINDOW_SECONDS', 3600),
+    );
   }
 
   async generateAndStore(
@@ -46,8 +50,8 @@ export class OtpService {
       { EX: this.otpTtl },
     );
 
-    // Fresh login resets the resend counter
-    await this.redis.del(`${OTP_RESEND_PREFIX}${adminId}`);
+    // KHÔNG xoá bộ đếm resend ở đây: gọi lại /login sẽ thành đường vòng để
+    // xin thêm lượt gửi mail. Bộ đếm tự hết hạn theo resendWindow.
 
     return { otp };
   }
@@ -141,7 +145,7 @@ export class OtpService {
     await this.redis.set(
       `${OTP_RESEND_PREFIX}${adminId}`,
       JSON.stringify({ count: prevCount + 1, lastResendAt: now }),
-      { EX: this.otpTtl },
+      { EX: this.resendWindow },
     );
 
     return { otp };

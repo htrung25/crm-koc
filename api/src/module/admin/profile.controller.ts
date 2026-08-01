@@ -16,7 +16,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../security/jwt.guard';
+import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';

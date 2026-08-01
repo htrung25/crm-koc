@@ -18,7 +18,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { EAccountRole } from '../../common/enum/account-roles.enum';
-import { JwtAuthGuard } from '../../security/jwt.guard';
+import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { AdminService } from './admin.service';

@@ -1,86 +1,133 @@
 "use client";
 
 import Link from "next/link";
+import { RedSunNav } from "@/components/layout/red-sun-nav";
 
 export default function LoginPage() {
   const portals = [
     {
       role: "ADMIN",
-      title: "KOC CRM ADMIN",
-      desc: "Cổng đăng nhập bảo mật dành riêng cho Quản trị viên hệ thống.",
+      title: "CỔNG ADMIN HỆ THỐNG",
+      desc: "Không gian quản trị tối cao dành cho Ban quản trị Red Sun CRM. Quản lý toàn bộ dữ liệu KOC & Nhãn hàng.",
       href: "/admin/login",
       icon: "⚡",
-      badge: "Cổng Admin",
-      btnClass: "from-[#6C4CF1] to-[#9B6CF5] hover:opacity-95 shadow-[#6C4CF1]/30",
-      accentBorder: "border-[#6C4CF1]/40"
+      badge: "Cổng Bảo Mật",
+      btnText: "Đăng nhập Admin",
+      pillBg: "bg-[#EF4623]",
+      borderHover: "hover:border-[#EF4623]"
     },
     {
       role: "BRAND",
-      title: "BRAND PORTAL",
-      desc: "Cổng thông tin & tạo chiến dịch dành cho Doanh nghiệp & Nhãn hàng.",
+      title: "CỔNG DOANH NGHIỆP",
+      desc: "Dành cho Doanh nghiệp & Nhãn hàng khởi tạo chiến dịch KOC, gửi sample sản phẩm và theo dõi doanh số.",
       href: "/brand/login",
       icon: "🏢",
-      badge: "Cổng Doanh nghiệp",
-      btnClass: "from-pink-600 to-amber-600 hover:from-pink-500 hover:to-amber-500 shadow-pink-600/30",
-      accentBorder: "border-pink-500/40"
+      badge: "Cổng Brand",
+      btnText: "Đăng nhập Brand",
+      pillBg: "bg-[#2D3B42] dark:bg-[#EF4623]",
+      borderHover: "hover:border-[#EF4623]"
     },
     {
       role: "CREATOR",
-      title: "CREATOR SPACE",
-      desc: "Không gian làm việc, nhận job & quản lý thu nhập cho KOC / KOL.",
+      title: "CỔNG CREATOR / KOC",
+      desc: "Không gian dành riêng cho KOC / KOL nhận Job, đăng ký nhận sản phẩm trải nghiệm và rút hoa hồng.",
       href: "/creator/login",
       icon: "✨",
-      badge: "Cổng Creator / KOC",
-      btnClass: "from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 shadow-violet-600/30",
-      accentBorder: "border-violet-500/40"
+      badge: "Cổng KOC",
+      btnText: "Đăng nhập KOC",
+      pillBg: "bg-[#EF4623]",
+      borderHover: "hover:border-[#EF4623]"
     }
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-radial from-slate-900 via-slate-950 to-black text-white p-4 font-sans">
-      <div className="w-full max-w-4xl space-y-8">
-        <div className="text-center space-y-3">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-violet-400 via-pink-400 to-amber-400 bg-clip-text text-transparent">
-            CRM-KOC Platform
-          </h1>
-          <p className="text-sm text-slate-400 max-w-md mx-auto">
-            Vui lòng lựa chọn Cổng đăng nhập tương ứng với Vai trò của bạn trên hệ thống
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#2D3B42] text-white font-sans selection:bg-[#EF4623] selection:text-white flex flex-col justify-between relative overflow-hidden">
+      {/* Top Glassmorphism Navigation */}
+      <RedSunNav />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {portals.map((p) => (
-            <div
-              key={p.role}
-              className={`flex flex-col justify-between rounded-3xl bg-slate-900/60 backdrop-blur-xl border ${p.accentBorder} p-6 shadow-2xl transition hover:-translate-y-1 hover:border-white/40`}
-            >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl">{p.icon}</span>
-                  <span className="rounded-full bg-slate-800 px-3 py-1 text-[11px] font-bold text-slate-300">
-                    {p.badge}
-                  </span>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">{p.title}</h2>
-                  <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                    {p.desc}
-                  </p>
-                </div>
-              </div>
+      {/* Ambient background blur circles */}
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#EF4623]/15 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-10 -right-20 w-96 h-96 bg-[#EF4623]/15 rounded-full blur-[120px] pointer-events-none" />
 
-              <div className="mt-8">
-                <Link
-                  href={p.href}
-                  className={`block w-full py-3 text-center bg-gradient-to-r ${p.btnClass} text-white font-extrabold rounded-xl shadow-lg transition text-xs`}
-                >
-                  Truy cập Cổng Đăng nhập
-                </Link>
-              </div>
+      <main className="flex-1 flex items-center justify-center px-6 pt-32 pb-20 relative z-10">
+        <div className="w-full max-w-5xl space-y-12 animate-fade-up">
+          {/* Header Section */}
+          <div className="text-center space-y-4 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FDF1EE] text-[#EF4623] text-xs font-bold uppercase tracking-widest shadow-sm">
+              <span>🔒 Red Sun Secure Gateways</span>
             </div>
-          ))}
+
+            <h1
+              className="text-4xl sm:text-6xl font-normal tracking-tight text-white leading-tight"
+              style={{ fontFamily: "'Instrument Serif', serif" }}
+            >
+              Hệ thống Cổng Đăng Nhập <br />
+              <span className="italic text-[#EF4623]">CRM-KOC Platform</span>
+            </h1>
+
+            <p className="text-slate-300 text-sm sm:text-base font-sans leading-relaxed">
+              Vui lòng lựa chọn Cổng đăng nhập tương ứng với vai trò của bạn trên nền tảng Red Sun.
+            </p>
+          </div>
+
+          {/* 3 Portals Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {portals.map((p) => (
+              <div
+                key={p.role}
+                className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-[30px] p-8 flex flex-col justify-between shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 ${p.borderHover}`}
+              >
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-[#FDF1EE] text-[#EF4623] flex items-center justify-center text-2xl font-bold shadow-sm">
+                      {p.icon}
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-200">
+                      {p.badge}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h2
+                      className="text-2xl font-normal text-white"
+                      style={{ fontFamily: "'Instrument Serif', serif" }}
+                    >
+                      {p.title}
+                    </h2>
+                    <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                      {p.desc}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-white/10">
+                  <Link
+                    href={p.href}
+                    className="block w-full py-3.5 text-center bg-[#EF4623] text-white font-bold rounded-[30px] text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:bg-[#D83B19] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  >
+                    {p.btnText} →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Return Home Link */}
+          <div className="text-center pt-4">
+            <Link
+              href="/"
+              className="text-xs font-bold text-slate-400 hover:text-white transition-colors underline underline-offset-4"
+            >
+              ← Quay lại Trang Chủ Red Sun
+            </Link>
+          </div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer minimal */}
+      <footer className="py-6 text-center text-xs text-slate-500 border-t border-white/5 relative z-10">
+        © 2026 Red Sun Editorial Design System. Protected Gateway.
+      </footer>
     </div>
   );
 }
