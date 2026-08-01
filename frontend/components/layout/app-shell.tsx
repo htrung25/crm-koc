@@ -6,8 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { WORKSPACES } from "@/config/navigation";
-import { clearSession } from "@/lib/auth/session";
-import type { UserRole } from "@/types/auth";
+import { clearSession } from "@/features/auth/session";
+import type { UserRole } from "@/features/auth/types";
 import { AdminHeader } from "./admin-header";
 import { AdminSidebar } from "./admin-sidebar";
 

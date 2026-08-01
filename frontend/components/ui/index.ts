@@ -5,3 +5,4 @@ export * from "./status-badge";
 export * from "./platform-badge";
 export * from "./view-button";
 export * from "./detail-ui";
+export * from "./scroll-reveal";

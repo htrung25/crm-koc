@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { clearSession } from "@/lib/auth/session";
+import { clearSession } from "@/features/auth/session";
 
 type AdminHeaderProps = {
   onSearch?: (query: string) => void;

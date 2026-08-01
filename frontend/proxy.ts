@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { isUserRole, ROLE_HOME } from "@/types/auth";
+import { isUserRole, ROLE_HOME } from "@/features/auth/types";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

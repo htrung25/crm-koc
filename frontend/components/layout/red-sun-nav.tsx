@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 
 interface RedSunNavProps {
-  activeSection?: string;
   /**
    * Nền của trang bên dưới nav. "light" = chữ ink (landing hero trắng),
    * "dark" = chữ trắng (các trang login nền #2D3B42).
@@ -12,7 +11,7 @@ interface RedSunNavProps {
   tone?: "light" | "dark";
 }
 
-export function RedSunNav({ activeSection, tone = "light" }: RedSunNavProps) {
+export function RedSunNav({ tone = "light" }: RedSunNavProps) {
   const [scrolled, setScrolled] = useState(false);
   const isDark = tone === "dark";
   const brandText = isDark ? "text-white" : "text-[#2D3B42]";

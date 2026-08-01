@@ -7,7 +7,6 @@ interface ScrollRevealProps {
   className?: string;
   delay?: number;
   direction?: "up" | "down" | "left" | "right" | "rotate";
-  stagger?: boolean;
 }
 
 export function ScrollReveal({
@@ -15,7 +14,6 @@ export function ScrollReveal({
   className = "",
   delay = 0,
   direction = "rotate",
-  stagger = false,
 }: ScrollRevealProps) {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);

@@ -1,4 +1,4 @@
-import type { UserRole } from "@/types/auth";
+import type { UserRole } from "@/features/auth/types";
 
 export type NavigationItem = {
   label: string;

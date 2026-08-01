@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
+import { createDemoSession } from "../session";
+import { ROLE_HOME } from "../types";
 
 export function EditorialLogin() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(true);
   const [email, setEmail] = useState("");
@@ -13,7 +17,9 @@ export function EditorialLogin() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Demo login action
-    window.location.href = "/admin/dashboard";
+    createDemoSession("ADMIN");
+    router.replace(ROLE_HOME.ADMIN);
+    router.refresh();
   };
 
   return (

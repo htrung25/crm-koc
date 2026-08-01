@@ -3,19 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 
-interface PricingCardProps {
-  title: string;
-  subtitle: string;
-  price?: string;
-  priceDetail?: string;
-  buttonText: string;
-  buttonVariant?: "primary" | "secondary" | "outline";
-  highlight?: boolean;
-  badge?: string;
-  sublinkText?: string;
-  features: string[];
-}
-
 export function PricingSection() {
   const [events, setEvents] = useState<number>(10); // Volume slider (1K to 100K orders/month)
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
@@ -28,10 +15,7 @@ export function PricingSection() {
     return new Intl.NumberFormat("vi-VN").format(Math.round(finalPrice));
   };
 
-  const getPerUnitRate = (val: number) => {
-    const rate = period === "yearly" ? 152 : 190;
-    return rate;
-  };
+  const getPerUnitRate = () => (period === "yearly" ? 152 : 190);
 
   return (
     <section id="pricing" className="py-24 bg-[#2D3B42] text-white relative overflow-hidden">
@@ -324,7 +308,7 @@ export function PricingSection() {
                     <span className="text-slate-400 font-sans text-sm">VNĐ / tháng</span>
                   </div>
                   <p className="text-xs text-slate-400 mt-2 font-mono">
-                    ~ {getPerUnitRate(events)} VNĐ / đơn hàng thành công ({events}K đơn/tháng)
+                    ~ {getPerUnitRate()} VNĐ / đơn hàng thành công ({events}K đơn/tháng)
                   </p>
                 </div>
               </div>

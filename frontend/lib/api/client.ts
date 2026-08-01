@@ -15,7 +15,6 @@ export class ApiError extends Error {
 
 export async function apiClient<T = unknown>(
   endpoint: string,
-  _config: RequestInit = {}
 ): Promise<T | null> {
   // Chế độ UI Only: Mô phỏng gọi API và trả về thành công/null để bảo vệ giao diện
   console.log(`[UI Only Mode] Simulation request to: ${endpoint}`);

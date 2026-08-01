@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
-import { UiSimulator } from "@/components/ui/ui-simulator";
-import { BentoFeatures } from "@/components/ui/bento-features";
-import { MarqueeCards } from "@/components/ui/marquee-cards";
-import { PricingSection } from "@/components/ui/pricing-section";
+import { UiSimulator } from "@/components/marketing/ui-simulator";
+import { BentoFeatures } from "@/components/marketing/bento-features";
+import { MarqueeCards } from "@/components/marketing/marquee-cards";
+import { PricingSection } from "@/components/marketing/pricing-section";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export default function Home() {

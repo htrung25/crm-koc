@@ -1,4 +1,4 @@
-import { ROLE_HOME, type UserRole } from "@/types/auth";
+import { ROLE_HOME, type UserRole } from "@/features/auth/types";
 
 const COOKIE_OPTIONS = "path=/; SameSite=Lax";
 

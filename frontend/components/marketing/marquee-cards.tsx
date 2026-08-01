@@ -174,7 +174,7 @@ export function MarqueeCards() {
               </div>
 
               <blockquote className="text-sm sm:text-base font-medium leading-relaxed mb-6 italic opacity-95">
-                "{card.quote}"
+                &ldquo;{card.quote}&rdquo;
               </blockquote>
 
               <div className="pt-4 border-t border-current/10 flex items-center justify-between">
@@ -225,7 +225,7 @@ export function MarqueeCards() {
               </div>
 
               <blockquote className="text-sm sm:text-base font-medium leading-relaxed mb-6 italic opacity-95">
-                "{card.quote}"
+                &ldquo;{card.quote}&rdquo;
               </blockquote>
 
               <div className="pt-4 border-t border-current/10 flex items-center justify-between">
