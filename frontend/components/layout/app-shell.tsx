@@ -1,67 +1,27 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { WORKSPACES } from "@/config/navigation";
-import { clearSession } from "@/features/auth/session";
+import { requestLogout } from "@/features/auth/session";
 import type { UserRole } from "@/features/auth/types";
-import { AdminHeader } from "./admin-header";
-import { AdminSidebar } from "./admin-sidebar";
 
 type AppShellProps = {
   children: ReactNode;
   role: UserRole;
-  onSearch?: (query: string) => void;
 };
 
-export function AppShell({ children, role, onSearch }: AppShellProps) {
+export function AppShell({ children, role }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  if (role === "ADMIN") {
-    return (
-      <div className="flex h-dvh overflow-hidden bg-[#F6F7FB] text-[#1A1830]">
-        {/* Desktop Sidebar */}
-        <AdminSidebar
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        />
-
-        {/* Mobile Drawer Overlay */}
-        {isMobileMenuOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs md:hidden"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <AdminSidebar
-              isMobile
-              onCloseMobile={() => setIsMobileMenuOpen(false)}
-            />
-          </>
-        )}
-
-        <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-          <AdminHeader
-            onSearch={onSearch}
-            onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">{children}</main>
-        </div>
-      </div>
-    );
-  }
 
   // Default Shell for BRAND & CREATOR workspaces
   const workspace = WORKSPACES[role];
 
-  const handleLogout = () => {
-    clearSession();
+  const handleLogout = async () => {
+    await requestLogout();
     router.replace("/login");
     router.refresh();
   };

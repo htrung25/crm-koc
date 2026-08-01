@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
-import type { ErrorResult, LoginResult } from "@/features/auth/types";
+import { useLogin } from "@/features/auth/use-login";
 
 const HIGHLIGHTS = [
   "Theo dõi hiệu suất & doanh thu KOC theo thời gian thực",
@@ -11,112 +10,24 @@ const HIGHLIGHTS = [
   "Báo cáo vận hành toàn hệ thống trong một bảng điều khiển",
 ];
 
-type Step = "credentials" | "otp";
-
-async function postJson<T>(url: string, body: unknown): Promise<T> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  const data: unknown = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message =
-      (data as ErrorResult | null)?.message ?? "Đăng nhập thất bại";
-    throw new Error(message);
-  }
-
-  return data as T;
-}
-
 export default function AdminLoginPage() {
-  const router = useRouter();
-  const [step, setStep] = useState<Step>("credentials");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const goHome = (result: LoginResult) => {
-    if (result.status === "authenticated") {
-      router.replace(result.redirectTo);
-      router.refresh();
-    }
-  };
-
-  // Bước 1: email + mật khẩu. Admin sẽ nhận OTP thay vì token.
-  const handleCredentials = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setNotice("");
-    setIsSubmitting(true);
-
-    try {
-      const result = await postJson<LoginResult>("/api/auth/login", {
-        email,
-        password,
-      });
-
-      if (result.status === "otp_required") {
-        setStep("otp");
-        setNotice(result.message);
-      } else {
-        goHome(result);
-      }
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Bước 2: đổi OTP lấy phiên đăng nhập.
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
-
-    try {
-      const result = await postJson<LoginResult>("/api/auth/verify-otp", {
-        email,
-        otp,
-      });
-      goHome(result);
-    } catch (err) {
-      setError((err as Error).message);
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleResendOtp = async () => {
-    setError("");
-    setNotice("");
-    setIsSubmitting(true);
-
-    try {
-      const result = await postJson<{ message: string }>(
-        "/api/auth/resend-otp",
-        { email },
-      );
-      setNotice(result.message);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const backToCredentials = () => {
-    setStep("credentials");
-    setOtp("");
-    setError("");
-    setNotice("");
-  };
+  const {
+    step,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    otp,
+    setOtp,
+    error,
+    notice,
+    isSubmitting,
+    submitCredentials,
+    verifyOtp,
+    resendOtp,
+    backToCredentials,
+  } = useLogin("ADMIN");
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#2D3B42] font-sans selection:bg-[#EF4623] selection:text-white">
@@ -201,7 +112,7 @@ export default function AdminLoginPage() {
               )}
 
               {step === "credentials" ? (
-                <form onSubmit={handleCredentials} className="space-y-5">
+                <form onSubmit={submitCredentials} className="space-y-5">
                   <div className="space-y-1.5">
                     <label
                       htmlFor="admin-email"
@@ -261,7 +172,7 @@ export default function AdminLoginPage() {
                   </button>
                 </form>
               ) : (
-                <form onSubmit={handleVerifyOtp} className="space-y-5">
+                <form onSubmit={verifyOtp} className="space-y-5">
                   <p className="text-xs text-slate-500 leading-relaxed">
                     Mã gồm 6 chữ số đã được gửi tới{" "}
                     <span className="font-bold text-[#2D3B42]">{email}</span>.
@@ -311,7 +222,7 @@ export default function AdminLoginPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={handleResendOtp}
+                      onClick={resendOtp}
                       disabled={isSubmitting}
                       className="text-[#EF4623] hover:underline disabled:opacity-50 disabled:no-underline"
                     >

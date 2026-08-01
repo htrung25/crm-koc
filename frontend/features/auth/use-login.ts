@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import type { ErrorResult, LoginResult } from "./types";
+import type { ErrorResult, LoginResult, UserRole } from "./types";
 
 export type LoginStep = "credentials" | "otp";
 
@@ -31,8 +31,12 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
  * Backend bắt tài khoản admin qua thêm bước OTP: POST /login chỉ trả
  * `requireOtp`, phải gọi tiếp /verify-otp mới có phiên. Brand/creator xong
  * ngay ở bước đầu.
+ *
+ * `expectedRole` giới hạn cổng đăng nhập: trang /admin truyền "ADMIN" nên tài
+ * khoản brand/creator không tạo được phiên ở đó. Server mới là nơi chốt chặn,
+ * tham số này chỉ nói cho server biết đang đứng ở cổng nào.
  */
-export function useLogin() {
+export function useLogin(expectedRole?: UserRole) {
   const router = useRouter();
   const [step, setStep] = useState<LoginStep>("credentials");
   const [email, setEmail] = useState("");
@@ -59,6 +63,7 @@ export function useLogin() {
       const result = await postJson<LoginResult>("/api/auth/login", {
         email,
         password,
+        expectedRole,
       });
 
       if (result.status === "otp_required") {
@@ -81,7 +86,11 @@ export function useLogin() {
 
     try {
       goHome(
-        await postJson<LoginResult>("/api/auth/verify-otp", { email, otp }),
+        await postJson<LoginResult>("/api/auth/verify-otp", {
+          email,
+          otp,
+          expectedRole,
+        }),
       );
     } catch (err) {
       setError((err as Error).message);

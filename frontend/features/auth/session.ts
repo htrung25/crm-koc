@@ -19,8 +19,10 @@ const COOKIE_OPTIONS = {
 
 /**
  * Ghi phiên vào cookie (chỉ gọi được trong Route Handler).
- * `token` để httpOnly nên JavaScript trên trình duyệt không đọc được;
- * `user_role` không httpOnly để UI biết đang ở workspace nào.
+ *
+ * Cả hai cookie đều httpOnly: `user_role` là dữ liệu proxy.ts dùng để gác
+ * route, không phải trạng thái UI. Để client sửa được nghĩa là tự tay mở
+ * đường đi vòng qua guard điều hướng.
  */
 export function applySession(
   response: NextResponse,
@@ -33,7 +35,7 @@ export function applySession(
   });
   response.cookies.set(ROLE_COOKIE, role, {
     ...COOKIE_OPTIONS,
-    httpOnly: false,
+    httpOnly: true,
   });
   return response;
 }

@@ -2,25 +2,28 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
-import { createDemoSession } from "../session";
-import { ROLE_HOME } from "../types";
+import { useLogin } from "../use-login";
 
 export function EditorialLogin() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Demo login action
-    createDemoSession("ADMIN");
-    router.replace(ROLE_HOME.ADMIN);
-    router.refresh();
-  };
+  const {
+    step,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    otp,
+    setOtp,
+    error,
+    notice,
+    isSubmitting,
+    submitCredentials,
+    verifyOtp,
+    resendOtp,
+    backToCredentials,
+  } = useLogin();
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#2D3B42] font-sans selection:bg-[#EF4623] selection:text-white">
@@ -103,19 +106,37 @@ export function EditorialLogin() {
               <div className="flex items-start justify-between gap-4 border-b border-[#2D3B42]/10 pb-5">
                 <div>
                   <span className="block mb-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#EF4623]">
-                    Cổng đăng nhập hệ thống
+                    {step === "credentials"
+                      ? "Cổng đăng nhập hệ thống"
+                      : "Xác thực hai lớp"}
                   </span>
                   <h2 className="font-serif text-3xl font-normal text-[#2D3B42]">
-                    Đăng nhập Portal
+                    {step === "credentials" ? "Đăng nhập Portal" : "Nhập mã OTP"}
                   </h2>
                 </div>
 
                 <span className="font-serif text-4xl leading-none text-[#EF4623]/30 select-none tabular-nums">
-                  01
+                  {step === "credentials" ? "01" : "02"}
                 </span>
               </div>
 
+              {notice && (
+                <p className="text-xs font-semibold text-[#2D3B42] bg-[#FDF1EE] border border-[#EF4623]/20 rounded-xl px-4 py-3">
+                  {notice}
+                </p>
+              )}
+
+              {error && (
+                <p
+                  role="alert"
+                  className="text-xs font-semibold text-[#EF4623] bg-[#FDF1EE] border border-[#EF4623]/30 rounded-xl px-4 py-3"
+                >
+                  {error}
+                </p>
+              )}
+
               {/* Google SSO Button */}
+              {step === "credentials" && (
               <button
                 type="button"
                 className="w-full py-3.5 px-4 rounded-full bg-white hover:bg-[#FDF1EE] border border-[#2D3B42]/15 text-[#2D3B42] font-bold text-xs flex items-center justify-center gap-3 transition-all duration-300 shadow-md active:scale-[0.98]"
@@ -140,8 +161,10 @@ export function EditorialLogin() {
                 </svg>
                 Tiếp tục với Google
               </button>
+              )}
 
               {/* Or with Email Divider */}
+              {step === "credentials" && (
               <div className="flex items-center gap-3">
                 <div className="h-px bg-[#2D3B42]/10 flex-1" />
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-bold">
@@ -149,9 +172,11 @@ export function EditorialLogin() {
                 </span>
                 <div className="h-px bg-[#2D3B42]/10 flex-1" />
               </div>
+              )}
 
               {/* Form Input Fields */}
-              <form onSubmit={handleSubmit} className="space-y-5">
+              {step === "credentials" ? (
+              <form onSubmit={submitCredentials} className="space-y-5">
                 {/* Email Field */}
                 <div className="space-y-1.5">
                   <label
@@ -251,11 +276,72 @@ export function EditorialLogin() {
                 {/* Primary Submit Button */}
                 <button
                   type="submit"
-                  className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
                 >
-                  Đăng nhập ngay →
+                  {isSubmitting ? "Đang kiểm tra…" : "Đăng nhập ngay →"}
                 </button>
               </form>
+              ) : (
+              <form onSubmit={verifyOtp} className="space-y-5">
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Mã gồm 6 chữ số đã được gửi tới{" "}
+                  <span className="font-bold text-[#2D3B42]">{email}</span>.
+                </p>
+
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="login-otp"
+                    className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
+                  >
+                    Mã xác thực
+                  </label>
+                  <input
+                    id="login-otp"
+                    name="otp"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    required
+                    pattern="\d{6}"
+                    maxLength={6}
+                    autoFocus
+                    value={otp}
+                    onChange={(e) =>
+                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    placeholder="000000"
+                    className="w-full px-4 py-3 rounded-2xl bg-[#FDF1EE]/50 focus:bg-white border border-[#2D3B42]/15 text-[#2D3B42] text-center text-2xl font-bold tracking-[0.5em] tabular-nums placeholder:text-slate-300 placeholder:tracking-[0.5em] focus:outline-none focus:border-[#EF4623] focus:ring-4 focus:ring-[#EF4623]/20 transition-all duration-300"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || otp.length !== 6}
+                  className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? "Đang xác thực…" : "Xác thực & đăng nhập →"}
+                </button>
+
+                <div className="flex items-center justify-between gap-3 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={backToCredentials}
+                    className="text-slate-500 hover:text-[#2D3B42] transition-colors"
+                  >
+                    ← Đổi tài khoản
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resendOtp}
+                    disabled={isSubmitting}
+                    className="text-[#EF4623] hover:underline disabled:opacity-50 disabled:no-underline"
+                  >
+                    Gửi lại mã
+                  </button>
+                </div>
+              </form>
+              )}
 
               {/* Đăng ký */}
               <div className="pt-5 border-t border-[#2D3B42]/10 text-center">

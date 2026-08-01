@@ -1,19 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { ApiError, apiRequest } from "@/lib/api/client";
-import { applySession } from "@/features/auth/session";
-import {
-  toUserRole,
-  ROLE_HOME,
-  type LoginTokenResponse,
-  type LoginResult,
-} from "@/features/auth/types";
+import { establishSession, parseExpectedRole } from "@/features/auth/guard-role";
+import type { LoginTokenResponse } from "@/features/auth/types";
 
 /**
  * Bước 2 của đăng nhập admin: đổi OTP lấy access token và ghi cookie phiên.
  */
 export async function POST(request: Request) {
-  let payload: { email?: string; otp?: string };
+  let payload: { email?: string; otp?: string; expectedRole?: unknown };
 
   try {
     payload = await request.json();
@@ -23,6 +18,7 @@ export async function POST(request: Request) {
 
   const email = payload.email?.trim();
   const otp = payload.otp?.trim();
+  const expectedRole = parseExpectedRole(payload.expectedRole);
 
   if (!email || !otp) {
     return NextResponse.json(
@@ -44,23 +40,7 @@ export async function POST(request: Request) {
       body: { email, otp },
     });
 
-    const role = toUserRole(result.account.accountRole);
-    if (!role) {
-      return NextResponse.json(
-        { message: `Vai trò không được hỗ trợ: ${result.account.accountRole}` },
-        { status: 502 },
-      );
-    }
-
-    return applySession(
-      NextResponse.json<LoginResult>({
-        status: "authenticated",
-        role,
-        redirectTo: ROLE_HOME[role],
-      }),
-      result.access_token,
-      role,
-    );
+    return await establishSession(result, expectedRole);
   } catch (error) {
     if (error instanceof ApiError) {
       return NextResponse.json(

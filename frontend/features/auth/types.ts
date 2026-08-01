@@ -2,10 +2,9 @@ export const USER_ROLES = ["ADMIN", "BRAND", "CREATOR"] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 
-// TODO: trỏ lại về /admin/dashboard | /brand/dashboard | /creator/dashboard
-// khi các trang dashboard được dựng lại.
+// TODO: trỏ BRAND/CREATOR về dashboard riêng khi các trang đó được dựng lại.
 export const ROLE_HOME: Record<UserRole, string> = {
-  ADMIN: "/",
+  ADMIN: "/admin/dashboard",
   BRAND: "/",
   CREATOR: "/",
 };

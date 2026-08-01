@@ -28,7 +28,10 @@ export function proxy(request: NextRequest) {
   if (!isLoginPage) {
     for (const [prefix, role] of guarded) {
       if (pathname.startsWith(prefix) && (!token || userRole !== role)) {
-        return NextResponse.redirect(new URL('/login', request.url));
+        // Trả người dùng về đúng cổng của khu vực họ đang cố vào, thay vì
+        // luôn quăng ra cổng chung.
+        const loginPage = prefix === '/admin' ? '/admin' : '/login';
+        return NextResponse.redirect(new URL(loginPage, request.url));
       }
     }
   }

@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { ApiError, apiRequest } from "@/lib/api/client";
-import { applySession } from "@/features/auth/session";
+import { establishSession, parseExpectedRole } from "@/features/auth/guard-role";
 import {
   isPendingOtp,
-  toUserRole,
-  ROLE_HOME,
   type LoginResponse,
   type LoginResult,
 } from "@/features/auth/types";
@@ -16,9 +14,12 @@ import {
  * Tài khoản admin không nhận token ngay — backend gửi OTP qua email và trả
  * `requireOtp`, phải gọi tiếp /api/auth/verify-otp. Brand/creator nhận token
  * luôn ở bước này.
+ *
+ * `expectedRole` là cổng đang đăng nhập (ví dụ /admin gửi "ADMIN"): sai vai
+ * trò thì không có phiên nào được tạo.
  */
 export async function POST(request: Request) {
-  let payload: { email?: string; password?: string };
+  let payload: { email?: string; password?: string; expectedRole?: unknown };
 
   try {
     payload = await request.json();
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
 
   const email = payload.email?.trim();
   const { password } = payload;
+  const expectedRole = parseExpectedRole(payload.expectedRole);
 
   if (!email || !password) {
     return NextResponse.json(
@@ -42,6 +44,8 @@ export async function POST(request: Request) {
       body: { email, password },
     });
 
+    // Admin: backend mới gửi OTP, chưa có token nên chưa xét được vai trò.
+    // Chốt chặn role nằm ở /api/auth/verify-otp.
     if (isPendingOtp(result)) {
       return NextResponse.json<LoginResult>({
         status: "otp_required",
@@ -49,23 +53,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const role = toUserRole(result.account.accountRole);
-    if (!role) {
-      return NextResponse.json(
-        { message: `Vai trò không được hỗ trợ: ${result.account.accountRole}` },
-        { status: 502 },
-      );
-    }
-
-    return applySession(
-      NextResponse.json<LoginResult>({
-        status: "authenticated",
-        role,
-        redirectTo: ROLE_HOME[role],
-      }),
-      result.access_token,
-      role,
-    );
+    return await establishSession(result, expectedRole);
   } catch (error) {
     if (error instanceof ApiError) {
       return NextResponse.json(
