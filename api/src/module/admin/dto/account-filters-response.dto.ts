@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EAccountRole } from '../../../common/enum/account-roles.enum';
+import { ERole } from '../../../common/enum/roles.enum';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 
 /**
@@ -19,8 +19,8 @@ export class AccountFilterItemDto {
   @ApiProperty({ nullable: true, type: String, example: '+84901111111' })
   phone!: string | null;
 
-  @ApiProperty({ enum: EAccountRole, enumName: 'EAccountRole' })
-  accountRole!: EAccountRole;
+  @ApiProperty({ enum: ERole, enumName: 'ERole' })
+  accountRole!: ERole;
 
   @ApiProperty({ enum: EAccountStatus, enumName: 'EAccountStatus' })
   status!: EAccountStatus;

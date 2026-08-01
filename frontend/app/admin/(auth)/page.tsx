@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createDemoSession } from "@/features/auth/session";
-import { ROLE_HOME } from "@/features/auth/types";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
+import type { ErrorResult, LoginResult } from "@/features/auth/types";
 
 const HIGHLIGHTS = [
   "Theo dõi hiệu suất & doanh thu KOC theo thời gian thực",
@@ -12,28 +11,111 @@ const HIGHLIGHTS = [
   "Báo cáo vận hành toàn hệ thống trong một bảng điều khiển",
 ];
 
+type Step = "credentials" | "otp";
+
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  const data: unknown = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message =
+      (data as ErrorResult | null)?.message ?? "Đăng nhập thất bại";
+    throw new Error(message);
+  }
+
+  return data as T;
+}
+
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@gmail.com");
-  const [password, setPassword] = useState("admin@123");
+  const [step, setStep] = useState<Step>("credentials");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const goHome = (result: LoginResult) => {
+    if (result.status === "authenticated") {
+      router.replace(result.redirectTo);
+      router.refresh();
+    }
+  };
+
+  // Bước 1: email + mật khẩu. Admin sẽ nhận OTP thay vì token.
+  const handleCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setNotice("");
+    setIsSubmitting(true);
+
+    try {
+      const result = await postJson<LoginResult>("/api/auth/login", {
+        email,
+        password,
+      });
+
+      if (result.status === "otp_required") {
+        setStep("otp");
+        setNotice(result.message);
+      } else {
+        goHome(result);
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Bước 2: đổi OTP lấy phiên đăng nhập.
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
 
     try {
-      createDemoSession("ADMIN");
-      router.replace(ROLE_HOME.ADMIN);
-      router.refresh();
-    } catch {
-      setError("Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.");
+      const result = await postJson<LoginResult>("/api/auth/verify-otp", {
+        email,
+        otp,
+      });
+      goHome(result);
+    } catch (err) {
+      setError((err as Error).message);
       setIsSubmitting(false);
     }
+  };
+
+  const handleResendOtp = async () => {
+    setError("");
+    setNotice("");
+    setIsSubmitting(true);
+
+    try {
+      const result = await postJson<{ message: string }>(
+        "/api/auth/resend-otp",
+        { email },
+      );
+      setNotice(result.message);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const backToCredentials = () => {
+    setStep("credentials");
+    setOtp("");
+    setError("");
+    setNotice("");
   };
 
   return (
@@ -67,7 +149,8 @@ export default function AdminLoginPage() {
                 <span className="block italic text-[#EF4623]">RedSun Admin.</span>
               </h1>
               <p className="text-sm text-white/70 leading-relaxed max-w-[40ch]">
-                Cổng vận hành dành riêng cho đội ngũ nội bộ. Vui lòng đăng nhập bằng tài khoản quản trị đã được cấp.
+                Cổng vận hành dành riêng cho đội ngũ nội bộ. Đăng nhập quản trị
+                có thêm bước xác thực OTP gửi qua email.
               </p>
             </div>
 
@@ -89,120 +172,154 @@ export default function AdminLoginPage() {
               <div className="flex items-start justify-between gap-4 border-b border-[#2D3B42]/10 pb-5">
                 <div>
                   <span className="block mb-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#EF4623]">
-                    Cổng quản trị nội bộ
+                    {step === "credentials"
+                      ? "Cổng quản trị nội bộ"
+                      : "Xác thực hai lớp"}
                   </span>
                   <h2 className="font-serif text-3xl font-normal text-[#2D3B42]">
-                    Đăng nhập Admin
+                    {step === "credentials" ? "Đăng nhập Admin" : "Nhập mã OTP"}
                   </h2>
                 </div>
                 <span className="font-serif text-4xl leading-none text-[#EF4623]/30 select-none tabular-nums">
-                  A
+                  {step === "credentials" ? "01" : "02"}
                 </span>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="admin-email"
-                    className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
-                  >
-                    Email quản trị
-                  </label>
-                  <input
-                    id="admin-email"
-                    name="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@company.com"
-                    className="w-full px-4 py-3 rounded-2xl bg-[#FDF1EE]/50 focus:bg-white border border-[#2D3B42]/15 text-[#2D3B42] text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#EF4623] focus:ring-4 focus:ring-[#EF4623]/20 transition-all duration-300"
-                  />
-                </div>
+              {notice && (
+                <p className="text-xs font-semibold text-[#2D3B42] bg-[#FDF1EE] border border-[#EF4623]/20 rounded-xl px-4 py-3">
+                  {notice}
+                </p>
+              )}
 
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="admin-password"
-                    className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
-                  >
-                    Mật khẩu
-                  </label>
-                  <div className="relative">
+              {error && (
+                <p
+                  role="alert"
+                  className="text-xs font-semibold text-[#EF4623] bg-[#FDF1EE] border border-[#EF4623]/30 rounded-xl px-4 py-3"
+                >
+                  {error}
+                </p>
+              )}
+
+              {step === "credentials" ? (
+                <form onSubmit={handleCredentials} className="space-y-5">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="admin-email"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
+                    >
+                      Email quản trị
+                    </label>
                     <input
-                      id="admin-password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
+                      id="admin-email"
+                      name="email"
+                      type="email"
                       required
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full px-4 py-3 pr-14 rounded-2xl bg-[#FDF1EE]/50 focus:bg-white border border-[#2D3B42]/15 text-[#2D3B42] text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#EF4623] focus:ring-4 focus:ring-[#EF4623]/20 transition-all duration-300"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="admin@company.com"
+                      className="w-full px-4 py-3 rounded-2xl bg-[#FDF1EE]/50 focus:bg-white border border-[#2D3B42]/15 text-[#2D3B42] text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#EF4623] focus:ring-4 focus:ring-[#EF4623]/20 transition-all duration-300"
                     />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="admin-password"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
+                    >
+                      Mật khẩu
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="admin-password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full px-4 py-3 pr-14 rounded-2xl bg-[#FDF1EE]/50 focus:bg-white border border-[#2D3B42]/15 text-[#2D3B42] text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#EF4623] focus:ring-4 focus:ring-[#EF4623]/20 transition-all duration-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#2D3B42] text-xs font-semibold px-1.5 py-1 rounded-md transition-colors"
+                      >
+                        {showPassword ? "Ẩn" : "Hiện"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? "Đang kiểm tra…" : "Tiếp tục →"}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOtp} className="space-y-5">
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Mã gồm 6 chữ số đã được gửi tới{" "}
+                    <span className="font-bold text-[#2D3B42]">{email}</span>.
+                  </p>
+
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="admin-otp"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
+                    >
+                      Mã xác thực
+                    </label>
+                    <input
+                      id="admin-otp"
+                      name="otp"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      required
+                      pattern="\d{6}"
+                      maxLength={6}
+                      autoFocus
+                      value={otp}
+                      onChange={(e) =>
+                        setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                      }
+                      placeholder="000000"
+                      className="w-full px-4 py-3 rounded-2xl bg-[#FDF1EE]/50 focus:bg-white border border-[#2D3B42]/15 text-[#2D3B42] text-center text-2xl font-bold tracking-[0.5em] tabular-nums placeholder:text-slate-300 placeholder:tracking-[0.5em] focus:outline-none focus:border-[#EF4623] focus:ring-4 focus:ring-[#EF4623]/20 transition-all duration-300"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || otp.length !== 6}
+                    className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? "Đang xác thực…" : "Vào bảng điều khiển →"}
+                  </button>
+
+                  <div className="flex items-center justify-between gap-3 text-xs font-semibold">
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#2D3B42] text-xs font-semibold px-1.5 py-1 rounded-md transition-colors"
+                      onClick={backToCredentials}
+                      className="text-slate-500 hover:text-[#2D3B42] transition-colors"
                     >
-                      {showPassword ? "Ẩn" : "Hiện"}
+                      ← Đổi tài khoản
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={isSubmitting}
+                      className="text-[#EF4623] hover:underline disabled:opacity-50 disabled:no-underline"
+                    >
+                      Gửi lại mã
                     </button>
                   </div>
-                </div>
-
-                <label
-                  htmlFor="admin-remember"
-                  className="flex items-center gap-3 cursor-pointer select-none w-fit"
-                >
-                  <input
-                    id="admin-remember"
-                    type="checkbox"
-                    checked={remember}
-                    onChange={(e) => setRemember(e.target.checked)}
-                    className="peer sr-only"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className={`w-[18px] h-[18px] shrink-0 rounded-[6px] border flex items-center justify-center transition-colors peer-focus-visible:ring-4 peer-focus-visible:ring-[#EF4623]/30 ${remember
-                        ? "bg-[#EF4623] border-[#EF4623]"
-                        : "bg-white border-[#2D3B42]/25"
-                      }`}
-                  >
-                    <svg
-                      viewBox="0 0 16 16"
-                      className={`w-3 h-3 text-white transition-opacity ${remember ? "opacity-100" : "opacity-0"}`}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M3.5 8.5 6.5 11.5 12.5 4.5" />
-                    </svg>
-                  </span>
-                  <span className="text-xs text-slate-600 font-medium">
-                    Duy trì phiên quản trị trong 30 ngày
-                  </span>
-                </label>
-
-                {error && (
-                  <p
-                    role="alert"
-                    className="text-xs font-semibold text-[#EF4623] bg-[#FDF1EE] border border-[#EF4623]/20 rounded-xl px-4 py-3"
-                  >
-                    {error}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? "Đang đăng nhập…" : "Vào bảng điều khiển →"}
-                </button>
-              </form>
+                </form>
+              )}
 
               <p className="pt-5 border-t border-[#2D3B42]/10 text-center text-xs text-slate-500">
                 Tài khoản quản trị do hệ thống cấp. Cần hỗ trợ? Liên hệ đội vận hành RedSun.

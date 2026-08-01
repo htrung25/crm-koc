@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { EAccountRole } from '../../../common/enum/account-roles.enum';
+import { ERole } from '../../../common/enum/roles.enum';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 import { IsEnum } from 'class-validator';
 
@@ -16,11 +16,11 @@ export class AuthEntity {
   id!: string;
 
   @Index()
-  @IsEnum(EAccountRole, {
+  @IsEnum(ERole, {
     message: 'AccountRole must be admin, brand or creator',
   })
   @Column({ type: 'varchar', length: 32 })
-  accountRole!: EAccountRole;
+  accountRole!: ERole;
 
   @Column({ type: 'varchar', length: 255 })
   name!: string;

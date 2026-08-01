@@ -1,4 +1,4 @@
-export enum EAccountRole {
+export enum ERole {
   ADMIN = 'admin',
   BRAND = 'brand',
   CREATOR = 'creator',

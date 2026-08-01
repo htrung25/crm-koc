@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { EAccountRole } from '../../common/enum/account-roles.enum';
+import { ERole } from '../../common/enum/roles.enum';
 import { EAccountSortField } from '../../common/enum/sort-fields.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { ESortOrder } from '../../common/enum/sort-fields.enum';
@@ -93,7 +93,7 @@ export class AdminService {
   async findAll(query: AdminFilters): Promise<PaginatedResult<AuthEntity>> {
     const qb = this.authRepository
       .createQueryBuilder('account')
-      .where('account.accountRole = :role', { role: EAccountRole.ADMIN });
+      .where('account.accountRole = :role', { role: ERole.ADMIN });
 
     if (query.search?.trim()) {
       qb.andWhere('(account.name ILIKE :s OR account.email ILIKE :s)', {
@@ -126,18 +126,18 @@ export class AdminService {
   findAllBrands(
     query: BrandFilterDto,
   ): Promise<PaginatedResult<AccountListItem>> {
-    return this.listByRole(EAccountRole.BRAND, query);
+    return this.listByRole(ERole.BRAND, query);
   }
 
   /** Danh sách creator, phân trang + lọc. */
   findAllCreators(
     query: CreatorFilterDto,
   ): Promise<PaginatedResult<AccountListItem>> {
-    return this.listByRole(EAccountRole.CREATOR, query);
+    return this.listByRole(ERole.CREATOR, query);
   }
 
   private listByRole(
-    role: EAccountRole,
+    role: ERole,
     // hợp của 2 DTO con: field riêng của bên nào cũng optional nên nhánh
     // tương ứng chỉ chạy khi client thực sự gửi
     query: AccountFilterDto & Partial<BrandFilterDto & CreatorFilterDto>,

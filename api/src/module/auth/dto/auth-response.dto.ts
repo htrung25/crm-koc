@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EAccountRole } from '../../../common/enum/account-roles.enum';
+import { ERole } from '../../../common/enum/roles.enum';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 
 /** Account tóm tắt kèm theo token khi login — không bao giờ chứa password. */
@@ -10,8 +10,8 @@ export class AuthResponseDto {
   @ApiProperty({ format: 'email' })
   email!: string;
 
-  @ApiProperty({ enum: EAccountRole, enumName: 'EAccountRole' })
-  accountRole!: EAccountRole;
+  @ApiProperty({ enum: ERole, enumName: 'ERole' })
+  accountRole!: ERole;
 
   @ApiProperty({ enum: EAccountStatus, enumName: 'EAccountStatus' })
   status!: EAccountStatus;

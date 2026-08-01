@@ -3,22 +3,17 @@ import { NextResponse } from "next/server";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { applySession } from "@/features/auth/session";
 import {
-  isPendingOtp,
   toUserRole,
   ROLE_HOME,
-  type LoginResponse,
+  type LoginTokenResponse,
   type LoginResult,
 } from "@/features/auth/types";
 
 /**
- * Bước 1 của đăng nhập: kiểm tra email/mật khẩu ở backend.
- *
- * Tài khoản admin không nhận token ngay — backend gửi OTP qua email và trả
- * `requireOtp`, phải gọi tiếp /api/auth/verify-otp. Brand/creator nhận token
- * luôn ở bước này.
+ * Bước 2 của đăng nhập admin: đổi OTP lấy access token và ghi cookie phiên.
  */
 export async function POST(request: Request) {
-  let payload: { email?: string; password?: string };
+  let payload: { email?: string; otp?: string };
 
   try {
     payload = await request.json();
@@ -27,27 +22,27 @@ export async function POST(request: Request) {
   }
 
   const email = payload.email?.trim();
-  const { password } = payload;
+  const otp = payload.otp?.trim();
 
-  if (!email || !password) {
+  if (!email || !otp) {
     return NextResponse.json(
-      { message: "Vui lòng nhập email và mật khẩu" },
+      { message: "Thiếu email hoặc mã OTP" },
+      { status: 400 },
+    );
+  }
+
+  if (!/^\d{6}$/.test(otp)) {
+    return NextResponse.json(
+      { message: "Mã OTP gồm 6 chữ số" },
       { status: 400 },
     );
   }
 
   try {
-    const result = await apiRequest<LoginResponse>("/login", {
+    const result = await apiRequest<LoginTokenResponse>("/verify-otp", {
       method: "POST",
-      body: { email, password },
+      body: { email, otp },
     });
-
-    if (isPendingOtp(result)) {
-      return NextResponse.json<LoginResult>({
-        status: "otp_required",
-        message: result.message,
-      });
-    }
 
     const role = toUserRole(result.account.accountRole);
     if (!role) {

@@ -10,7 +10,7 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { EAccountRole } from '../../common/enum/account-roles.enum';
+import { ERole } from '../../common/enum/roles.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { Transactional } from 'typeorm-transactional';
 import { normalizePhone } from '../../common/util/phone.util';
@@ -27,10 +27,10 @@ const PG_UNIQUE_VIOLATION = '23505';
 
 /**
  * Role được phép tạo qua đăng ký công khai.
- * Cố tình KHÔNG có ADMIN: truyền EAccountRole.ADMIN vào createAuth() sẽ
+ * Cố tình KHÔNG có ADMIN: truyền ERole.ADMIN vào createAuth() sẽ
  * không compile được. Admin chỉ được tạo bởi admin khác.
  */
-export type PublicRole = EAccountRole.BRAND | EAccountRole.CREATOR;
+export type PublicRole = ERole.BRAND | ERole.CREATOR;
 
 @Injectable()
 export class AuthService {
@@ -49,13 +49,13 @@ export class AuthService {
   }
 
   createAdminAccount(dto: RegisterDto): Promise<AuthenticatedAccount> {
-    return this.createAccount(dto, EAccountRole.ADMIN);
+    return this.createAccount(dto, ERole.ADMIN);
   }
 
   @Transactional()
   private async createAccount(
     dto: RegisterDto,
-    role: EAccountRole,
+    role: ERole,
   ): Promise<AuthenticatedAccount> {
     if (!dto?.email || !dto?.password || !dto?.name?.trim()) {
       throw new BadRequestException('name, email and password are required');

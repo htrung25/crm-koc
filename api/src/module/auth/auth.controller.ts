@@ -29,7 +29,7 @@ import {
   AUTH_THROTTLE_BLOCK_MS,
 } from '../../security/auth-throttle.decorator';
 import { AuthService } from './auth.service';
-import { EAccountRole } from '../../common/enum/account-roles.enum';
+import { ERole } from '../../common/enum/roles.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { EOtpResult } from '../../common/enum/otp-result.enum';
 import { OtpService } from '../../security/otp.service';
@@ -90,7 +90,7 @@ export class AuthController {
     const account = request.user;
 
     // Chỉ admin mới qua bước OTP. brand/creator giữ nguyên luồng cũ.
-    if (account.accountRole !== EAccountRole.ADMIN) {
+    if (account.accountRole !== ERole.ADMIN) {
       return this.authService.loginAccount(account);
     }
 
@@ -176,7 +176,7 @@ export class AuthController {
    */
   private async requireAdminByEmail(email: string) {
     const account = await this.authService.findByEmail(email);
-    if (!account || account.accountRole !== EAccountRole.ADMIN) {
+    if (!account || account.accountRole !== ERole.ADMIN) {
       throw new UnauthorizedException('invalid otp');
     }
     this.assertUsable(account);
@@ -219,7 +219,7 @@ export class AuthController {
   // nhập. Thứ tự guard có ý nghĩa — JwtAuthGuard nạp request.user trước để
   // RolesGuard có cái mà đọc; đảo lại thì RolesGuard luôn thấy user rỗng.
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(EAccountRole.ADMIN)
+  @Roles(ERole.ADMIN)
   @Post('/register/admin')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth('access-token')
@@ -246,7 +246,7 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Missing name, email or password' })
   @ApiConflictResponse({ description: 'Email or phone already exists' })
   registerBrand(@Body() registerDto: RegisterDto) {
-    return this.authService.createAccountUser(registerDto, EAccountRole.BRAND);
+    return this.authService.createAccountUser(registerDto, ERole.BRAND);
   }
 
   @Post('/register/creator')
@@ -257,10 +257,7 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Missing name, email or password' })
   @ApiConflictResponse({ description: 'Email or phone already exists' })
   registerCreator(@Body() registerDto: RegisterDto) {
-    return this.authService.createAccountUser(
-      registerDto,
-      EAccountRole.CREATOR,
-    );
+    return this.authService.createAccountUser(registerDto, ERole.CREATOR);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
-import { EAccountRole } from 'src/common/enum/account-roles.enum';
+import { ERole } from '../common/enum/roles.enum';
 
 export interface JwtPayload {
   sub: string; // adminId
   email: string;
   displayName: string;
-  role: EAccountRole;
+  role: ERole;
   type: 'access' | 'refresh';
 }
 

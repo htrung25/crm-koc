@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { EAccountRole } from '../common/enum/account-roles.enum';
+import { ERole } from '../common/enum/roles.enum';
 import { AuthenticatedAccount } from '../module/auth/entities/authenticated.entity';
 import { ROLES_KEY } from './roles.decorator';
 
@@ -16,10 +16,10 @@ export class RolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     // getAllAndOverride: @Roles ở method đè lên @Roles ở class
-    const required = this.reflector.getAllAndOverride<EAccountRole[]>(
-      ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const required = this.reflector.getAllAndOverride<ERole[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     // Không khai báo @Roles => route không giới hạn role
     if (!required?.length) {

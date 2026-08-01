@@ -6,7 +6,7 @@ import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
 import { ProfileEntity } from './entities/profile.entity';
 import { AuthEntity } from '../auth/entities/auth.entity';
-import { SecurityModule } from 'src/security/security.module';
+import { SecurityModule } from '../../security/security.module';
 
 @Module({
   imports: [

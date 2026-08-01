@@ -821,7 +821,7 @@
           "password"
         ]
       },
-      "EAccountRole": {
+      "ERole": {
         "type": "string",
         "enum": [
           "admin",
@@ -852,7 +852,7 @@
           "accountRole": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/EAccountRole"
+                "$ref": "#/components/schemas/ERole"
               }
             ]
           },
@@ -979,7 +979,7 @@
           "accountRole": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/EAccountRole"
+                "$ref": "#/components/schemas/ERole"
               }
             ]
           },
@@ -1062,7 +1062,7 @@
           "accountRole": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/EAccountRole"
+                "$ref": "#/components/schemas/ERole"
               }
             ]
           },
@@ -1180,7 +1180,7 @@
           "accountRole": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/EAccountRole"
+                "$ref": "#/components/schemas/ERole"
               }
             ]
           },

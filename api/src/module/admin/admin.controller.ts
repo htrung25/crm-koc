@@ -17,7 +17,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { EAccountRole } from '../../common/enum/account-roles.enum';
+import { ERole } from '../../common/enum/roles.enum';
 import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
@@ -37,7 +37,7 @@ import { UpdateStatusDto } from './dto/update-status.dto';
 // Thứ tự guard có ý nghĩa: JwtAuthGuard chạy trước để nạp request.user,
 // RolesGuard mới có cái để đọc. Đảo lại thì RolesGuard luôn thấy user rỗng.
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(EAccountRole.ADMIN)
+@Roles(ERole.ADMIN)
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}

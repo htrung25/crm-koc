@@ -1,0 +1,133 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+import type { ErrorResult, LoginResult } from "./types";
+
+export type LoginStep = "credentials" | "otp";
+
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  const data: unknown = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      (data as ErrorResult | null)?.message ?? "Đăng nhập thất bại",
+    );
+  }
+
+  return data as T;
+}
+
+/**
+ * Luồng đăng nhập chung cho mọi cổng.
+ *
+ * Backend bắt tài khoản admin qua thêm bước OTP: POST /login chỉ trả
+ * `requireOtp`, phải gọi tiếp /verify-otp mới có phiên. Brand/creator xong
+ * ngay ở bước đầu.
+ */
+export function useLogin() {
+  const router = useRouter();
+  const [step, setStep] = useState<LoginStep>("credentials");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const goHome = (result: LoginResult) => {
+    if (result.status === "authenticated") {
+      router.replace(result.redirectTo);
+      router.refresh();
+    }
+  };
+
+  const submitCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setNotice("");
+    setIsSubmitting(true);
+
+    try {
+      const result = await postJson<LoginResult>("/api/auth/login", {
+        email,
+        password,
+      });
+
+      if (result.status === "otp_required") {
+        setStep("otp");
+        setNotice(result.message);
+      } else {
+        goHome(result);
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const verifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      goHome(
+        await postJson<LoginResult>("/api/auth/verify-otp", { email, otp }),
+      );
+    } catch (err) {
+      setError((err as Error).message);
+      setIsSubmitting(false);
+    }
+  };
+
+  const resendOtp = async () => {
+    setError("");
+    setNotice("");
+    setIsSubmitting(true);
+
+    try {
+      const result = await postJson<{ message: string }>(
+        "/api/auth/resend-otp",
+        { email },
+      );
+      setNotice(result.message);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const backToCredentials = () => {
+    setStep("credentials");
+    setOtp("");
+    setError("");
+    setNotice("");
+  };
+
+  return {
+    step,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    otp,
+    setOtp,
+    error,
+    notice,
+    isSubmitting,
+    submitCredentials,
+    verifyOtp,
+    resendOtp,
+    backToCredentials,
+  };
+}

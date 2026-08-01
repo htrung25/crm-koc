@@ -1,4 +1,4 @@
-import { EAccountRole } from '../../../common/enum/account-roles.enum';
+import { ERole } from '../../../common/enum/roles.enum';
 import { AuthEntity } from './auth.entity';
 
 /**
@@ -14,7 +14,7 @@ export interface JwtPayload {
   sub: string;
   email: string;
   name: string;
-  role: EAccountRole;
+  role: ERole;
 }
 
 /** Payload đã được verify: jsonwebtoken tự thêm iat/exp. */

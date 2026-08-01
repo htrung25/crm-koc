@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EAccountRole } from '../../../common/enum/account-roles.enum';
+import { ERole } from '../../../common/enum/roles.enum';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 
 /** Một account admin trong danh sách. Không bao giờ chứa password. */
@@ -7,8 +7,8 @@ export class AdminResponseDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
 
-  @ApiProperty({ enum: EAccountRole, enumName: 'EAccountRole' })
-  accountRole!: EAccountRole;
+  @ApiProperty({ enum: ERole, enumName: 'ERole' })
+  accountRole!: ERole;
 
   @ApiProperty({ maxLength: 255 })
   name!: string;
