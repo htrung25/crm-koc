@@ -62,8 +62,7 @@ export function AppShell({ children, role, onSearch }: AppShellProps) {
 
   const handleLogout = () => {
     clearSession();
-    const loginUrl = role === "BRAND" ? "/brand/login" : "/creator/login";
-    router.replace(loginUrl);
+    router.replace("/login");
     router.refresh();
   };
 

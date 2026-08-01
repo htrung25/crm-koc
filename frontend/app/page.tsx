@@ -223,7 +223,7 @@ export default function Home() {
                 Đăng nhập Cổng Hệ Thống
               </Link>
               <Link
-                href="/brand/login"
+                href="/login"
                 className="inline-flex items-center justify-center px-8 py-4 rounded-[30px] border-2 border-white/40 text-white font-extrabold text-sm uppercase tracking-wider hover:bg-white hover:text-[#EF4623] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
               >
                 Dành cho Brand
@@ -320,17 +320,17 @@ export default function Home() {
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <Link href="/admin/login" className="hover:text-[#EF4623] transition-colors">
+                <Link href="/login" className="hover:text-[#EF4623] transition-colors">
                   Cổng Quản trị Admin
                 </Link>
               </li>
               <li>
-                <Link href="/brand/login" className="hover:text-[#EF4623] transition-colors">
+                <Link href="/login" className="hover:text-[#EF4623] transition-colors">
                   Cổng Doanh Nghiệp
                 </Link>
               </li>
               <li>
-                <Link href="/creator/login" className="hover:text-[#EF4623] transition-colors">
+                <Link href="/login" className="hover:text-[#EF4623] transition-colors">
                   Cổng Creator / KOC
                 </Link>
               </li>

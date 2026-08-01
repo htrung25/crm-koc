@@ -19,7 +19,7 @@ export function AdminHeader({ onSearch, onOpenMobileMenu }: AdminHeaderProps) {
 
   const handleLogout = () => {
     clearSession();
-    router.replace("/admin/login");
+    router.replace("/login");
     router.refresh();
   };
 

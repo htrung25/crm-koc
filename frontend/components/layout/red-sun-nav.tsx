@@ -5,10 +5,20 @@ import Link from "next/link";
 
 interface RedSunNavProps {
   activeSection?: string;
+  /**
+   * Nền của trang bên dưới nav. "light" = chữ ink (landing hero trắng),
+   * "dark" = chữ trắng (các trang login nền #2D3B42).
+   */
+  tone?: "light" | "dark";
 }
 
-export function RedSunNav({ activeSection }: RedSunNavProps) {
+export function RedSunNav({ activeSection, tone = "light" }: RedSunNavProps) {
   const [scrolled, setScrolled] = useState(false);
+  const isDark = tone === "dark";
+  const brandText = isDark ? "text-white" : "text-[#2D3B42]";
+  const linkText = isDark
+    ? "text-white/90 hover:text-[#EF4623]"
+    : "text-[#2D3B42] hover:text-[#EF4623]";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,11 +30,12 @@ export function RedSunNav({ activeSection }: RedSunNavProps) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-        scrolled
-          ? "py-3 bg-white/85 dark:bg-[#2D3B42]/90 backdrop-blur-xl border-b border-[#2D3B42]/10 dark:border-white/10 shadow-lg shadow-black/5"
-          : "py-6 bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${!scrolled
+          ? "py-6 bg-transparent"
+          : isDark
+            ? "py-3 bg-[#2D3B42]/90 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/20"
+            : "py-3 bg-white/85 backdrop-blur-xl border-b border-[#2D3B42]/10 shadow-lg shadow-black/5"
+        }`}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
         {/* Left: Rotating Logo Brand Mark */}
@@ -39,7 +50,7 @@ export function RedSunNav({ activeSection }: RedSunNavProps) {
           </div>
           <div className="flex flex-col">
             <span
-              className="text-xl font-bold tracking-tight text-[#2D3B42] dark:text-white"
+              className={`text-xl font-bold tracking-tight ${brandText}`}
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
               RedSun <span className="text-[#EF4623] italic">CRM</span>
@@ -49,43 +60,45 @@ export function RedSunNav({ activeSection }: RedSunNavProps) {
 
         {/* Center: Manrope Navigation Links */}
         <nav className="hidden md:flex items-center gap-8 font-sans">
-          <a
-            href="#hero"
-            className="text-sm font-semibold text-[#2D3B42]/80 dark:text-white/80 hover:text-[#EF4623] dark:hover:text-[#EF4623] transition-colors"
+          <Link
+            href="/#hero"
+            className={`text-sm font-semibold transition-colors ${linkText}`}
           >
             Tổng quan
-          </a>
-          <a
-            href="#value-prop"
-            className="text-sm font-semibold text-[#2D3B42]/80 dark:text-white/80 hover:text-[#EF4623] dark:hover:text-[#EF4623] transition-colors"
+          </Link>
+          <Link
+            href="/#value-prop"
+            className={`text-sm font-semibold transition-colors ${linkText}`}
           >
             Mô phỏng UI
-          </a>
-          <a
-            href="#features"
-            className="text-sm font-semibold text-[#2D3B42]/80 dark:text-white/80 hover:text-[#EF4623] dark:hover:text-[#EF4623] transition-colors"
+          </Link>
+          <Link
+            href="/#features"
+            className={`text-sm font-semibold transition-colors ${linkText}`}
           >
             Tính năng
-          </a>
-          <a
-            href="#pricing"
-            className="text-sm font-semibold text-[#2D3B42]/80 dark:text-white/80 hover:text-[#EF4623] dark:hover:text-[#EF4623] transition-colors"
+          </Link>
+          <Link
+            href="/#pricing"
+            className={`text-sm font-semibold transition-colors ${linkText}`}
           >
             Bảng giá
-          </a>
-          <a
-            href="#cta"
-            className="text-sm font-semibold text-[#2D3B42]/80 dark:text-white/80 hover:text-[#EF4623] dark:hover:text-[#EF4623] transition-colors"
+          </Link>
+          <Link
+            href="/#cta"
+            className={`text-sm font-semibold transition-colors ${linkText}`}
           >
             Giải pháp KOC
-          </a>
+          </Link>
         </nav>
 
         {/* Right CTAs */}
         <div className="flex items-center gap-4">
           <Link
             href="/login"
-            className="hidden sm:inline-block text-xs font-bold uppercase tracking-wider text-[#2D3B42] dark:text-white hover:text-[#EF4623] transition-colors px-3 py-2"
+            className={`hidden sm:inline-block text-xs font-bold uppercase tracking-wider transition-colors px-3 py-2 ${
+              isDark ? "text-white hover:text-[#EF4623]" : "text-[#2D3B42] hover:text-[#EF4623]"
+            }`}
           >
             Đăng nhập
           </Link>

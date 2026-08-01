@@ -9,34 +9,24 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const userRole = request.cookies.get('user_role')?.value;
 
-  const isAdminLogin = pathname === '/admin/login';
-  const isBrandLogin = pathname === '/brand/login';
-  const isCreatorLogin = pathname === '/creator/login';
-  const isLoginPage = pathname === '/login' || isAdminLogin || isBrandLogin || isCreatorLogin;
+  // Chỉ còn một cổng đăng nhập duy nhất: /login
+  const isLoginPage = pathname === '/login';
 
-  // Nếu truy cập các route đăng nhập mà đã có token hợp lệ
+  // Nếu truy cập route đăng nhập mà đã có token hợp lệ
   if (isLoginPage && token && isUserRole(userRole)) {
     return NextResponse.redirect(new URL(ROLE_HOME[userRole], request.url));
   }
 
-  // Bảo vệ route ADMIN
-  if (pathname.startsWith('/admin') && !isAdminLogin) {
-    if (!token || userRole !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
-    }
-  }
+  // Bảo vệ route theo role
+  const guarded: Array<[string, string]> = [
+    ['/admin', 'ADMIN'],
+    ['/brand', 'BRAND'],
+    ['/creator', 'CREATOR'],
+  ];
 
-  // Bảo vệ route BRAND
-  if (pathname.startsWith('/brand') && !isBrandLogin) {
-    if (!token || userRole !== 'BRAND') {
-      return NextResponse.redirect(new URL('/brand/login', request.url));
-    }
-  }
-
-  // Bảo vệ route CREATOR
-  if (pathname.startsWith('/creator') && !isCreatorLogin) {
-    if (!token || userRole !== 'CREATOR') {
-      return NextResponse.redirect(new URL('/creator/login', request.url));
+  for (const [prefix, role] of guarded) {
+    if (pathname.startsWith(prefix) && (!token || userRole !== role)) {
+      return NextResponse.redirect(new URL('/login', request.url));
     }
   }
 

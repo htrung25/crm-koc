@@ -180,7 +180,7 @@ export function PricingSection() {
 
             <div className="pt-8 mt-6 space-y-3">
               <Link
-                href="/brand/login"
+                href="/login"
                 className="block w-full py-4 text-center bg-[#EF4623] text-white font-extrabold rounded-[30px] text-xs uppercase tracking-wider shadow-xl shadow-[#EF4623]/35 hover:bg-[#D83B19] hover:scale-105 transition-all"
               >
                 Dùng Thử 14 Ngày Miễn Phí →
@@ -237,7 +237,7 @@ export function PricingSection() {
 
             <div className="pt-8 mt-6">
               <Link
-                href="/admin/login"
+                href="/login"
                 className="block w-full py-3.5 text-center bg-[#2D3B42] text-white font-bold rounded-[30px] text-xs uppercase tracking-wider shadow-md hover:bg-[#EF4623] transition-colors"
               >
                 Liên Hệ Đội Ngũ Sales →
@@ -361,7 +361,7 @@ export function PricingSection() {
                 </div>
 
                 <Link
-                  href="/brand/login"
+                  href="/login"
                   className="block w-full py-4 text-center bg-[#EF4623] text-white font-extrabold rounded-[30px] text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:bg-[#D83B19] transition-all"
                 >
                   Kích Hoạt Gói Growth Ngay →

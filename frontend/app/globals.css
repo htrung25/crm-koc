@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -11,6 +11,11 @@
   --ink-light: #3D4F58;
   
   --peach: #FDF1EE;
+  
+  --paper-cream: #faf6ef;
+  --paper-ink: #1c1815;
+  --burgundy: #7b2d3b;
+  --burgundy-deep: #5e1f2b;
   
   --background: #2D3B42;
   --foreground: #FDF1EE;
@@ -190,10 +195,26 @@ body {
   background: #2D3B42;
 }
 
-button,
-a {
-  -webkit-tap-highlight-color: transparent;
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+/* Link Underline Hover Effect */
+.link-underline {
+  background-image: linear-gradient(#7b2d3b, #7b2d3b);
+  background-position: 0% 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  transition: background-size 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.link-underline:hover {
+  background-size: 100% 1px;
+}
+
+/* Paper Grain Texture Overlay */
+.grain-overlay {
+  background-image: radial-gradient(rgba(28, 24, 21, 0.12) 1px, transparent 1px);
+  background-size: 4px 4px;
+  opacity: 0.45;
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 
 
