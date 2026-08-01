@@ -9,24 +9,27 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const userRole = request.cookies.get('user_role')?.value;
 
-  // Chỉ còn một cổng đăng nhập duy nhất: /login
-  const isLoginPage = pathname === '/login';
+  // Các trang đăng nhập công khai: /login (chung) và /admin (quản trị)
+  const LOGIN_PAGES = ['/login', '/admin'];
+  const isLoginPage = LOGIN_PAGES.includes(pathname);
 
-  // Nếu truy cập route đăng nhập mà đã có token hợp lệ
+  // Nếu truy cập trang đăng nhập mà đã có token hợp lệ
   if (isLoginPage && token && isUserRole(userRole)) {
     return NextResponse.redirect(new URL(ROLE_HOME[userRole], request.url));
   }
 
-  // Bảo vệ route theo role
+  // Bảo vệ route theo role (trang đăng nhập được loại trừ ở trên)
   const guarded: Array<[string, string]> = [
     ['/admin', 'ADMIN'],
     ['/brand', 'BRAND'],
     ['/creator', 'CREATOR'],
   ];
 
-  for (const [prefix, role] of guarded) {
-    if (pathname.startsWith(prefix) && (!token || userRole !== role)) {
-      return NextResponse.redirect(new URL('/login', request.url));
+  if (!isLoginPage) {
+    for (const [prefix, role] of guarded) {
+      if (pathname.startsWith(prefix) && (!token || userRole !== role)) {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
     }
   }
 
