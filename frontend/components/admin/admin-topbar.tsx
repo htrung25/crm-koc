@@ -9,7 +9,7 @@ import {
   IconChevronDown,
   IconLogout,
   IconSearch,
-} from "./admin-icons";
+} from "@/components/ui/icons";
 
 type AdminTopbarProps = {
   title: string;

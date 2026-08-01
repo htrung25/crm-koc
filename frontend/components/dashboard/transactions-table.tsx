@@ -1,9 +1,6 @@
 import Link from "next/link";
 
-import {
-  RECENT_TRANSACTIONS,
-  type TransactionStatus,
-} from "@/lib/mock/dashboard";
+import type { TransactionsData, TransactionStatus } from "./types";
 
 const STATUS_STYLE: Record<TransactionStatus, { label: string; className: string }> = {
   completed: {
@@ -20,21 +17,19 @@ const STATUS_STYLE: Record<TransactionStatus, { label: string; className: string
   },
 };
 
-export function TransactionsTable() {
+export function TransactionsTable({ data }: { data: TransactionsData }) {
   return (
     <section className="rounded-[26px] glass p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-extrabold tracking-tight text-[#2D3B42]">
-            Hoa hồng gần đây
+            {data.title}
           </h2>
-          <p className="text-xs font-medium text-[#8A7768]">
-            6 giao dịch mới nhất trong hệ thống
-          </p>
+          <p className="text-xs font-medium text-[#8A7768]">{data.caption}</p>
         </div>
 
         <Link
-          href="/admin/reports"
+          href={data.viewAllHref}
           className="text-xs font-extrabold text-[#EF4623] transition-opacity hover:opacity-70"
         >
           Xem tất cả →
@@ -46,16 +41,16 @@ export function TransactionsTable() {
         <table className="w-full min-w-[640px] border-collapse">
           <thead>
             <tr className="text-left text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A7768]">
-              <th scope="col" className="pb-3 pr-3 font-bold">KOC</th>
+              <th scope="col" className="pb-3 pr-3 font-bold">{data.subjectLabel}</th>
               <th scope="col" className="pb-3 pr-3 font-bold">Chiến dịch</th>
               <th scope="col" className="pb-3 pr-3 font-bold">Ngày</th>
               <th scope="col" className="pb-3 pr-3 font-bold">Trạng thái</th>
-              <th scope="col" className="pb-3 text-right font-bold">Hoa hồng</th>
+              <th scope="col" className="pb-3 text-right font-bold">{data.amountLabel}</th>
             </tr>
           </thead>
 
           <tbody>
-            {RECENT_TRANSACTIONS.map((tx) => {
+            {data.items.map((tx) => {
               const status = STATUS_STYLE[tx.status];
 
               return (

@@ -1,10 +1,10 @@
-import { MONTHLY_GOAL } from "@/lib/mock/dashboard";
+import type { GoalData } from "./types";
 
 const RADIUS = 58;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export function MonthlyGoal() {
-  const { percent, current, target, breakdown } = MONTHLY_GOAL;
+export function MonthlyGoal({ goal }: { goal: GoalData }) {
+  const { percent, current, target, breakdown } = goal;
   const filled = (percent / 100) * CIRCUMFERENCE;
 
   return (

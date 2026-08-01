@@ -1,4 +1,4 @@
-import { REVENUE_SERIES } from "@/lib/mock/dashboard";
+import type { RevenueSeries } from "./types";
 
 const WIDTH = 720;
 const HEIGHT = 240;
@@ -43,8 +43,8 @@ function smoothPath(points: Point[]): string {
   return path;
 }
 
-export function RevenueChart() {
-  const { months, thisYear, lastYear } = REVENUE_SERIES;
+export function RevenueChart({ series }: { series: RevenueSeries }) {
+  const { months, thisYear, lastYear, caption } = series;
   const max = Math.max(...thisYear, ...lastYear) * 1.12;
 
   const current = toPoints(thisYear, max);
@@ -64,9 +64,7 @@ export function RevenueChart() {
           <h2 className="text-base font-extrabold tracking-tight text-[#2D3B42]">
             Doanh thu theo thời gian
           </h2>
-          <p className="text-xs font-medium text-[#8A7768]">
-            Tổng GMV Affiliate 12 tháng gần nhất (tỉ VNĐ)
-          </p>
+          <p className="text-xs font-medium text-[#8A7768]">{caption}</p>
         </div>
 
         <div className="flex items-center gap-4 text-[11px] font-bold text-[#5C5049]">

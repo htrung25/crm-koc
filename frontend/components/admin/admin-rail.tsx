@@ -9,7 +9,7 @@ import {
   IconHelp,
   IconSettings,
   type NavIconName,
-} from "./admin-icons";
+} from "@/components/ui/icons";
 
 /**
  * Thanh điều hướng dạng icon rail bên trái.

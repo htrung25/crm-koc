@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { ADMIN_NAV_ITEMS } from "@/config/navigation";
-import { NAV_ICONS, type NavIconName } from "./admin-icons";
+import { NAV_ICONS, type NavIconName } from "@/components/ui/icons";
 
 /** Rail bị ẩn dưới md, nên màn nhỏ cần một dải điều hướng cuộn ngang. */
 export function AdminMobileNav() {

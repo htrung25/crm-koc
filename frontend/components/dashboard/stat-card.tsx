@@ -1,11 +1,11 @@
-import type { StatMetric } from "@/lib/mock/dashboard";
+import type { StatMetric } from "./types";
 import {
   IconDelta,
   IconTarget,
   IconTrendUp,
   IconUsers,
   IconWallet,
-} from "./admin-icons";
+} from "@/components/ui/icons";
 
 const ICONS = {
   wallet: IconWallet,

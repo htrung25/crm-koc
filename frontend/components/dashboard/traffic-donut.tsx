@@ -1,4 +1,4 @@
-import { TRAFFIC_SOURCES, TRAFFIC_TOTAL } from "@/lib/mock/dashboard";
+import type { TrafficData, TrafficSlice } from "./types";
 
 const RADIUS = 62;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -6,32 +6,32 @@ const GAP = 1.6; // khe hở giữa các cung, tính theo phần trăm
 
 /**
  * Vị trí bắt đầu của mỗi cung = tổng phần trăm các cung đứng trước.
- * Tính ở mức module vì dữ liệu tĩnh — cộng dồn trong lúc render là mutate
- * giữa chừng, lần render sau sẽ cho kết quả khác.
+ * Hàm thuần, gọi trong render vẫn an toàn vì không mutate gì bên ngoài.
  */
-const SEGMENTS = TRAFFIC_SOURCES.map((slice, index) => {
-  const startPercent = TRAFFIC_SOURCES.slice(0, index).reduce(
-    (sum, previous) => sum + previous.percent,
-    0,
-  );
+function toSegments(slices: TrafficSlice[]) {
+  return slices.map((slice, index) => {
+    const startPercent = slices
+      .slice(0, index)
+      .reduce((sum, previous) => sum + previous.percent, 0);
 
-  return {
-    ...slice,
-    length: ((slice.percent - GAP) / 100) * CIRCUMFERENCE,
-    dashOffset: -(startPercent / 100) * CIRCUMFERENCE,
-  };
-});
+    return {
+      ...slice,
+      length: ((slice.percent - GAP) / 100) * CIRCUMFERENCE,
+      dashOffset: -(startPercent / 100) * CIRCUMFERENCE,
+    };
+  });
+}
 
-export function TrafficDonut() {
+export function TrafficDonut({ data }: { data: TrafficData }) {
+  const segments = toSegments(data.slices);
+
   return (
     <section className="flex flex-col rounded-[26px] glass p-5 sm:p-6">
       <div>
         <h2 className="text-base font-extrabold tracking-tight text-[#2D3B42]">
           Nguồn traffic
         </h2>
-        <p className="text-xs font-medium text-[#8A7768]">
-          Lượt truy cập qua link Affiliate
-        </p>
+        <p className="text-xs font-medium text-[#8A7768]">{data.caption}</p>
       </div>
 
       <div className="relative mx-auto my-6 h-[168px] w-[168px]">
@@ -46,7 +46,7 @@ export function TrafficDonut() {
             strokeWidth="24"
           />
 
-          {SEGMENTS.map((slice) => (
+          {segments.map((slice) => (
             <circle
               key={slice.label}
               cx="80"
@@ -65,7 +65,7 @@ export function TrafficDonut() {
         <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
           <div>
             <p className="font-mono text-2xl font-bold text-[#2D3B42] tnum">
-              {TRAFFIC_TOTAL}
+              {data.total}
             </p>
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8A7768]">
               Lượt truy cập
@@ -75,7 +75,7 @@ export function TrafficDonut() {
       </div>
 
       <ul className="mt-auto space-y-2.5">
-        {TRAFFIC_SOURCES.map((slice) => (
+        {data.slices.map((slice) => (
           <li key={slice.label} className="flex items-center gap-2.5">
             <span
               aria-hidden="true"
