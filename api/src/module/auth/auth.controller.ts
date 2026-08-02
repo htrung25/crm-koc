@@ -33,6 +33,7 @@ import { ERole } from '../../common/enum/roles.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { EOtpResult } from '../../common/enum/otp-result.enum';
 import { OtpService } from '../../security/otp.service';
+import { JwtAuthService } from '../../security/jwt-auth.service';
 import { EmailService } from '../../common/services/email.service';
 import {
   LoginPendingResponseDto,
@@ -43,12 +44,16 @@ import { LocalAuthGuard } from '../../security/local-auth.guard';
 import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
-import { TokenBlacklistService } from '../../security/token-blacklist.service';
 import type { RequestWithToken } from '../../passport/jwt.strategy';
 import { AuthenticatedAccount } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto, RegisterResponseDto } from './dto/auth-response.dto';
+import { RefreshTokenDto, TokenPairResponseDto } from './dto/refresh-token.dto';
+import { extractClientIp } from '../../common/util/ip.util';
+// import type: isolatedModules + emitDecoratorMetadata cấm type thường trong
+// chữ ký đã decorate
+import type { Request as ExpressRequest } from 'express';
 
 @ApiTags('Auth')
 @Controller()
@@ -57,9 +62,9 @@ export class AuthController {
 
   constructor(
     private readonly authService: AuthService,
-    private readonly blacklist: TokenBlacklistService,
     private readonly otpService: OtpService,
     private readonly emailService: EmailService,
+    private readonly jwtAuthService: JwtAuthService,
   ) {}
 
   // Chặn dò mật khẩu, đồng thời bịt đường gọi lại /login để reset bộ đếm
@@ -85,13 +90,13 @@ export class AuthController {
     description: 'Account is suspended, banned, or OTP is locked',
   })
   async login(
-    @Request() request: { user: AuthenticatedAccount },
+    @Request() request: ExpressRequest & { user: AuthenticatedAccount },
   ): Promise<LoginResponseDto | LoginPendingResponseDto> {
     const account = request.user;
 
-    // Chỉ admin mới qua bước OTP. brand/creator giữ nguyên luồng cũ.
+    // Chỉ admin mới qua bước OTP. brand/creator nhận token ngay.
     if (account.accountRole !== ERole.ADMIN) {
-      return this.authService.loginAccount(account);
+      return this.issueTokens(account, request);
     }
 
     const result = await this.otpService.generateAndStore(account.id);
@@ -119,7 +124,10 @@ export class AuthController {
   @ApiForbiddenResponse({
     description: 'OTP is locked, or the account is suspended or banned',
   })
-  async verifyOtp(@Body() dto: VerifyOtpDto): Promise<LoginResponseDto> {
+  async verifyOtp(
+    @Body() dto: VerifyOtpDto,
+    @Request() request: ExpressRequest,
+  ): Promise<LoginResponseDto> {
     const account = await this.requireAdminByEmail(dto.email);
     const result = await this.otpService.verify(account.id, dto.otp);
 
@@ -136,7 +144,7 @@ export class AuthController {
     // Trạng thái có thể đã đổi trong lúc OTP còn hiệu lực
     this.assertUsable(account);
 
-    return this.authService.loginAccount(account);
+    return this.issueTokens(account, request);
   }
 
   // Mỗi lần gọi là một email được gửi đi.
@@ -183,6 +191,40 @@ export class AuthController {
 
     const { password: _password, ...result } = account;
     return result;
+  }
+
+  /**
+   * Một chỗ duy nhất phát token, dùng cho cả /login lẫn /verify-otp.
+   *
+   * Phiên được tạo trong Redis nên logout và ban có hiệu lực tức thì; access
+   * token ngắn hạn còn refresh token dài hạn có xoay vòng.
+   */
+  private async issueTokens(
+    account: AuthenticatedAccount,
+    request: ExpressRequest,
+  ): Promise<LoginResponseDto> {
+    const { accessToken, refreshToken } = await this.jwtAuthService.login(
+      account.id,
+      {
+        email: account.email,
+        displayName: account.name,
+        role: account.accountRole,
+        ipAddress: extractClientIp(request),
+        userAgent: request.headers['user-agent'] ?? null,
+      },
+    );
+
+    return {
+      accessToken,
+      refreshToken,
+      account: {
+        id: account.id,
+        email: account.email,
+        name: account.name,
+        accountRole: account.accountRole,
+        status: account.status,
+      },
+    };
   }
 
   private assertUsable(account: AuthenticatedAccount): void {
@@ -236,8 +278,6 @@ export class AuthController {
     return this.authService.createAdminAccount(registerDto);
   }
 
-  // Có 2 actor công khai nên role đến từ ROUTE, không từ body và cũng không
-  // phải một giá trị mặc định đoán mò. Không có route công khai nào tạo admin.
   @Post('/register/brand')
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: RegisterDto })
@@ -260,6 +300,29 @@ export class AuthController {
     return this.authService.createAccountUser(registerDto, ERole.CREATOR);
   }
 
+  @Post('/refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Đổi refresh token lấy cặp token mới (có xoay vòng)',
+    description:
+      'Token cũ vô hiệu ngay sau khi gọi. Dùng lại token đã xoay bị coi là ' +
+      'dấu hiệu bị đánh cắp và toàn bộ phiên sẽ bị huỷ.',
+  })
+  @ApiOkResponse({ type: TokenPairResponseDto })
+  @ApiUnauthorizedResponse({
+    description: 'Token sai, hết hạn, sai loại, hoặc phiên đã bị thu hồi',
+  })
+  refresh(
+    @Body() dto: RefreshTokenDto,
+    @Request() request: ExpressRequest,
+  ): Promise<TokenPairResponseDto> {
+    // IP/User-Agent để đối chiếu với lúc đăng nhập: lệch thì ghi session_event
+    return this.jwtAuthService.refresh(dto.refreshToken, {
+      ipAddress: extractClientIp(request),
+      userAgent: request.headers['user-agent'] ?? null,
+    });
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post('/logout')
   @HttpCode(HttpStatus.OK)
@@ -276,8 +339,14 @@ export class AuthController {
       throw new UnauthorizedException('token payload missing');
     }
 
-    const revoked = await this.blacklist.revoke(payload.jti, payload.exp);
-    return { revoked, expiresAt: new Date(payload.exp * 1000).toISOString() };
+    // Xoá phiên là đủ: mọi access token của phiên này chết ngay ở lần gọi
+    // tiếp theo vì JwtStrategy không tìm thấy phiên nữa.
+    await this.jwtAuthService.logout(payload.session_id, {
+      ipAddress: extractClientIp(request),
+      userAgent: request.headers['user-agent'] ?? null,
+    });
+
+    return { revoked: true, sessionId: payload.session_id };
   }
 
   @UseGuards(JwtAuthGuard)

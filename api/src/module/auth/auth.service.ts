@@ -5,21 +5,16 @@ import {
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
 import { QueryFailedError, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ERole } from '../../common/enum/roles.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { Transactional } from 'typeorm-transactional';
-import { normalizePhone } from '../../common/util/phone.util';
+import { normalizePhone } from '../../common/util/account.util';
 import { ProfileService } from '../admin/profile.service';
 import { AuthEntity } from './entities/auth.entity';
-import {
-  AuthenticatedAccount,
-  JwtPayload,
-} from './entities/authenticated.entity';
+import { AuthenticatedAccount } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
 
 const BCRYPT_ROUNDS = 10;
@@ -37,7 +32,6 @@ export class AuthService {
   constructor(
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
-    private readonly jwtService: JwtService,
     private readonly profileService: ProfileService,
   ) {}
 
@@ -57,9 +51,8 @@ export class AuthService {
     dto: RegisterDto,
     role: ERole,
   ): Promise<AuthenticatedAccount> {
-    if (!dto?.email || !dto?.password || !dto?.name?.trim()) {
-      throw new BadRequestException('name, email and password are required');
-    }
+    // Không kiểm tra rỗng ở đây nữa: @IsNotEmpty/@IsEmail/@MinLength trong
+    // RegisterDto đã chặn từ tầng ValidationPipe.
 
     let phone: string | null = null;
     if (dto.phone?.trim()) {
@@ -99,27 +92,6 @@ export class AuthService {
       }
       throw error;
     }
-  }
-
-  async loginAccount(account: AuthenticatedAccount) {
-    const payload: JwtPayload = {
-      jti: randomUUID(),
-      sub: account.id,
-      email: account.email,
-      name: account.name,
-      role: account.accountRole,
-    };
-
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-      account: {
-        id: account.id,
-        email: account.email,
-        name: account.name,
-        accountRole: account.accountRole,
-        status: account.status,
-      },
-    };
   }
 
   findById(id: string): Promise<AuthEntity | null> {

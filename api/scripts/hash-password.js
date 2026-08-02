@@ -7,7 +7,7 @@ async function main() {
 
   if (!password) {
     console.error('Thiếu mật khẩu.\n');
-    console.error("  node scripts/hash-password.js 'abc@123'");
+    console.error("  node scripts/hash-password.js 'abc@12345'");
     process.exit(1);
   }
 

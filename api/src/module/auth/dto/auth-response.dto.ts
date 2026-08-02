@@ -10,6 +10,9 @@ export class AuthResponseDto {
   @ApiProperty({ format: 'email' })
   email!: string;
 
+  @ApiProperty({ maxLength: 255 })
+  name!: string;
+
   @ApiProperty({ enum: ERole, enumName: 'ERole' })
   accountRole!: ERole;
 
@@ -19,8 +22,7 @@ export class AuthResponseDto {
 
 /** Account đầy đủ trả về sau khi register. */
 export class RegisterResponseDto extends AuthResponseDto {
-  @ApiProperty({ maxLength: 255 })
-  name!: string;
+  // name đã có ở AuthResponseDto, khai lại sẽ đè base property
 
   @ApiProperty({ nullable: true, type: String })
   phone!: string | null;
@@ -42,8 +44,14 @@ export class RegisterResponseDto extends AuthResponseDto {
 }
 
 export class LoginResponseDto {
-  @ApiProperty({ description: 'JWT bearer token' })
-  access_token!: string;
+  @ApiProperty({ description: 'Sống ngắn (15 phút), dùng cho request thường' })
+  accessToken!: string;
+
+  @ApiProperty({
+    description:
+      'Dùng để lấy cặp token mới qua POST /refresh. Xoay vòng mỗi lần dùng.',
+  })
+  refreshToken!: string;
 
   @ApiProperty({ type: AuthResponseDto })
   account!: AuthResponseDto;

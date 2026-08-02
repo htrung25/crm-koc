@@ -4,9 +4,14 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
+import {
+  PASSWORD_REGEX,
+  PASSWORD_REGEX_MESSAGE,
+} from '../../../common/util/account.util';
 
 /**
  * Lớp 1 của phòng thủ nhiều lớp: DTO chỉ khai báo đúng những field client
@@ -27,8 +32,9 @@ export class RegisterDto {
   email!: string;
 
   @IsString()
-  @MinLength(6)
-  @ApiProperty({ example: 'abc@123', minLength: 6, format: 'password' })
+  @MinLength(8)
+  @Matches(PASSWORD_REGEX, { message: PASSWORD_REGEX_MESSAGE })
+  @ApiProperty({ example: 'abc@12345', minLength: 8, format: 'password' })
   password!: string;
 
   // Định dạng số do normalizePhone() kiểm tra, ở đây chỉ chặn kiểu và độ dài

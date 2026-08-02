@@ -1,64 +1,318 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { randomUUID } from 'node:crypto';
+// StringValue: kiểu chuỗi thời lượng của ms ('15m', '7d'). jsonwebtoken chỉ
+// nhận kiểu này hoặc number, không nhận string thường.
 import type { StringValue } from 'ms';
+import { AdminSessionScope } from '../common/enum/admin-scopes.enum';
 import { ERole } from '../common/enum/roles.enum';
+import { ESessionEventType } from '../common/enum/session-event-types.enum';
+import { SessionService } from './session.service';
+import { SessionEventService } from './session-event.service';
 
-export interface JwtPayload {
-  sub: string; // adminId
+/** Chỉ chứa thứ thật sự cần: client đọc được payload nên không nhét gì nhạy cảm. */
+interface BaseJwtPayload {
+  sub: string;
+  session_id: string;
+  exp: number;
+  iat: number;
+}
+
+export interface AccessTokenPayload extends BaseJwtPayload {
+  type: 'access';
+  role: ERole;
+  scopes: AdminSessionScope[];
+}
+
+export interface RefreshTokenPayload extends BaseJwtPayload {
+  type: 'refresh';
+  jti: string;
+}
+
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface LoginContext {
   email: string;
   displayName: string;
   role: ERole;
-  type: 'access' | 'refresh';
+  scopes?: AdminSessionScope[];
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+export interface RequestContext {
+  ipAddress?: string | null;
+  userAgent?: string | null;
 }
 
 @Injectable()
 export class JwtAuthService {
-  private readonly accessTokenExpiresIn: string;
-  private readonly refreshTokenExpiresIn: string;
+  private readonly logger = new Logger(JwtAuthService.name);
+
+  private readonly accessSecret: string;
+  private readonly refreshSecret: string;
+  private readonly accessTtl: StringValue;
+  private readonly refreshTtl: StringValue;
 
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly sessionService: SessionService,
+    private readonly sessionEventService: SessionEventService,
   ) {
-    this.accessTokenExpiresIn = this.configService.get<string>(
-      'JWT_ACCESS_TOKEN_EXPIRES_IN',
-      '15m',
-    );
-    this.refreshTokenExpiresIn = this.configService.get<string>(
-      'JWT_REFRESH_TOKEN_EXPIRES_IN',
-      '8h',
-    );
-  }
-  generateAccessToken(payload: Omit<JwtPayload, 'type'>): string {
-    const tokenPayload: Record<string, any> = {
-      ...payload,
-      type: 'access',
-    };
-    return this.jwtService.sign(tokenPayload, {
-      expiresIn: this.accessTokenExpiresIn as StringValue | number,
-    });
-  }
+    // getOrThrow: thiếu secret thì app phải chết lúc khởi động, không được
+    // âm thầm ký bằng một giá trị mặc định nào đó.
+    this.accessSecret =
+      this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
+    this.refreshSecret =
+      this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
 
-  generateRefreshToken(payload: Omit<JwtPayload, 'type'>): string {
-    const tokenPayload: Record<string, any> = {
-      ...payload,
-      type: 'refresh',
-    };
-    return this.jwtService.sign(tokenPayload, {
-      expiresIn: this.refreshTokenExpiresIn as StringValue | number,
-    });
-  }
-
-  verifyToken(token: string): JwtPayload {
-    return this.jwtService.verify<JwtPayload>(token);
-  }
-
-  decodeToken(token: string): JwtPayload | null {
-    try {
-      return this.jwtService.decode<JwtPayload>(token);
-    } catch {
-      return null;
+    // Dùng chung một secret thì refresh token cũng qua được cửa access token,
+    // mất sạch ý nghĩa của việc tách hai loại.
+    if (this.accessSecret === this.refreshSecret) {
+      throw new Error('JWT_ACCESS_SECRET và JWT_REFRESH_SECRET phải khác nhau');
     }
+
+    this.accessTtl = this.configService.get<string>(
+      'JWT_ACCESS_TTL',
+      '15m',
+    ) as StringValue;
+    this.refreshTtl = this.configService.get<string>(
+      'JWT_REFRESH_TTL',
+      '7d',
+    ) as StringValue;
+  }
+
+  /**
+   * Đăng nhập: tạo phiên trong Redis rồi phát cặp token.
+   * sessionId và jti đều sinh mới. Phiên giữ currentJti để biết refresh token
+   * nào còn hợp lệ.
+   */
+  async login(
+    accountId: string,
+    context: LoginContext,
+  ): Promise<TokenPair & { sessionId: string }> {
+    const sessionId = randomUUID();
+    const jti = randomUUID();
+    const scopes = context.scopes ?? [];
+
+    await this.sessionService.createSession({
+      sessionId,
+      adminId: accountId,
+      email: context.email,
+      displayName: context.displayName,
+      role: context.role,
+      scopes,
+      csrfToken: randomUUID(),
+      currentJti: jti,
+    });
+
+    await this.sessionEventService.record({
+      eventType: ESessionEventType.LOGIN,
+      accountId,
+      sessionId,
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+    });
+
+    return {
+      sessionId,
+      ...this.signPair(accountId, sessionId, jti, context.role, scopes),
+    };
+  }
+
+  /**
+   * Kiểm tra access token. KHÔNG tra Redis hay DB — access token là stateless,
+   * đó cũng là lý do nó chỉ sống 15 phút.
+   */
+  validateAccessToken(token: string): AccessTokenPayload {
+    const payload = this.verify<AccessTokenPayload>(token, this.accessSecret);
+
+    // Chặn việc dùng refresh token thay cho access token
+    if (payload.type !== 'access') {
+      throw new UnauthorizedException('invalid token');
+    }
+
+    return payload;
+  }
+
+  /**
+   * Đổi refresh token lấy cặp mới, có xoay vòng jti.
+   */
+  async refresh(
+    refreshToken: string,
+    context: RequestContext = {},
+  ): Promise<TokenPair> {
+    const payload = this.verify<RefreshTokenPayload>(
+      refreshToken,
+      this.refreshSecret,
+    );
+
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException('invalid token');
+    }
+
+    const session = await this.sessionService.getSession(payload.session_id);
+    if (!session) {
+      // Phiên đã logout, hết hạn, hoặc bị thu hồi
+      throw new UnauthorizedException('session is no longer valid');
+    }
+
+    const newJti = randomUUID();
+    const rotated = await this.sessionService.rotateJti(
+      payload.session_id,
+      payload.jti,
+      newJti,
+    );
+
+    if (rotated === 'missing') {
+      throw new UnauthorizedException('session is no longer valid');
+    }
+
+    if (rotated === 'mismatch') {
+      await this.sessionService.deleteSession(payload.session_id);
+      await this.sessionEventService.record({
+        eventType: ESessionEventType.REVOKED_REUSE,
+        accountId: session.adminId,
+        sessionId: payload.session_id,
+        ipAddress: context.ipAddress,
+        userAgent: context.userAgent,
+        metadata: { reusedJti: payload.jti },
+      });
+      this.logger.warn(
+        `Refresh token bị dùng lại, đã huỷ phiên ${payload.session_id}`,
+      );
+      throw new UnauthorizedException('session is no longer valid');
+    }
+
+    await this.logRefreshIfSuspicious(
+      session.adminId,
+      payload.session_id,
+      context,
+    );
+
+    return this.signPair(
+      session.adminId,
+      payload.session_id,
+      newJti,
+      session.role,
+      session.scopes,
+    );
+  }
+
+  async logout(sessionId: string, context: RequestContext = {}): Promise<void> {
+    const session = await this.sessionService.getSession(sessionId);
+    await this.sessionService.deleteSession(sessionId);
+
+    await this.sessionEventService.record({
+      eventType: ESessionEventType.LOGOUT,
+      accountId: session?.adminId ?? null,
+      sessionId,
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+    });
+  }
+
+  /** Đăng xuất mọi thiết bị. Trả về số phiên đã thu hồi. */
+  async logoutAll(
+    accountId: string,
+    context: RequestContext = {},
+  ): Promise<number> {
+    const revoked = await this.sessionService.deleteAllByAccount(accountId);
+
+    await this.sessionEventService.record({
+      eventType: ESessionEventType.LOGOUT_ALL,
+      accountId,
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      metadata: { revokedSessions: revoked },
+    });
+
+    return revoked;
+  }
+
+  private signPair(
+    accountId: string,
+    sessionId: string,
+    jti: string,
+    role: ERole,
+    scopes: AdminSessionScope[],
+  ): TokenPair {
+    const accessToken = this.jwtService.sign(
+      { sub: accountId, session_id: sessionId, type: 'access', role, scopes },
+      { secret: this.accessSecret, expiresIn: this.accessTtl },
+    );
+
+    // Refresh token chỉ mang đúng thứ cần để xoay vòng: không role, không
+    // scopes — nó không dùng để phân quyền.
+    const refreshToken = this.jwtService.sign(
+      { sub: accountId, session_id: sessionId, jti, type: 'refresh' },
+      { secret: this.refreshSecret, expiresIn: this.refreshTtl },
+    );
+
+    return { accessToken, refreshToken };
+  }
+
+  /**
+   * Mọi lỗi verify quy về một 401 chung.
+   *
+   */
+  private verify<T extends object>(token: string, secret: string): T {
+    try {
+      return this.jwtService.verify<T>(token, { secret });
+    } catch {
+      throw new UnauthorizedException('invalid token');
+    }
+  }
+
+  /**
+   * Refresh bình thường KHÔNG ghi log: 15 phút một lần nghĩa là 4 lượt/giờ
+   * mỗi phiên, ghi hết sẽ thành hàng triệu dòng chỉ để nói "phiên vẫn sống" —
+   * điều lastSeenAt trong Redis đã trả lời.
+   *
+   * Chỉ ghi khi IP hoặc User-Agent lệch so với lúc đăng nhập, vì đó là dấu
+   * hiệu token đang được dùng ở máy khác.
+   */
+  private async logRefreshIfSuspicious(
+    accountId: string,
+    sessionId: string,
+    context: RequestContext,
+  ): Promise<void> {
+    const events = await this.sessionEventService.findBySession(sessionId);
+    const loginEvent = events.find(
+      (e) => e.eventType === ESessionEventType.LOGIN,
+    );
+    if (!loginEvent) return;
+
+    const ipChanged =
+      !!context.ipAddress && context.ipAddress !== loginEvent.ipAddress;
+    const uaChanged =
+      !!context.userAgent && context.userAgent !== loginEvent.userAgent;
+
+    if (!ipChanged && !uaChanged) return;
+
+    const reason =
+      ipChanged && uaChanged
+        ? 'ip_and_ua_changed'
+        : ipChanged
+          ? 'ip_changed'
+          : 'ua_changed';
+
+    await this.sessionEventService.record({
+      eventType: ESessionEventType.REFRESH,
+      accountId,
+      sessionId,
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      metadata: {
+        reason,
+        loginIp: loginEvent.ipAddress,
+        loginUserAgent: loginEvent.userAgent,
+      },
+    });
   }
 }

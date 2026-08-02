@@ -6,6 +6,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { AuthEntity } from '../module/auth/entities/auth.entity';
 import { ProfileEntity } from '../module/admin/entities/profile.entity';
+import { SessionEventEntity } from '../module/auth/entities/session-event.entity';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { ProfileEntity } from '../module/admin/entities/profile.entity';
           return {
             type: 'postgres',
             url: databaseURL,
-            entities: [AuthEntity, ProfileEntity],
+            entities: [AuthEntity, ProfileEntity, SessionEventEntity],
             migrations: migrationGlobals,
             migrationsRun: false,
             synchronize: false,
@@ -46,7 +47,7 @@ import { ProfileEntity } from '../module/admin/entities/profile.entity';
           username,
           password,
           database,
-          entities: [AuthEntity, ProfileEntity],
+          entities: [AuthEntity, ProfileEntity, SessionEventEntity],
           migrations: migrationGlobals,
           migrationsRun: false,
           synchronize: false,

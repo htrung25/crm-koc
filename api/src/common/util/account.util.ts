@@ -21,3 +21,9 @@ export function normalizePhone(raw: string): string | null {
 
   return `+${VN_COUNTRY_CODE}${subscriber}`;
 }
+
+export const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?]).{8,}$/;
+
+export const PASSWORD_REGEX_MESSAGE =
+  'Password must be at least 8 characters and include uppercase, lowercase, digit, and special character.';

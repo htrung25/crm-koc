@@ -240,6 +240,42 @@
         ]
       }
     },
+    "/refresh": {
+      "post": {
+        "description": "Token cũ vô hiệu ngay sau khi gọi. Dùng lại token đã xoay bị coi là dấu hiệu bị đánh cắp và toàn bộ phiên sẽ bị huỷ.",
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token sai, hết hạn, sai loại, hoặc phiên đã bị thu hồi"
+          }
+        },
+        "summary": "Đổi refresh token lấy cặp token mới (có xoay vòng)",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/logout": {
       "post": {
         "operationId": "AuthController_logout",
@@ -812,7 +848,8 @@
           },
           "password": {
             "type": "string",
-            "example": "abc@123",
+            "example": "abc@12345",
+            "minLength": 8,
             "format": "password"
           }
         },
@@ -849,6 +886,10 @@
             "type": "string",
             "format": "email"
           },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
           "accountRole": {
             "allOf": [
               {
@@ -867,6 +908,7 @@
         "required": [
           "id",
           "email",
+          "name",
           "accountRole",
           "status"
         ]
@@ -874,16 +916,21 @@
       "LoginResponseDto": {
         "type": "object",
         "properties": {
-          "access_token": {
+          "accessToken": {
             "type": "string",
-            "description": "JWT bearer token"
+            "description": "Sống ngắn (15 phút), dùng cho request thường"
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Dùng để lấy cặp token mới qua POST /refresh. Xoay vòng mỗi lần dùng."
           },
           "account": {
             "$ref": "#/components/schemas/AuthResponseDto"
           }
         },
         "required": [
-          "access_token",
+          "accessToken",
+          "refreshToken",
           "account"
         ]
       },
@@ -948,8 +995,8 @@
           },
           "password": {
             "type": "string",
-            "example": "abc@123",
-            "minLength": 6,
+            "example": "abc@12345",
+            "minLength": 8,
             "format": "password"
           },
           "phone": {
@@ -976,6 +1023,10 @@
             "type": "string",
             "format": "email"
           },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
           "accountRole": {
             "allOf": [
               {
@@ -989,10 +1040,6 @@
                 "$ref": "#/components/schemas/EAccountStatus"
               }
             ]
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 255
           },
           "phone": {
             "type": "string",
@@ -1024,15 +1071,45 @@
         "required": [
           "id",
           "email",
+          "name",
           "accountRole",
           "status",
-          "name",
           "phone",
           "emailVerifiedAt",
           "phoneVerifiedAt",
           "statusReason",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh token nhận được khi đăng nhập",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "TokenPairResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Sống ngắn, dùng cho mọi request thường"
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Token mới; token cũ lập tức vô hiệu. Client PHẢI thay thế token đang giữ."
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken"
         ]
       },
       "EAccountSortField": {

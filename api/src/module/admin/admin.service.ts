@@ -39,10 +39,6 @@ export type AccountListItem = Pick<
   (typeof ACCOUNT_LIST_FIELDS)[number]
 >;
 
-function toBoolean(value: boolean | string): boolean {
-  return value === true || value === 'true';
-}
-
 /**
  * Dành cho enum SỐ (EAccountStatus).
  *
@@ -161,7 +157,8 @@ export class AdminService {
 
     if (query.emailVerified !== undefined) {
       qb.andWhere(
-        toBoolean(query.emailVerified)
+        // @Transform trong AccountFilterDto đã đổi 'true'/'false' thành boolean
+        query.emailVerified
           ? 'account.emailVerifiedAt IS NOT NULL'
           : 'account.emailVerifiedAt IS NULL',
       );
@@ -189,11 +186,9 @@ export class AdminService {
       }
 
       if (query.gender !== undefined) {
-        const gender = Number(query.gender);
-        if (![1, 2, 3].includes(gender)) {
-          throw new BadRequestException('gender must be 1, 2 or 3');
-        }
-        qb.andWhere('profile.gender = :gender', { gender });
+        // @Type(() => Number) + @IsEnum(GendersEnum) trong CreatorFilterDto
+        // đã ép kiểu và chặn giá trị ngoài 1/2/3
+        qb.andWhere('profile.gender = :gender', { gender: query.gender });
       }
     }
 
