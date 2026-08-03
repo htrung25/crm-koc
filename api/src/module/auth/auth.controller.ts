@@ -36,9 +36,9 @@ import { OtpService } from '../../security/otp.service';
 import { JwtAuthService } from '../../security/jwt-auth.service';
 import { EmailService } from '../../common/services/email.service';
 import {
-  LoginPendingResponseDto,
-  ResendOtpDto,
-  VerifyOtpDto,
+  AdminLoginPendingResponseDto,
+  AdminResendOtpDto,
+  AdminVerifyOtpDto,
 } from '../admin/dto/verify-otp.dto';
 import { LocalAuthGuard } from '../../security/local-auth.guard';
 import { IpWhitelistGuard } from '../admin/ip-whitelist.guard';
@@ -78,7 +78,7 @@ export class AuthController {
   // LocalAuthGuard đọc body trực tiếp qua passport nên không có @Body();
   // khai báo @ApiBody để Swagger vẫn mô tả đúng request shape.
   @ApiBody({ type: LoginDto })
-  @ApiOkResponse({ type: LoginPendingResponseDto })
+  @ApiOkResponse({ type: AdminLoginPendingResponseDto })
   @ApiUnauthorizedResponse({ description: 'Wrong email or password' })
   @ApiForbiddenResponse({
     description:
@@ -86,7 +86,7 @@ export class AuthController {
   })
   async loginAdmin(
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
-  ): Promise<LoginPendingResponseDto> {
+  ): Promise<AdminLoginPendingResponseDto> {
     const account = this.assertRole(request.user, [ERole.ADMIN]);
 
     const result = await this.otpService.generateAndStore(account.id);
@@ -141,7 +141,7 @@ export class AuthController {
     description: 'OTP is locked, or the account is suspended or banned',
   })
   async verifyOtp(
-    @Body() dto: VerifyOtpDto,
+    @Body() dto: AdminVerifyOtpDto,
     @Request() request: ExpressRequest,
   ): Promise<LoginResponseDto> {
     const account = await this.requireAdminByEmail(dto.email);
@@ -168,11 +168,13 @@ export class AuthController {
   @Post('/resend-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send a new login OTP, subject to a cooldown' })
-  @ApiOkResponse({ type: LoginPendingResponseDto })
+  @ApiOkResponse({ type: AdminLoginPendingResponseDto })
   @ApiUnauthorizedResponse({ description: 'Email is not an admin account' })
   @ApiForbiddenResponse({ description: 'OTP is locked' })
   @ApiTooManyRequestsResponse({ description: 'Cooldown has not elapsed yet' })
-  async resendOtp(@Body() dto: ResendOtpDto): Promise<LoginPendingResponseDto> {
+  async resendOtp(
+    @Body() dto: AdminResendOtpDto,
+  ): Promise<AdminLoginPendingResponseDto> {
     const account = await this.requireAdminByEmail(dto.email);
     const result = await this.otpService.resend(account.id);
 

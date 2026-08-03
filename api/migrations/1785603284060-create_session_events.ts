@@ -8,7 +8,7 @@ export class CreateSessionEvents1785603284060 implements MigrationInterface {
     // lưu trạng thái. Không có updated_at vì bản ghi không bao giờ bị sửa.
     await queryRunner.query(`
       CREATE TABLE "session_events" (
-        "id"          uuid         NOT NULL DEFAULT gen_random_uuid(),
+        "id"          bigint       GENERATED ALWAYS AS IDENTITY,
         -- nullable: sự kiện login_failed có thể chưa xác định được account
         "account_id"  uuid,
         -- trỏ tới phiên trong Redis, KHÔNG đặt FK vì Redis mới là nguồn

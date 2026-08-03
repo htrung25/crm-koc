@@ -77,6 +77,7 @@ export class AuthService {
       const saved = await this.authRepository.save(account);
       await this.profileService.createProfile(
         saved.id,
+        saved.accountRole,
         saved.name,
         saved.email,
       );

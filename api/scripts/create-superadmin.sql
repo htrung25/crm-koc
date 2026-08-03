@@ -37,8 +37,9 @@ new_account AS (
   RETURNING id, name, email
 )
 -- Quan hệ 1-1: account_id vừa là PK vừa là FK, giá trị bằng đúng accounts.id.
+-- Hồ sơ admin nằm ngay trong admin_users (gộp, không có bảng profile riêng).
 -- Thiếu dòng này thì GET /admin/profile/me trả 404 cho chính admin gốc.
-INSERT INTO account_profiles (account_id, name, email)
+INSERT INTO admin_users (account_id, name, email)
 SELECT id, name, email FROM new_account
 ON CONFLICT (account_id) DO NOTHING;
 
@@ -52,5 +53,5 @@ SELECT
   a.phone,
   (p.account_id IS NOT NULL) AS has_profile
 FROM accounts a
-LEFT JOIN account_profiles p ON p.account_id = a.id
+LEFT JOIN admin_users p ON p.account_id = a.id
 WHERE a.account_role = 'admin';

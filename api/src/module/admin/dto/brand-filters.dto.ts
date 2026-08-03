@@ -7,7 +7,7 @@ export class BrandFilterDto extends AccountFilterDto {
   @IsString()
   @MaxLength(255)
   @ApiPropertyOptional({
-    description: 'Match against the address in account_profiles',
+    description: 'Match against the address in the role profile table',
   })
   address?: string;
 }

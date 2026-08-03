@@ -173,8 +173,10 @@ export class AdminService {
       qb.andWhere('account.createdAt < :to', { to });
     }
     if (query.address?.trim() || query.gender !== undefined) {
+      // Mỗi vai trò một bảng profile riêng; listByRole chỉ chạy cho brand và
+      // creator nên hai nhánh này là đủ.
       qb.leftJoin(
-        'account_profiles',
+        role === ERole.BRAND ? 'brand_profiles' : 'creator_profiles',
         'profile',
         'profile.account_id = account.id',
       );

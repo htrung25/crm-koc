@@ -1,6 +1,37 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/login/admin": {
+      "post": {
+        "operationId": "AuthController_loginAdmin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Wrong email or password"
+          },
+          "403": {
+            "description": "Account is suspended or banned, OTP is locked, or the IP is not whitelisted"
+          }
+        },
+        "summary": "Admin log in. Returns an OTP challenge, never a token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/login": {
       "post": {
         "operationId": "AuthController_login",
@@ -17,7 +48,7 @@
         },
         "responses": {
           "200": {
-            "description": "LoginResponseDto for brand/creator, LoginPendingResponseDto for admin",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -27,13 +58,13 @@
             }
           },
           "401": {
-            "description": "Wrong email or password"
+            "description": "Wrong email or password, or the account is an admin"
           },
           "403": {
-            "description": "Account is suspended, banned, or OTP is locked"
+            "description": "Account is suspended or banned"
           }
         },
-        "summary": "Log in. Admin accounts receive an OTP instead of a token; other roles get the token directly",
+        "summary": "Brand/creator log in. Returns the token pair directly; admin accounts are rejected",
         "tags": [
           "Auth"
         ]
@@ -43,16 +74,6 @@
       "post": {
         "operationId": "AuthController_verifyOtp",
         "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyOtpDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "",
@@ -81,26 +102,9 @@
       "post": {
         "operationId": "AuthController_resendOtp",
         "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResendOtpDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginPendingResponseDto"
-                }
-              }
-            }
+            "description": ""
           },
           "401": {
             "description": "Email is not an admin account"
@@ -516,7 +520,7 @@
             "name": "address",
             "required": false,
             "in": "query",
-            "description": "Match against the address in account_profiles",
+            "description": "Match against the address in the role profile table",
             "schema": {
               "type": "string"
             }
@@ -644,7 +648,7 @@
             "name": "address",
             "required": false,
             "in": "query",
-            "description": "Match against the address in account_profiles",
+            "description": "Match against the address in the role profile table",
             "schema": {
               "type": "string"
             }
@@ -932,52 +936,6 @@
           "accessToken",
           "refreshToken",
           "account"
-        ]
-      },
-      "VerifyOtpDto": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "example": "admin@example.com"
-          },
-          "otp": {
-            "type": "string",
-            "example": "384921"
-          }
-        },
-        "required": [
-          "email",
-          "otp"
-        ]
-      },
-      "ResendOtpDto": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "example": "admin@example.com"
-          }
-        },
-        "required": [
-          "email"
-        ]
-      },
-      "LoginPendingResponseDto": {
-        "type": "object",
-        "properties": {
-          "requireOtp": {
-            "type": "boolean",
-            "example": true
-          },
-          "message": {
-            "type": "string",
-            "example": "OTP has been sent to your email"
-          }
-        },
-        "required": [
-          "requireOtp",
-          "message"
         ]
       },
       "RegisterDto": {
