@@ -17,7 +17,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLoginPendingResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Wrong email or password"
@@ -74,6 +81,16 @@
       "post": {
         "operationId": "AuthController_verifyOtp",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminVerifyOtpDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -102,9 +119,26 @@
       "post": {
         "operationId": "AuthController_resendOtp",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminResendOtpDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLoginPendingResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Email is not an admin account"
@@ -757,13 +791,16 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProfileResponseDto"
+                  "$ref": "#/components/schemas/AdminProfileResponseDto"
                 }
               }
             }
           },
           "401": {
             "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Not an admin, or IP not whitelisted"
           },
           "404": {
             "description": "Account has no profile yet"
@@ -774,7 +811,7 @@
             "access-token": []
           }
         ],
-        "summary": "Profile of the authenticated account",
+        "summary": "Your own admin profile",
         "tags": [
           "Admin-Profile"
         ]
@@ -787,7 +824,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateProfileDto"
+                "$ref": "#/components/schemas/UpdateAdminProfileDto"
               }
             }
           }
@@ -798,7 +835,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProfileResponseDto"
+                  "$ref": "#/components/schemas/AdminProfileResponseDto"
                 }
               }
             }
@@ -806,11 +843,14 @@
           "401": {
             "description": "Token is missing, invalid or expired"
           },
+          "403": {
+            "description": "Not an admin, or IP not whitelisted"
+          },
           "404": {
             "description": "Account has no profile yet"
           },
           "409": {
-            "description": "Email already taken by another account"
+            "description": "Email already taken"
           }
         },
         "security": [
@@ -818,9 +858,365 @@
             "access-token": []
           }
         ],
-        "summary": "Partially update your own profile",
+        "summary": "Partially update your own admin profile",
         "tags": [
           "Admin-Profile"
+        ]
+      }
+    },
+    "/brand/profile/me": {
+      "get": {
+        "operationId": "BrandProfileController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandProfileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Not a brand account"
+          },
+          "404": {
+            "description": "Account has no profile yet"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Your own brand profile",
+        "tags": [
+          "Brand-Profile"
+        ]
+      },
+      "patch": {
+        "operationId": "BrandProfileController_updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBrandProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandProfileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Not a brand account"
+          },
+          "404": {
+            "description": "Account has no profile yet"
+          },
+          "409": {
+            "description": "Email or tax code already taken"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Partially update your own brand profile",
+        "tags": [
+          "Brand-Profile"
+        ]
+      }
+    },
+    "/creator/profile/me": {
+      "get": {
+        "operationId": "CreatorProfileController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatorProfileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Not a creator account"
+          },
+          "404": {
+            "description": "Account has no profile yet"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Your own creator profile",
+        "tags": [
+          "Creator-Profile"
+        ]
+      },
+      "patch": {
+        "operationId": "CreatorProfileController_updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCreatorProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatorProfileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Not a creator account"
+          },
+          "404": {
+            "description": "Account has no profile yet"
+          },
+          "409": {
+            "description": "Email already taken"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Partially update your own creator profile",
+        "tags": [
+          "Creator-Profile"
+        ]
+      }
+    },
+    "/social/connections": {
+      "get": {
+        "operationId": "SocialConnectionsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SocialConnectionResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token thiếu, sai hoặc hết hạn"
+          },
+          "403": {
+            "description": "Không phải tài khoản creator"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Danh sách tài khoản mạng xã hội đã kết nối",
+        "tags": [
+          "Social-Connections"
+        ]
+      }
+    },
+    "/social/{platform}/authorize": {
+      "get": {
+        "operationId": "SocialConnectionsController_authorize",
+        "parameters": [
+          {
+            "name": "platform",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "tiktok",
+                "instagram",
+                "youtube",
+                "facebook"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "authorizationUrl": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token thiếu, sai hoặc hết hạn"
+          },
+          "403": {
+            "description": "Không phải tài khoản creator"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Lấy URL chuyển hướng để bắt đầu luồng OAuth",
+        "tags": [
+          "Social-Connections"
+        ]
+      }
+    },
+    "/social/{platform}/callback": {
+      "post": {
+        "operationId": "SocialConnectionsController_callback",
+        "parameters": [
+          {
+            "name": "platform",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "tiktok",
+                "instagram",
+                "youtube",
+                "facebook"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SocialOAuthCallbackDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialConnectionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "State hết hạn, sai, hoặc token hỏng"
+          },
+          "403": {
+            "description": "State thuộc về creator khác, hoặc không phải creator"
+          },
+          "409": {
+            "description": "Tài khoản mạng xã hội này đã thuộc creator khác"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Hoàn tất luồng OAuth và lưu kết nối",
+        "tags": [
+          "Social-Connections"
+        ]
+      }
+    },
+    "/social/connections/{platform}": {
+      "delete": {
+        "operationId": "SocialConnectionsController_disconnect",
+        "parameters": [
+          {
+            "name": "platform",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "tiktok",
+                "instagram",
+                "youtube",
+                "facebook"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Đã ngắt kết nối"
+          },
+          "401": {
+            "description": "Token thiếu, sai hoặc hết hạn"
+          },
+          "403": {
+            "description": "Không phải tài khoản creator"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Ngắt kết nối một nền tảng",
+        "tags": [
+          "Social-Connections"
         ]
       }
     }
@@ -860,6 +1256,23 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "AdminLoginPendingResponseDto": {
+        "type": "object",
+        "properties": {
+          "requireOtp": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "OTP has been sent to your email"
+          }
+        },
+        "required": [
+          "requireOtp",
+          "message"
         ]
       },
       "ERole": {
@@ -936,6 +1349,35 @@
           "accessToken",
           "refreshToken",
           "account"
+        ]
+      },
+      "AdminVerifyOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@gmail.com"
+          },
+          "otp": {
+            "type": "string",
+            "example": "123456"
+          }
+        },
+        "required": [
+          "email",
+          "otp"
+        ]
+      },
+      "AdminResendOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@gmail.com"
+          }
+        },
+        "required": [
+          "email"
         ]
       },
       "RegisterDto": {
@@ -1304,7 +1746,7 @@
           "status"
         ]
       },
-      "ProfileResponseDto": {
+      "AdminProfileResponseDto": {
         "type": "object",
         "properties": {
           "accountId": {
@@ -1325,15 +1767,6 @@
             "type": "string",
             "nullable": true
           },
-          "address": {
-            "type": "string",
-            "nullable": true
-          },
-          "gender": {
-            "type": "number",
-            "nullable": true,
-            "description": "1 = male, 2 = female, 3 = other"
-          },
           "timezone": {
             "type": "string",
             "example": "Asia/Ho_Chi_Minh"
@@ -1348,13 +1781,11 @@
           "name",
           "email",
           "avatarUrl",
-          "address",
-          "gender",
           "timezone",
           "updatedAt"
         ]
       },
-      "UpdateProfileDto": {
+      "UpdateAdminProfileDto": {
         "type": "object",
         "properties": {
           "name": {
@@ -1371,14 +1802,161 @@
             "type": "object",
             "example": "https://cdn.example.com/a.png"
           },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Ho_Chi_Minh",
+            "maxLength": 64
+          }
+        }
+      },
+      "BrandProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Same value as accounts.id"
+          },
+          "brandName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "taxCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 14
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 20
+          },
+          "website": {
+            "type": "string",
+            "nullable": true
+          },
+          "industry": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 64
+          },
+          "logoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 20
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Ho_Chi_Minh"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId",
+          "brandName",
+          "companyName",
+          "taxCode",
+          "email",
+          "phone",
+          "website",
+          "industry",
+          "logoUrl",
+          "description",
+          "address",
+          "contactName",
+          "contactPhone",
+          "timezone",
+          "updatedAt"
+        ]
+      },
+      "UpdateBrandProfileDto": {
+        "type": "object",
+        "properties": {
+          "brandName": {
+            "type": "object",
+            "example": "Cocoon",
+            "maxLength": 255
+          },
+          "companyName": {
+            "type": "object",
+            "example": "Cong ty TNHH My pham Cocoon Viet Nam",
+            "maxLength": 255
+          },
+          "taxCode": {
+            "type": "object",
+            "example": "0123456789",
+            "maxLength": 14
+          },
+          "email": {
+            "type": "string",
+            "example": "contact@cocoon.vn",
+            "format": "email"
+          },
+          "phone": {
+            "type": "object",
+            "example": "+84900000001",
+            "maxLength": 20
+          },
+          "website": {
+            "type": "object",
+            "example": "https://cocoon.vn"
+          },
+          "industry": {
+            "type": "object",
+            "example": "beauty",
+            "maxLength": 64
+          },
+          "logoUrl": {
+            "type": "object",
+            "example": "https://cdn.example.com/logo.png"
+          },
+          "description": {
+            "type": "object",
+            "example": "Thuong hieu my pham thuan chay"
+          },
           "address": {
             "type": "object",
             "example": "12 Nguyen Hue St, District 1, Ho Chi Minh City"
           },
-          "gender": {
-            "type": "number",
-            "example": 1,
-            "description": "1 = male, 2 = female, 3 = other"
+          "contactName": {
+            "type": "object",
+            "example": "Nguyen Van A",
+            "maxLength": 255
+          },
+          "contactPhone": {
+            "type": "object",
+            "example": "+84900000002",
+            "maxLength": 20
           },
           "timezone": {
             "type": "string",
@@ -1386,6 +1964,281 @@
             "maxLength": 64
           }
         }
+      },
+      "CreatorProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Same value as accounts.id"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 20
+          },
+          "bio": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "gender": {
+            "type": "number",
+            "nullable": true,
+            "description": "1 = male, 2 = female, 3 = other"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 128
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "contentCategories": {
+            "example": [
+              "beauty",
+              "fashion"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "portfolioUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Ho_Chi_Minh"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId",
+          "displayName",
+          "email",
+          "phone",
+          "bio",
+          "avatarUrl",
+          "dateOfBirth",
+          "gender",
+          "city",
+          "address",
+          "contentCategories",
+          "portfolioUrl",
+          "timezone",
+          "updatedAt"
+        ]
+      },
+      "UpdateCreatorProfileDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "object",
+            "example": "Chau Bui",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "example": "creator@gmail.com",
+            "format": "email"
+          },
+          "phone": {
+            "type": "object",
+            "example": "+84900000003",
+            "maxLength": 20
+          },
+          "bio": {
+            "type": "object",
+            "example": "KOC linh vuc lam dep va thoi trang"
+          },
+          "avatarUrl": {
+            "type": "object",
+            "example": "https://cdn.example.com/a.png"
+          },
+          "dateOfBirth": {
+            "type": "object",
+            "example": "1998-04-21",
+            "format": "date"
+          },
+          "gender": {
+            "type": "number",
+            "example": 1,
+            "description": "1 = male, 2 = female, 3 = other"
+          },
+          "city": {
+            "type": "object",
+            "example": "Ho Chi Minh City",
+            "maxLength": 128
+          },
+          "address": {
+            "type": "object",
+            "example": "12 Nguyen Hue St, District 1, Ho Chi Minh City"
+          },
+          "contentCategories": {
+            "example": [
+              "beauty",
+              "fashion"
+            ],
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "portfolioUrl": {
+            "type": "object",
+            "example": "https://portfolio.example.com"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Ho_Chi_Minh",
+            "maxLength": 64
+          }
+        }
+      },
+      "ESocialPlatform": {
+        "type": "string",
+        "enum": [
+          "tiktok",
+          "instagram",
+          "youtube",
+          "facebook"
+        ]
+      },
+      "SocialConnectionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "platform": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ESocialPlatform"
+              }
+            ]
+          },
+          "externalAccountId": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "biography": {
+            "type": "string",
+            "nullable": true
+          },
+          "profileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "followerCount": {
+            "type": "string",
+            "description": "bigint nên driver trả về chuỗi"
+          },
+          "followingCount": {
+            "type": "string"
+          },
+          "contentCount": {
+            "type": "string"
+          },
+          "grantedScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tokenExpiresAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "syncError": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "externalAccountId",
+          "username",
+          "displayName",
+          "biography",
+          "profileUrl",
+          "avatarUrl",
+          "followerCount",
+          "followingCount",
+          "contentCount",
+          "grantedScopes",
+          "tokenExpiresAt",
+          "lastSyncedAt",
+          "syncError",
+          "isActive",
+          "createdAt"
+        ]
+      },
+      "SocialOAuthCallbackDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Authorization code do nền tảng trả về"
+          },
+          "state": {
+            "type": "string",
+            "description": "Giá trị state của lần chuyển hướng đi"
+          }
+        },
+        "required": [
+          "code",
+          "state"
+        ]
       }
     }
   }

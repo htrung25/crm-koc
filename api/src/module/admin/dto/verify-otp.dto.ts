@@ -7,26 +7,26 @@ import {
   Matches,
 } from 'class-validator';
 
-export class VerifyOtpDto {
-  @ApiProperty({ example: 'admin@example.com' })
+export class AdminVerifyOtpDto {
+  @ApiProperty({ example: 'admin@gmail.com' })
   @IsEmail()
   email!: string;
 
-  @ApiProperty({ example: '384921' })
+  @ApiProperty({ example: '123456' })
   @IsString()
   @Length(6, 6)
   @Matches(/^\d{6}$/, { message: 'otp must be 6 digits' })
   otp!: string;
 }
 
-export class ResendOtpDto {
-  @ApiProperty({ example: 'admin@example.com' })
+export class AdminResendOtpDto {
+  @ApiProperty({ example: 'admin@gmail.com' })
   @IsEmail()
   @IsNotEmpty()
   email!: string;
 }
 
-export class LoginPendingResponseDto {
+export class AdminLoginPendingResponseDto {
   @ApiProperty({ example: true })
   requireOtp!: boolean;
 

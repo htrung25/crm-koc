@@ -9,6 +9,7 @@ import { BrandProfile } from '../module/brand/entities/brand-profile.entity';
 import { CreatorProfile } from '../module/creator/entities/creator-profile.entity';
 import { SessionEventEntity } from '../module/auth/entities/session-event.entity';
 import { AdminUser } from '../module/admin/entities/admin_user.entity';
+import { SocialAccountEntity } from '../module/social/entities/social-account.entity';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { AdminUser } from '../module/admin/entities/admin_user.entity';
               CreatorProfile,
               SessionEventEntity,
               AdminUser,
+              SocialAccountEntity,
             ],
             migrations: migrationGlobals,
             migrationsRun: false,
@@ -61,6 +63,7 @@ import { AdminUser } from '../module/admin/entities/admin_user.entity';
             CreatorProfile,
             SessionEventEntity,
             AdminUser,
+            SocialAccountEntity,
           ],
           migrations: migrationGlobals,
           migrationsRun: false,

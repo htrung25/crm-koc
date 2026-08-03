@@ -12,6 +12,8 @@ import { ERole } from '../../common/enum/roles.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { Transactional } from 'typeorm-transactional';
 import { normalizePhone } from '../../common/util/account.util';
+import { BrandProfileService } from '../brand/brand-profile.service';
+import { CreatorProfileService } from '../creator/creator-profile.service';
 import { ProfileService } from '../admin/profile.service';
 import { AuthEntity } from './entities/auth.entity';
 import { AuthenticatedAccount } from './entities/authenticated.entity';
@@ -33,7 +35,37 @@ export class AuthService {
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
     private readonly profileService: ProfileService,
+    private readonly brandProfileService: BrandProfileService,
+    private readonly creatorProfileService: CreatorProfileService,
   ) {}
+
+  /**
+   * Mỗi vai trò một bảng hồ sơ do module tương ứng quản lý. Không đặt default
+   * trong switch: thêm vai trò mới vào ERole mà quên hồ sơ sẽ là lỗi biên
+   * dịch, không phải lỗi lúc chạy.
+   */
+  private createProfileFor(account: AuthenticatedAccount): Promise<unknown> {
+    switch (account.accountRole) {
+      case ERole.ADMIN:
+        return this.profileService.create(
+          account.id,
+          account.name,
+          account.email,
+        );
+      case ERole.BRAND:
+        return this.brandProfileService.create(
+          account.id,
+          account.name,
+          account.email,
+        );
+      case ERole.CREATOR:
+        return this.creatorProfileService.create(
+          account.id,
+          account.name,
+          account.email,
+        );
+    }
+  }
 
   createAccountUser(
     dto: RegisterDto,
@@ -75,12 +107,7 @@ export class AuthService {
 
     try {
       const saved = await this.authRepository.save(account);
-      await this.profileService.createProfile(
-        saved.id,
-        saved.accountRole,
-        saved.name,
-        saved.email,
-      );
+      await this.createProfileFor(saved);
       const { password: _password, ...result } = saved;
       return result;
     } catch (error) {

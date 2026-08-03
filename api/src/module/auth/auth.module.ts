@@ -7,6 +7,8 @@ import { AuthEntity } from './entities/auth.entity';
 import { LocalStrategy } from '../../passport/local.strategy';
 import { JwtStrategy } from '../../passport/jwt.strategy';
 import { AdminModule } from '../admin/admin.module';
+import { BrandModule } from '../brand/brand.module';
+import { CreatorModule } from '../creator/creator.module';
 import { IpWhitelistModule } from '../admin/ip-whitelist.module';
 import { SecurityModule } from '../../security/security.module';
 import { OtpService } from '../../security/otp.service';
@@ -18,6 +20,8 @@ import { RedisCacheService } from '../../common/services/redis.service';
   imports: [
     TypeOrmModule.forFeature([AuthEntity]),
     AdminModule,
+    BrandModule,
+    CreatorModule,
     PassportModule,
     SecurityModule,
     // AdminModule import IpWhitelistModule nhưng không re-export, nên phải

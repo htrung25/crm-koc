@@ -8,6 +8,9 @@ import { RedisModule, REDIS_CLIENT } from './infra/redis.module';
 import { SecurityModule } from './security/security.module';
 import { AppThrottlerGuard } from './security/throttler.guard';
 import { RedisThrottlerStorage } from './security/throttler-redis.storage';
+import { BrandModule } from './module/brand/brand.module';
+import { CreatorModule } from './module/creator/creator.module';
+import { SocialModule } from './module/social/social.module';
 import { AdminModule } from './module/admin/admin.module';
 import { AuthModule } from './module/auth/auth.module';
 import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
@@ -29,6 +32,9 @@ import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
     }),
     AuthModule,
     AdminModule,
+    BrandModule,
+    CreatorModule,
+    SocialModule,
     IpWhitelistModule,
   ],
   controllers: [],

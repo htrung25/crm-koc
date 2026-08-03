@@ -102,7 +102,7 @@ export function RedSunNav({ tone = "light" }: RedSunNavProps) {
             Đăng nhập
           </Link>
           <Link
-            href="/login"
+            href="/register"
             className="inline-flex items-center justify-center px-6 py-2.5 rounded-[30px] bg-[#EF4623] text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/25 hover:bg-[#D83B19] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
           >
             Bắt đầu ngay
