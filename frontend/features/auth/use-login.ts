@@ -28,13 +28,16 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 /**
  * Luồng đăng nhập chung cho mọi cổng.
  *
- * Backend bắt tài khoản admin qua thêm bước OTP: POST /login chỉ trả
+ * Backend bắt tài khoản admin qua thêm bước OTP: POST /login/admin chỉ trả
  * `requireOtp`, phải gọi tiếp /verify-otp mới có phiên. Brand/creator xong
  * ngay ở bước đầu.
  *
- * `expectedRole` giới hạn cổng đăng nhập: trang /admin truyền "ADMIN" nên tài
- * khoản brand/creator không tạo được phiên ở đó. Server mới là nơi chốt chặn,
- * tham số này chỉ nói cho server biết đang đứng ở cổng nào.
+ * `expectedRole` chỉ có ở cổng admin (trang /admin truyền "ADMIN"): nó chọn
+ * endpoint /login/admin và chặn tài khoản brand/creator tạo phiên ở đó.
+ *
+ * Cổng công khai KHÔNG truyền gì. Brand và creator dùng chung /login vì trước
+ * khi xác thực thì chưa biết ai là ai — vai trò do backend trả về, client chỉ
+ * dựa vào đó để điều hướng.
  */
 export function useLogin(expectedRole?: UserRole) {
   const router = useRouter();

@@ -7,6 +7,7 @@ import { AuthEntity } from './entities/auth.entity';
 import { LocalStrategy } from '../../passport/local.strategy';
 import { JwtStrategy } from '../../passport/jwt.strategy';
 import { AdminModule } from '../admin/admin.module';
+import { IpWhitelistModule } from '../admin/ip-whitelist.module';
 import { SecurityModule } from '../../security/security.module';
 import { OtpService } from '../../security/otp.service';
 import { SessionGuard } from '../../security/session.guard';
@@ -19,6 +20,10 @@ import { RedisCacheService } from '../../common/services/redis.service';
     AdminModule,
     PassportModule,
     SecurityModule,
+    // AdminModule import IpWhitelistModule nhưng không re-export, nên phải
+    // import trực tiếp: Nest dựng IpWhitelistGuard trong context của module
+    // khai controller (AuthModule), không dùng lại instance của module khác.
+    IpWhitelistModule,
   ],
   controllers: [AuthController],
   providers: [

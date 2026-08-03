@@ -41,6 +41,7 @@ import {
   VerifyOtpDto,
 } from '../admin/dto/verify-otp.dto';
 import { LocalAuthGuard } from '../../security/local-auth.guard';
+import { IpWhitelistGuard } from '../admin/ip-whitelist.guard';
 import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
@@ -67,37 +68,26 @@ export class AuthController {
     private readonly jwtAuthService: JwtAuthService,
   ) {}
 
-  // Chặn dò mật khẩu, đồng thời bịt đường gọi lại /login để reset bộ đếm
-  // resend OTP (generateAndStore xoá key otp:resend:).
   @AuthThrottle()
-  @UseGuards(LocalAuthGuard)
-  @Post('/login')
+  @UseGuards(LocalAuthGuard, IpWhitelistGuard)
+  @Post('/login/admin')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary:
-      'Log in. Admin accounts receive an OTP instead of a token; other roles get the token directly',
+    summary: 'Admin log in. Returns an OTP challenge, never a token',
   })
   // LocalAuthGuard đọc body trực tiếp qua passport nên không có @Body();
   // khai báo @ApiBody để Swagger vẫn mô tả đúng request shape.
   @ApiBody({ type: LoginDto })
-  @ApiOkResponse({
-    description:
-      'LoginResponseDto for brand/creator, LoginPendingResponseDto for admin',
-    type: LoginResponseDto,
-  })
+  @ApiOkResponse({ type: LoginPendingResponseDto })
   @ApiUnauthorizedResponse({ description: 'Wrong email or password' })
   @ApiForbiddenResponse({
-    description: 'Account is suspended, banned, or OTP is locked',
+    description:
+      'Account is suspended or banned, OTP is locked, or the IP is not whitelisted',
   })
-  async login(
+  async loginAdmin(
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
-  ): Promise<LoginResponseDto | LoginPendingResponseDto> {
-    const account = request.user;
-
-    // Chỉ admin mới qua bước OTP. brand/creator nhận token ngay.
-    if (account.accountRole !== ERole.ADMIN) {
-      return this.issueTokens(account, request);
-    }
+  ): Promise<LoginPendingResponseDto> {
+    const account = this.assertRole(request.user, [ERole.ADMIN]);
 
     const result = await this.otpService.generateAndStore(account.id);
     if (result === EOtpResult.LOCKED) {
@@ -111,6 +101,32 @@ export class AuthController {
       requireOtp: true,
       message: 'OTP has been sent to your email',
     };
+  }
+
+  /**
+   * Cổng chung cho brand và creator.
+   */
+  @AuthThrottle()
+  @UseGuards(LocalAuthGuard)
+  @Post('/login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Brand/creator log in. Returns the token pair directly; admin accounts are rejected',
+  })
+  @ApiBody({ type: LoginDto })
+  @ApiOkResponse({ type: LoginResponseDto })
+  @ApiUnauthorizedResponse({
+    description: 'Wrong email or password, or the account is an admin',
+  })
+  @ApiForbiddenResponse({ description: 'Account is suspended or banned' })
+  async login(
+    @Request() request: ExpressRequest & { user: AuthenticatedAccount },
+  ): Promise<LoginResponseDto> {
+    return this.issueTokens(
+      this.assertRole(request.user, [ERole.BRAND, ERole.CREATOR]),
+      request,
+    );
   }
 
   // OTP chỉ có 6 chữ số nên đây là mục tiêu dò mã rõ ràng nhất: vượt hạn thì
@@ -227,6 +243,24 @@ export class AuthController {
     };
   }
 
+  /**
+   * Mỗi cổng đăng nhập chỉ nhận đúng tập vai trò của nó.
+   *
+   * Sai vai trò trả về ĐÚNG thông điệp của sai mật khẩu ('invalid
+   * credentials', 401) chứ không phải 403 "requires role: admin" như
+   * RolesGuard. Trả lời khác đi là biến hai cổng thành máy dò: gõ một email
+   * vào /login mà nhận 403 tức là email đó tồn tại và là admin.
+   */
+  private assertRole(
+    account: AuthenticatedAccount,
+    allowed: ERole[],
+  ): AuthenticatedAccount {
+    if (!allowed.includes(account.accountRole)) {
+      throw new UnauthorizedException('invalid credentials');
+    }
+    return account;
+  }
+
   private assertUsable(account: AuthenticatedAccount): void {
     if (
       account.status === EAccountStatus.SUSPENDED ||
@@ -238,11 +272,6 @@ export class AuthController {
     }
   }
 
-  /**
-   * Gửi mail nhưng không để lỗi gửi làm hỏng cả request: OTP đã nằm trong
-   * Redis rồi, chặn ở đây thì người dùng mất mã mà vẫn bị tính một lần phát.
-   * Thiếu SENDGRID_API_KEY vẫn lấy được mã qua log để thao tác trên Swagger.
-   */
   private async sendOtp(
     email: string,
     otp: string,
@@ -257,9 +286,6 @@ export class AuthController {
     }
   }
 
-  // Endpoint DUY NHẤT tạo được admin. Không công khai: phải là admin đã đăng
-  // nhập. Thứ tự guard có ý nghĩa — JwtAuthGuard nạp request.user trước để
-  // RolesGuard có cái mà đọc; đảo lại thì RolesGuard luôn thấy user rỗng.
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(ERole.ADMIN)
   @Post('/register/admin')

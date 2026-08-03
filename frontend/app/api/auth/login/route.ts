@@ -15,8 +15,13 @@ import {
  * `requireOtp`, phải gọi tiếp /api/auth/verify-otp. Brand/creator nhận token
  * luôn ở bước này.
  *
- * `expectedRole` là cổng đang đăng nhập (ví dụ /admin gửi "ADMIN"): sai vai
- * trò thì không có phiên nào được tạo.
+ * Backend có hai endpoint: /login/admin (kèm whitelist IP và bước OTP) và
+ * /login dùng chung cho brand với creator. `expectedRole` chỉ xuất hiện ở
+ * cổng admin — cổng công khai không truyền, vì chưa xác thực thì chưa biết
+ * tài khoản là brand hay creator.
+ *
+ * Sai cổng bị backend trả 401 giống hệt sai mật khẩu: cố ý, để hai cổng không
+ * thành máy dò xem một email có tồn tại và thuộc vai trò nào.
  */
 export async function POST(request: Request) {
   let payload: { email?: string; password?: string; expectedRole?: unknown };
@@ -39,10 +44,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await apiRequest<LoginResponse>("/login", {
-      method: "POST",
-      body: { email, password },
-    });
+    const result = await apiRequest<LoginResponse>(
+      expectedRole === "ADMIN" ? "/login/admin" : "/login",
+      {
+        method: "POST",
+        body: { email, password },
+      },
+    );
 
     // Admin: backend mới gửi OTP, chưa có token nên chưa xét được vai trò.
     // Chốt chặn role nằm ở /api/auth/verify-otp.

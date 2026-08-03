@@ -29,13 +29,19 @@ export type AccountSummary = {
   status: string;
 };
 
-/** POST /login, POST /verify-otp — brand/creator nhận token ngay. */
+/**
+ * POST /login/brand, POST /login/creator, POST /verify-otp.
+ *
+ * Backend dùng camelCase (LoginResponseDto). Trước đây khai `access_token`
+ * nên giá trị đọc ra luôn undefined và cookie phiên được ghi bằng undefined.
+ */
 export type LoginTokenResponse = {
-  access_token: string;
+  accessToken: string;
+  refreshToken: string;
   account: AccountSummary;
 };
 
-/** POST /login với tài khoản admin — chỉ báo đã gửi OTP, chưa có token. */
+/** POST /login/admin — chỉ báo đã gửi OTP, chưa có token. */
 export type LoginPendingResponse = {
   requireOtp: true;
   message: string;

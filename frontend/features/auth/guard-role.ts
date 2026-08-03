@@ -30,7 +30,7 @@ export async function establishSession(
   const role = toUserRole(result.account.accountRole);
 
   if (!role) {
-    await revokeToken(result.access_token);
+    await revokeToken(result.accessToken);
     return NextResponse.json(
       { message: `Vai trò không được hỗ trợ: ${result.account.accountRole}` },
       { status: 502 },
@@ -38,7 +38,7 @@ export async function establishSession(
   }
 
   if (expectedRole && role !== expectedRole) {
-    await revokeToken(result.access_token);
+    await revokeToken(result.accessToken);
     return NextResponse.json(
       { message: "Tài khoản này không có quyền truy cập cổng đăng nhập này" },
       { status: 403 },
@@ -51,7 +51,7 @@ export async function establishSession(
       role,
       redirectTo: ROLE_HOME[role],
     }),
-    result.access_token,
+    result.accessToken,
     role,
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { RedSunNav } from "@/components/layout/red-sun-nav";
 import { useLogin } from "@/features/auth/use-login";
 
 const HIGHLIGHTS = [
@@ -31,9 +30,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#2D3B42] font-sans selection:bg-[#EF4623] selection:text-white">
-      <RedSunNav />
-
-      <main className="relative flex-1 flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8 pt-28 pb-12 lg:pt-32 lg:pb-16">
+      <main className="relative flex-1 flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         {/* Ambient Blur Circles — cùng ngôn ngữ nền với hero trang chủ */}
         <div className="absolute top-10 right-10 w-[450px] h-[450px] bg-[#EF4623]/10 rounded-full blur-[120px] pointer-events-none animate-ambient-blur" />
         <div
