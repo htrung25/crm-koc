@@ -1,9 +1,8 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { randomUUID } from 'node:crypto';
-// StringValue: kiểu chuỗi thời lượng của ms ('15m', '7d'). jsonwebtoken chỉ
-// nhận kiểu này hoặc number, không nhận string thường.
+// node:crypto chỉ sinh được UUID v4, không có v7 — phải dùng package uuid.
+import { v7 as uuidv7 } from 'uuid';
 import type { StringValue } from 'ms';
 import { AdminSessionScope } from '../common/enum/admin-scopes.enum';
 import { ERole } from '../common/enum/roles.enum';
@@ -96,8 +95,8 @@ export class JwtAuthService {
     accountId: string,
     context: LoginContext,
   ): Promise<TokenPair & { sessionId: string }> {
-    const sessionId = randomUUID();
-    const jti = randomUUID();
+    const sessionId = uuidv7();
+    const jti = uuidv7();
     const scopes = context.scopes ?? [];
 
     await this.sessionService.createSession({
@@ -107,7 +106,7 @@ export class JwtAuthService {
       displayName: context.displayName,
       role: context.role,
       scopes,
-      csrfToken: randomUUID(),
+      csrfToken: uuidv7(),
       currentJti: jti,
     });
 
@@ -162,7 +161,7 @@ export class JwtAuthService {
       throw new UnauthorizedException('session is no longer valid');
     }
 
-    const newJti = randomUUID();
+    const newJti = uuidv7();
     const rotated = await this.sessionService.rotateJti(
       payload.session_id,
       payload.jti,

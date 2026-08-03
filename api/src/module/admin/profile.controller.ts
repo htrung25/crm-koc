@@ -21,6 +21,7 @@ import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileResponseDto } from './dto/profile-response.dto';
+import { IpWhitelistGuard } from './ip-whitelist.guard';
 
 @ApiTags('Admin-Profile')
 @ApiBearerAuth('access-token')
@@ -30,6 +31,7 @@ export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Get('/me')
+  @UseGuards(IpWhitelistGuard)
   @ApiOperation({ summary: 'Profile of the authenticated account' })
   @ApiOkResponse({ type: ProfileResponseDto })
   @ApiUnauthorizedResponse({
@@ -45,6 +47,7 @@ export class ProfileController {
   }
 
   @Patch('/me')
+  @UseGuards(IpWhitelistGuard)
   @ApiOperation({ summary: 'Partially update your own profile' })
   @ApiOkResponse({ type: ProfileResponseDto })
   @ApiUnauthorizedResponse({

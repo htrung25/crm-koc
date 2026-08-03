@@ -31,6 +31,7 @@ import {
   AdminResponseDto,
 } from './dto/admin-response.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
+import { IpWhitelistGuard } from './ip-whitelist.guard';
 
 @ApiTags('Admin')
 @ApiBearerAuth('access-token')
@@ -43,6 +44,7 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('/admin-list')
+  @UseGuards(IpWhitelistGuard)
   @ApiOperation({ summary: 'List admin accounts, paginated' })
   @ApiOkResponse({ type: AdminFilterResponseDto })
   @ApiUnauthorizedResponse({
@@ -54,6 +56,7 @@ export class AdminController {
   }
 
   @Get('/brands-list')
+  @UseGuards(IpWhitelistGuard)
   @ApiOperation({ summary: 'List brand accounts, paginated' })
   @ApiOkResponse({ type: AccountFilterResponseDto })
   @ApiUnauthorizedResponse({
@@ -65,6 +68,7 @@ export class AdminController {
   }
 
   @Get('/creators-list')
+  @UseGuards(IpWhitelistGuard)
   @ApiOperation({ summary: 'List creator accounts, paginated' })
   @ApiOkResponse({ type: AccountFilterResponseDto })
   @ApiUnauthorizedResponse({
@@ -78,6 +82,7 @@ export class AdminController {
   // Đặt SAU /brands và /creators: '/:id/status' là route động, nếu khai
   // trước thì Nest sẽ khớp '/brands' vào :id và ParseUUIDPipe ném 400.
   @Patch('/:id/status')
+  @UseGuards(IpWhitelistGuard)
   @ApiOperation({
     summary: 'Change account status; banning takes effect immediately',
   })

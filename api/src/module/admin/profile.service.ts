@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
 import { AuthEntity } from '../auth/entities/auth.entity';
-import { ProfileEntity } from './entities/profile.entity';
+import { Profile } from './entities/profile.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 const PG_UNIQUE_VIOLATION = '23505';
@@ -15,8 +15,8 @@ const PG_UNIQUE_VIOLATION = '23505';
 @Injectable()
 export class ProfileService {
   constructor(
-    @InjectRepository(ProfileEntity)
-    private readonly profileRepository: Repository<ProfileEntity>,
+    @InjectRepository(Profile)
+    private readonly profileRepository: Repository<Profile>,
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
   ) {}
@@ -26,7 +26,7 @@ export class ProfileService {
     return this.profileRepository.save(profile);
   }
 
-  async findByAccountId(accountId: string): Promise<ProfileEntity | null> {
+  async findByAccountId(accountId: string): Promise<Profile | null> {
     return this.profileRepository.findOneBy({ accountId });
   }
 
@@ -34,7 +34,7 @@ export class ProfileService {
   async updateProfile(
     accountId: string,
     dto: UpdateProfileDto,
-  ): Promise<ProfileEntity> {
+  ): Promise<Profile> {
     // chỉ accountId mới là điều kiện tìm; các field khác là dữ liệu cần ghi
     const profile = await this.profileRepository.findOneBy({ accountId });
     if (!profile) {

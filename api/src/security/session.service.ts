@@ -31,6 +31,7 @@ export interface AdminSession {
 @Injectable()
 export class SessionService {
   private readonly ttlSeconds: number;
+  private readonly touchIntervalSeconds: number;
   private readonly cookieName: string;
   private readonly ABSOLUTE_TTL_SECONDS = 8 * 60 * 60; // 8 hours
 
@@ -42,6 +43,9 @@ export class SessionService {
     this.ttlSeconds = this.configService.get<number>(
       'SESSION_TTL_SECONDS',
       30 * 60,
+    );
+    this.touchIntervalSeconds = Number(
+      this.configService.get('SESSION_TOUCH_INTERVAL_SECONDS', 5 * 60),
     );
     this.cookieName = this.configService.get<string>(
       SESSION_COOKIE_NAME_KEY,
@@ -106,8 +110,29 @@ export class SessionService {
     return session;
   }
 
+  /**
+   * Gia hạn idle timeout, nhưng KHÔNG ghi lại mỗi request.
+   *
+   * Ghi mỗi request nghĩa là mỗi lượt gọi API kéo theo một lệnh SET toàn bộ
+   * payload — với AOF thì thành một lượt ghi đĩa. Ở đây chỉ ghi khi đã cách
+   * lần gia hạn gần nhất ít nhất touchIntervalSeconds, nên số lệnh ghi bị chặn
+   * trên bởi 1 lần mỗi khoảng đó bất kể tần suất request.
+   *
+   * ĐÁNH ĐỔI: idle timeout thực tế không còn là đúng ttlSeconds mà nằm trong
+   * khoảng [ttlSeconds - touchIntervalSeconds, ttlSeconds]. Với mặc định
+   * 30 phút và ngưỡng 5 phút thì phiên hết hạn sau 25–30 phút không hoạt động.
+   * Cần đúng sàn 30 phút thì nâng SESSION_TTL_SECONDS lên 30 + ngưỡng.
+   */
   async refreshSession(session: AdminSession): Promise<void> {
     const now = new Date();
+
+    // lastSeenAt là mốc lần ghi gần nhất; phiên mới tạo thì lấy createdAt.
+    const lastTouch = new Date(session.lastSeenAt ?? session.createdAt);
+    const sinceLastTouchMs = now.getTime() - lastTouch.getTime();
+    if (sinceLastTouchMs < this.touchIntervalSeconds * 1000) {
+      return;
+    }
+
     const expiresAt = new Date(now.getTime() + this.ttlSeconds * 1000);
     session.lastSeenAt = now.toISOString();
     session.expiresAt = expiresAt.toISOString();

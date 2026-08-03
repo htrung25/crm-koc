@@ -13,7 +13,7 @@ import { AuthEntity } from '../../auth/entities/auth.entity';
  * Giá trị account_id luôn bằng accounts.id, không tự sinh.
  */
 @Entity('account_profiles')
-export class ProfileEntity {
+export class Profile {
   @PrimaryColumn({ type: 'uuid' })
   accountId!: string;
 

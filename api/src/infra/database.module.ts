@@ -5,8 +5,9 @@ import { SnakeNamingStrategy } from './snake-naming.strategy';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { AuthEntity } from '../module/auth/entities/auth.entity';
-import { ProfileEntity } from '../module/admin/entities/profile.entity';
+import { Profile } from '../module/admin/entities/profile.entity';
 import { SessionEventEntity } from '../module/auth/entities/session-event.entity';
+import { AdminUser } from '../module/admin/entities/admin_user.entity';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { SessionEventEntity } from '../module/auth/entities/session-event.entity
           return {
             type: 'postgres',
             url: databaseURL,
-            entities: [AuthEntity, ProfileEntity, SessionEventEntity],
+            entities: [AuthEntity, Profile, SessionEventEntity, AdminUser],
             migrations: migrationGlobals,
             migrationsRun: false,
             synchronize: false,
@@ -47,7 +48,7 @@ import { SessionEventEntity } from '../module/auth/entities/session-event.entity
           username,
           password,
           database,
-          entities: [AuthEntity, ProfileEntity, SessionEventEntity],
+          entities: [AuthEntity, Profile, SessionEventEntity, AdminUser],
           migrations: migrationGlobals,
           migrationsRun: false,
           synchronize: false,

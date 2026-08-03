@@ -9,6 +9,7 @@ import { JwtStrategy } from '../../passport/jwt.strategy';
 import { AdminModule } from '../admin/admin.module';
 import { SecurityModule } from '../../security/security.module';
 import { OtpService } from '../../security/otp.service';
+import { SessionGuard } from '../../security/session.guard';
 import { EmailService } from '../../common/services/email.service';
 import { RedisCacheService } from '../../common/services/redis.service';
 
@@ -27,8 +28,17 @@ import { RedisCacheService } from '../../common/services/redis.service';
     OtpService,
     EmailService,
     RedisCacheService,
+    // Đặt ở đây chứ không ở SecurityModule: guard cần AuthService, mà
+    // AuthModule đã import SecurityModule — khai ngược lại sẽ thành vòng tròn.
+    SessionGuard,
   ],
   // export để module khác dùng lại đúng instance này, không tự khai lại
-  exports: [AuthService, OtpService, EmailService, RedisCacheService],
+  exports: [
+    AuthService,
+    OtpService,
+    EmailService,
+    RedisCacheService,
+    SessionGuard,
+  ],
 })
 export class AuthModule {}

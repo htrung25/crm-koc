@@ -10,6 +10,7 @@ import { AppThrottlerGuard } from './security/throttler.guard';
 import { RedisThrottlerStorage } from './security/throttler-redis.storage';
 import { AdminModule } from './module/admin/admin.module';
 import { AuthModule } from './module/auth/auth.module';
+import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AuthModule } from './module/auth/auth.module';
     }),
     AuthModule,
     AdminModule,
+    IpWhitelistModule,
   ],
   controllers: [],
   providers: [

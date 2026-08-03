@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Netmask } from 'netmask';
 import { BusinessCode } from './../../common/enum/business-code.enum';
+import { AdminUser } from './entities/admin_user.entity';
 
 @Injectable()
 export class IpWhitelistService {
@@ -56,7 +57,9 @@ export class IpWhitelistService {
   }
 
   private async getUser(adminId: string): Promise<AdminUser> {
-    const user = await this.adminUserRepo.findOne({ where: { id: adminId } });
+    const user = await this.adminUserRepo.findOne({
+      where: { accountId: adminId },
+    });
     if (!user) throw new NotFoundException('Admin user not found');
     return user;
   }
@@ -112,7 +115,9 @@ export class IpWhitelistService {
   }
 
   async isIpAllowed(adminId: string, sourceIp: string): Promise<boolean> {
-    const user = await this.adminUserRepo.findOne({ where: { id: adminId } });
+    const user = await this.adminUserRepo.findOne({
+      where: { accountId: adminId },
+    });
     if (!user) return true;
 
     const list = this.parseList(user.ipWhitelist);
