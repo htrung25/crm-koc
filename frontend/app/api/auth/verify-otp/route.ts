@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 import { establishSession, parseExpectedRole } from "@/features/auth/guard-role";
 import type { LoginTokenResponse } from "@/features/auth/types";
 
@@ -34,13 +35,16 @@ export async function POST(request: Request) {
     );
   }
 
+  const clientContext = await getClientContext();
+
   try {
     const result = await apiRequest<LoginTokenResponse>("/verify-otp", {
       method: "POST",
       body: { email, otp },
+      clientContext,
     });
 
-    return await establishSession(result, expectedRole);
+    return await establishSession(result, expectedRole, clientContext);
   } catch (error) {
     if (error instanceof ApiError) {
       return NextResponse.json(

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 import type { LoginPendingResponse } from "@/features/auth/types";
 
 /** Gửi lại OTP đăng nhập. Backend có cooldown riêng, vượt sẽ trả 429. */
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
     const result = await apiRequest<LoginPendingResponse>("/resend-otp", {
       method: "POST",
       body: { email },
+      clientContext: await getClientContext(),
     });
     return NextResponse.json({ message: result.message });
   } catch (error) {

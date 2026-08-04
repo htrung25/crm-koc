@@ -188,6 +188,34 @@ export function IconTarget(props: IconProps) {
   );
 }
 
+export function IconShield(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3 5 6v5.5c0 4.2 2.9 8 7 9.5 4.1-1.5 7-5.3 7-9.5V6z" />
+      <path d="m9.2 12.2 2 2 3.6-3.8" />
+    </Svg>
+  );
+}
+
+export function IconPlus(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </Svg>
+  );
+}
+
+export function IconTrash(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 7h16" />
+      <path d="M9.5 7V5.4A1.4 1.4 0 0 1 10.9 4h2.2a1.4 1.4 0 0 1 1.4 1.4V7" />
+      <path d="M6.5 7v12.1A1.9 1.9 0 0 0 8.4 21h7.2a1.9 1.9 0 0 0 1.9-1.9V7" />
+      <path d="M10.5 11v6M13.5 11v6" />
+    </Svg>
+  );
+}
+
 export function IconLogout(props: IconProps) {
   return (
     <Svg {...props}>
@@ -231,6 +259,9 @@ export function IconDelta({
 
 export const NAV_ICONS = {
   dashboard: IconDashboard,
+  shield: IconShield,
+  settings: IconSettings,
+  help: IconHelp,
   users: IconUsers,
   building: IconBuilding,
   megaphone: IconMegaphone,

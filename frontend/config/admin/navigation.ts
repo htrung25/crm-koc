@@ -7,6 +7,7 @@ export type NavigationItem = {
   iconName?: string;
 };
 
+/** Nhóm "Điều hướng": các khu vực nghiệp vụ hằng ngày. */
 export const ADMIN_NAV_ITEMS: NavigationItem[] = [
   { label: "Tổng quan", href: "/admin/dashboard", iconName: "dashboard" },
   { label: "Danh sách KOC", href: "/admin/kocs", iconName: "users" },
@@ -15,6 +16,31 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
   { label: "Đơn đăng ký", href: "/admin/applications", iconName: "fileCheck" },
   { label: "Nhiệm vụ", href: "/admin/tasks", iconName: "clipboardList" },
   { label: "Báo cáo", href: "/admin/reports", iconName: "barChart" },
+];
+
+/**
+ * Nhóm "Cấu hình hệ thống": thiết lập ít đụng tới nhưng ảnh hưởng toàn hệ
+ * thống. Tách khỏi điều hướng nghiệp vụ để không ai vào nhầm khi đang thao tác
+ * hằng ngày.
+ */
+export const ADMIN_SYSTEM_ITEMS: NavigationItem[] = [
+  {
+    label: "Bảo mật & IP",
+    href: "/admin/security",
+    iconName: "shield",
+  },
+  {
+    label: "Cấu hình chung",
+    href: "/admin/settings",
+    iconName: "settings",
+    disabled: true,
+  },
+  {
+    label: "Cấu Hình FAQ",
+    href: "/admin/faq-config",
+    iconName: "help",
+    disabled: true,
+  },
 ];
 
 export type WorkspaceConfig = {

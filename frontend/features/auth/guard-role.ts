@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ApiError, apiRequest } from "@/lib/api/client";
+import type { ClientContext } from "@/lib/api/client-context";
 import { applySession } from "./session";
 import {
   isUserRole,
@@ -25,12 +26,13 @@ export function parseExpectedRole(value: unknown): UserRole | undefined {
  */
 export async function establishSession(
   result: LoginTokenResponse,
-  expectedRole?: UserRole,
+  expectedRole: UserRole | undefined,
+  clientContext: ClientContext,
 ): Promise<NextResponse> {
   const role = toUserRole(result.account.accountRole);
 
   if (!role) {
-    await revokeToken(result.accessToken);
+    await revokeToken(result.accessToken, clientContext);
     return NextResponse.json(
       { message: `Vai trò không được hỗ trợ: ${result.account.accountRole}` },
       { status: 502 },
@@ -38,7 +40,7 @@ export async function establishSession(
   }
 
   if (expectedRole && role !== expectedRole) {
-    await revokeToken(result.accessToken);
+    await revokeToken(result.accessToken, clientContext);
     return NextResponse.json(
       { message: "Tài khoản này không có quyền truy cập cổng đăng nhập này" },
       { status: 403 },
@@ -51,14 +53,17 @@ export async function establishSession(
       role,
       redirectTo: ROLE_HOME[role],
     }),
-    result.accessToken,
+    { accessToken: result.accessToken, refreshToken: result.refreshToken },
     role,
   );
 }
 
-async function revokeToken(token: string): Promise<void> {
+async function revokeToken(
+  token: string,
+  clientContext: ClientContext,
+): Promise<void> {
   try {
-    await apiRequest("/logout", { method: "POST", token });
+    await apiRequest("/logout", { method: "POST", token, clientContext });
   } catch (error) {
     // Thu hồi hỏng cũng không được phép biến thành đăng nhập thành công.
     if (!(error instanceof ApiError)) throw error;

@@ -17,6 +17,10 @@ async function bootstrap() {
     logger: ['log', 'error', 'warn'],
   });
 
+  // Frontend Next gọi API thay cho trình duyệt nên IP thật nằm trong
+  // X-Forwarded-For.
+  app.set('trust proxy', 1);
+
   // Create uploads directory if it doesn't exist
   const uploadsDir = path.join(process.cwd(), 'uploads', 'images');
   if (!fs.existsSync(uploadsDir)) {

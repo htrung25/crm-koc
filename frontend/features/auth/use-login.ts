@@ -3,27 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import type { ErrorResult, LoginResult, UserRole } from "./types";
+import { postJson } from "@/lib/api/fetch-client";
+import type { LoginResult, UserRole } from "./types";
 
 export type LoginStep = "credentials" | "otp";
-
-async function postJson<T>(url: string, body: unknown): Promise<T> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  const data: unknown = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(
-      (data as ErrorResult | null)?.message ?? "Đăng nhập thất bại",
-    );
-  }
-
-  return data as T;
-}
 
 /**
  * Luồng đăng nhập chung cho mọi cổng.
@@ -63,11 +46,11 @@ export function useLogin(expectedRole?: UserRole) {
     setIsSubmitting(true);
 
     try {
-      const result = await postJson<LoginResult>("/api/auth/login", {
-        email,
-        password,
-        expectedRole,
-      });
+      const result = await postJson<LoginResult>(
+        "/api/auth/login",
+        { email, password, expectedRole },
+        { skipRefresh: true },
+      );
 
       if (result.status === "otp_required") {
         setStep("otp");
@@ -89,11 +72,11 @@ export function useLogin(expectedRole?: UserRole) {
 
     try {
       goHome(
-        await postJson<LoginResult>("/api/auth/verify-otp", {
-          email,
-          otp,
-          expectedRole,
-        }),
+        await postJson<LoginResult>(
+          "/api/auth/verify-otp",
+          { email, otp, expectedRole },
+          { skipRefresh: true },
+        ),
       );
     } catch (err) {
       setError((err as Error).message);
@@ -110,6 +93,7 @@ export function useLogin(expectedRole?: UserRole) {
       const result = await postJson<{ message: string }>(
         "/api/auth/resend-otp",
         { email },
+        { skipRefresh: true },
       );
       setNotice(result.message);
     } catch (err) {

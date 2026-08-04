@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 import { establishSession, parseExpectedRole } from "@/features/auth/guard-role";
 import {
   isPendingOtp,
@@ -43,12 +44,17 @@ export async function POST(request: Request) {
     );
   }
 
+  // IP thật của người dùng: backend cần nó cho IP whitelist của cổng admin và
+  // cho throttle theo email+IP. Thiếu thì mọi request trông như đến từ server.
+  const clientContext = await getClientContext();
+
   try {
     const result = await apiRequest<LoginResponse>(
       expectedRole === "ADMIN" ? "/login/admin" : "/login",
       {
         method: "POST",
         body: { email, password },
+        clientContext,
       },
     );
 
@@ -61,7 +67,7 @@ export async function POST(request: Request) {
       });
     }
 
-    return await establishSession(result, expectedRole);
+    return await establishSession(result, expectedRole, clientContext);
   } catch (error) {
     if (error instanceof ApiError) {
       return NextResponse.json(

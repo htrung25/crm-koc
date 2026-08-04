@@ -1,3 +1,5 @@
+import { clientIpOf, type ClientContext } from "./client-context";
+
 /**
  * HTTP client tới backend NestJS (CRM-KOC API).
  *
@@ -5,7 +7,17 @@
  * gọi thẳng backend để access token còn nằm được trong cookie httpOnly.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+/**
+ * Không dùng tiền tố NEXT_PUBLIC_: biến này chỉ chạy trên server, để public
+ * là công bố địa chỉ backend nội bộ vào bundle trình duyệt mà chẳng được gì.
+ */
+const API_BASE_URL = process.env.API_URL ?? "http://localhost:3000";
+
+if (!process.env.API_URL && process.env.NODE_ENV === "production") {
+  // Thiếu biến ở production mà vẫn chạy nghĩa là mọi request lặng lẽ đi tới
+  // localhost và hỏng theo kiểu khó truy nguyên. Chết sớm dễ sửa hơn.
+  throw new Error("Thiếu biến môi trường API_URL");
+}
 
 export class ApiError extends Error {
   constructor(
@@ -33,21 +45,51 @@ type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   token?: string;
+  /**
+   * IP + User-Agent của người dùng cuối. Bắt buộc với các endpoint mà backend
+   * xét nguồn: /login/admin (IP whitelist), /login, /verify-otp (throttle theo
+   * email+IP) và /refresh (đối chiếu IP/UA với lúc đăng nhập).
+   */
+  clientContext?: ClientContext;
 };
+
+function buildHeaders({
+  body,
+  token,
+  clientContext,
+}: RequestOptions): HeadersInit {
+  const headers: Record<string, string> = {};
+
+  if (body) headers["Content-Type"] = "application/json";
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  if (clientContext?.forwardedFor) {
+    // Giữ nguyên cả chuỗi: phần tử đầu là client, các phần sau là proxy trung
+    // gian — backend cần đủ chuỗi để tự quyết định tin tới đâu.
+    headers["x-forwarded-for"] = clientContext.forwardedFor;
+
+    const ip = clientIpOf(clientContext);
+    if (ip) headers["x-real-ip"] = ip;
+  }
+
+  if (clientContext?.userAgent) {
+    headers["user-agent"] = clientContext.userAgent;
+  }
+
+  return headers;
+}
 
 export async function apiRequest<T>(
   endpoint: string,
-  { method = "GET", body, token }: RequestOptions = {},
+  options: RequestOptions = {},
 ): Promise<T> {
+  const { method = "GET", body } = options;
   let response: Response;
 
   try {
     response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method,
-      headers: {
-        ...(body ? { "Content-Type": "application/json" } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers: buildHeaders(options),
       body: body ? JSON.stringify(body) : undefined,
       cache: "no-store",
     });
@@ -57,7 +99,22 @@ export async function apiRequest<T>(
   }
 
   const raw = await response.text();
-  const data: unknown = raw ? JSON.parse(raw) : null;
+
+  let data: unknown = null;
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      // Gateway/proxy chết thường trả HTML. Ném ApiError để route trả lỗi sạch
+      // thay vì để SyntaxError lọt ra thành 500 kèm stack.
+      throw new ApiError(
+        response.ok
+          ? "Máy chủ trả về dữ liệu không hợp lệ."
+          : `Máy chủ gặp sự cố (${response.status}).`,
+        response.ok ? 502 : response.status,
+      );
+    }
+  }
 
   if (!response.ok) {
     throw new ApiError(

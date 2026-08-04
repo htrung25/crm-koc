@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { WORKSPACES } from "@/config/navigation";
+import { WORKSPACES } from "@/config/admin/navigation";
 import { requestLogout } from "@/features/auth/session";
 import type { UserRole } from "@/features/auth/types";
 
@@ -61,11 +61,10 @@ export function AppShell({ children, role }: AppShellProps) {
                   key={item.href}
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  className={`block rounded-xl px-4 py-3 text-sm font-medium transition ${
-                    isActive
+                  className={`block rounded-xl px-4 py-3 text-sm font-medium transition ${isActive
                       ? "bg-slate-800 text-white"
                       : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {item.label}
                 </Link>
