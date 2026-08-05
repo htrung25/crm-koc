@@ -6,7 +6,9 @@
 
 **Architecture:** Next.js BFF. Server Component đọc trực tiếp qua `apiRequest` (có cookie); mọi mutation từ trình duyệt đi qua một Route Handler `/api/admin/me/ip-whitelist` tự resolve account id phía server. Logic thuần (validate, chuẩn hoá CIDR, đếm host, so khớp dải) tách ra `features/admin/ip-whitelist/whitelist.ts` và được test bằng Vitest.
 
-**Tech Stack:** Next.js 16.2.10 (App Router, `proxy.ts` thay `middleware.ts`), React 19.2.4, TypeScript 5, Tailwind CSS 4, Vitest (thêm mới).
+**Tech Stack:** Next.js 16.2.10 (App Router, `proxy.ts` thay `middleware.ts`), React 19.2.4, TypeScript 5, Tailwind CSS 4, `@tanstack/react-query` 5.101.4 (mutation phía client), Vitest (thêm mới).
+
+**Lệch có chủ đích khỏi skill dự án:** `.agents/skills/next-best-practices/route-handlers.md` khuyên dùng Server Action cho mutation từ UI. Plan này dùng Route Handler vì `lib/api/fetch-client.ts` đã có interceptor tự refresh token khi 401 (access token 15 phút) và cả 5 route auth hiện có đều theo mẫu này; Server Action không đi qua interceptor đó. Quyết định của người dùng, 2026-08-05.
 
 Spec: `docs/superpowers/specs/2026-08-05-admin-ip-whitelist-ui-design.md`
 
@@ -768,17 +770,19 @@ git commit -m "feat(admin): route handler sửa IP whitelist của chính mình"
 
 ---
 
-### Task 5: Hook `useIpWhitelist`
+### Task 5: `QueryClientProvider` + hook `useIpWhitelist`
 
 **Files:**
+- Create: `app/providers.tsx`
+- Modify: `app/layout.tsx` (bọc `children` bằng `<Providers>`)
 - Create: `features/admin/ip-whitelist/use-ip-whitelist.ts`
 
 **Interfaces:**
-- Consumes: `parseWhitelist`, `serializeWhitelist`, `validateEntry`, `normalizeCidr`, `MAX_WHITELIST_LENGTH` (Task 1); `AdminResponse`, `WhitelistErrorBody`, `LOCKOUT_CODE` (Task 4); `apiFetch` (`lib/api/fetch-client.ts`, đã có)
+- Consumes: `parseWhitelist`, `serializeWhitelist`, `validateEntry`, `MAX_WHITELIST_LENGTH` (Task 1); `AdminResponse`, `WhitelistErrorBody`, `LOCKOUT_CODE` (Task 4); `apiFetch` (`lib/api/fetch-client.ts`, đã có sẵn)
 - Produces:
 
 ```ts
-type Lockout = { clientIp: string; retry: (acknowledge: boolean) => void };
+type Lockout = { clientIp: string };
 
 useIpWhitelist(initialWhitelist: string | null): {
   entries: string[];
@@ -788,17 +792,70 @@ useIpWhitelist(initialWhitelist: string | null): {
   addEntry: (raw: string) => void;
   removeEntry: (entry: string) => void;
   clearAll: () => void;
+  forceLastAction: () => void;   // gửi lại thao tác vừa rồi với acknowledgeSelfLockout: true
   dismissLockout: () => void;
   clearError: () => void;
 }
 ```
 
-- [ ] **Step 1: Viết hook**
+**Ghi chú kiến trúc (khác plan gốc):** repo đã cài `@tanstack/react-query@5.101.4` nên task này dùng `useMutation` thay cho `useState` tự chế. Mutation vẫn gọi tới Route Handler ở Task 4 — **cố ý lệch** khỏi `.agents/skills/next-best-practices/route-handlers.md` (skill khuyên dùng Server Action cho mutation từ UI). Lý do: 5 route auth hiện có đều là Route Handler, và `lib/api/fetch-client.ts` đã có interceptor tự gọi `/api/auth/refresh` khi gặp 401 — access token sống 15 phút nên 401 xảy ra thường xuyên; Server Action không đi qua interceptor đó.
+
+- [ ] **Step 1: Tạo `app/providers.tsx`**
+
+```tsx
+"use client";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState, type ReactNode } from "react";
+
+/**
+ * QueryClient phải tạo trong `useState`, KHÔNG phải ở cấp module.
+ *
+ * Một instance ở cấp module bị chia sẻ giữa mọi request khi render phía server
+ * — dữ liệu của người dùng này rò sang người dùng khác. `useState` với hàm
+ * khởi tạo cho mỗi cây React một client riêng.
+ */
+export function Providers({ children }: { children: ReactNode }) {
+  const [client] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: { staleTime: 60_000, retry: 1 },
+          // Mutation KHÔNG được tự thử lại: PATCH bị 422 mà retry là bỏ qua
+          // cảnh báo tự khoá, còn DELETE thử lại lần hai sẽ ăn 404 vì phần tử
+          // đã bị xoá ở lần đầu.
+          mutations: { retry: false },
+        },
+      }),
+  );
+
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+}
+```
+
+- [ ] **Step 2: Bọc root layout**
+
+Trong `app/layout.tsx`, thêm import và bọc `children`:
+
+```tsx
+import { Providers } from "./providers";
+```
+
+```tsx
+      <body className="flex min-h-full flex-col">
+        <Providers>{children}</Providers>
+      </body>
+```
+
+Giữ nguyên mọi thứ khác trong file (`metadata`, `lang="vi"`, các className).
+
+- [ ] **Step 3: Viết hook**
 
 ```ts
 "use client";
 
 import { useCallback, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 import { apiFetch } from "@/lib/api/fetch-client";
 import {
@@ -815,11 +872,59 @@ import {
 
 const ENDPOINT = "/api/admin/me/ip-whitelist";
 
-export type Lockout = {
-  clientIp: string;
-  /** Gửi lại đúng thao tác vừa rồi; `true` = chấp nhận tự khoá. */
-  retry: (acknowledge: boolean) => void;
-};
+export type Lockout = { clientIp: string };
+
+/** Ghi đè cả danh sách, hoặc xoá đúng một phần tử. */
+type Operation =
+  | { kind: "replace"; list: string[] }
+  | { kind: "remove"; entry: string };
+
+type Variables = { operation: Operation; acknowledge: boolean };
+
+/** Giữ lại status + body để `onError` phân nhánh được. */
+class WhitelistRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly businessCode?: string,
+    readonly clientIp?: string,
+  ) {
+    super(message);
+    this.name = "WhitelistRequestError";
+  }
+}
+
+async function send({ operation, acknowledge }: Variables): Promise<AdminResponse> {
+  const response =
+    operation.kind === "replace"
+      ? await apiFetch(ENDPOINT, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ipWhitelist: serializeWhitelist(operation.list),
+            acknowledgeSelfLockout: acknowledge,
+          }),
+        })
+      : // encodeURIComponent vì CIDR chứa dấu '/'.
+        await apiFetch(
+          `${ENDPOINT}?entry=${encodeURIComponent(operation.entry)}&acknowledgeSelfLockout=${acknowledge}`,
+          { method: "DELETE" },
+        );
+
+  const body: unknown = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const failure = (body ?? {}) as WhitelistErrorBody;
+    throw new WhitelistRequestError(
+      failure.message || "Không lưu được thay đổi.",
+      response.status,
+      failure.businessCode,
+      failure.clientIp,
+    );
+  }
+
+  return body as AdminResponse;
+}
 
 /**
  * State chip-list + ba thao tác ghi.
@@ -831,80 +936,58 @@ export type Lockout = {
  */
 export function useIpWhitelist(initialWhitelist: string | null) {
   const [entries, setEntries] = useState(() => parseWhitelist(initialWhitelist));
-  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lockout, setLockout] = useState<Lockout | null>(null);
+  // Giữ lại thao tác vừa bị 422 để nút "Vẫn lưu" gửi lại đúng nó.
+  const [lastVariables, setLastVariables] = useState<Variables | null>(null);
 
-  /** Gửi một thao tác và đồng bộ lại state từ response. */
-  const submit = useCallback(
-    async (
-      send: (acknowledge: boolean) => Promise<Response>,
-      acknowledge: boolean,
-    ) => {
-      setPending(true);
+  const mutation = useMutation({
+    mutationFn: send,
+    onMutate: () => {
       setError(null);
-
-      try {
-        const response = await send(acknowledge);
-        const body: unknown = await response.json().catch(() => null);
-
-        if (response.ok) {
-          setLockout(null);
-          setEntries(parseWhitelist((body as AdminResponse).ipWhitelist));
-          return;
-        }
-
-        const failure = (body ?? {}) as WhitelistErrorBody;
-
-        if (
-          response.status === 422 &&
-          failure.businessCode === LOCKOUT_CODE &&
-          failure.clientIp
-        ) {
-          setLockout({
-            clientIp: failure.clientIp,
-            retry: (ack) => void submit(send, ack),
-          });
-          return;
-        }
-
-        if (response.status === 401) {
-          window.location.href = "/admin";
-          return;
-        }
-
-        setError(failure.message || "Không lưu được thay đổi.");
-      } catch {
-        setError("Không kết nối được tới máy chủ. Vui lòng thử lại.");
-      } finally {
-        setPending(false);
-      }
     },
-    [],
-  );
-
-  const patch = useCallback(
-    (list: string[]) => {
-      const csv = serializeWhitelist(list);
-      if (csv.length > MAX_WHITELIST_LENGTH) {
-        setError(`Danh sách vượt quá ${MAX_WHITELIST_LENGTH} ký tự.`);
+    onSuccess: (data) => {
+      setLockout(null);
+      setLastVariables(null);
+      setEntries(parseWhitelist(data.ipWhitelist));
+    },
+    onError: (failure, variables) => {
+      if (!(failure instanceof WhitelistRequestError)) {
+        setError("Không kết nối được tới máy chủ. Vui lòng thử lại.");
         return;
       }
 
-      void submit(
-        (acknowledge) =>
-          apiFetch(ENDPOINT, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ipWhitelist: csv,
-              acknowledgeSelfLockout: acknowledge,
-            }),
-          }),
-        false,
-      );
+      if (
+        failure.status === 422 &&
+        failure.businessCode === LOCKOUT_CODE &&
+        failure.clientIp
+      ) {
+        setLastVariables(variables);
+        setLockout({ clientIp: failure.clientIp });
+        return;
+      }
+
+      // apiFetch đã tự thử refresh một lần; còn 401 nghĩa là phiên đã chết.
+      if (failure.status === 401) {
+        window.location.href = "/admin";
+        return;
+      }
+
+      setError(failure.message);
     },
-    [submit],
+  });
+
+  const { mutate } = mutation;
+
+  const replace = useCallback(
+    (list: string[]) => {
+      if (serializeWhitelist(list).length > MAX_WHITELIST_LENGTH) {
+        setError(`Danh sách vượt quá ${MAX_WHITELIST_LENGTH} ký tự.`);
+        return;
+      }
+      mutate({ operation: { kind: "replace", list }, acknowledge: false });
+    },
+    [mutate],
   );
 
   const addEntry = useCallback(
@@ -916,9 +999,9 @@ export function useIpWhitelist(initialWhitelist: string | null) {
         return;
       }
       // Ghi đè là ngữ nghĩa duy nhất backend có — thêm một mục vẫn gửi cả danh sách.
-      patch([...entries, value]);
+      replace([...entries, value]);
     },
-    [entries, patch],
+    [entries, replace],
   );
 
   /**
@@ -927,45 +1010,43 @@ export function useIpWhitelist(initialWhitelist: string | null) {
    */
   const removeEntry = useCallback(
     (entry: string) => {
-      void submit(
-        (acknowledge) =>
-          apiFetch(
-            `${ENDPOINT}?entry=${encodeURIComponent(entry)}&acknowledgeSelfLockout=${acknowledge}`,
-            { method: "DELETE" },
-          ),
-        false,
-      );
+      mutate({ operation: { kind: "remove", entry }, acknowledge: false });
     },
-    [submit],
+    [mutate],
   );
 
   /** Chuỗi rỗng -> backend set null -> CHO PHÉP MỌI IP. */
-  const clearAll = useCallback(() => patch([]), [patch]);
+  const clearAll = useCallback(() => replace([]), [replace]);
+
+  const forceLastAction = useCallback(() => {
+    if (lastVariables) mutate({ ...lastVariables, acknowledge: true });
+  }, [lastVariables, mutate]);
 
   return {
     entries,
-    pending,
+    pending: mutation.isPending,
     error,
     lockout,
     addEntry,
     removeEntry,
     clearAll,
+    forceLastAction,
     dismissLockout: useCallback(() => setLockout(null), []),
     clearError: useCallback(() => setError(null), []),
   };
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [ ] **Step 4: Typecheck + lint**
 
-Run: `npx tsc --noEmit && npx eslint features/admin/ip-whitelist/`
+Run: `npx tsc --noEmit && npx eslint app/providers.tsx app/layout.tsx features/admin/ip-whitelist/`
 Expected: không lỗi, không cảnh báo biến không dùng.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add features/admin/ip-whitelist/use-ip-whitelist.ts
-git commit -m "feat(admin): hook useIpWhitelist với xử lý 422 tự khoá"
+git add app/providers.tsx app/layout.tsx features/admin/ip-whitelist/use-ip-whitelist.ts
+git commit -m "feat(admin): QueryClientProvider + hook useIpWhitelist dùng react-query"
 ```
 
 ---
@@ -1151,6 +1232,7 @@ export function IpWhitelistManager({
     addEntry,
     removeEntry,
     clearAll,
+    forceLastAction,
     dismissLockout,
     clearError,
   } = useIpWhitelist(initialWhitelist);
@@ -1403,7 +1485,7 @@ export function IpWhitelistManager({
             dismissLockout();
             addEntry(lockout.clientIp);
           }}
-          onForce={() => lockout.retry(true)}
+          onForce={forceLastAction}
           onDismiss={dismissLockout}
         />
       )}
