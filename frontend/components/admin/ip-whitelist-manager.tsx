@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { IconPlus, IconShield, IconTrash } from "@/components/ui/icons";
 import { SelfLockoutDialog } from "@/components/admin/self-lockout-dialog";
@@ -25,9 +25,35 @@ const formatCount = (n: number) => n.toLocaleString("vi-VN");
 
 export function IpWhitelistManager({
   initialWhitelist,
-  currentIp,
+  currentIp: serverIp,
   canEdit,
 }: IpWhitelistManagerProps) {
+  /**
+   * Khởi tạo bằng giá trị server đã tính, rồi làm mới qua /api/get-client-ip.
+   *
+   * Seed từ server chứ không để null: trang vẫn hiện đúng IP khi JavaScript
+   * chưa chạy hoặc lời gọi thất bại, và không có khoảnh khắc nhấp nháy "chưa
+   * biết IP". Cả hai đường đều đi qua cùng một hàm chuẩn hoá nên không thể
+   * lệch nhau.
+   */
+  const [currentIp, setCurrentIp] = useState(serverIp);
+
+  useEffect(() => {
+    // Huỷ khi component unmount để không setState trên cây đã gỡ.
+    const controller = new AbortController();
+
+    fetch("/api/get-client-ip", { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { ip?: string | null } | null) => {
+        if (typeof data?.ip === "string") setCurrentIp(data.ip);
+      })
+      // Hỏng thì im lặng giữ giá trị từ server — đây là đường làm mới, không
+      // phải nguồn sự thật, nên không đáng làm phiền người dùng bằng lỗi.
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, []);
+
   const {
     entries,
     pending,

@@ -11,6 +11,23 @@ export const MAX_WHITELIST_LENGTH = 2000;
 
 const ENTRY_SHAPE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?:\/(\d{1,2}))?$/;
 
+/**
+ * Quy IP nguồn về IPv4, phản chiếu đúng `normalizeIp` của backend
+ * (api/src/module/admin/ip-whitelist.service.ts).
+ *
+ * BẮT BUỘC phải khớp, vì đây là giá trị guard thật sự đem đi so với whitelist.
+ * Hiển thị `::1` trong khi guard so `127.0.0.1` gây ba hậu quả cùng lúc: nút
+ * "điền IP của tôi" điền một chuỗi mà chính validate của ta từ chối (chỉ
+ * IPv4), badge "IP của bạn" không bao giờ sáng dù `127.0.0.1` đã nằm trong
+ * danh sách, và con số trên màn hình nói dối về thứ đang được so khớp.
+ */
+export function normalizeClientIp(ip: string | null): string | null {
+  if (!ip) return null;
+  if (ip === "::1") return "127.0.0.1";
+  if (ip.startsWith("::ffff:")) return ip.slice(7);
+  return ip;
+}
+
 export const parseWhitelist = (raw?: string | null): string[] =>
   (raw ?? "")
     .split(",")

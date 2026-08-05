@@ -4,6 +4,7 @@ import {
   entryCovers,
   hostCount,
   normalizeCidr,
+  normalizeClientIp,
   parseWhitelist,
   serializeWhitelist,
   validateEntry,
@@ -53,6 +54,32 @@ describe("validateEntry", () => {
     ["1.2.3.4/24/8", "hai dấu gạch chéo"],
   ])("từ chối %s (%s)", (value) => {
     expect(validateEntry(value)).toBeTypeOf("string");
+  });
+});
+
+describe("normalizeClientIp", () => {
+  it("quy IPv6 loopback về IPv4 giống hệt backend", () => {
+    expect(normalizeClientIp("::1")).toBe("127.0.0.1");
+  });
+
+  it("bóc tiền tố IPv4-mapped", () => {
+    expect(normalizeClientIp("::ffff:203.0.113.9")).toBe("203.0.113.9");
+    expect(normalizeClientIp("::ffff:127.0.0.1")).toBe("127.0.0.1");
+  });
+
+  it("giữ nguyên IPv4 thuần", () => {
+    expect(normalizeClientIp("203.0.113.9")).toBe("203.0.113.9");
+  });
+
+  it("coi null và chuỗi rỗng là không xác định được IP", () => {
+    expect(normalizeClientIp(null)).toBeNull();
+    expect(normalizeClientIp("")).toBeNull();
+  });
+
+  it("kết quả phải lọt qua chính validateEntry của ta", () => {
+    // Đây là lý do hàm tồn tại: giá trị hiển thị phải dùng được ở ô nhập.
+    expect(validateEntry(normalizeClientIp("::1")!)).toBeNull();
+    expect(validateEntry(normalizeClientIp("::ffff:10.0.0.7")!)).toBeNull();
   });
 });
 

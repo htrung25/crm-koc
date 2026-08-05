@@ -7,6 +7,7 @@ import { AdminTopbar } from "@/components/admin/admin-topbar";
 import { IpWhitelistManager } from "@/components/admin/ip-whitelist-manager";
 import { ACCESS_COOKIE } from "@/features/auth/session";
 import type { AdminResponse } from "@/features/admin/ip-whitelist/types";
+import { normalizeClientIp } from "@/features/admin/ip-whitelist/whitelist";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { clientIpOf, getClientContext } from "@/lib/api/client-context";
 
@@ -17,10 +18,11 @@ export const metadata: Metadata = {
 export default async function AdminSecurityPage() {
   const token = (await cookies()).get(ACCESS_COOKIE)?.value;
 
-  // Cùng nguồn IP mà route đăng nhập chuyển tiếp cho backend, nên con số hiển
-  // thị ở đây đúng bằng thứ IpWhitelistGuard sẽ đem đi so khớp.
+  // Cùng nguồn IP mà route đăng nhập chuyển tiếp cho backend, và chuẩn hoá y
+  // hệt backend, nên con số hiển thị ở đây đúng bằng thứ IpWhitelistGuard sẽ
+  // đem đi so khớp. Bỏ chuẩn hoá là hiện `::1` trong khi guard so `127.0.0.1`.
   const clientContext = await getClientContext();
-  const currentIp = clientIpOf(clientContext);
+  const currentIp = normalizeClientIp(clientIpOf(clientContext));
 
   if (!token) redirect("/admin");
 
