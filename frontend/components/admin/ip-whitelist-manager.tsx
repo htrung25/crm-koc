@@ -197,6 +197,12 @@ export function IpWhitelistManager({
         </p>
       )}
 
+      <p aria-live="polite" className="sr-only">
+        {unrestricted
+          ? "Danh sách trống. Mọi địa chỉ IP đều truy cập được."
+          : `Danh sách có ${entries.length} mục.`}
+      </p>
+
       <ul className="mt-5 flex flex-wrap gap-2">
         {entries.map((entry) => {
           const isCurrent =
@@ -247,11 +253,12 @@ export function IpWhitelistManager({
               </span>
               <button
                 type="button"
+                disabled={pending}
                 onClick={() => {
                   clearAll();
                   setConfirmingClear(false);
                 }}
-                className="rounded-full bg-[#EF4623] px-3 py-1 text-[11px] font-bold text-white transition-colors hover:bg-[#D83B19]"
+                className="rounded-full bg-[#EF4623] px-3 py-1 text-[11px] font-bold text-white transition-colors hover:bg-[#D83B19] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Xoá toàn bộ
               </button>
