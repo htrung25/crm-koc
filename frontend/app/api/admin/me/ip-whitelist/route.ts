@@ -2,12 +2,17 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { ApiError, apiRequest } from "@/lib/api/client";
-import { getClientContext, type ClientContext } from "@/lib/api/client-context";
+import {
+  clientIpOf,
+  getClientContext,
+  type ClientContext,
+} from "@/lib/api/client-context";
 import { ACCESS_COOKIE } from "@/features/auth/session";
 import { MAX_WHITELIST_LENGTH } from "@/features/admin/ip-whitelist/whitelist";
-import type {
-  AdminResponse,
-  WhitelistErrorBody,
+import {
+  SUPER_ADMIN_REQUIRED,
+  type AdminResponse,
+  type WhitelistErrorBody,
 } from "@/features/admin/ip-whitelist/types";
 
 /**
@@ -35,6 +40,22 @@ async function resolveSession(): Promise<Session | NextResponse> {
   // Next, bất biến chống tự khoá vẫn chạy nhưng so sai IP.
   const clientContext = await getClientContext();
 
+  // Fail CLOSED, không fail open: nếu không xác định được IP thật của người
+  // gọi thì DỪNG LẠI ở đây, đừng gửi request tới backend. Nếu để lọt qua,
+  // bất biến chống tự khoá của backend vẫn "chạy" nhưng so nhầm với IP của
+  // server Next — admin có thể lưu whitelist thiếu IP của chính mình mà vẫn
+  // nhận 200, rồi bị khoá ở request kế tiếp. Thà chặn thao tác còn hơn để
+  // lá chắn trông như hoạt động trong khi đã vô hiệu.
+  if (!clientIpOf(clientContext)) {
+    return NextResponse.json(
+      {
+        message:
+          "Không xác định được địa chỉ IP của bạn. Không thể thay đổi danh sách IP một cách an toàn.",
+      },
+      { status: 500 },
+    );
+  }
+
   try {
     const me = await apiRequest<{ id: string }>("/me", {
       token,
@@ -48,6 +69,20 @@ async function resolveSession(): Promise<Session | NextResponse> {
 
 function toErrorResponse(error: unknown): NextResponse {
   if (!(error instanceof ApiError)) throw error;
+
+  // SuperAdminGuard ném `new ForbiddenException('REQUIRES_SUPER_ADMIN')`, tức
+  // Nest trả { statusCode: 403, error: 'Forbidden', message: 'REQUIRES_SUPER_ADMIN' }
+  // — KHÔNG có field businessCode như các lỗi nghiệp vụ khác của whitelist
+  // (vd IP_WHITELIST_WOULD_LOCK_YOU_OUT). Nếu không chuẩn hoá ở đây, lớp UI so
+  // body.businessCode === SUPER_ADMIN_REQUIRED sẽ luôn sai lặng lẽ, và người
+  // dùng sẽ thấy thẳng chuỗi tiếng Anh "REQUIRES_SUPER_ADMIN".
+  if (error.status === 403 && error.message === "REQUIRES_SUPER_ADMIN") {
+    const body: WhitelistErrorBody = {
+      message: "Chỉ super admin mới thay đổi được danh sách này.",
+      businessCode: SUPER_ADMIN_REQUIRED,
+    };
+    return NextResponse.json(body, { status: error.status });
+  }
 
   const body: WhitelistErrorBody = { message: error.message };
   if (error.businessCode) body.businessCode = error.businessCode;
