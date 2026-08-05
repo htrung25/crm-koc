@@ -24,6 +24,8 @@ import { BrandFilterDto } from './dto/brand-filters.dto';
 import { CreatorFilterDto } from './dto/creator-filters.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
+import { AdminUser } from './entities/admin_user.entity';
+import { EAdminRole } from './enum/admin-roles.enum';
 import { IpWhitelistService } from './ip-whitelist.service';
 
 const ACCOUNT_LIST_FIELDS = [
@@ -94,6 +96,8 @@ export class AdminService {
   constructor(
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
+    @InjectRepository(AdminUser)
+    private readonly adminUserRepo: Repository<AdminUser>,
     private readonly accountCache: AccountCacheService,
     private readonly ipWhitelistService: IpWhitelistService,
   ) {}
@@ -263,10 +267,20 @@ export class AdminService {
    */
   async findAdminById(
     id: string,
-  ): Promise<AuthenticatedAccount & { ipWhitelist: string | null }> {
+  ): Promise<
+    AuthenticatedAccount & { ipWhitelist: string | null; adminRole: EAdminRole }
+  > {
     const account = await this.requireAdmin(id);
+    const adminUser = await this.adminUserRepo.findOne({
+      where: { accountId: id },
+      select: { accountId: true, adminRole: true, ipWhitelist: true },
+    });
     const entries = await this.ipWhitelistService.getByAdminId(id);
-    return this.toAdminResponse(account, entries);
+    return {
+      ...this.toAdminResponse(account, entries),
+      // Không có dòng admin_users => coi như admin thường, không phải super.
+      adminRole: adminUser?.adminRole ?? EAdminRole.ADMIN,
+    };
   }
 
   async updateAdmin(
