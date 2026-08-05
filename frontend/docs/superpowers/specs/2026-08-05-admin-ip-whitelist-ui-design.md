@@ -5,7 +5,14 @@ Phạm vi: `frontend/` (Next.js 16 App Router, BFF trước NestJS)
 
 ## 1. Mục tiêu
 
-Cho admin đang đăng nhập tự quản lý danh sách IP/CIDR được phép truy cập cổng quản trị, tại `/admin/security`, dùng dữ liệu thật thay cho mock hiện tại.
+Hiển thị danh sách IP/CIDR được phép truy cập cổng quản trị tại `/admin/security`, dùng dữ liệu thật thay cho mock hiện tại.
+
+**Phân quyền** (khớp guard của backend, cập nhật 2026-08-05):
+
+| `admin_users.admin_role` | Quyền |
+|---|---|
+| `super_admin` | xem **và** chỉnh sửa |
+| `admin` | **chỉ xem** |
 
 **Ngoài phạm vi:** quản lý whitelist của admin khác (cần `GET /admin/admin-list` + bảng phân trang — tách spec riêng), lọc/tìm theo IP (backend không hỗ trợ).
 
@@ -76,14 +83,29 @@ Không có trạng thái "chưa lưu" để mất khi đóng tab. Chuẩn hoá c
 
 Dùng `DELETE` cho từng chip thay vì `PATCH` cả chuỗi: server đọc-sửa-ghi trên giá trị mới nhất nên không đụng mục mà tab khác vừa thêm.
 
+### 4.6. Phân quyền super admin — và một phụ thuộc backend chưa có
+
+Backend đã gác sẵn: `PATCH /admin/:id` và `DELETE /admin/:id/ip-whitelist` đều là `@UseGuards(IpWhitelistGuard, SuperAdminGuard)`, trả `403 REQUIRES_SUPER_ADMIN`. `GET /admin/:id` **không** bị gác — admin thường vẫn đọc được. FE không cần lặp lại việc chặn; nó chỉ quyết định hiện gì.
+
+> **⚠ BLOCKER — cần backend bổ sung trước khi làm FE.**
+> `adminRole` nằm trên entity `admin_users` nhưng **không DTO nào expose**: `GET /me` trả `accounts` row, `AdminResponseDto` và `AdminProfileResponseDto` đều không có. Nghĩa là FE không có cách nào biết nên render chế độ sửa hay chỉ-đọc — chỉ phát hiện được bằng cách gửi một request ghi rồi ăn 403.
+>
+> Đề xuất: thêm `adminRole` vào **`AdminResponseDto`**. `findAdminById` vốn đã gọi `ipWhitelistService.getByAdminId(id)` — cùng bảng `admin_users` — nên lấy thêm một cột là thay đổi nhỏ, và nó phục vụ được cả `GET /admin/:id` lẫn `admin-list` sau này.
+>
+> Chừng nào chưa có: **fallback fail-safe** là render chỉ-đọc. Thà một super admin phải hỏi vì sao không sửa được, còn hơn một admin thường bấm nút rồi ăn 403 khó hiểu.
+
+**Chế độ chỉ-đọc** không phải là ẩn nút. Nó phải nói rõ *vì sao*: chip không có nút X, không có ô nhập, kèm dòng "Chỉ super admin mới thay đổi được danh sách này." Ẩn trơn khiến người dùng tưởng tính năng hỏng.
+
+**Lỗ hổng còn lại, cần bạn quyết sau:** với phân quyền này, whitelist của một admin thường **không ai sửa được qua UI** — chính họ không có quyền, còn super admin thì chưa có màn hình chọn admin khác. Hiện chỉ đổi được dưới DB. Giải bằng spec "danh sách admin" (§1 Ngoài phạm vi).
+
 ## 5. Kiến trúc
 
 ```
 app/admin/(dashboard)/security/page.tsx     Server Component
   ├─ getClientContext()          → clientIp hiển thị
   ├─ GET /me                     → adminId
-  └─ GET /admin/:adminId         → ipWhitelist
-       └─ <IpWhitelistManager currentIp defaultWhitelist />   "use client"
+  └─ GET /admin/:adminId         → ipWhitelist + adminRole (chờ BE, §4.6)
+       └─ <IpWhitelistManager currentIp defaultWhitelist canEdit />   "use client"
             └─ useIpWhitelist()  → PATCH/DELETE qua /api/admin/me/ip-whitelist
                  └─ <SelfLockoutDialog />  khi 422
 ```
@@ -98,7 +120,7 @@ app/admin/(dashboard)/security/page.tsx     Server Component
 | `features/admin/ip-whitelist/types.ts` | `AdminResponse`, `WhitelistErrorBody` |
 | `features/admin/ip-whitelist/whitelist.ts` | thuần: `parseWhitelist`, `serializeWhitelist`, `validateEntry`, `hostCount`, `entryCovers`, `normalizeCidr` (tính network address để cảnh báo host bits, §6) |
 | `features/admin/ip-whitelist/use-ip-whitelist.ts` | state chip-list, submit, xử lý 422 |
-| `components/admin/ip-whitelist-manager.tsx` | viết lại: chip-list, bỏ note/addedAt, badge "Không giới hạn IP" |
+| `components/admin/ip-whitelist-manager.tsx` | viết lại: chip-list, bỏ note/addedAt, badge "Không giới hạn IP", chế độ chỉ-đọc (§4.6) |
 | `components/admin/self-lockout-dialog.tsx` | mới |
 | `app/api/admin/me/ip-whitelist/route.ts` | mới: PATCH + DELETE |
 | `app/admin/(dashboard)/security/page.tsx` | dữ liệu thật |
@@ -123,7 +145,8 @@ Chỉ để báo lỗi sớm khi gõ, **không phải để bảo vệ** — bac
 | 400 | `INVALID_CIDR_FORMAT` | "Dải CIDR không hợp lệ: {entry}" |
 | 400 | — | "Tài khoản này không phải quản trị viên" |
 | 401 | — | `apiFetch` tự refresh 1 lần; vẫn 401 → điều hướng `/admin` |
-| 403 | — | "Bạn đang truy cập từ IP không nằm trong danh sách cho phép" |
+| 403 | — (`message: "REQUIRES_SUPER_ADMIN"`) | "Chỉ super admin mới thay đổi được danh sách này" → chuyển UI sang chỉ-đọc |
+| 403 | — (khác) | "Bạn đang truy cập từ IP không nằm trong danh sách cho phép" |
 | 404 | — | "Không tìm thấy {entry} trong danh sách" |
 | 422 | `IP_WHITELIST_WOULD_LOCK_YOU_OUT` | mở `SelfLockoutDialog` (§8) |
 
