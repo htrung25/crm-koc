@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 
 import { apiFetch } from "@/lib/api/fetch-client";
@@ -12,6 +13,7 @@ import {
 } from "./whitelist";
 import {
   LOCKOUT_CODE,
+  SUPER_ADMIN_REQUIRED,
   type AdminResponse,
   type WhitelistErrorBody,
 } from "./types";
@@ -81,11 +83,15 @@ async function send({ operation, acknowledge }: Variables): Promise<AdminRespons
  * hoá (10.0.0.5/24 -> 10.0.0.0/24) và khử trùng lặp.
  */
 export function useIpWhitelist(initialWhitelist: string | null) {
+  const router = useRouter();
   const [entries, setEntries] = useState(() => parseWhitelist(initialWhitelist));
   const [error, setError] = useState<string | null>(null);
   const [lockout, setLockout] = useState<Lockout | null>(null);
   // Giữ lại thao tác vừa bị 422 để nút "Vẫn lưu" gửi lại đúng nó.
   const [lastVariables, setLastVariables] = useState<Variables | null>(null);
+  // 403 REQUIRES_SUPER_ADMIN -> khoá UI về chỉ-đọc (spec §7), tránh bấm lại
+  // ăn 403 liên tục vì canEdit ở prop cha không tự biết quyền vừa mất.
+  const [forbidden, setForbidden] = useState(false);
 
   const mutation = useMutation({
     mutationFn: send,
@@ -96,6 +102,9 @@ export function useIpWhitelist(initialWhitelist: string | null) {
       setLockout(null);
       setLastVariables(null);
       setEntries(parseWhitelist(data.ipWhitelist));
+      // RSC payload trong Router Cache vẫn giữ initialWhitelist cũ; làm mới để
+      // Back/điều hướng lại không đè state đúng bằng dữ liệu cũ.
+      router.refresh();
     },
     onError: (failure, variables) => {
       if (!(failure instanceof WhitelistRequestError)) {
@@ -113,9 +122,18 @@ export function useIpWhitelist(initialWhitelist: string | null) {
         return;
       }
 
+      if (
+        failure.status === 403 &&
+        failure.businessCode === SUPER_ADMIN_REQUIRED
+      ) {
+        setForbidden(true);
+        setError(failure.message);
+        return;
+      }
+
       // apiFetch đã tự thử refresh một lần; còn 401 nghĩa là phiên đã chết.
       if (failure.status === 401) {
-        window.location.href = "/admin";
+        router.replace("/admin");
         return;
       }
 
@@ -168,15 +186,52 @@ export function useIpWhitelist(initialWhitelist: string | null) {
     if (lastVariables) mutate({ ...lastVariables, acknowledge: true });
   }, [lastVariables, mutate]);
 
+  /**
+   * Nút chính của SelfLockoutDialog. PHẢI phái sinh payload từ `lastVariables`
+   * (thao tác vừa bị 422), KHÔNG từ `entries` (state cũ, chưa hề đổi vì
+   * mutation thất bại) — nếu không, ý định gốc của người dùng (replace bằng
+   * danh sách mới, hoặc remove một mục) sẽ bị vứt bỏ âm thầm, chỉ còn
+   * `entries + clientIp` được gửi mà UI vẫn báo "đã lưu".
+   */
+  const addCurrentIpAndRetry = useCallback(
+    (clientIp: string) => {
+      if (!lastVariables) {
+        // Không nên xảy ra vì dialog chỉ hiện sau 422, nhưng rơi về hành vi
+        // addEntry cũ để không im lặng bỏ qua thao tác của người dùng.
+        addEntry(clientIp);
+        return;
+      }
+
+      const { operation } = lastVariables;
+      const nextList =
+        operation.kind === "replace"
+          ? operation.list
+          : entries.filter((e) => e !== operation.entry);
+
+      // Khử trùng lặp: nếu clientIp đã có trong danh sách sắp gửi thì thôi.
+      const withClientIp = nextList.includes(clientIp)
+        ? nextList
+        : [...nextList, clientIp];
+
+      mutate({
+        operation: { kind: "replace", list: withClientIp },
+        acknowledge: false,
+      });
+    },
+    [lastVariables, entries, addEntry, mutate],
+  );
+
   return {
     entries,
     pending: mutation.isPending,
     error,
     lockout,
+    forbidden,
     addEntry,
     removeEntry,
     clearAll,
     forceLastAction,
+    addCurrentIpAndRetry,
     dismissLockout: useCallback(() => setLockout(null), []),
     clearError: useCallback(() => setError(null), []),
   };

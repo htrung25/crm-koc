@@ -33,10 +33,12 @@ export function IpWhitelistManager({
     pending,
     error,
     lockout,
+    forbidden,
     addEntry,
     removeEntry,
     clearAll,
     forceLastAction,
+    addCurrentIpAndRetry,
     dismissLockout,
     clearError,
   } = useIpWhitelist(initialWhitelist);
@@ -46,6 +48,10 @@ export function IpWhitelistManager({
   const inputId = useId();
   const errorId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // 403 REQUIRES_SUPER_ADMIN khoá UI về chỉ-đọc dù prop `canEdit` ban đầu
+  // là true (spec §7) — tránh bấm nút mãi mà không hiểu vì sao cứ 403.
+  const editable = canEdit && !forbidden;
 
   const unrestricted = entries.length === 0;
   const coveringEntry =
@@ -102,7 +108,7 @@ export function IpWhitelistManager({
         </p>
       )}
 
-      {!canEdit && (
+      {!editable && (
         <p className="mt-4 rounded-2xl bg-[#2D3B42]/8 px-4 py-3 text-xs font-semibold text-[#5C5049]">
           Chỉ super admin mới thay đổi được danh sách này. Bạn đang ở chế độ xem.
         </p>
@@ -124,7 +130,7 @@ export function IpWhitelistManager({
             // Không gác theo `unrestricted`: danh sách rỗng chính là lúc người
             // dùng cần thêm IP của mình nhất — bật whitelist mà quên chính mình
             // là cách tự khoá phổ biến nhất.
-            canEdit && (
+            editable && (
               <button
                 type="button"
                 onClick={() => {
@@ -141,7 +147,7 @@ export function IpWhitelistManager({
         </div>
       )}
 
-      {canEdit && (
+      {editable && (
         <form onSubmit={handleSubmit} className="mt-5 flex flex-wrap gap-3">
           <div className="min-w-[240px] flex-1">
             <label
@@ -227,7 +233,7 @@ export function IpWhitelistManager({
               {isCurrent && (
                 <span className="text-[11px] font-bold">· IP của bạn</span>
               )}
-              {canEdit && (
+              {editable && (
                 <button
                   type="button"
                   disabled={pending}
@@ -243,7 +249,7 @@ export function IpWhitelistManager({
         })}
       </ul>
 
-      {canEdit && !unrestricted && (
+      {editable && !unrestricted && (
         <div className="mt-5 border-t border-[#2D3B42]/10 pt-4">
           {confirmingClear ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -293,8 +299,11 @@ export function IpWhitelistManager({
         <SelfLockoutDialog
           clientIp={lockout.clientIp}
           onAddCurrentIp={() => {
-            dismissLockout();
-            addEntry(lockout.clientIp);
+            // KHÔNG dismissLockout() ở đây: dialog chỉ nên đóng khi mutation
+            // mới thực sự thành công (onSuccess của hook tự setLockout(null)).
+            // Đóng sớm mà lời gọi lại thất bại thì người dùng chỉ thấy một
+            // dòng lỗi rời rạc, mất luôn ngữ cảnh tự khoá.
+            addCurrentIpAndRetry(lockout.clientIp);
           }}
           onForce={forceLastAction}
           onDismiss={dismissLockout}
