@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 type SelfLockoutDialogProps = {
   /** IP backend thấy, ĐÃ chuẩn hoá (127.0.0.1 chứ không phải ::ffff:127.0.0.1). */
@@ -9,6 +9,10 @@ type SelfLockoutDialogProps = {
   onForce: () => void;
   onDismiss: () => void;
 };
+
+/** Selector các phần tử có thể focus trong dialog, dùng để bẫy Tab. */
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), input:not([disabled]), [href], select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /**
  * Hiện khi backend trả 422 IP_WHITELIST_WOULD_LOCK_YOU_OUT.
@@ -26,27 +30,84 @@ export function SelfLockoutDialog({
   const [acknowledged, setAcknowledged] = useState(false);
   const titleId = useId();
   const checkboxId = useId();
+  const descriptionId = useId();
+  const consequenceId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Focus vào container (không phải một trong ba nút): đây là alertdialog
+    // cho hành động không thể hoàn tác, nên một phím Enter lạc không được
+    // phép kích hoạt bất kỳ nút nào, kể cả nút "an toàn".
+    dialogRef.current?.focus();
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onDismiss();
+        return;
+      }
+
+      if (e.key !== "Tab" || !dialogRef.current) return;
+
+      // Tính lại danh sách focusable mỗi lần Tab: nút "Vẫn lưu" đổi trạng
+      // thái disabled theo checkbox nên danh sách không được cache.
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (e.shiftKey) {
+        if (active === first || active === dialogRef.current) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [onDismiss]);
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
+        tabIndex={-1}
         aria-labelledby={titleId}
-        className="w-full max-w-lg rounded-[26px] bg-white p-6 shadow-2xl"
+        aria-describedby={`${descriptionId} ${consequenceId}`}
+        className="w-full max-w-lg rounded-[26px] bg-white p-6 shadow-2xl outline-none"
       >
         <h2 id={titleId} className="text-lg font-extrabold text-[#2D3B42]">
           Thay đổi này sẽ khoá bạn ra ngoài
         </h2>
 
-        <p className="mt-3 text-sm leading-relaxed text-[#5C5049]">
+        <p id={descriptionId} className="mt-3 text-sm leading-relaxed text-[#5C5049]">
           IP hiện tại của bạn là{" "}
           <code className="font-mono font-bold text-[#2D3B42]">{clientIp}</code>,
           và nó không nằm trong danh sách mới. Nếu lưu, bạn sẽ mất quyền vào khu
           vực quản trị ngay ở request kế tiếp.
         </p>
 
-        <p className="mt-3 rounded-2xl bg-amber-500/12 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-800">
+        <p
+          id={consequenceId}
+          className="mt-3 rounded-2xl bg-amber-500/12 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-800"
+        >
           Không có đường tự cứu. Đăng nhập lại cũng vô ích. Bạn sẽ phải nhờ một
           super admin khác sửa hộ, hoặc sửa thẳng dưới cơ sở dữ liệu.
         </p>
