@@ -48,7 +48,7 @@ import { Roles } from '../../security/roles.decorator';
 import type { RequestWithToken } from '../../passport/jwt.strategy';
 import { AuthenticatedAccount } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto, LoginAdminDto } from './dto/login.dto';
 import { LoginResponseDto, RegisterResponseDto } from './dto/auth-response.dto';
 import { RefreshTokenDto, TokenPairResponseDto } from './dto/refresh-token.dto';
 import { extractClientIp } from '../../common/util/ip.util';
@@ -77,7 +77,7 @@ export class AuthController {
   })
   // LocalAuthGuard đọc body trực tiếp qua passport nên không có @Body();
   // khai báo @ApiBody để Swagger vẫn mô tả đúng request shape.
-  @ApiBody({ type: LoginDto })
+  @ApiBody({ type: LoginAdminDto })
   @ApiOkResponse({ type: AdminLoginPendingResponseDto })
   @ApiUnauthorizedResponse({ description: 'Wrong email or password' })
   @ApiForbiddenResponse({
@@ -108,16 +108,15 @@ export class AuthController {
    */
   @AuthThrottle()
   @UseGuards(LocalAuthGuard)
-  @Post('/login')
+  @Post('/login/brand-creator')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary:
-      'Brand/creator log in. Returns the token pair directly; admin accounts are rejected',
+    summary: 'Brand/creator log in. Returns the token pair directly',
   })
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({ type: LoginResponseDto })
   @ApiUnauthorizedResponse({
-    description: 'Wrong email or password, or the account is an admin',
+    description: 'Wrong email or password',
   })
   @ApiForbiddenResponse({ description: 'Account is suspended or banned' })
   async login(

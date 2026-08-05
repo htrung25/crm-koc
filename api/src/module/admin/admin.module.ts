@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
-import { ProfileController } from './profile.controller';
-import { ProfileService } from './profile.service';
+import { AdminProfileController } from './admin-profile.controller';
+import { AdminProfileService } from './admin-profile.service';
 import { AdminUser } from './entities/admin_user.entity';
+import { SuperAdminGuard } from './super-admin.guard';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { SecurityModule } from '../../security/security.module';
 import { IpWhitelistModule } from './ip-whitelist.module';
@@ -15,8 +16,8 @@ import { IpWhitelistModule } from './ip-whitelist.module';
     SecurityModule,
     IpWhitelistModule,
   ],
-  controllers: [AdminController, ProfileController],
-  providers: [AdminService, ProfileService],
-  exports: [AdminService, ProfileService],
+  controllers: [AdminController, AdminProfileController],
+  providers: [AdminService, AdminProfileService, SuperAdminGuard],
+  exports: [AdminService, AdminProfileService],
 })
 export class AdminModule {}

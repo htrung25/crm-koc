@@ -4,7 +4,6 @@ import { JwtService } from '@nestjs/jwt';
 // node:crypto chỉ sinh được UUID v4, không có v7 — phải dùng package uuid.
 import { v7 as uuidv7 } from 'uuid';
 import type { StringValue } from 'ms';
-import { AdminSessionScope } from '../common/enum/admin-scopes.enum';
 import { ERole } from '../common/enum/roles.enum';
 import { ESessionEventType } from '../common/enum/session-event-types.enum';
 import { SessionService } from './session.service';
@@ -21,7 +20,6 @@ interface BaseJwtPayload {
 export interface AccessTokenPayload extends BaseJwtPayload {
   type: 'access';
   role: ERole;
-  scopes: AdminSessionScope[];
 }
 
 export interface RefreshTokenPayload extends BaseJwtPayload {
@@ -38,7 +36,6 @@ export interface LoginContext {
   email: string;
   displayName: string;
   role: ERole;
-  scopes?: AdminSessionScope[];
   ipAddress?: string | null;
   userAgent?: string | null;
 }
@@ -97,7 +94,6 @@ export class JwtAuthService {
   ): Promise<TokenPair & { sessionId: string }> {
     const sessionId = uuidv7();
     const jti = uuidv7();
-    const scopes = context.scopes ?? [];
 
     await this.sessionService.createSession({
       sessionId,
@@ -105,7 +101,6 @@ export class JwtAuthService {
       email: context.email,
       displayName: context.displayName,
       role: context.role,
-      scopes,
       csrfToken: uuidv7(),
       currentJti: jti,
     });
@@ -120,7 +115,7 @@ export class JwtAuthService {
 
     return {
       sessionId,
-      ...this.signPair(accountId, sessionId, jti, context.role, scopes),
+      ...this.signPair(accountId, sessionId, jti, context.role),
     };
   }
 
@@ -199,7 +194,6 @@ export class JwtAuthService {
       payload.session_id,
       newJti,
       session.role,
-      session.scopes,
     );
   }
 
@@ -239,10 +233,9 @@ export class JwtAuthService {
     sessionId: string,
     jti: string,
     role: ERole,
-    scopes: AdminSessionScope[],
   ): TokenPair {
     const accessToken = this.jwtService.sign(
-      { sub: accountId, session_id: sessionId, type: 'access', role, scopes },
+      { sub: accountId, session_id: sessionId, type: 'access', role },
       { secret: this.accessSecret, expiresIn: this.accessTtl },
     );
 

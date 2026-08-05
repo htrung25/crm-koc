@@ -46,7 +46,10 @@ export class SessionEventService {
   }
 
   /** Lịch sử của một account, mới nhất trước. */
-  findByAccount(accountId: string, limit = 50): Promise<SessionEventEntity[]> {
+  async findByAccount(
+    accountId: string,
+    limit = 50,
+  ): Promise<SessionEventEntity[]> {
     return this.eventRepository.find({
       where: { accountId },
       order: { createdAt: 'DESC' },
@@ -55,7 +58,7 @@ export class SessionEventService {
   }
 
   /** Toàn bộ sự kiện của một phiên, dùng khi lần theo một sự cố cụ thể. */
-  findBySession(sessionId: string): Promise<SessionEventEntity[]> {
+  async findBySession(sessionId: string): Promise<SessionEventEntity[]> {
     return this.eventRepository.find({
       where: { sessionId },
       order: { createdAt: 'ASC' },
@@ -63,7 +66,7 @@ export class SessionEventService {
   }
 
   /** Lọc theo loại, ví dụ tìm mọi revoked_reuse gần đây. */
-  findByType(
+  async findByType(
     eventType: ESessionEventType,
     limit = 100,
   ): Promise<SessionEventEntity[]> {

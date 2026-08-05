@@ -11,7 +11,7 @@ export type NavigationItem = {
 export const ADMIN_NAV_ITEMS: NavigationItem[] = [
   { label: "Tổng quan", href: "/admin/dashboard", iconName: "dashboard" },
   { label: "Danh sách KOC", href: "/admin/kocs", iconName: "users" },
-  { label: "Thương hiệu", href: "/admin/brands", iconName: "building" },
+  { label: "Danh sách Brand", href: "/admin/brands", iconName: "building" },
   { label: "Chiến dịch", href: "/admin/campaigns", iconName: "megaphone" },
   { label: "Đơn đăng ký", href: "/admin/applications", iconName: "fileCheck" },
   { label: "Nhiệm vụ", href: "/admin/tasks", iconName: "clipboardList" },

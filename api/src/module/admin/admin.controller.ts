@@ -38,6 +38,7 @@ import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { RemoveIpWhitelistDto } from './dto/remove-ip-whitelist.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
+import { SuperAdminGuard } from './super-admin.guard';
 import { extractClientIp } from '../../common/util/ip.util';
 import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
 // import type: isolatedModules + emitDecoratorMetadata cấm type thường trong
@@ -109,46 +110,6 @@ export class AdminController {
   ) {
     return this.adminService.updateStatus(id, dto);
   }
-
-  /**
-   * Xoá MỘT phần tử khỏi whitelist, thay cho việc gửi lại cả chuỗi.
-   *
-   * '/:id/ip-whitelist' lệch số đoạn với '/:id' nên hai route không tranh nhau.
-   */
-  @Delete('/:id/ip-whitelist')
-  @UseGuards(IpWhitelistGuard)
-  @ApiOperation({ summary: 'Remove one IP/CIDR from an admin IP whitelist' })
-  @ApiOkResponse({ type: AdminResponseDto })
-  @ApiBadRequestResponse({
-    description: 'Malformed IP or CIDR, or account is not an admin',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Token is missing, invalid or expired',
-  })
-  @ApiForbiddenResponse({ description: 'Requires admin role' })
-  @ApiNotFoundResponse({
-    description: 'Account not found, or entry not in the whitelist',
-  })
-  @ApiUnprocessableEntityResponse({
-    description:
-      'Removing this entry would lock the caller out; set acknowledgeSelfLockout to override',
-  })
-  removeIpWhitelistEntry(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Query() query: RemoveIpWhitelistDto,
-    @Request() request: ExpressRequest & { user: AuthenticatedAccount },
-  ) {
-    return this.adminService.removeIpWhitelistEntry(
-      id,
-      query.entry.trim(),
-      {
-        accountId: request.user.id,
-        clientIp: extractClientIp(request),
-      },
-      query.acknowledgeSelfLockout === true,
-    );
-  }
-
   /**
    * PHẢI khai sau /admin-list, /brands-list, /creators-list: cùng method GET và
    * cùng một đoạn đường dẫn, nên đặt trước thì '/admin-list' sẽ khớp vào :id và
@@ -169,9 +130,10 @@ export class AdminController {
   }
 
   @Patch('/:id')
-  @UseGuards(IpWhitelistGuard)
+  @UseGuards(IpWhitelistGuard, SuperAdminGuard)
   @ApiOperation({
-    summary: 'Update an admin user; ipWhitelist replaces the whole CSV list',
+    summary:
+      'Update an admin user; ipWhitelist replaces the whole CSV list. Super admin only',
   })
   @ApiOkResponse({ type: AdminResponseDto })
   @ApiBadRequestResponse({
@@ -180,7 +142,9 @@ export class AdminController {
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
   })
-  @ApiForbiddenResponse({ description: 'Requires admin role' })
+  @ApiForbiddenResponse({
+    description: 'Requires super admin role, or IP not whitelisted',
+  })
   @ApiNotFoundResponse({ description: 'Account not found' })
   @ApiUnprocessableEntityResponse({
     description:
@@ -197,5 +161,51 @@ export class AdminController {
       accountId: request.user.id,
       clientIp: extractClientIp(request),
     });
+  }
+
+  /**
+   * Xoá MỘT phần tử khỏi whitelist, thay cho việc gửi lại cả chuỗi.
+   *
+   * '/:id/ip-whitelist' lệch số đoạn với '/:id' nên hai route không tranh nhau.
+   * Đừng rút gọn thành '/:id': đường dẫn đó đọc ra là "xoá tài khoản admin"
+   * trong khi việc thật chỉ là gỡ một IP, và nó chiếm luôn chỗ của endpoint
+   * xoá admin sau này.
+   */
+  @Delete('/:id/ip-whitelist')
+  @UseGuards(IpWhitelistGuard, SuperAdminGuard)
+  @ApiOperation({
+    summary: 'Remove one IP/CIDR from an admin IP whitelist. Super admin only',
+  })
+  @ApiOkResponse({ type: AdminResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Malformed IP or CIDR, or account is not an admin',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({
+    description: 'Requires super admin role, or IP not whitelisted',
+  })
+  @ApiNotFoundResponse({
+    description: 'Account not found, or entry not in the whitelist',
+  })
+  @ApiUnprocessableEntityResponse({
+    description:
+      'Removing this entry would lock the caller out; set acknowledgeSelfLockout to override',
+  })
+  async removeIpWhitelistEntry(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: RemoveIpWhitelistDto,
+    @Request() request: ExpressRequest & { user: AuthenticatedAccount },
+  ) {
+    return this.adminService.removeIpWhitelistEntry(
+      id,
+      query.entry.trim(),
+      {
+        accountId: request.user.id,
+        clientIp: extractClientIp(request),
+      },
+      query.acknowledgeSelfLockout === true,
+    );
   }
 }

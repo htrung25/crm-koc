@@ -1,7 +1,36 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 
 export class UpdateAdminDto {
+  @ApiProperty({ maxLength: 255 })
+  name!: string;
+
+  @ApiProperty({ format: 'email' })
+  email!: string;
+
+  @ApiProperty({ nullable: true, type: String })
+  phone!: string | null;
+
+  @ApiProperty({ enum: EAccountStatus, enumName: 'EAccountStatus' })
+  status!: EAccountStatus;
+
+  @ApiProperty({ nullable: true, type: String })
+  statusReason!: string | null;
+
+  @ApiProperty({ nullable: true, type: String, format: 'date-time' })
+  emailVerifiedAt!: Date | null;
+
+  @ApiProperty({ nullable: true, type: String, format: 'date-time' })
+  phoneVerifiedAt!: Date | null;
+
+  @ApiProperty({ format: 'date-time' })
+  createdAt!: Date;
+
+  @ApiProperty({ format: 'date-time' })
+  updatedAt!: Date;
+
   @IsOptional()
   @IsString()
   // Cột là text không giới hạn; chặn ở đây để một chuỗi khổng lồ không thành

@@ -145,14 +145,14 @@ export class AdminService {
   }
 
   /** Danh sách brand, phân trang + lọc. */
-  findAllBrands(
+  async findAllBrands(
     query: BrandFilterDto,
   ): Promise<PaginatedResult<AccountListItem>> {
     return this.listByRole(ERole.BRAND, query);
   }
 
   /** Danh sách creator, phân trang + lọc. */
-  findAllCreators(
+  async findAllCreators(
     query: CreatorFilterDto,
   ): Promise<PaginatedResult<AccountListItem>> {
     return this.listByRole(ERole.CREATOR, query);

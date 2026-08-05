@@ -23,7 +23,7 @@ export class BrandProfileService {
     private readonly authRepository: Repository<AuthEntity>,
   ) {}
 
-  create(
+  async create(
     accountId: string,
     name: string | null,
     email: string,
@@ -33,7 +33,7 @@ export class BrandProfileService {
     );
   }
 
-  findByAccountId(accountId: string): Promise<BrandProfile | null> {
+  async findByAccountId(accountId: string): Promise<BrandProfile | null> {
     return this.brandRepository.findOneBy({ accountId });
   }
 
@@ -85,4 +85,21 @@ export class BrandProfileService {
       throw error;
     }
   }
+
+  // async remove(accountId: string) {
+  //   const profile = await this.brandRepository.profile.findUnique({
+  //     where: {accountId},
+  //   });
+
+  //   if(!profile){
+  //     throw new NotFoundException(`Profile and ID ${accountId} does not exist`);
+  //   }
+  //   await this.brandRepository.profile.delete({
+  //     where: {accountId},
+  //   });
+  //   return {
+  //     statusCode: 200,
+  //     mesage: 'Delete profile complete',
+  //   };
+  // }
 }

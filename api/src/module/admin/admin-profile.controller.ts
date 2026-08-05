@@ -22,7 +22,7 @@ import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { ERole } from '../../common/enum/roles.enum';
 import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
-import { ProfileService } from './profile.service';
+import { AdminProfileService } from './admin-profile.service';
 import { UpdateAdminProfileDto } from './dto/update-admin-profile.dto';
 import { AdminProfileResponseDto } from './dto/admin-profile-response.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
@@ -36,8 +36,8 @@ import { IpWhitelistGuard } from './ip-whitelist.guard';
 @Roles(ERole.ADMIN)
 @UseGuards(JwtAuthGuard, RolesGuard, IpWhitelistGuard)
 @Controller('admin/profile')
-export class ProfileController {
-  constructor(private readonly profileService: ProfileService) {}
+export class AdminProfileController {
+  constructor(private readonly profileService: AdminProfileService) {}
 
   @Get('/me')
   @ApiOperation({ summary: 'Your own admin profile' })

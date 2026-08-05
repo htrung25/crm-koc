@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { RedisClientType } from 'redis';
-import { AdminSessionScope } from '../common/enum/admin-scopes.enum';
 import { ERole } from '../common/enum/roles.enum';
 import {
   SESSION_COOKIE_DEFAULT_NAME,
@@ -14,7 +13,6 @@ export interface AdminSession {
   email: string;
   displayName: string;
   role: ERole;
-  scopes: AdminSessionScope[];
   csrfToken: string;
   /**
    * jti của refresh token ĐANG hợp lệ. Mỗi lần refresh thành công giá trị này
@@ -110,19 +108,6 @@ export class SessionService {
     return session;
   }
 
-  /**
-   * Gia hạn idle timeout, nhưng KHÔNG ghi lại mỗi request.
-   *
-   * Ghi mỗi request nghĩa là mỗi lượt gọi API kéo theo một lệnh SET toàn bộ
-   * payload — với AOF thì thành một lượt ghi đĩa. Ở đây chỉ ghi khi đã cách
-   * lần gia hạn gần nhất ít nhất touchIntervalSeconds, nên số lệnh ghi bị chặn
-   * trên bởi 1 lần mỗi khoảng đó bất kể tần suất request.
-   *
-   * ĐÁNH ĐỔI: idle timeout thực tế không còn là đúng ttlSeconds mà nằm trong
-   * khoảng [ttlSeconds - touchIntervalSeconds, ttlSeconds]. Với mặc định
-   * 30 phút và ngưỡng 5 phút thì phiên hết hạn sau 25–30 phút không hoạt động.
-   * Cần đúng sàn 30 phút thì nâng SESSION_TTL_SECONDS lên 30 + ngưỡng.
-   */
   async refreshSession(session: AdminSession): Promise<void> {
     const now = new Date();
 
@@ -171,12 +156,6 @@ export class SessionService {
   /**
    * Đổi currentJti một cách NGUYÊN TỬ: chỉ đổi khi jti hiện tại đúng như
    * mong đợi.
-   *
-   * Phải làm bằng Lua vì đọc-kiểm tra-ghi qua 3 lệnh riêng sẽ hở race: hai
-   * request refresh đồng thời đều đọc được cùng một jti rồi cả hai cùng cho
-   * là hợp lệ. Script chạy nguyên khối trên Redis nên request thứ hai chắc
-   * chắn thấy jti đã đổi và bị nhận diện là token cũ.
-   *
    * KEEPTTL giữ nguyên hạn của phiên, không gia hạn ngầm khi refresh.
    */
   async rotateJti(

@@ -7,10 +7,6 @@ import { clientIpOf, type ClientContext } from "./client-context";
  * gọi thẳng backend để access token còn nằm được trong cookie httpOnly.
  */
 
-/**
- * Không dùng tiền tố NEXT_PUBLIC_: biến này chỉ chạy trên server, để public
- * là công bố địa chỉ backend nội bộ vào bundle trình duyệt mà chẳng được gì.
- */
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:3000";
 
 if (!process.env.API_URL && process.env.NODE_ENV === "production") {
