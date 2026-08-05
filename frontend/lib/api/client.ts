@@ -7,10 +7,6 @@ import { clientIpOf, type ClientContext } from "./client-context";
  * gọi thẳng backend để access token còn nằm được trong cookie httpOnly.
  */
 
-/**
- * Không dùng tiền tố NEXT_PUBLIC_: biến này chỉ chạy trên server, để public
- * là công bố địa chỉ backend nội bộ vào bundle trình duyệt mà chẳng được gì.
- */
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:3000";
 
 if (!process.env.API_URL && process.env.NODE_ENV === "production") {
@@ -23,9 +19,32 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    /**
+     * Body lỗi đã parse. Backend trả HAI hình dạng:
+     *   { message, businessCode }                  <- lỗi nghiệp vụ
+     *   { message, error, statusCode }             <- Nest mặc định
+     * Giữ nguyên bản thô vì chỉ `message` + `status` là không đủ: dialog tự
+     * khoá cần `clientIp`, và highlight chip sai cần `businessCode`.
+     */
+    public readonly body: unknown = null,
   ) {
     super(message);
     this.name = "ApiError";
+  }
+
+  private field(key: string): string | undefined {
+    if (typeof this.body !== "object" || this.body === null) return undefined;
+    const value = (this.body as Record<string, unknown>)[key];
+    return typeof value === "string" ? value : undefined;
+  }
+
+  get businessCode(): string | undefined {
+    return this.field("businessCode");
+  }
+
+  /** Có ở 422 IP_WHITELIST_WOULD_LOCK_YOU_OUT, đã chuẩn hoá về IPv4. */
+  get clientIp(): string | undefined {
+    return this.field("clientIp");
   }
 }
 
@@ -120,6 +139,7 @@ export async function apiRequest<T>(
     throw new ApiError(
       extractMessage(data, `Yêu cầu thất bại (${response.status})`),
       response.status,
+      data,
     );
   }
 

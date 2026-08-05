@@ -14,7 +14,7 @@ import { Transactional } from 'typeorm-transactional';
 import { normalizePhone } from '../../common/util/account.util';
 import { BrandProfileService } from '../brand/brand-profile.service';
 import { CreatorProfileService } from '../creator/creator-profile.service';
-import { ProfileService } from '../admin/profile.service';
+import { AdminProfileService } from '../admin/admin-profile.service';
 import { AuthEntity } from './entities/auth.entity';
 import { AuthenticatedAccount } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
@@ -34,7 +34,7 @@ export class AuthService {
   constructor(
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
-    private readonly profileService: ProfileService,
+    private readonly adminProfileService: AdminProfileService,
     private readonly brandProfileService: BrandProfileService,
     private readonly creatorProfileService: CreatorProfileService,
   ) {}
@@ -47,7 +47,7 @@ export class AuthService {
   private createProfileFor(account: AuthenticatedAccount): Promise<unknown> {
     switch (account.accountRole) {
       case ERole.ADMIN:
-        return this.profileService.create(
+        return this.adminProfileService.create(
           account.id,
           account.name,
           account.email,
@@ -67,14 +67,14 @@ export class AuthService {
     }
   }
 
-  createAccountUser(
+  async createAccountUser(
     dto: RegisterDto,
     role: PublicRole,
   ): Promise<AuthenticatedAccount> {
     return this.createAccount(dto, role);
   }
 
-  createAdminAccount(dto: RegisterDto): Promise<AuthenticatedAccount> {
+  async createAdminAccount(dto: RegisterDto): Promise<AuthenticatedAccount> {
     return this.createAccount(dto, ERole.ADMIN);
   }
 
@@ -122,7 +122,7 @@ export class AuthService {
     }
   }
 
-  findById(id: string): Promise<AuthEntity | null> {
+  async findById(id: string): Promise<AuthEntity | null> {
     return this.authRepository.findOneBy({ id });
   }
 

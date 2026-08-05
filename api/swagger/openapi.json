@@ -10,7 +10,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginDto"
+                "$ref": "#/components/schemas/LoginAdminDto"
               }
             }
           }
@@ -39,7 +39,7 @@
         ]
       }
     },
-    "/login": {
+    "/login/brand-creator": {
       "post": {
         "operationId": "AuthController_login",
         "parameters": [],
@@ -65,13 +65,13 @@
             }
           },
           "401": {
-            "description": "Wrong email or password, or the account is an admin"
+            "description": "Wrong email or password"
           },
           "403": {
             "description": "Account is suspended or banned"
           }
         },
-        "summary": "Brand/creator log in. Returns the token pair directly; admin accounts are rejected",
+        "summary": "Brand/creator log in. Returns the token pair directly",
         "tags": [
           "Auth"
         ]
@@ -781,9 +781,187 @@
         ]
       }
     },
+    "/admin/{id}": {
+      "get": {
+        "operationId": "AdminController_findAdminById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Account exists but is not an admin"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Account not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Read one admin account with its IP whitelist",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminController_updateAdmin",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed IP or CIDR; businessCode says which kind"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires super admin role, or IP not whitelisted"
+          },
+          "404": {
+            "description": "Account not found"
+          },
+          "422": {
+            "description": "Change would lock the caller out of their own whitelist; set acknowledgeSelfLockout to override"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Update an admin user; ipWhitelist replaces the whole CSV list. Super admin only",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/admin/{id}/ip-whitelist": {
+      "delete": {
+        "operationId": "AdminController_removeIpWhitelistEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entry",
+            "required": true,
+            "in": "query",
+            "description": "IP hoặc CIDR cần xoá. So khớp sau khi chuẩn hoá nên gửi 10.0.0.5/24 cũng xoá được 10.0.0.0/24.",
+            "schema": {
+              "example": "10.0.0.0/24",
+              "type": "string"
+            }
+          },
+          {
+            "name": "acknowledgeSelfLockout",
+            "required": false,
+            "in": "query",
+            "description": "Chấp nhận mất quyền truy cập khi xoá chính dải đang cho mình đi qua.",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed IP or CIDR, or account is not an admin"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires super admin role, or IP not whitelisted"
+          },
+          "404": {
+            "description": "Account not found, or entry not in the whitelist"
+          },
+          "422": {
+            "description": "Removing this entry would lock the caller out; set acknowledgeSelfLockout to override"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Remove one IP/CIDR from an admin IP whitelist. Super admin only",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/admin/profile/me": {
       "get": {
-        "operationId": "ProfileController_getMe",
+        "operationId": "AdminProfileController_getMe",
         "parameters": [],
         "responses": {
           "200": {
@@ -817,7 +995,7 @@
         ]
       },
       "patch": {
-        "operationId": "ProfileController_updateMe",
+        "operationId": "AdminProfileController_updateMe",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -896,7 +1074,7 @@
         ],
         "summary": "Your own brand profile",
         "tags": [
-          "Brand-Profile"
+          "Brand"
         ]
       },
       "patch": {
@@ -943,7 +1121,7 @@
         ],
         "summary": "Partially update your own brand profile",
         "tags": [
-          "Brand-Profile"
+          "Brand"
         ]
       }
     },
@@ -1238,7 +1416,7 @@
       }
     },
     "schemas": {
-      "LoginDto": {
+      "LoginAdminDto": {
         "type": "object",
         "properties": {
           "email": {
@@ -1273,6 +1451,26 @@
         "required": [
           "requireOtp",
           "message"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "test@gmail.com",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "example": "test@12345",
+            "minLength": 8,
+            "format": "password"
+          }
+        },
+        "required": [
+          "email",
+          "password"
         ]
       },
       "ERole": {
@@ -1529,6 +1727,13 @@
           "DESC"
         ]
       },
+      "EAdminRole": {
+        "type": "string",
+        "enum": [
+          "admin",
+          "super_admin"
+        ]
+      },
       "AdminResponseDto": {
         "type": "object",
         "properties": {
@@ -1583,6 +1788,19 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "ipWhitelist": {
+            "type": "string",
+            "nullable": true,
+            "example": "203.0.113.1,10.0.0.0/24",
+            "description": "null hoặc rỗng = cho phép truy cập từ mọi IP"
+          },
+          "adminRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAdminRole"
+              }
+            ]
           }
         },
         "required": [
@@ -1596,7 +1814,9 @@
           "emailVerifiedAt",
           "phoneVerifiedAt",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "ipWhitelist",
+          "adminRole"
         ]
       },
       "AdminFilterResponseDto": {
@@ -1744,6 +1964,75 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "UpdateAdminDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAccountStatus"
+              }
+            ]
+          },
+          "statusReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "emailVerifiedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "phoneVerifiedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "ipWhitelist": {
+            "type": "string",
+            "example": "203.0.113.1,10.0.0.0/24",
+            "maxLength": 2000,
+            "description": "CSV các IP/CIDR. Ghi đè toàn bộ. Chuỗi rỗng = cho phép mọi IP."
+          },
+          "acknowledgeSelfLockout": {
+            "type": "boolean",
+            "example": false,
+            "default": false,
+            "description": "Bỏ qua kiểm tra tự khoá khi tự sửa whitelist của mình. Dùng có ý thức."
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "status",
+          "statusReason",
+          "emailVerifiedAt",
+          "phoneVerifiedAt",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "AdminProfileResponseDto": {

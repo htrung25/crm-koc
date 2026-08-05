@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ERole } from '../../../common/enum/roles.enum';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
+import { EAdminRole } from '../enum/admin-roles.enum';
 
 /** Một account admin trong danh sách. Không bao giờ chứa password. */
 export class AdminResponseDto {
@@ -36,6 +37,26 @@ export class AdminResponseDto {
 
   @ApiProperty({ format: 'date-time' })
   updatedAt!: Date;
+
+  /**
+   * CSV các IP/CIDR được phép, null nghĩa là KHÔNG giới hạn IP.
+   * Client đọc field này sau khi PATCH để đồng bộ lại thay vì tin state cũ.
+   */
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    example: '203.0.113.1,10.0.0.0/24',
+    description: 'null hoặc rỗng = cho phép truy cập từ mọi IP',
+  })
+  ipWhitelist!: string | null;
+
+  /**
+   * Phân cấp nội bộ giữa các admin. FE dùng field này để quyết định render
+   * trình soạn thảo hay chế độ chỉ-đọc — nếu không có, nó phải thử ghi rồi
+   * ăn 403 REQUIRES_SUPER_ADMIN mới biết.
+   */
+  @ApiProperty({ enum: EAdminRole, enumName: 'EAdminRole' })
+  adminRole!: EAdminRole;
 }
 
 /** Bọc phân trang — khớp đúng PaginatedResult<T> mà paginate() trả về. */

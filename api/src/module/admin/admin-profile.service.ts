@@ -17,7 +17,7 @@ import { UpdateAdminProfileDto } from './dto/update-admin-profile.dto';
  * một bộ cột, nên gom vào một service sẽ thành nơi chứa cả ba lược đồ.
  */
 @Injectable()
-export class ProfileService {
+export class AdminProfileService {
   constructor(
     @InjectRepository(AdminUser)
     private readonly adminRepository: Repository<AdminUser>,
@@ -41,7 +41,7 @@ export class ProfileService {
     return this.adminRepository.findOneByOrFail({ accountId });
   }
 
-  findByAccountId(accountId: string): Promise<AdminUser | null> {
+  async findByAccountId(accountId: string): Promise<AdminUser | null> {
     return this.adminRepository.findOneBy({ accountId });
   }
 

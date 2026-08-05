@@ -11,16 +11,6 @@ import {
 import { ESocialPlatform } from '../../../common/enum/social-platform.enum';
 import { CreatorProfile } from '../../creator/entities/creator-profile.entity';
 
-/**
- * Tài khoản mạng xã hội đã kết nối của một creator.
- *
- * Hai ràng buộc duy nhất mang ý nghĩa khác nhau, và handleCallback dựa vào
- * chính sự khác nhau đó để phân biệt lỗi:
- * - (creator_profile_id, platform): mỗi creator một tài khoản trên mỗi nền
- *   tảng. Va vào đây là nối lại chính nền tảng đó => ON CONFLICT DO UPDATE.
- * - (platform, external_account_id): một tài khoản social không thuộc về hai
- *   creator. Va vào đây là lỗi nghiệp vụ => bắt 23505 rồi dịch.
- */
 @Entity('social_accounts')
 @Index(
   'uq_social_accounts_platform_external_id',

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  // Delete,
   Get,
   NotFoundException,
   Patch,
@@ -26,7 +27,7 @@ import { BrandProfileService } from './brand-profile.service';
 import { UpdateBrandProfileDto } from './dto/update-brand-profile.dto';
 import { BrandProfileResponseDto } from './dto/brand-profile-response.dto';
 
-@ApiTags('Brand-Profile')
+@ApiTags('Brand')
 @ApiBearerAuth('access-token')
 @Roles(ERole.BRAND)
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -71,4 +72,17 @@ export class BrandProfileController {
       await this.brandProfileService.update(request.user.id, dto),
     );
   }
+
+  // @Delete('/me')
+  // @ApiOperation({summary: 'Delete brand profile & account'})
+  // @ApiUnauthorizedResponse({
+  //   description: 'Token is missing, invalid or expired',
+  // })
+  // @ApiForbiddenResponse({ description: 'Not a brand account' })
+  // @ApiNotFoundResponse({ description: 'Account has no profile yet' })
+  // @ApiConflictResponse({ description: 'Email or tax code already taken' })
+  // async deleteMe(@Req()req){
+  //   const userId = req.user.id;
+  //   return this.brandProfileService.remove(userId);
+  // }
 }

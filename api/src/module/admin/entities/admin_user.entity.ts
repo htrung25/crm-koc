@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { AuthEntity } from '../../auth/entities/auth.entity';
 import { AdminStatus } from '../constants/status.enum';
+import { EAdminRole } from '../enum/admin-roles.enum';
 
 /**
  * Vừa là cấu hình bảo mật vừa là hồ sơ của admin — gộp một bảng thay vì tách
@@ -30,6 +31,13 @@ export class AdminUser {
   // type: 'enum' ở đây sẽ khiến metadata lệch với schema thật mà không báo lỗi.
   @Column({ type: 'varchar', length: 16, default: AdminStatus.ACTIVE })
   status!: AdminStatus;
+
+  /**
+   * Chỉ super_admin mới sửa được whitelist của admin khác. Đọc từ DB chứ không
+   * nhét vào JWT: hạ quyền phải có hiệu lực ngay, không chờ token hết hạn.
+   */
+  @Column({ type: 'varchar', length: 32, default: EAdminRole.ADMIN })
+  adminRole!: EAdminRole;
 
   /** Danh sách IP/CIDR ngăn cách bởi dấu phẩy, NULL nghĩa là không giới hạn */
   @Column({ type: 'text', nullable: true })
