@@ -35,4 +35,26 @@ describe("ApiError", () => {
     expect(error.businessCode).toBeUndefined();
     expect(error.clientIp).toBeUndefined();
   });
+
+  it("body là mảng không ném lỗi, getters trả undefined", () => {
+    const error = new ApiError("mảng", 400, ["a", "b"]);
+    expect(error.businessCode).toBeUndefined();
+    expect(error.clientIp).toBeUndefined();
+  });
+
+  it("body là chuỗi trần không ném lỗi, getters trả undefined", () => {
+    const error = new ApiError("chuỗi", 400, "raw string");
+    expect(error.businessCode).toBeUndefined();
+    expect(error.clientIp).toBeUndefined();
+  });
+
+  it("businessCode không phải string trả undefined không phải giá trị", () => {
+    const error = new ApiError("số", 400, { businessCode: 123 });
+    expect(error.businessCode).toBeUndefined();
+  });
+
+  it("clientIp là object lồng trả undefined", () => {
+    const error = new ApiError("object lồng", 400, { clientIp: { ip: "1.2.3.4" } });
+    expect(error.clientIp).toBeUndefined();
+  });
 });
