@@ -24,7 +24,6 @@ import { BrandFilterDto } from './dto/brand-filters.dto';
 import { CreatorFilterDto } from './dto/creator-filters.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
-import { AdminUser } from './entities/admin_user.entity';
 import { EAdminRole } from './enum/admin-roles.enum';
 import { IpWhitelistService } from './ip-whitelist.service';
 
@@ -96,8 +95,6 @@ export class AdminService {
   constructor(
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
-    @InjectRepository(AdminUser)
-    private readonly adminUserRepo: Repository<AdminUser>,
     private readonly accountCache: AccountCacheService,
     private readonly ipWhitelistService: IpWhitelistService,
   ) {}
@@ -262,8 +259,9 @@ export class AdminService {
   }
 
   /**
-   * Đọc một admin kèm whitelist. Trả cùng hình dạng với updateAdmin để client
-   * dùng chung một kiểu dữ liệu cho cả lúc xem lẫn lúc sửa.
+   * Đọc một admin kèm whitelist và adminRole. Trả cùng hình dạng với
+   * updateAdmin/removeIpWhitelistEntry để client dùng chung một kiểu dữ liệu
+   * cho cả lúc xem lẫn lúc sửa (đúng AdminResponseDto).
    */
   async findAdminById(
     id: string,
@@ -271,26 +269,28 @@ export class AdminService {
     AuthenticatedAccount & { ipWhitelist: string | null; adminRole: EAdminRole }
   > {
     const account = await this.requireAdmin(id);
-    const adminUser = await this.adminUserRepo.findOne({
-      where: { accountId: id },
-      select: { accountId: true, adminRole: true, ipWhitelist: true },
-    });
-    const entries = await this.ipWhitelistService.getByAdminId(id);
-    return {
-      ...this.toAdminResponse(account, entries),
-      // Không có dòng admin_users => coi như admin thường, không phải super.
-      adminRole: adminUser?.adminRole ?? EAdminRole.ADMIN,
-    };
+    // MỘT truy vấn admin_users duy nhất lấy cả adminRole lẫn whitelist.
+    // Không có dòng => admin thường, KHÔNG giới hạn IP (không phải 404):
+    // getSecurityInfo() đã tự fail-safe, không ném lỗi.
+    const { adminRole, entries } =
+      await this.ipWhitelistService.getSecurityInfo(id);
+    return { ...this.toAdminResponse(account, entries), adminRole };
   }
 
   async updateAdmin(
     id: string,
     dto: UpdateAdminDto,
     caller: { accountId: string; clientIp: string },
-  ): Promise<AuthenticatedAccount & { ipWhitelist: string | null }> {
+  ): Promise<
+    AuthenticatedAccount & { ipWhitelist: string | null; adminRole: EAdminRole }
+  > {
     const account = await this.requireAdmin(id);
 
+    // Khớp DTO với findAdminById: cả hai đường xem lẫn sửa đều trả adminRole.
+    // Mỗi nhánh chỉ đọc admin_users đúng một lần (setWhitelist đã tự trả
+    // adminRole từ dòng nó vừa ghi, không cần đọc lại).
     let entries: string[];
+    let adminRole: EAdminRole;
     if (dto.ipWhitelist !== undefined) {
       const isSelf = caller.accountId === id;
       const overridden = dto.acknowledgeSelfLockout === true;
@@ -303,16 +303,20 @@ export class AdminService {
         );
       }
 
-      entries = await this.ipWhitelistService.setWhitelist(
+      const result = await this.ipWhitelistService.setWhitelist(
         id,
         dto.ipWhitelist,
         isSelf && !overridden ? caller.clientIp : undefined,
       );
+      entries = result.entries;
+      adminRole = result.adminRole;
     } else {
-      entries = await this.ipWhitelistService.getByAdminId(id);
+      const info = await this.ipWhitelistService.getSecurityInfo(id);
+      entries = info.entries;
+      adminRole = info.adminRole;
     }
 
-    return this.toAdminResponse(account, entries);
+    return { ...this.toAdminResponse(account, entries), adminRole };
   }
 
   /**
@@ -324,7 +328,9 @@ export class AdminService {
     entry: string,
     caller: { accountId: string; clientIp: string },
     acknowledgeSelfLockout = false,
-  ): Promise<AuthenticatedAccount & { ipWhitelist: string | null }> {
+  ): Promise<
+    AuthenticatedAccount & { ipWhitelist: string | null; adminRole: EAdminRole }
+  > {
     const account = await this.requireAdmin(id);
 
     const isSelf = caller.accountId === id;
@@ -334,13 +340,15 @@ export class AdminService {
       );
     }
 
-    const entries = await this.ipWhitelistService.removeEntry(
+    // removeEntry đã tự trả adminRole từ dòng nó vừa đọc/ghi, không cần đọc
+    // admin_users thêm lần nữa.
+    const { entries, adminRole } = await this.ipWhitelistService.removeEntry(
       id,
       entry,
       isSelf && !acknowledgeSelfLockout ? caller.clientIp : undefined,
     );
 
-    return this.toAdminResponse(account, entries);
+    return { ...this.toAdminResponse(account, entries), adminRole };
   }
 
   /** Tài khoản phải tồn tại VÀ là admin: chỉ admin mới có dòng admin_users. */

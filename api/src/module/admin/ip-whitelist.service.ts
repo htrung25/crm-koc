@@ -9,6 +9,7 @@ import { In, Repository } from 'typeorm';
 import { Netmask } from 'netmask';
 import { BusinessCode } from './../../common/enum/business-code.enum';
 import { AdminUser } from './entities/admin_user.entity';
+import { EAdminRole } from './enum/admin-roles.enum';
 
 @Injectable()
 export class IpWhitelistService {
@@ -137,9 +138,27 @@ export class IpWhitelistService {
     return user;
   }
 
-  async getByAdminId(adminId: string): Promise<string[]> {
-    const user = await this.getUser(adminId);
-    return this.parseList(user.ipWhitelist);
+  /**
+   * Vai trò + whitelist của một admin, trong MỘT truy vấn. Dùng cho các
+   * đường đọc (GET, và nhánh PATCH không đổi whitelist) — khác với
+   * setWhitelist/removeEntry vốn đã tự có adminRole từ dòng đang ghi.
+   *
+   * Không có dòng admin_users => coi như admin thường, KHÔNG giới hạn IP.
+   * Nhất quán với isIpAllowed(): thiếu cấu hình không phải lỗi 404, mà là
+   * "chưa cấu hình gì" (fail-open cho IP, fail-safe ADMIN cho quyền).
+   */
+  async getSecurityInfo(
+    adminId: string,
+  ): Promise<{ adminRole: EAdminRole; entries: string[] }> {
+    const user = await this.adminUserRepo.findOne({
+      where: { accountId: adminId },
+      select: { accountId: true, adminRole: true, ipWhitelist: true },
+    });
+    if (!user) return { adminRole: EAdminRole.ADMIN, entries: [] };
+    return {
+      adminRole: user.adminRole,
+      entries: this.parseList(user.ipWhitelist),
+    };
   }
 
   /**
@@ -173,7 +192,7 @@ export class IpWhitelistService {
     adminId: string,
     raw: string,
     reachableFrom?: string,
-  ): Promise<string[]> {
+  ): Promise<{ adminRole: EAdminRole; entries: string[] }> {
     const user = await this.getUser(adminId);
 
     const seen = new Set<string>();
@@ -199,7 +218,9 @@ export class IpWhitelistService {
 
     user.ipWhitelist = this.serializeList(normalized);
     await this.adminUserRepo.save(user);
-    return normalized;
+    // user đã được đọc bởi getUser() ở trên nên adminRole có sẵn, không cần
+    // đọc thêm lần nữa.
+    return { adminRole: user.adminRole, entries: normalized };
   }
 
   /**
@@ -211,7 +232,7 @@ export class IpWhitelistService {
     adminId: string,
     entry: string,
     reachableFrom?: string,
-  ): Promise<string[]> {
+  ): Promise<{ adminRole: EAdminRole; entries: string[] }> {
     this.validateEntry(entry);
 
     const user = await this.getUser(adminId);
@@ -232,7 +253,9 @@ export class IpWhitelistService {
 
     user.ipWhitelist = this.serializeList(updated);
     await this.adminUserRepo.save(user);
-    return updated;
+    // user đã được đọc bởi getUser() ở trên nên adminRole có sẵn, không cần
+    // đọc thêm lần nữa.
+    return { adminRole: user.adminRole, entries: updated };
   }
 
   async isIpAllowed(adminId: string, sourceIp: string): Promise<boolean> {
