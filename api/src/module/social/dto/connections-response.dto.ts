@@ -2,11 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ESocialPlatform } from '../../../common/enum/social-platform.enum';
 import { SocialAccountEntity } from '../entities/social-account.entity';
 
-/**
- * KHÔNG chứa access_token_encrypted / refresh_token_encrypted. Chúng là bí mật
- * của nền tảng, chỉ server dùng — trả entity thẳng sẽ đẩy ciphertext ra ngoài
- * mà không ai chủ ý.
- */
 export class SocialConnectionResponseDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;

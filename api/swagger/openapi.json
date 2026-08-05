@@ -781,6 +781,184 @@
         ]
       }
     },
+    "/admin/{id}/ip-whitelist": {
+      "delete": {
+        "operationId": "AdminController_removeIpWhitelistEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entry",
+            "required": true,
+            "in": "query",
+            "description": "IP hoặc CIDR cần xoá. So khớp sau khi chuẩn hoá nên gửi 10.0.0.5/24 cũng xoá được 10.0.0.0/24.",
+            "schema": {
+              "example": "10.0.0.0/24",
+              "type": "string"
+            }
+          },
+          {
+            "name": "acknowledgeSelfLockout",
+            "required": false,
+            "in": "query",
+            "description": "Chấp nhận mất quyền truy cập khi xoá chính dải đang cho mình đi qua.",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed IP or CIDR, or account is not an admin"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Account not found, or entry not in the whitelist"
+          },
+          "422": {
+            "description": "Removing this entry would lock the caller out; set acknowledgeSelfLockout to override"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Remove one IP/CIDR from an admin IP whitelist",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/admin/{id}": {
+      "get": {
+        "operationId": "AdminController_findAdminById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Account exists but is not an admin"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Account not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Read one admin account with its IP whitelist",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminController_updateAdmin",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed IP or CIDR; businessCode says which kind"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Account not found"
+          },
+          "422": {
+            "description": "Change would lock the caller out of their own whitelist; set acknowledgeSelfLockout to override"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Update an admin user; ipWhitelist replaces the whole CSV list",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/admin/profile/me": {
       "get": {
         "operationId": "ProfileController_getMe",
@@ -1583,6 +1761,12 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "ipWhitelist": {
+            "type": "string",
+            "nullable": true,
+            "example": "203.0.113.1,10.0.0.0/24",
+            "description": "null hoặc rỗng = cho phép truy cập từ mọi IP"
           }
         },
         "required": [
@@ -1596,7 +1780,8 @@
           "emailVerifiedAt",
           "phoneVerifiedAt",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "ipWhitelist"
         ]
       },
       "AdminFilterResponseDto": {
@@ -1745,6 +1930,23 @@
         "required": [
           "status"
         ]
+      },
+      "UpdateAdminDto": {
+        "type": "object",
+        "properties": {
+          "ipWhitelist": {
+            "type": "string",
+            "example": "203.0.113.1,10.0.0.0/24",
+            "maxLength": 2000,
+            "description": "CSV các IP/CIDR. Ghi đè toàn bộ. Chuỗi rỗng = cho phép mọi IP."
+          },
+          "acknowledgeSelfLockout": {
+            "type": "boolean",
+            "example": false,
+            "default": false,
+            "description": "Bỏ qua kiểm tra tự khoá khi tự sửa whitelist của mình. Dùng có ý thức."
+          }
+        }
       },
       "AdminProfileResponseDto": {
         "type": "object",

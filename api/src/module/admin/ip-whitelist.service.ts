@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Netmask } from 'netmask';
 import { BusinessCode } from './../../common/enum/business-code.enum';
 import { AdminUser } from './entities/admin_user.entity';
@@ -33,7 +33,37 @@ export class IpWhitelistService {
     return value.includes('/');
   }
 
+  private assertShape(entry: string): void {
+    const match = entry.match(
+      /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?:\/(\d{1,2}))?$/,
+    );
+
+    const shapeOk =
+      match !== null &&
+      match.slice(1, 5).every((octet) => Number(octet) <= 255) &&
+      (match[5] === undefined || Number(match[5]) <= 32);
+
+    if (!shapeOk) {
+      const isCidr = this.isCidr(entry);
+      throw new HttpException(
+        {
+          // Kèm entry vào message: BE dừng ở lỗi ĐẦU TIÊN nên client cần biết
+          // phần tử nào hỏng, không thì phải tự đoán trong cả chuỗi CSV.
+          message: isCidr
+            ? `Invalid CIDR format: ${entry}`
+            : `Invalid IP address format: ${entry}`,
+          businessCode: isCidr
+            ? BusinessCode.INVALID_CIDR_FORMAT
+            : BusinessCode.INVALID_IP_FORMAT,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   private validateEntry(entry: string): void {
+    this.assertShape(entry);
+
     try {
       new Netmask(entry);
     } catch {
@@ -56,6 +86,49 @@ export class IpWhitelistService {
     }
   }
 
+  /** IPv6 loopback và dạng IPv4-mapped đều quy về IPv4 để so với CIDR. */
+  private normalizeIp(sourceIp: string): string {
+    if (sourceIp === '::1') return '127.0.0.1';
+    if (sourceIp.startsWith('::ffff:')) return sourceIp.substring(7);
+    return sourceIp;
+  }
+
+  /**
+   * Danh sách rỗng = KHÔNG giới hạn, nên trả true. Đây là nguồn sự thật dùng
+   * chung cho cả isIpAllowed (lúc gác cổng) lẫn assertReachable (lúc ghi), để
+   * hai chỗ không thể lệch luật nhau.
+   */
+  private listAllows(list: string[], sourceIp: string): boolean {
+    if (list.length === 0) return true;
+
+    const normalized = this.normalizeIp(sourceIp);
+    return list.some((entry) => {
+      try {
+        return new Netmask(entry).contains(normalized);
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  private assertReachable(list: string[], clientIp: string): void {
+    if (this.listAllows(list, clientIp)) return;
+
+    // Trả dạng ĐÃ chuẩn hoá: so khớp chạy trên '127.0.0.1' chứ không phải
+    // '::ffff:127.0.0.1', nên hiện bản thô sẽ khiến người dùng gõ lại đúng
+    // chuỗi đó vào whitelist và vẫn bị chặn.
+    const normalized = this.normalizeIp(clientIp);
+
+    throw new HttpException(
+      {
+        message: `This change would lock you out: your current IP ${normalized} is not covered by the new whitelist.`,
+        businessCode: BusinessCode.IP_WHITELIST_WOULD_LOCK_YOU_OUT,
+        clientIp: normalized,
+      },
+      HttpStatus.UNPROCESSABLE_ENTITY,
+    );
+  }
+
   private async getUser(adminId: string): Promise<AdminUser> {
     const user = await this.adminUserRepo.findOne({
       where: { accountId: adminId },
@@ -69,46 +142,94 @@ export class IpWhitelistService {
     return this.parseList(user.ipWhitelist);
   }
 
-  async addEntry(adminId: string, cidr: string): Promise<string[]> {
-    this.validateEntry(cidr);
+  /**
+   * Whitelist của nhiều admin trong MỘT truy vấn, phục vụ danh sách phân trang.
+   * Đọc từng dòng một sẽ thành N+1.
+   *
+   * Admin không có dòng admin_users thì vắng mặt trong Map; chỗ gọi tự hiểu là
+   * null, tức không giới hạn.
+   */
+  async getManyByAdminIds(
+    adminIds: string[],
+  ): Promise<Map<string, string | null>> {
+    if (adminIds.length === 0) return new Map();
 
-    const user = await this.getUser(adminId);
-    const list = this.parseList(user.ipWhitelist);
+    const rows = await this.adminUserRepo.find({
+      where: { accountId: In(adminIds) },
+      select: { accountId: true, ipWhitelist: true },
+    });
 
-    if (list.includes(cidr)) {
-      if (this.isCidr(cidr)) {
-        throw new HttpException(
-          {
-            message: 'CIDR already exists.',
-            businessCode: BusinessCode.CIDR_EXISTS,
-          },
-          HttpStatus.CONFLICT,
-        );
-      }
-      throw new HttpException(
-        {
-          message: 'IP address already exists.',
-          businessCode: BusinessCode.IP_ADDRESS_EXISTS,
-        },
-        HttpStatus.CONFLICT,
-      );
-    }
-
-    list.push(cidr);
-    user.ipWhitelist = this.serializeList(list);
-    await this.adminUserRepo.save(user);
-    return list;
+    return new Map(rows.map((row) => [row.accountId, row.ipWhitelist]));
   }
 
-  async removeEntry(adminId: string, cidr: string): Promise<string[]> {
-    const user = await this.getUser(adminId);
-    const list = this.parseList(user.ipWhitelist);
+  private normalizeEntry(entry: string): string {
+    if (!this.isCidr(entry)) return entry;
 
-    if (!list.includes(cidr)) {
-      throw new NotFoundException('IP/CIDR not found in whitelist');
+    const block = new Netmask(entry);
+    return `${block.base}/${block.bitmask}`;
+  }
+
+  async setWhitelist(
+    adminId: string,
+    raw: string,
+    reachableFrom?: string,
+  ): Promise<string[]> {
+    const user = await this.getUser(adminId);
+
+    const seen = new Set<string>();
+    const normalized: string[] = [];
+
+    for (const entry of this.parseList(raw)) {
+      this.validateEntry(entry);
+
+      // Dedupe SAU khi chuẩn hoá: '10.0.0.5/24' và '10.0.0.7/24' là cùng một
+      // dải, để cả hai vào danh sách là thừa và gây hiểu nhầm.
+      const value = this.normalizeEntry(entry);
+      if (seen.has(value)) continue;
+
+      seen.add(value);
+      normalized.push(value);
     }
 
-    const updated = list.filter((e) => e !== cidr);
+    // Kiểm TRƯỚC khi ghi, và kiểm trên danh sách ĐÃ chuẩn hoá: '10.0.0.5/24'
+    // thành '10.0.0.0/24' nên phải so với thứ thực sự được lưu.
+    if (reachableFrom !== undefined) {
+      this.assertReachable(normalized, reachableFrom);
+    }
+
+    user.ipWhitelist = this.serializeList(normalized);
+    await this.adminUserRepo.save(user);
+    return normalized;
+  }
+
+  /**
+   * Xoá đúng MỘT phần tử khỏi whitelist.
+   * Đối chiếu sau khi CHUẨN HOÁ: client thấy '10.0.0.0/24' (thứ đã lưu) nhưng
+   * cũng có thể gửi '10.0.0.5/24' — cùng một dải thì phải xoá được.
+   */
+  async removeEntry(
+    adminId: string,
+    entry: string,
+    reachableFrom?: string,
+  ): Promise<string[]> {
+    this.validateEntry(entry);
+
+    const user = await this.getUser(adminId);
+    const list = this.parseList(user.ipWhitelist);
+    const target = this.normalizeEntry(entry);
+
+    const updated = list.filter((item) => this.normalizeEntry(item) !== target);
+
+    if (updated.length === list.length) {
+      throw new NotFoundException(`IP/CIDR not in whitelist: ${entry}`);
+    }
+
+    // Xoá tới rỗng là hợp lệ: rỗng nghĩa là bỏ giới hạn, không phải khoá cửa.
+    // Nhưng xoá phần tử ĐANG cho mình đi qua thì vẫn là tự khoá.
+    if (reachableFrom !== undefined) {
+      this.assertReachable(updated, reachableFrom);
+    }
+
     user.ipWhitelist = this.serializeList(updated);
     await this.adminUserRepo.save(user);
     return updated;
@@ -118,24 +239,9 @@ export class IpWhitelistService {
     const user = await this.adminUserRepo.findOne({
       where: { accountId: adminId },
     });
+    // Không có dòng admin_users nghĩa là chưa cấu hình gì => không giới hạn.
     if (!user) return true;
 
-    const list = this.parseList(user.ipWhitelist);
-    if (list.length === 0) return true;
-
-    let normalizedIp = sourceIp;
-    if (normalizedIp === '::1') {
-      normalizedIp = '127.0.0.1';
-    } else if (normalizedIp.startsWith('::ffff:')) {
-      normalizedIp = normalizedIp.substring(7);
-    }
-
-    return list.some((entry) => {
-      try {
-        return new Netmask(entry).contains(normalizedIp);
-      } catch {
-        return false;
-      }
-    });
+    return this.listAllows(this.parseList(user.ipWhitelist), sourceIp);
   }
 }

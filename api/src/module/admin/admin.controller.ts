@@ -4,18 +4,22 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Delete,
   Patch,
   Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBadRequestResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
+  ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { ERole } from '../../common/enum/roles.enum';
 import { JwtAuthGuard } from '../../security/jwt-auth.guard';
@@ -31,7 +35,14 @@ import {
   AdminResponseDto,
 } from './dto/admin-response.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
+import { UpdateAdminDto } from './dto/update-admin.dto';
+import { RemoveIpWhitelistDto } from './dto/remove-ip-whitelist.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
+import { extractClientIp } from '../../common/util/ip.util';
+import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
+// import type: isolatedModules + emitDecoratorMetadata cấm type thường trong
+// chữ ký đã decorate
+import type { Request as ExpressRequest } from 'express';
 
 @ApiTags('Admin')
 @ApiBearerAuth('access-token')
@@ -97,5 +108,94 @@ export class AdminController {
     @Body() dto: UpdateStatusDto,
   ) {
     return this.adminService.updateStatus(id, dto);
+  }
+
+  /**
+   * Xoá MỘT phần tử khỏi whitelist, thay cho việc gửi lại cả chuỗi.
+   *
+   * '/:id/ip-whitelist' lệch số đoạn với '/:id' nên hai route không tranh nhau.
+   */
+  @Delete('/:id/ip-whitelist')
+  @UseGuards(IpWhitelistGuard)
+  @ApiOperation({ summary: 'Remove one IP/CIDR from an admin IP whitelist' })
+  @ApiOkResponse({ type: AdminResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Malformed IP or CIDR, or account is not an admin',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({ description: 'Requires admin role' })
+  @ApiNotFoundResponse({
+    description: 'Account not found, or entry not in the whitelist',
+  })
+  @ApiUnprocessableEntityResponse({
+    description:
+      'Removing this entry would lock the caller out; set acknowledgeSelfLockout to override',
+  })
+  removeIpWhitelistEntry(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: RemoveIpWhitelistDto,
+    @Request() request: ExpressRequest & { user: AuthenticatedAccount },
+  ) {
+    return this.adminService.removeIpWhitelistEntry(
+      id,
+      query.entry.trim(),
+      {
+        accountId: request.user.id,
+        clientIp: extractClientIp(request),
+      },
+      query.acknowledgeSelfLockout === true,
+    );
+  }
+
+  /**
+   * PHẢI khai sau /admin-list, /brands-list, /creators-list: cùng method GET và
+   * cùng một đoạn đường dẫn, nên đặt trước thì '/admin-list' sẽ khớp vào :id và
+   * ParseUUIDPipe ném 400.
+   */
+  @Get('/:id')
+  @UseGuards(IpWhitelistGuard)
+  @ApiOperation({ summary: 'Read one admin account with its IP whitelist' })
+  @ApiOkResponse({ type: AdminResponseDto })
+  @ApiBadRequestResponse({ description: 'Account exists but is not an admin' })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({ description: 'Requires admin role' })
+  @ApiNotFoundResponse({ description: 'Account not found' })
+  findAdminById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.findAdminById(id);
+  }
+
+  @Patch('/:id')
+  @UseGuards(IpWhitelistGuard)
+  @ApiOperation({
+    summary: 'Update an admin user; ipWhitelist replaces the whole CSV list',
+  })
+  @ApiOkResponse({ type: AdminResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Malformed IP or CIDR; businessCode says which kind',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({ description: 'Requires admin role' })
+  @ApiNotFoundResponse({ description: 'Account not found' })
+  @ApiUnprocessableEntityResponse({
+    description:
+      'Change would lock the caller out of their own whitelist; set acknowledgeSelfLockout to override',
+  })
+  updateAdmin(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateAdminDto,
+    @Request() request: ExpressRequest & { user: AuthenticatedAccount },
+  ) {
+    // clientIp lấy từ request chứ không nhận từ body: để client tự khai IP của
+    // mình thì bất biến chống tự khoá thành vô nghĩa.
+    return this.adminService.updateAdmin(id, dto, {
+      accountId: request.user.id,
+      clientIp: extractClientIp(request),
+    });
   }
 }

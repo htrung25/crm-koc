@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,6 +23,8 @@ import { AdminFilters } from './dto/admin-filters.dto';
 import { BrandFilterDto } from './dto/brand-filters.dto';
 import { CreatorFilterDto } from './dto/creator-filters.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
+import { UpdateAdminDto } from './dto/update-admin.dto';
+import { IpWhitelistService } from './ip-whitelist.service';
 
 const ACCOUNT_LIST_FIELDS = [
   'id',
@@ -32,6 +35,12 @@ const ACCOUNT_LIST_FIELDS = [
   'status',
   'createdAt',
 ] as const;
+
+/**
+ * Dòng trong danh sách admin: account kèm whitelist lấy từ admin_users.
+ * ipWhitelist null nghĩa là KHÔNG giới hạn IP, không phải chặn hết.
+ */
+export type AdminListRow = AuthEntity & { ipWhitelist: string | null };
 
 /** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
 export type AccountListItem = Pick<
@@ -80,13 +89,16 @@ function assertEnum<T extends Record<string, string>>(
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
     private readonly accountCache: AccountCacheService,
+    private readonly ipWhitelistService: IpWhitelistService,
   ) {}
 
-  async findAll(query: AdminFilters): Promise<PaginatedResult<AuthEntity>> {
+  async findAll(query: AdminFilters): Promise<PaginatedResult<AdminListRow>> {
     const qb = this.authRepository
       .createQueryBuilder('account')
       .where('account.accountRole = :role', { role: ERole.ADMIN });
@@ -115,7 +127,20 @@ export class AdminService {
     // khoá thứ tự bằng id để phân trang ổn định khi nhiều dòng trùng giá trị sort
     qb.addOrderBy('account.id', ESortOrder.ASC);
 
-    return paginate(qb, query);
+    const page = await paginate(qb, query);
+
+    // Một truy vấn cho cả trang thay vì đọc từng dòng => tránh N+1.
+    const whitelists = await this.ipWhitelistService.getManyByAdminIds(
+      page.data.map((account) => account.id),
+    );
+
+    return {
+      ...page,
+      data: page.data.map((account) => ({
+        ...account,
+        ipWhitelist: whitelists.get(account.id) ?? null,
+      })),
+    };
   }
 
   /** Danh sách brand, phân trang + lọc. */
@@ -230,5 +255,101 @@ export class AdminService {
 
     const { password: _password, ...result } = saved;
     return result;
+  }
+
+  /**
+   * Đọc một admin kèm whitelist. Trả cùng hình dạng với updateAdmin để client
+   * dùng chung một kiểu dữ liệu cho cả lúc xem lẫn lúc sửa.
+   */
+  async findAdminById(
+    id: string,
+  ): Promise<AuthenticatedAccount & { ipWhitelist: string | null }> {
+    const account = await this.requireAdmin(id);
+    const entries = await this.ipWhitelistService.getByAdminId(id);
+    return this.toAdminResponse(account, entries);
+  }
+
+  async updateAdmin(
+    id: string,
+    dto: UpdateAdminDto,
+    caller: { accountId: string; clientIp: string },
+  ): Promise<AuthenticatedAccount & { ipWhitelist: string | null }> {
+    const account = await this.requireAdmin(id);
+
+    let entries: string[];
+    if (dto.ipWhitelist !== undefined) {
+      const isSelf = caller.accountId === id;
+      const overridden = dto.acknowledgeSelfLockout === true;
+
+      if (isSelf && overridden) {
+        // Ghi log vì đây là lối thoát khỏi một bất biến an toàn: cần vết để
+        // truy khi sau này có người mất quyền vào mà không rõ vì sao.
+        this.logger.warn(
+          `Admin ${id} tự đặt whitelist bỏ qua kiểm tra tự khoá từ IP ${caller.clientIp}`,
+        );
+      }
+
+      entries = await this.ipWhitelistService.setWhitelist(
+        id,
+        dto.ipWhitelist,
+        isSelf && !overridden ? caller.clientIp : undefined,
+      );
+    } else {
+      entries = await this.ipWhitelistService.getByAdminId(id);
+    }
+
+    return this.toAdminResponse(account, entries);
+  }
+
+  /**
+   * Xoá một IP/CIDR khỏi whitelist. Bất biến chống tự khoá áp cùng luật với
+   * updateAdmin: chỉ khi tự sửa của mình, và bỏ qua được bằng cờ có ghi log.
+   */
+  async removeIpWhitelistEntry(
+    id: string,
+    entry: string,
+    caller: { accountId: string; clientIp: string },
+    acknowledgeSelfLockout = false,
+  ): Promise<AuthenticatedAccount & { ipWhitelist: string | null }> {
+    const account = await this.requireAdmin(id);
+
+    const isSelf = caller.accountId === id;
+    if (isSelf && acknowledgeSelfLockout) {
+      this.logger.warn(
+        `Admin ${id} xoá '${entry}' khỏi whitelist, bỏ qua kiểm tra tự khoá từ IP ${caller.clientIp}`,
+      );
+    }
+
+    const entries = await this.ipWhitelistService.removeEntry(
+      id,
+      entry,
+      isSelf && !acknowledgeSelfLockout ? caller.clientIp : undefined,
+    );
+
+    return this.toAdminResponse(account, entries);
+  }
+
+  /** Tài khoản phải tồn tại VÀ là admin: chỉ admin mới có dòng admin_users. */
+  private async requireAdmin(id: string): Promise<AuthEntity> {
+    const account = await this.authRepository.findOneBy({ id });
+    if (!account) {
+      throw new NotFoundException('account not found');
+    }
+    if (account.accountRole !== ERole.ADMIN) {
+      throw new BadRequestException('account is not an admin');
+    }
+    return account;
+  }
+
+  /** Danh sách rỗng trả về null, đúng ngữ nghĩa "không giới hạn IP". */
+  private toAdminResponse(
+    account: AuthEntity,
+    entries: string[],
+  ): AuthenticatedAccount & { ipWhitelist: string | null } {
+    const { password: _password, ...result } = account;
+    return {
+      ...result,
+      ipWhitelist: entries.length ? entries.join(',') : null,
+    };
   }
 }
