@@ -8,6 +8,14 @@ type SelfLockoutDialogProps = {
   onAddCurrentIp: () => void;
   onForce: () => void;
   onDismiss: () => void;
+  /** true khi lời gọi lại (nút chính hoặc "Vẫn lưu") đang gửi. */
+  pending: boolean;
+  /**
+   * Lỗi của lần gọi lại GẦN NHẤT (khác 422 self-lockout — nếu là 422 cùng
+   * loại thì hook đã tự cập nhật `lockout`, dialog vẫn hiện). Phải hiện
+   * NGAY TRONG dialog vì overlay che khuất dòng lỗi ở thân trang.
+   */
+  error: string | null;
 };
 
 /** Selector các phần tử có thể focus trong dialog, dùng để bẫy Tab. */
@@ -26,6 +34,8 @@ export function SelfLockoutDialog({
   onAddCurrentIp,
   onForce,
   onDismiss,
+  pending,
+  error,
 }: SelfLockoutDialogProps) {
   const [acknowledged, setAcknowledged] = useState(false);
   const titleId = useId();
@@ -114,11 +124,21 @@ export function SelfLockoutDialog({
 
         <button
           type="button"
+          disabled={pending}
           onClick={onAddCurrentIp}
-          className="mt-5 w-full rounded-2xl bg-[#EF4623] px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-[#EF4623]/30 transition-colors hover:bg-[#D83B19] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30"
+          className="mt-5 w-full rounded-2xl bg-[#EF4623] px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-[#EF4623]/30 transition-colors hover:bg-[#D83B19] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30"
         >
-          Thêm {clientIp} vào danh sách rồi lưu
+          {pending ? "Đang lưu…" : `Thêm ${clientIp} vào danh sách rồi lưu`}
         </button>
+
+        {error && (
+          <p
+            role="alert"
+            className="mt-3 text-xs font-semibold text-[#EF4623]"
+          >
+            {error}
+          </p>
+        )}
 
         <div className="mt-5 border-t border-[#2D3B42]/10 pt-4">
           <label
@@ -138,7 +158,7 @@ export function SelfLockoutDialog({
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
-              disabled={!acknowledged}
+              disabled={!acknowledged || pending}
               onClick={onForce}
               className="rounded-full border border-[#EF4623]/40 px-4 py-2 text-xs font-bold text-[#EF4623] transition-colors hover:bg-[#EF4623]/10 disabled:cursor-not-allowed disabled:border-[#2D3B42]/15 disabled:text-[#8A7768] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30"
             >
@@ -147,8 +167,9 @@ export function SelfLockoutDialog({
 
             <button
               type="button"
+              disabled={pending}
               onClick={onDismiss}
-              className="rounded-full px-4 py-2 text-xs font-bold text-[#5C5049] transition-colors hover:bg-[#2D3B42]/8 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2D3B42]/20"
+              className="rounded-full px-4 py-2 text-xs font-bold text-[#5C5049] transition-colors hover:bg-[#2D3B42]/8 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2D3B42]/20"
             >
               Huỷ
             </button>

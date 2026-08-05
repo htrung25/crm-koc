@@ -299,14 +299,17 @@ export function IpWhitelistManager({
         <SelfLockoutDialog
           clientIp={lockout.clientIp}
           onAddCurrentIp={() => {
-            // KHÔNG dismissLockout() ở đây: dialog chỉ nên đóng khi mutation
-            // mới thực sự thành công (onSuccess của hook tự setLockout(null)).
-            // Đóng sớm mà lời gọi lại thất bại thì người dùng chỉ thấy một
-            // dòng lỗi rời rạc, mất luôn ngữ cảnh tự khoá.
+            // KHÔNG gọi dismissLockout() ở đây: dialog chỉ nên đóng khi lời
+            // gọi lại thực sự thành công — onSuccess của hook đã tự
+            // setLockout(null). Đóng sớm mà thao tác lại thất bại thì người
+            // dùng mất luôn ngữ cảnh tự khoá, chỉ còn thấy một dòng lỗi rời
+            // rạc ở thân trang, không hiểu vì sao dialog biến mất.
             addCurrentIpAndRetry(lockout.clientIp);
           }}
           onForce={forceLastAction}
           onDismiss={dismissLockout}
+          pending={pending}
+          error={error}
         />
       )}
     </section>

@@ -213,12 +213,13 @@ export function useIpWhitelist(initialWhitelist: string | null) {
         ? nextList
         : [...nextList, clientIp];
 
-      mutate({
-        operation: { kind: "replace", list: withClientIp },
-        acknowledge: false,
-      });
+      // Đi qua `replace` (không gọi thẳng `mutate`) để chốt độ dài
+      // MAX_WHITELIST_LENGTH cũng áp dụng ở đây — backend vẫn chặn nếu bỏ
+      // qua, nhưng lỗi tới muộn hơn một vòng mạng. `replace` luôn gửi
+      // acknowledge: false, đúng thứ ta cần cho lần thử lại này.
+      replace(withClientIp);
     },
-    [lastVariables, entries, addEntry, mutate],
+    [lastVariables, entries, addEntry, replace],
   );
 
   return {
