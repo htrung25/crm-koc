@@ -23,7 +23,7 @@ import { AdminFilters } from './dto/admin-filters.dto';
 import { BrandFilterDto } from './dto/brand-filters.dto';
 import { CreatorFilterDto } from './dto/creator-filters.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
-import { UpdateAdminDto } from './dto/update-admin.dto';
+import { AddIpWhitelistDto } from './dto/add-ip-whitelist.dto';
 import { EAdminRole } from './enum/admin-roles.enum';
 import { IpWhitelistService } from './ip-whitelist.service';
 
@@ -277,9 +277,9 @@ export class AdminService {
     return { ...this.toAdminResponse(account, entries), adminRole };
   }
 
-  async updateAdmin(
+  async updateIpWhitelist(
     id: string,
-    dto: UpdateAdminDto,
+    dto: AddIpWhitelistDto,
     caller: { accountId: string; clientIp: string },
   ): Promise<
     AuthenticatedAccount & { ipWhitelist: string | null; adminRole: EAdminRole }

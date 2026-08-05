@@ -18,10 +18,11 @@ import {
 /**
  * Sửa whitelist của CHÍNH người đang đăng nhập.
  *
- * Đường dẫn cố ý là '/me' chứ không phải '/[id]': bất biến chống tự khoá của
- * backend CHỈ áp khi ':id' là chính người gọi. Nếu trình duyệt truyền được id,
- * nó gửi được id của admin khác — request vẫn hợp lệ nhưng lá chắn tắt lặng lẽ.
- * Resolve id ở server thì id không bao giờ đi qua trình duyệt.
+ * Route này KHÔNG nhận `id` từ trình duyệt, và đó là điểm mấu chốt: bất biến
+ * chống tự khoá của backend CHỈ áp khi ':id' là chính người gọi. Nếu client
+ * truyền được id, nó gửi được id của admin khác — request vẫn hợp lệ với
+ * backend nhưng lá chắn tắt lặng lẽ. Vì vậy id luôn được resolve phía server
+ * qua `GET /me`, không bao giờ đi qua trình duyệt.
  */
 
 type Session = {
@@ -119,15 +120,20 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const result = await apiRequest<AdminResponse>(`/admin/${session.adminId}`, {
-      method: "PATCH",
-      body: {
-        ipWhitelist: payload.ipWhitelist,
-        acknowledgeSelfLockout: payload.acknowledgeSelfLockout === true,
+    // Ghi đè cả danh sách. Cùng đường dẫn với DELETE (xoá một phần tử) — hai
+    // thao tác trên cùng một sub-resource, khác method.
+    const result = await apiRequest<AdminResponse>(
+      `/admin/${session.adminId}/ip-whitelist`,
+      {
+        method: "PATCH",
+        body: {
+          ipWhitelist: payload.ipWhitelist,
+          acknowledgeSelfLockout: payload.acknowledgeSelfLockout === true,
+        },
+        token: session.token,
+        clientContext: session.clientContext,
       },
-      token: session.token,
-      clientContext: session.clientContext,
-    });
+    );
     return NextResponse.json(result);
   } catch (error) {
     return toErrorResponse(error);

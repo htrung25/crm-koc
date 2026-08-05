@@ -35,7 +35,7 @@ import {
   AdminResponseDto,
 } from './dto/admin-response.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
-import { UpdateAdminDto } from './dto/update-admin.dto';
+import { AddIpWhitelistDto } from './dto/add-ip-whitelist.dto';
 import { RemoveIpWhitelistDto } from './dto/remove-ip-whitelist.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 import { SuperAdminGuard } from './super-admin.guard';
@@ -129,11 +129,17 @@ export class AdminController {
     return this.adminService.findAdminById(id);
   }
 
-  @Patch('/:id')
+  /**
+   * Đặt lại TOÀN BỘ whitelist, đối xứng với DELETE cùng đường dẫn.
+   *
+   * Không dùng '/:id' trơn: đường dẫn đó đọc ra là "sửa tài khoản admin",
+   * trong khi body chỉ nhận mỗi whitelist. Giữ '/:id' trống để dành cho việc
+   * sửa hồ sơ admin thật sự sau này.
+   */
+  @Patch('/:id/ip-whitelist')
   @UseGuards(IpWhitelistGuard, SuperAdminGuard)
   @ApiOperation({
-    summary:
-      'Update an admin user; ipWhitelist replaces the whole CSV list. Super admin only',
+    summary: 'Replace the whole IP whitelist CSV of an admin. Super admin only',
   })
   @ApiOkResponse({ type: AdminResponseDto })
   @ApiBadRequestResponse({
@@ -152,12 +158,12 @@ export class AdminController {
   })
   updateAdmin(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateAdminDto,
+    @Body() dto: AddIpWhitelistDto,
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
   ) {
     // clientIp lấy từ request chứ không nhận từ body: để client tự khai IP của
     // mình thì bất biến chống tự khoá thành vô nghĩa.
-    return this.adminService.updateAdmin(id, dto, {
+    return this.adminService.updateIpWhitelist(id, dto, {
       accountId: request.user.id,
       clientIp: extractClientIp(request),
     });
