@@ -18,9 +18,6 @@ export const metadata: Metadata = {
 export default async function AdminSecurityPage() {
   const token = (await cookies()).get(ACCESS_COOKIE)?.value;
 
-  // Cùng nguồn IP mà route đăng nhập chuyển tiếp cho backend, và chuẩn hoá y
-  // hệt backend, nên con số hiển thị ở đây đúng bằng thứ IpWhitelistGuard sẽ
-  // đem đi so khớp. Bỏ chuẩn hoá là hiện `::1` trong khi guard so `127.0.0.1`.
   const clientContext = await getClientContext();
   const currentIp = normalizeClientIp(clientIpOf(clientContext));
 
@@ -29,7 +26,7 @@ export default async function AdminSecurityPage() {
   let admin: AdminResponse;
   try {
     const me = await apiRequest<{ id: string }>("/me", { token, clientContext });
-    admin = await apiRequest<AdminResponse>(`/admin/${me.id}`, {
+    admin = await apiRequest<AdminResponse>(`/admin/${me.id}/ip-whitelist`, {
       token,
       clientContext,
     });
@@ -38,9 +35,6 @@ export default async function AdminSecurityPage() {
     throw error;
   }
 
-  // Fail-safe: thiếu adminRole (backend chưa expose) thì coi như không có
-  // quyền sửa. Thà super admin phải hỏi vì sao không sửa được, còn hơn admin
-  // thường bấm nút rồi ăn 403 khó hiểu.
   const canEdit = admin.adminRole === "super_admin";
 
   return (

@@ -9,21 +9,6 @@ import {
   type LoginResult,
 } from "@/features/auth/types";
 
-/**
- * Bước 1 của đăng nhập: kiểm tra email/mật khẩu ở backend.
- *
- * Tài khoản admin không nhận token ngay — backend gửi OTP qua email và trả
- * `requireOtp`, phải gọi tiếp /api/auth/verify-otp. Brand/creator nhận token
- * luôn ở bước này.
- *
- * Backend có hai endpoint: /login/admin (kèm whitelist IP và bước OTP) và
- * /login dùng chung cho brand với creator. `expectedRole` chỉ xuất hiện ở
- * cổng admin — cổng công khai không truyền, vì chưa xác thực thì chưa biết
- * tài khoản là brand hay creator.
- *
- * Sai cổng bị backend trả 401 giống hệt sai mật khẩu: cố ý, để hai cổng không
- * thành máy dò xem một email có tồn tại và thuộc vai trò nào.
- */
 export async function POST(request: Request) {
   let payload: { email?: string; password?: string; expectedRole?: unknown };
 
@@ -50,7 +35,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await apiRequest<LoginResponse>(
-      expectedRole === "ADMIN" ? "/login/admin" : "/login",
+      expectedRole === "ADMIN" ? "/login/admin" : "/login/brand-creator",
       {
         method: "POST",
         body: { email, password },
