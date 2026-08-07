@@ -18,7 +18,7 @@ import {
   type WhitelistErrorBody,
 } from "./types";
 
-const ENDPOINT = "/api/admin/me/ip-whitelist";
+const ENDPOINT = "/api/admin/ip-whitelist";
 
 export type Lockout = { clientIp: string };
 
@@ -186,13 +186,6 @@ export function useIpWhitelist(initialWhitelist: string | null) {
     if (lastVariables) mutate({ ...lastVariables, acknowledge: true });
   }, [lastVariables, mutate]);
 
-  /**
-   * Nút chính của SelfLockoutDialog. PHẢI phái sinh payload từ `lastVariables`
-   * (thao tác vừa bị 422), KHÔNG từ `entries` (state cũ, chưa hề đổi vì
-   * mutation thất bại) — nếu không, ý định gốc của người dùng (replace bằng
-   * danh sách mới, hoặc remove một mục) sẽ bị vứt bỏ âm thầm, chỉ còn
-   * `entries + clientIp` được gửi mà UI vẫn báo "đã lưu".
-   */
   const addCurrentIpAndRetry = useCallback(
     (clientIp: string) => {
       if (!lastVariables) {
@@ -212,11 +205,6 @@ export function useIpWhitelist(initialWhitelist: string | null) {
       const withClientIp = nextList.includes(clientIp)
         ? nextList
         : [...nextList, clientIp];
-
-      // Đi qua `replace` (không gọi thẳng `mutate`) để chốt độ dài
-      // MAX_WHITELIST_LENGTH cũng áp dụng ở đây — backend vẫn chặn nếu bỏ
-      // qua, nhưng lỗi tới muộn hơn một vòng mạng. `replace` luôn gửi
-      // acknowledge: false, đúng thứ ta cần cho lần thử lại này.
       replace(withClientIp);
     },
     [lastVariables, entries, addEntry, replace],

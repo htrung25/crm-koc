@@ -1,11 +1,13 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Transactional } from 'typeorm-transactional';
 import { ERole } from '../../common/enum/roles.enum';
 import { EAccountSortField } from '../../common/enum/sort-fields.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
@@ -23,9 +25,11 @@ import { AdminFilters } from './dto/admin-filters.dto';
 import { BrandFilterDto } from './dto/brand-filters.dto';
 import { CreatorFilterDto } from './dto/creator-filters.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
-import { AddIpWhitelistDto } from './dto/add-ip-whitelist.dto';
+import { UpdateAdminDto } from './dto/update-admin.dto';
 import { EAdminRole } from './enum/admin-roles.enum';
+import { AdminUser } from './entities/admin_user.entity';
 import { IpWhitelistService } from './ip-whitelist.service';
+import { uniqueViolationOf } from '../../common/util/pg-error.util';
 
 const ACCOUNT_LIST_FIELDS = [
   'id',
@@ -38,10 +42,16 @@ const ACCOUNT_LIST_FIELDS = [
 ] as const;
 
 /**
- * Dòng trong danh sách admin: account kèm whitelist lấy từ admin_users.
- * ipWhitelist null nghĩa là KHÔNG giới hạn IP, không phải chặn hết.
+ * Dòng trong danh sách admin: account kèm whitelist và adminRole lấy từ
+ * admin_users. ipWhitelist null nghĩa là KHÔNG giới hạn IP, không phải chặn hết.
+ *
+ * adminRole có mặt ở đây để danh sách hiện được huy hiệu super admin mà không
+ * phải gọi thêm GET /admin/:id cho từng dòng.
  */
-export type AdminListRow = AuthEntity & { ipWhitelist: string | null };
+export type AdminListRow = AuthEntity & {
+  ipWhitelist: string | null;
+  adminRole: EAdminRole;
+};
 
 /** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
 export type AccountListItem = Pick<
@@ -49,13 +59,6 @@ export type AccountListItem = Pick<
   (typeof ACCOUNT_LIST_FIELDS)[number]
 >;
 
-/**
- * Dành cho enum SỐ (EAccountStatus).
- *
- * Không dùng chung assertEnum được: với enum số, Object.values() trả về CẢ
- * tên lẫn giá trị (['PENDING', ..., 1, 2, 3, 4]) do TypeScript sinh reverse
- * mapping. Ngoài ra status từ query string là chuỗi '2' nên phải Number().
- */
 function assertNumericEnum<T extends Record<string, string | number>>(
   enumType: T,
   value: unknown,
@@ -95,6 +98,9 @@ export class AdminService {
   constructor(
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
+    // Chỉ để đồng bộ bản sao email trong admin_users khi accounts.email đổi.
+    @InjectRepository(AdminUser)
+    private readonly adminUserRepository: Repository<AdminUser>,
     private readonly accountCache: AccountCacheService,
     private readonly ipWhitelistService: IpWhitelistService,
   ) {}
@@ -131,16 +137,22 @@ export class AdminService {
     const page = await paginate(qb, query);
 
     // Một truy vấn cho cả trang thay vì đọc từng dòng => tránh N+1.
-    const whitelists = await this.ipWhitelistService.getManyByAdminIds(
+    const securityInfo = await this.ipWhitelistService.getManyByAdminIds(
       page.data.map((account) => account.id),
     );
 
     return {
       ...page,
-      data: page.data.map((account) => ({
-        ...account,
-        ipWhitelist: whitelists.get(account.id) ?? null,
-      })),
+      data: page.data.map((account) => {
+        // Vắng dòng admin_users = admin thường, không giới hạn IP. Giống hệt
+        // fail-safe của getSecurityInfo, không phải 404.
+        const info = securityInfo.get(account.id);
+        return {
+          ...account,
+          ipWhitelist: info?.ipWhitelist ?? null,
+          adminRole: info?.adminRole ?? EAdminRole.ADMIN,
+        };
+      }),
     };
   }
 
@@ -258,11 +270,6 @@ export class AdminService {
     return result;
   }
 
-  /**
-   * Đọc một admin kèm whitelist và adminRole. Trả cùng hình dạng với
-   * updateAdmin/removeIpWhitelistEntry để client dùng chung một kiểu dữ liệu
-   * cho cả lúc xem lẫn lúc sửa (đúng AdminResponseDto).
-   */
   async findAdminById(
     id: string,
   ): Promise<
@@ -277,18 +284,26 @@ export class AdminService {
     return { ...this.toAdminResponse(account, entries), adminRole };
   }
 
-  async updateIpWhitelist(
+  /**
+   * Sửa một tài khoản admin. Phục vụ cả PATCH /admin/:id (toàn bộ field) lẫn
+   * PATCH /admin/:id/ip-whitelist (AddIpWhitelistDto là tập con của
+   * UpdateAdminDto nên dùng chung được một đường).
+   *
+   * Ghi hai bảng nên phải @Transactional: email là nguồn ở accounts (UNIQUE
+   * nằm đó) nhưng admin_users giữ một bản sao cho hồ sơ admin — nửa vời sẽ để
+   * GET /admin/profile/me trả email cũ mãi mãi.
+   */
+  @Transactional()
+  async updateAdminById(
     id: string,
-    dto: AddIpWhitelistDto,
+    dto: UpdateAdminDto,
     caller: { accountId: string; clientIp: string },
   ): Promise<
     AuthenticatedAccount & { ipWhitelist: string | null; adminRole: EAdminRole }
   > {
-    const account = await this.requireAdmin(id);
+    let account = await this.requireAdmin(id);
+    account = await this.applyAccountFields(account, dto);
 
-    // Khớp DTO với findAdminById: cả hai đường xem lẫn sửa đều trả adminRole.
-    // Mỗi nhánh chỉ đọc admin_users đúng một lần (setWhitelist đã tự trả
-    // adminRole từ dòng nó vừa ghi, không cần đọc lại).
     let entries: string[];
     let adminRole: EAdminRole;
     if (dto.ipWhitelist !== undefined) {
@@ -349,6 +364,71 @@ export class AdminService {
     );
 
     return { ...this.toAdminResponse(account, entries), adminRole };
+  }
+
+  /**
+   * Ghi phần thuộc bảng accounts của UpdateAdminDto. Không gửi field nào thì
+   * không đụng tới DB — nhánh PATCH /:id/ip-whitelist đi qua đây và phải rẻ.
+   *
+   * Trả về account đã lưu để chỗ gọi dựng response từ giá trị THẬT trong DB,
+   * không phải từ bản trong bộ nhớ.
+   */
+  private async applyAccountFields(
+    account: AuthEntity,
+    dto: UpdateAdminDto,
+  ): Promise<AuthEntity> {
+    // undefined = client không gửi => giữ nguyên. null = chủ động xoá.
+    let touched = false;
+    if (dto.name !== undefined) {
+      account.name = dto.name;
+      touched = true;
+    }
+    if (dto.phone !== undefined) {
+      account.phone = dto.phone;
+      touched = true;
+    }
+    if (dto.statusReason !== undefined) {
+      account.statusReason = dto.statusReason;
+      touched = true;
+    }
+    if (dto.status !== undefined) {
+      account.status = assertNumericEnum(EAccountStatus, dto.status, 'status');
+      touched = true;
+    }
+
+    const email =
+      dto.email === undefined ? undefined : dto.email.trim().toLowerCase();
+    if (email !== undefined && email !== account.email) {
+      account.email = email;
+      touched = true;
+    }
+
+    if (!touched) return account;
+
+    let saved: AuthEntity;
+    try {
+      saved = await this.authRepository.save(account);
+      if (email !== undefined) {
+        // admin_users giữ bản sao email cho hồ sơ admin; không đồng bộ thì
+        // GET /admin/profile/me trả email cũ mãi.
+        await this.adminUserRepository.update(
+          { accountId: account.id },
+          { email },
+        );
+      }
+    } catch (error) {
+      // Ràng buộc duy nhất duy nhất chạm được từ đây là accounts.email.
+      if (uniqueViolationOf(error) !== null) {
+        throw new ConflictException('email already exists');
+      }
+      throw error;
+    }
+
+    // Cache giữ nguyên cả AuthenticatedAccount, nên đổi bất kỳ cột nào cũng
+    // phải xoá — không riêng status. Bỏ qua thì ban/đổi email không có hiệu
+    // lực cho tới khi cache tự hết hạn.
+    await this.accountCache.invalidate(account.id);
+    return saved;
   }
 
   /** Tài khoản phải tồn tại VÀ là admin: chỉ admin mới có dòng admin_users. */

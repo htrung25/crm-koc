@@ -1,0 +1,27 @@
+# node_modules của macOS chứa native addon không chạy được trên Linux
+node_modules
+dist
+coverage
+.git
+.gitignore
+
+# Secret không bao giờ được nướng vào image; env đi qua env_file lúc runtime
+.env
+.env.*
+!.env.docker.example
+.env.example
+
+uploads
+*.log
+.DS_Store
+.vscode
+.idea
+
+# Công cụ dev, không liên quan tới build
+.claude
+.gitnexus
+.superpowers
+skills-lock.json
+README.md
+Dockerfile
+docker-compose*.yml

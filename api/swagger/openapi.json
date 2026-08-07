@@ -783,6 +783,116 @@
     },
     "/admin/{id}": {
       "get": {
+        "operationId": "AdminController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Account exists but is not an admin"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Account not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Read one admin account in detail",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body, malformed IP/CIDR, or account is not an admin"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires super admin role, or IP not whitelisted"
+          },
+          "404": {
+            "description": "Account not found"
+          },
+          "409": {
+            "description": "Email already belongs to another account"
+          },
+          "422": {
+            "description": "Change would lock the caller out of their own whitelist; set acknowledgeSelfLockout to override"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Update one admin account. Super admin only",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/admin/{id}/ip-whitelist": {
+      "get": {
         "operationId": "AdminController_findAdminById",
         "parameters": [
           {
@@ -845,7 +955,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateAdminDto"
+                "$ref": "#/components/schemas/AddIpWhitelistDto"
               }
             }
           }
@@ -882,13 +992,11 @@
             "access-token": []
           }
         ],
-        "summary": "Update an admin user; ipWhitelist replaces the whole CSV list. Super admin only",
+        "summary": "Replace the whole IP whitelist CSV of an admin. Super admin only",
         "tags": [
           "Admin"
         ]
-      }
-    },
-    "/admin/{id}/ip-whitelist": {
+      },
       "delete": {
         "operationId": "AdminController_removeIpWhitelistEntry",
         "parameters": [
@@ -1975,11 +2083,13 @@
           },
           "email": {
             "type": "string",
-            "format": "email"
+            "format": "email",
+            "description": "Ràng buộc UNIQUE nằm ở accounts.email; trùng sẽ trả 409. Giá trị được trim + lowercase trước khi ghi."
           },
           "phone": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "maxLength": 20
           },
           "status": {
             "allOf": [
@@ -1990,25 +2100,9 @@
           },
           "statusReason": {
             "type": "string",
-            "nullable": true
-          },
-          "emailVerifiedAt": {
-            "type": "string",
             "nullable": true,
-            "format": "date-time"
-          },
-          "phoneVerifiedAt": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string"
+            "example": "Spamming campaigns",
+            "description": "Shown to the account owner when they are blocked"
           },
           "ipWhitelist": {
             "type": "string",
@@ -2022,18 +2116,24 @@
             "default": false,
             "description": "Bỏ qua kiểm tra tự khoá khi tự sửa whitelist của mình. Dùng có ý thức."
           }
-        },
-        "required": [
-          "name",
-          "email",
-          "phone",
-          "status",
-          "statusReason",
-          "emailVerifiedAt",
-          "phoneVerifiedAt",
-          "createdAt",
-          "updatedAt"
-        ]
+        }
+      },
+      "AddIpWhitelistDto": {
+        "type": "object",
+        "properties": {
+          "ipWhitelist": {
+            "type": "string",
+            "example": "203.0.113.1,10.0.0.0/24",
+            "maxLength": 2000,
+            "description": "CSV các IP/CIDR. Ghi đè toàn bộ. Chuỗi rỗng = cho phép mọi IP."
+          },
+          "acknowledgeSelfLockout": {
+            "type": "boolean",
+            "example": false,
+            "default": false,
+            "description": "Bỏ qua kiểm tra tự khoá khi tự sửa whitelist của mình. Dùng có ý thức."
+          }
+        }
       },
       "AdminProfileResponseDto": {
         "type": "object",

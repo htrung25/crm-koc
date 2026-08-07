@@ -15,16 +15,6 @@ import {
   type WhitelistErrorBody,
 } from "@/features/admin/ip-whitelist/types";
 
-/**
- * Sửa whitelist của CHÍNH người đang đăng nhập.
- *
- * Route này KHÔNG nhận `id` từ trình duyệt, và đó là điểm mấu chốt: bất biến
- * chống tự khoá của backend CHỈ áp khi ':id' là chính người gọi. Nếu client
- * truyền được id, nó gửi được id của admin khác — request vẫn hợp lệ với
- * backend nhưng lá chắn tắt lặng lẽ. Vì vậy id luôn được resolve phía server
- * qua `GET /me`, không bao giờ đi qua trình duyệt.
- */
-
 type Session = {
   token: string;
   adminId: string;
@@ -41,12 +31,6 @@ async function resolveSession(): Promise<Session | NextResponse> {
   // Next, bất biến chống tự khoá vẫn chạy nhưng so sai IP.
   const clientContext = await getClientContext();
 
-  // Fail CLOSED, không fail open: nếu không xác định được IP thật của người
-  // gọi thì DỪNG LẠI ở đây, đừng gửi request tới backend. Nếu để lọt qua,
-  // bất biến chống tự khoá của backend vẫn "chạy" nhưng so nhầm với IP của
-  // server Next — admin có thể lưu whitelist thiếu IP của chính mình mà vẫn
-  // nhận 200, rồi bị khoá ở request kế tiếp. Thà chặn thao tác còn hơn để
-  // lá chắn trông như hoạt động trong khi đã vô hiệu.
   if (!clientIpOf(clientContext)) {
     return NextResponse.json(
       {
@@ -70,13 +54,6 @@ async function resolveSession(): Promise<Session | NextResponse> {
 
 function toErrorResponse(error: unknown): NextResponse {
   if (!(error instanceof ApiError)) throw error;
-
-  // SuperAdminGuard ném `new ForbiddenException('REQUIRES_SUPER_ADMIN')`, tức
-  // Nest trả { statusCode: 403, error: 'Forbidden', message: 'REQUIRES_SUPER_ADMIN' }
-  // — KHÔNG có field businessCode như các lỗi nghiệp vụ khác của whitelist
-  // (vd IP_WHITELIST_WOULD_LOCK_YOU_OUT). Nếu không chuẩn hoá ở đây, lớp UI so
-  // body.businessCode === SUPER_ADMIN_REQUIRED sẽ luôn sai lặng lẽ, và người
-  // dùng sẽ thấy thẳng chuỗi tiếng Anh "REQUIRES_SUPER_ADMIN".
   if (error.status === 403 && error.message === "REQUIRES_SUPER_ADMIN") {
     const body: WhitelistErrorBody = {
       message: "Chỉ super admin mới thay đổi được danh sách này.",

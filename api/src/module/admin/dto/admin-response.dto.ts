@@ -50,11 +50,6 @@ export class AdminResponseDto {
   })
   ipWhitelist!: string | null;
 
-  /**
-   * Phân cấp nội bộ giữa các admin. FE dùng field này để quyết định render
-   * trình soạn thảo hay chế độ chỉ-đọc — nếu không có, nó phải thử ghi rồi
-   * ăn 403 REQUIRES_SUPER_ADMIN mới biết.
-   */
   @ApiProperty({ enum: EAdminRole, enumName: 'EAdminRole' })
   adminRole!: EAdminRole;
 }

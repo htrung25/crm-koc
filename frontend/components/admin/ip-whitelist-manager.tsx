@@ -42,7 +42,7 @@ export function IpWhitelistManager({
     // Huỷ khi component unmount để không setState trên cây đã gỡ.
     const controller = new AbortController();
 
-    fetch("/api/get-client-ip", { signal: controller.signal })
+    fetch("/api/admin/get-client-ip", { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data: { ip?: string | null } | null) => {
         if (typeof data?.ip === "string") setCurrentIp(data.ip);

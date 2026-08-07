@@ -1,0 +1,66 @@
+name: crm-koc
+
+services:
+  postgres:
+    image: postgres:18-bookworm
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      # Đổi HOST_DB_PORT nếu máy đã có Postgres chiếm 5432.
+      - '${HOST_DB_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      # $$ để shell trong container tự giãn biến, không phải compose giãn.
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '${HOST_REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      target: runner
+    # Đặt tên image khác nhau cho prod/dev, nếu không compose sẽ dùng lại image
+    # cũ của target kia mà không rebuild.
+    image: crm-koc-api:prod
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env.docker
+    environment:
+      # Ghi đè để trỏ vào service trong network của compose, bất kể .env.docker
+      # ghi gì — đây là nguồn hay sai nhất khi copy env từ máy khác.
+      DATABASE_HOST: postgres
+      DATABASE_PORT: '5432'
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+    ports:
+      - '${HOST_API_PORT:-3000}:3000'
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  redis-data:
+  uploads:

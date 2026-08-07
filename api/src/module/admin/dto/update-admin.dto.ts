@@ -1,35 +1,68 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 
+/**
+ * Body của PATCH /admin/:id — sửa một tài khoản admin.
+ *
+ * MỌI FIELD BẮT BUỘC PHẢI CÓ DECORATOR VALIDATOR. ValidationPipe chạy với
+ * `whitelist` + `forbidNonWhitelisted` (main.ts), và target là ES2023 nên
+ * `useDefineForClassFields` bật: một field khai trong class VẪN tồn tại trên
+ * instance với giá trị `undefined` sau `plainToInstance`, kể cả khi client
+ * không gửi nó. Field không có validator sẽ bị coi là property lạ và làm MỌI
+ * request bị từ chối 400 "property X should not exist" — dù body hợp lệ.
+ *
+ * Ngữ nghĩa PATCH: `undefined` (không gửi field) = giữ nguyên; `null` = chủ
+ * động xoá giá trị. Riêng `ipWhitelist` là GHI ĐÈ toàn bộ chuỗi CSV, chuỗi
+ * rỗng = cho phép mọi IP (không phải chặn hết).
+ */
 export class UpdateAdminDto {
-  @ApiProperty({ maxLength: 255 })
-  name!: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  @ApiPropertyOptional({ maxLength: 255 })
+  name?: string;
 
-  @ApiProperty({ format: 'email' })
-  email!: string;
+  @IsOptional()
+  @IsEmail()
+  @ApiPropertyOptional({
+    format: 'email',
+    description:
+      'Ràng buộc UNIQUE nằm ở accounts.email; trùng sẽ trả 409. Giá trị được trim + lowercase trước khi ghi.',
+  })
+  email?: string;
 
-  @ApiProperty({ nullable: true, type: String })
-  phone!: string | null;
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  @ApiPropertyOptional({ nullable: true, type: String, maxLength: 20 })
+  phone?: string | null;
 
-  @ApiProperty({ enum: EAccountStatus, enumName: 'EAccountStatus' })
-  status!: EAccountStatus;
+  @IsOptional()
+  @IsEnum(EAccountStatus, {
+    message:
+      'status must be 1 (pending), 2 (active), 3 (suspended) or 4 (banned)',
+  })
+  @ApiPropertyOptional({ enum: EAccountStatus, enumName: 'EAccountStatus' })
+  status?: EAccountStatus;
 
-  @ApiProperty({ nullable: true, type: String })
-  statusReason!: string | null;
-
-  @ApiProperty({ nullable: true, type: String, format: 'date-time' })
-  emailVerifiedAt!: Date | null;
-
-  @ApiProperty({ nullable: true, type: String, format: 'date-time' })
-  phoneVerifiedAt!: Date | null;
-
-  @ApiProperty({ format: 'date-time' })
-  createdAt!: Date;
-
-  @ApiProperty({ format: 'date-time' })
-  updatedAt!: Date;
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    example: 'Spamming campaigns',
+    description: 'Shown to the account owner when they are blocked',
+  })
+  statusReason?: string | null;
 
   @IsOptional()
   @IsString()

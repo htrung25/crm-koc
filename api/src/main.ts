@@ -57,6 +57,12 @@ async function bootstrap() {
   );
 
   setupSwagger(app);
+
+  // Không có hook này thì SIGTERM (docker stop, nest --watch restart) không gọi
+  // onModuleDestroy: socket Redis còn mở giữ process sống, lần start sau đụng
+  // EADDRINUSE.
+  app.enableShutdownHooks();
+
   const port = configService.get<number>('PORT', 3000);
 
   await app.listen(port, '0.0.0.0');

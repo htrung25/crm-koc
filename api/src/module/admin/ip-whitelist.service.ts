@@ -94,11 +94,6 @@ export class IpWhitelistService {
     return sourceIp;
   }
 
-  /**
-   * Danh sách rỗng = KHÔNG giới hạn, nên trả true. Đây là nguồn sự thật dùng
-   * chung cho cả isIpAllowed (lúc gác cổng) lẫn assertReachable (lúc ghi), để
-   * hai chỗ không thể lệch luật nhau.
-   */
   private listAllows(list: string[], sourceIp: string): boolean {
     if (list.length === 0) return true;
 
@@ -114,10 +109,6 @@ export class IpWhitelistService {
 
   private assertReachable(list: string[], clientIp: string): void {
     if (this.listAllows(list, clientIp)) return;
-
-    // Trả dạng ĐÃ chuẩn hoá: so khớp chạy trên '127.0.0.1' chứ không phải
-    // '::ffff:127.0.0.1', nên hiện bản thô sẽ khiến người dùng gõ lại đúng
-    // chuỗi đó vào whitelist và vẫn bị chặn.
     const normalized = this.normalizeIp(clientIp);
 
     throw new HttpException(
@@ -138,15 +129,6 @@ export class IpWhitelistService {
     return user;
   }
 
-  /**
-   * Vai trò + whitelist của một admin, trong MỘT truy vấn. Dùng cho các
-   * đường đọc (GET, và nhánh PATCH không đổi whitelist) — khác với
-   * setWhitelist/removeEntry vốn đã tự có adminRole từ dòng đang ghi.
-   *
-   * Không có dòng admin_users => coi như admin thường, KHÔNG giới hạn IP.
-   * Nhất quán với isIpAllowed(): thiếu cấu hình không phải lỗi 404, mà là
-   * "chưa cấu hình gì" (fail-open cho IP, fail-safe ADMIN cho quyền).
-   */
   async getSecurityInfo(
     adminId: string,
   ): Promise<{ adminRole: EAdminRole; entries: string[] }> {
@@ -161,24 +143,24 @@ export class IpWhitelistService {
     };
   }
 
-  /**
-   * Whitelist của nhiều admin trong MỘT truy vấn, phục vụ danh sách phân trang.
-   * Đọc từng dòng một sẽ thành N+1.
-   *
-   * Admin không có dòng admin_users thì vắng mặt trong Map; chỗ gọi tự hiểu là
-   * null, tức không giới hạn.
-   */
   async getManyByAdminIds(
     adminIds: string[],
-  ): Promise<Map<string, string | null>> {
+  ): Promise<
+    Map<string, { ipWhitelist: string | null; adminRole: EAdminRole }>
+  > {
     if (adminIds.length === 0) return new Map();
 
     const rows = await this.adminUserRepo.find({
       where: { accountId: In(adminIds) },
-      select: { accountId: true, ipWhitelist: true },
+      select: { accountId: true, ipWhitelist: true, adminRole: true },
     });
 
-    return new Map(rows.map((row) => [row.accountId, row.ipWhitelist]));
+    return new Map(
+      rows.map((row) => [
+        row.accountId,
+        { ipWhitelist: row.ipWhitelist, adminRole: row.adminRole },
+      ]),
+    );
   }
 
   private normalizeEntry(entry: string): string {
@@ -210,8 +192,6 @@ export class IpWhitelistService {
       normalized.push(value);
     }
 
-    // Kiểm TRƯỚC khi ghi, và kiểm trên danh sách ĐÃ chuẩn hoá: '10.0.0.5/24'
-    // thành '10.0.0.0/24' nên phải so với thứ thực sự được lưu.
     if (reachableFrom !== undefined) {
       this.assertReachable(normalized, reachableFrom);
     }
@@ -223,11 +203,6 @@ export class IpWhitelistService {
     return { adminRole: user.adminRole, entries: normalized };
   }
 
-  /**
-   * Xoá đúng MỘT phần tử khỏi whitelist.
-   * Đối chiếu sau khi CHUẨN HOÁ: client thấy '10.0.0.0/24' (thứ đã lưu) nhưng
-   * cũng có thể gửi '10.0.0.5/24' — cùng một dải thì phải xoá được.
-   */
   async removeEntry(
     adminId: string,
     entry: string,
