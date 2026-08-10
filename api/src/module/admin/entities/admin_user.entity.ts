@@ -21,40 +21,40 @@ import { EAdminRole } from '../enum/admin-roles.enum';
 @Entity('admin_users')
 export class AdminUser {
   @PrimaryColumn({ type: 'uuid' })
-  accountId!: string;
+  accountId: string;
 
   @OneToOne(() => AuthEntity, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'account_id' })
-  account?: AuthEntity;
+  account: AuthEntity;
 
   // varchar + CHECK ở migration, không phải enum type của Postgres. Khai
   // type: 'enum' ở đây sẽ khiến metadata lệch với schema thật mà không báo lỗi.
   @Column({ type: 'varchar', length: 16, default: AdminStatus.ACTIVE })
-  status!: AdminStatus;
+  status: AdminStatus;
 
   /**
    * Chỉ super_admin mới sửa được whitelist của admin khác. Đọc từ DB chứ không
    * nhét vào JWT: hạ quyền phải có hiệu lực ngay, không chờ token hết hạn.
    */
   @Column({ type: 'varchar', length: 32, default: EAdminRole.ADMIN })
-  adminRole!: EAdminRole;
+  adminRole: EAdminRole;
 
   /** Danh sách IP/CIDR ngăn cách bởi dấu phẩy, NULL nghĩa là không giới hạn */
   @Column({ type: 'text', nullable: true })
-  ipWhitelist!: string | null;
+  ipWhitelist: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  name!: string | null;
+  name: string | null;
 
   @Column({ type: 'citext' })
-  email!: string;
+  email: string;
 
   @Column({ type: 'text', nullable: true })
-  avatarUrl!: string | null;
+  avatarUrl: string | null;
 
   @Column({ type: 'varchar', length: 64, default: 'Asia/Ho_Chi_Minh' })
-  timezone!: string;
+  timezone: string;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt!: Date;
+  updatedAt: Date;
 }

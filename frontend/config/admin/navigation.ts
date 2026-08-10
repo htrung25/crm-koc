@@ -25,6 +25,11 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
  */
 export const ADMIN_SYSTEM_ITEMS: NavigationItem[] = [
   {
+    label: "Hồ sơ admin",
+    href: "/admin/profile",
+    iconName: "user",
+  },
+  {
     label: "Bảo mật & IP",
     href: "/admin/security",
     iconName: "shield",

@@ -203,36 +203,6 @@ export class IpWhitelistService {
     return { adminRole: user.adminRole, entries: normalized };
   }
 
-  async removeEntry(
-    adminId: string,
-    entry: string,
-    reachableFrom?: string,
-  ): Promise<{ adminRole: EAdminRole; entries: string[] }> {
-    this.validateEntry(entry);
-
-    const user = await this.getUser(adminId);
-    const list = this.parseList(user.ipWhitelist);
-    const target = this.normalizeEntry(entry);
-
-    const updated = list.filter((item) => this.normalizeEntry(item) !== target);
-
-    if (updated.length === list.length) {
-      throw new NotFoundException(`IP/CIDR not in whitelist: ${entry}`);
-    }
-
-    // Xoá tới rỗng là hợp lệ: rỗng nghĩa là bỏ giới hạn, không phải khoá cửa.
-    // Nhưng xoá phần tử ĐANG cho mình đi qua thì vẫn là tự khoá.
-    if (reachableFrom !== undefined) {
-      this.assertReachable(updated, reachableFrom);
-    }
-
-    user.ipWhitelist = this.serializeList(updated);
-    await this.adminUserRepo.save(user);
-    // user đã được đọc bởi getUser() ở trên nên adminRole có sẵn, không cần
-    // đọc thêm lần nữa.
-    return { adminRole: user.adminRole, entries: updated };
-  }
-
   async isIpAllowed(adminId: string, sourceIp: string): Promise<boolean> {
     const user = await this.adminUserRepo.findOne({
       where: { accountId: adminId },

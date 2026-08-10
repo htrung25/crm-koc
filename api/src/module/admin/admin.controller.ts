@@ -36,9 +36,6 @@ import {
   AdminResponseDto,
 } from './dto/admin-response.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
-import { AddIpWhitelistDto } from './dto/add-ip-whitelist.dto';
-import { UpdateAdminDto } from './dto/update-admin.dto';
-import { RemoveIpWhitelistDto } from './dto/remove-ip-whitelist.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 import { SuperAdminGuard } from './super-admin.guard';
 import { extractClientIp } from '../../common/util/ip.util';
@@ -159,7 +156,7 @@ export class AdminController {
   })
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateAdminDto,
+    @Body() dto: AdminResponseDto,
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
   ) {
     // clientIp lấy từ request chứ không nhận từ body: để client tự khai IP của
@@ -170,60 +167,14 @@ export class AdminController {
     });
   }
 
-  @Get('/:id/ip-whitelist')
-  @ApiOperation({ summary: 'Read one admin account with its IP whitelist' })
-  @ApiOkResponse({ type: AdminResponseDto })
-  @ApiBadRequestResponse({ description: 'Account exists but is not an admin' })
-  @ApiUnauthorizedResponse({
-    description: 'Token is missing, invalid or expired',
-  })
-  @ApiForbiddenResponse({ description: 'Requires admin role' })
-  @ApiNotFoundResponse({ description: 'Account not found' })
-  findAdminById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.adminService.findAdminById(id);
-  }
-
-  @Patch('/:id/ip-whitelist')
+  @Delete('/:id')
   @UseGuards(SuperAdminGuard)
   @ApiOperation({
-    summary: 'Replace the whole IP whitelist CSV of an admin. Super admin only',
+    summary: 'Delete one admin account. Super admin only',
   })
   @ApiOkResponse({ type: AdminResponseDto })
   @ApiBadRequestResponse({
-    description: 'Malformed IP or CIDR; businessCode says which kind',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Token is missing, invalid or expired',
-  })
-  @ApiForbiddenResponse({
-    description: 'Requires super admin role, or IP not whitelisted',
-  })
-  @ApiNotFoundResponse({ description: 'Account not found' })
-  @ApiUnprocessableEntityResponse({
-    description:
-      'Change would lock the caller out of their own whitelist; set acknowledgeSelfLockout to override',
-  })
-  updateAdmin(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: AddIpWhitelistDto,
-    @Request() request: ExpressRequest & { user: AuthenticatedAccount },
-  ) {
-    // clientIp lấy từ request chứ không nhận từ body: để client tự khai IP của
-    // mình thì bất biến chống tự khoá thành vô nghĩa.
-    return this.adminService.updateAdminById(id, dto, {
-      accountId: request.user.id,
-      clientIp: extractClientIp(request),
-    });
-  }
-
-  @Delete('/:id/ip-whitelist')
-  @UseGuards(SuperAdminGuard)
-  @ApiOperation({
-    summary: 'Remove one IP/CIDR from an admin IP whitelist. Super admin only',
-  })
-  @ApiOkResponse({ type: AdminResponseDto })
-  @ApiBadRequestResponse({
-    description: 'Malformed IP or CIDR, or account is not an admin',
+    description: 'Account exists but is not an admin',
   })
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
@@ -232,25 +183,9 @@ export class AdminController {
     description: 'Requires super admin role, or IP not whitelisted',
   })
   @ApiNotFoundResponse({
-    description: 'Account not found, or entry not in the whitelist',
+    description: 'Account not found',
   })
-  @ApiUnprocessableEntityResponse({
-    description:
-      'Removing this entry would lock the caller out; set acknowledgeSelfLockout to override',
-  })
-  async removeIpWhitelistEntry(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Query() query: RemoveIpWhitelistDto,
-    @Request() request: ExpressRequest & { user: AuthenticatedAccount },
-  ) {
-    return this.adminService.removeIpWhitelistEntry(
-      id,
-      query.entry.trim(),
-      {
-        accountId: request.user.id,
-        clientIp: extractClientIp(request),
-      },
-      query.acknowledgeSelfLockout === true,
-    );
+  delete(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.deleteAdminById(id);
   }
 }
