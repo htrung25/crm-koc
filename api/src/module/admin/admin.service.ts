@@ -25,7 +25,7 @@ import { AdminFilters } from './dto/admin-filters.dto';
 import { BrandFilterDto } from './dto/brand-filters.dto';
 import { CreatorFilterDto } from './dto/creator-filters.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
-import { UpdateAdminDto } from './dto/update-admin.dto';
+import { AdminResponseDto } from './dto/admin-response.dto';
 import { EAdminRole } from './enum/admin-roles.enum';
 import { AdminUser } from './entities/admin_user.entity';
 import { IpWhitelistService } from './ip-whitelist.service';
@@ -285,9 +285,7 @@ export class AdminService {
   }
 
   /**
-   * Sửa một tài khoản admin. Phục vụ cả PATCH /admin/:id (toàn bộ field) lẫn
-   * PATCH /admin/:id/ip-whitelist (AddIpWhitelistDto là tập con của
-   * UpdateAdminDto nên dùng chung được một đường).
+   * Sửa một tài khoản admin qua PATCH /admin/:id.
    *
    * Ghi hai bảng nên phải @Transactional: email là nguồn ở accounts (UNIQUE
    * nằm đó) nhưng admin_users giữ một bản sao cho hồ sơ admin — nửa vời sẽ để
@@ -296,7 +294,7 @@ export class AdminService {
   @Transactional()
   async updateAdminById(
     id: string,
-    dto: UpdateAdminDto,
+    dto: AdminResponseDto,
     caller: { accountId: string; clientIp: string },
   ): Promise<
     AuthenticatedAccount & { ipWhitelist: string | null; adminRole: EAdminRole }
@@ -320,7 +318,7 @@ export class AdminService {
 
       const result = await this.ipWhitelistService.setWhitelist(
         id,
-        dto.ipWhitelist,
+        dto.ipWhitelist ?? '',
         isSelf && !overridden ? caller.clientIp : undefined,
       );
       entries = result.entries;
@@ -334,48 +332,28 @@ export class AdminService {
     return { ...this.toAdminResponse(account, entries), adminRole };
   }
 
-  /**
-   * Xoá một IP/CIDR khỏi whitelist. Bất biến chống tự khoá áp cùng luật với
-   * updateAdmin: chỉ khi tự sửa của mình, và bỏ qua được bằng cờ có ghi log.
-   */
-  async removeIpWhitelistEntry(
+  /** Xoá account gốc; FK CASCADE tự xoá dòng tương ứng trong admin_users. */
+  async deleteAdminById(
     id: string,
-    entry: string,
-    caller: { accountId: string; clientIp: string },
-    acknowledgeSelfLockout = false,
   ): Promise<
     AuthenticatedAccount & { ipWhitelist: string | null; adminRole: EAdminRole }
   > {
-    const account = await this.requireAdmin(id);
-
-    const isSelf = caller.accountId === id;
-    if (isSelf && acknowledgeSelfLockout) {
-      this.logger.warn(
-        `Admin ${id} xoá '${entry}' khỏi whitelist, bỏ qua kiểm tra tự khoá từ IP ${caller.clientIp}`,
-      );
-    }
-
-    // removeEntry đã tự trả adminRole từ dòng nó vừa đọc/ghi, không cần đọc
-    // admin_users thêm lần nữa.
-    const { entries, adminRole } = await this.ipWhitelistService.removeEntry(
-      id,
-      entry,
-      isSelf && !acknowledgeSelfLockout ? caller.clientIp : undefined,
-    );
-
-    return { ...this.toAdminResponse(account, entries), adminRole };
+    const response = await this.findAdminById(id);
+    await this.authRepository.delete(id);
+    await this.accountCache.invalidate(id);
+    return response;
   }
 
   /**
-   * Ghi phần thuộc bảng accounts của UpdateAdminDto. Không gửi field nào thì
-   * không đụng tới DB — nhánh PATCH /:id/ip-whitelist đi qua đây và phải rẻ.
+   * Ghi phần thuộc bảng accounts của AdminResponseDto. Không gửi field nào thì
+   * không đụng tới DB.
    *
    * Trả về account đã lưu để chỗ gọi dựng response từ giá trị THẬT trong DB,
    * không phải từ bản trong bộ nhớ.
    */
   private async applyAccountFields(
     account: AuthEntity,
-    dto: UpdateAdminDto,
+    dto: AdminResponseDto,
   ): Promise<AuthEntity> {
     // undefined = client không gửi => giữ nguyên. null = chủ động xoá.
     let touched = false;

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { requestLogout } from "@/features/auth/session";
@@ -74,20 +75,26 @@ export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
 
         {/* Tài khoản */}
         <div className="flex h-11 items-center gap-2.5 rounded-2xl glass-soft pl-1.5 pr-3">
-          <span
-            aria-hidden="true"
-            className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#EF4623] to-[#F49E4C] text-[11px] font-extrabold text-white"
+          <Link
+            href="/admin/profile"
+            aria-label="Mở hồ sơ admin"
+            className="flex items-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/25"
           >
-            AD
-          </span>
-          <span className="hidden leading-tight sm:block">
-            <span className="block text-xs font-extrabold text-[#2D3B42]">
-              Quản trị viên
+            <span
+              aria-hidden="true"
+              className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#EF4623] to-[#F49E4C] text-[11px] font-extrabold text-white"
+            >
+              AD
             </span>
-            <span className="block text-[10px] font-semibold text-[#8A7768]">
-              RedSun Admin
+            <span className="hidden leading-tight sm:block">
+              <span className="block text-xs font-extrabold text-[#2D3B42]">
+                Quản trị viên
+              </span>
+              <span className="block text-[10px] font-semibold text-[#8A7768]">
+                RedSun Admin
+              </span>
             </span>
-          </span>
+          </Link>
           <button
             type="button"
             onClick={handleLogout}

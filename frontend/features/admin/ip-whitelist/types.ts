@@ -8,9 +8,19 @@ export type AdminResponse = {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
+  status?: number;
   adminRole?: AdminRole;
   /** CSV; null hoặc rỗng = KHÔNG giới hạn IP. */
   ipWhitelist: string | null;
+};
+
+export type AdminPage = {
+  data: AdminResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 };
 
 /** Body lỗi, gộp cả hai hình dạng backend trả về. */

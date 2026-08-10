@@ -17,54 +17,54 @@ import { AuthEntity } from '../../auth/entities/auth.entity';
 @Entity('brand_profiles')
 export class BrandProfile {
   @PrimaryColumn({ type: 'uuid' })
-  accountId!: string;
+  accountId: string;
 
   @OneToOne(() => AuthEntity, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'account_id' })
-  account?: AuthEntity;
+  account: AuthEntity;
 
   /** Tên thương hiệu hiển thị, thường khác tên pháp nhân trên giấy phép. */
   @Column({ type: 'varchar', length: 255, nullable: true })
-  brandName!: string | null;
+  brandName: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  companyName!: string | null;
+  companyName: string | null;
 
   /** MST Việt Nam: 10 số, hoặc 13 ký tự dạng chi nhánh 0123456789-001. */
   @Column({ type: 'varchar', length: 14, nullable: true })
-  taxCode!: string | null;
+  taxCode: string | null;
 
   @Column({ type: 'citext' })
-  email!: string;
+  email: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  phone!: string | null;
+  phone: string | null;
 
   @Column({ type: 'text', nullable: true })
-  website!: string | null;
+  website: string | null;
 
   @Column({ type: 'varchar', length: 64, nullable: true })
-  industry!: string | null;
+  industry: string | null;
 
   @Column({ type: 'text', nullable: true })
-  logoUrl!: string | null;
+  logoUrl: string | null;
 
   @Column({ type: 'text', nullable: true })
-  description!: string | null;
+  description: string | null;
 
   @Column({ type: 'text', nullable: true })
-  address!: string | null;
+  address: string | null;
 
   /** Người phụ trách phía nhãn hàng, không nhất thiết là chủ tài khoản. */
   @Column({ type: 'varchar', length: 255, nullable: true })
-  contactName!: string | null;
+  contactName: string | null;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  contactPhone!: string | null;
+  contactPhone: string | null;
 
   @Column({ type: 'varchar', length: 64, default: 'Asia/Ho_Chi_Minh' })
-  timezone!: string;
+  timezone: string;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt!: Date;
+  updatedAt: Date;
 }

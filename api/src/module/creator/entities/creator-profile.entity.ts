@@ -21,53 +21,53 @@ import { AuthEntity } from '../../auth/entities/auth.entity';
 @Entity('creator_profiles')
 export class CreatorProfile {
   @PrimaryColumn({ type: 'uuid' })
-  accountId!: string;
+  accountId: string;
 
   @OneToOne(() => AuthEntity, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'account_id' })
-  account?: AuthEntity;
+  account: AuthEntity;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  displayName!: string | null;
+  displayName: string | null;
 
   @Column({ type: 'citext' })
-  email!: string;
+  email: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  phone!: string | null;
+  phone: string | null;
 
   @Column({ type: 'text', nullable: true })
-  bio!: string | null;
+  bio: string | null;
 
   @Column({ type: 'text', nullable: true })
-  avatarUrl!: string | null;
+  avatarUrl: string | null;
 
   /** Ngày sinh thay vì tuổi: tuổi tự già đi, ngày sinh thì không. */
   @Column({ type: 'date', nullable: true })
-  dateOfBirth!: string | null;
+  dateOfBirth: string | null;
 
   // smallint => driver trả về number, không phải GenderEnum (string '1'|'2'|'3')
   @Column({ type: 'smallint', nullable: true })
-  gender!: number | null;
+  gender: number | null;
 
   /** Khu vực hoạt động, brand lọc KOC theo địa bàn. */
   @Index()
   @Column({ type: 'varchar', length: 128, nullable: true })
-  city!: string | null;
+  city: string | null;
 
   @Column({ type: 'text', nullable: true })
-  address!: string | null;
+  address: string | null;
 
   /** beauty, food, tech... Mảng vì một KOC thường làm nhiều mảng. */
   @Column({ type: 'text', array: true, default: '{}' })
-  contentCategories!: string[];
+  contentCategories: string[];
 
   @Column({ type: 'text', nullable: true })
-  portfolioUrl!: string | null;
+  portfolioUrl: string | null;
 
   @Column({ type: 'varchar', length: 64, default: 'Asia/Ho_Chi_Minh' })
-  timezone!: string;
+  timezone: string;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt!: Date;
+  updatedAt: Date;
 }
