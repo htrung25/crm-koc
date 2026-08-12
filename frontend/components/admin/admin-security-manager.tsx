@@ -21,6 +21,7 @@ import {
   validateEntry,
 } from "@/features/admin/ip-whitelist/whitelist";
 import { apiFetch } from "@/lib/api/fetch-client";
+import { SelfLockoutDialog } from "@/components/admin/self-lockout-dialog";
 
 const STATUS_LABEL: Record<number, string> = {
   1: "Chờ duyệt",
@@ -98,6 +99,8 @@ export function AdminSecurityManager() {
   const [saving, setSaving] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [lockoutIp, setLockoutIp] = useState<string | null>(null);
+  // 403 REQUIRES_SUPER_ADMIN khoá UI về chỉ-đọc thay vì để bấm mãi rồi ăn 403.
+  const [forbidden, setForbidden] = useState(false);
   const [deleting, setDeleting] = useState<AdminResponse | null>(null);
 
   const load = useCallback(async () => {
@@ -199,7 +202,12 @@ export function AdminSecurityManager() {
     setDialogError(null);
   };
 
-  const save = async (acknowledgeSelfLockout = false) => {
+  // `entriesOverride` để nút "thêm IP của tôi rồi lưu" gửi được danh sách mới
+  // ngay, không phải chờ setEditor cập nhật state.
+  const save = async (
+    acknowledgeSelfLockout = false,
+    entriesOverride?: string[],
+  ) => {
     if (!editor) return;
     setSaving(true);
     setDialogError(null);
@@ -213,7 +221,7 @@ export function AdminSecurityManager() {
           email: editor.email,
           phone: editor.phone || null,
           status: editor.status,
-          ipWhitelist: serializeWhitelist(editor.entries),
+          ipWhitelist: serializeWhitelist(entriesOverride ?? editor.entries),
           acknowledgeSelfLockout,
         }),
       });
@@ -229,6 +237,16 @@ export function AdminSecurityManager() {
       };
       if (requestError.status === 422 && requestError.clientIp) {
         setLockoutIp(requestError.clientIp);
+        setDialogError(requestError.message);
+        return;
+      }
+      if (
+        requestError.status === 403 &&
+        requestError.message === "REQUIRES_SUPER_ADMIN"
+      ) {
+        setForbidden(true);
+        setDialogError("Chỉ super admin mới thay đổi được dữ liệu này.");
+        return;
       }
       setDialogError(requestError.message);
     } finally {
@@ -256,6 +274,12 @@ export function AdminSecurityManager() {
 
   return (
     <section className="space-y-4">
+      {forbidden && (
+        <p className="rounded-2xl bg-[#2D3B42]/8 px-4 py-3 text-xs font-semibold text-[#5C5049]">
+          Chỉ super admin mới thay đổi được dữ liệu này. Bạn đang ở chế độ xem.
+        </p>
+      )}
+
       <div className="glass rounded-[26px] p-4 sm:p-5">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_230px_auto]">
           <label className="block">
@@ -391,6 +415,12 @@ export function AdminSecurityManager() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-1.5">
+                          {forbidden ? (
+                            <span className="px-3 py-2 text-xs font-semibold text-[#8A7768]">
+                              Chỉ xem
+                            </span>
+                          ) : (
+                          <>
                           <button
                             type="button"
                             onClick={() => void openEditor(admin)}
@@ -410,6 +440,8 @@ export function AdminSecurityManager() {
                             <IconTrash className="h-4 w-4" />
                             Xoá
                           </button>
+                          </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -530,14 +562,9 @@ export function AdminSecurityManager() {
               </div>
             </div>
 
-            {dialogError && (
+            {dialogError && !lockoutIp && (
               <div className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-700">
                 {dialogError}
-                {lockoutIp && (
-                  <button type="button" disabled={saving} onClick={() => void save(true)} className="ml-2 font-extrabold underline underline-offset-2">
-                    Vẫn lưu và chấp nhận tự khoá
-                  </button>
-                )}
               </div>
             )}
 
@@ -549,6 +576,23 @@ export function AdminSecurityManager() {
             </div>
           </div>
         </div>
+      )}
+
+      {editor && lockoutIp && (
+        <SelfLockoutDialog
+          clientIp={lockoutIp}
+          pending={saving}
+          error={dialogError}
+          onAddCurrentIp={() => {
+            const next = editor.entries.includes(lockoutIp)
+              ? editor.entries
+              : [...editor.entries, lockoutIp];
+            setEditor({ ...editor, entries: next });
+            void save(false, next);
+          }}
+          onForce={() => void save(true)}
+          onDismiss={() => setLockoutIp(null)}
+        />
       )}
 
       {deleting && (
