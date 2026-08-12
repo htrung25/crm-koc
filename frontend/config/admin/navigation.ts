@@ -31,7 +31,7 @@ export const ADMIN_SYSTEM_ITEMS: NavigationItem[] = [
   },
   {
     label: "Bảo mật & IP",
-    href: "/admin/security",
+    href: "/admin/ip-whitelist",
     iconName: "shield",
   },
   {
