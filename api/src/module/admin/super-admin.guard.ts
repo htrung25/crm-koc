@@ -8,7 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import type { Request } from 'express';
-import { AdminUser } from './entities/admin_user.entity';
+import { AdminUser } from './entities/admin-user.entity';
 import { EAdminRole } from './enum/admin-roles.enum';
 
 /** JwtAuthGuard gắn req.user trước khi guard này chạy. */
@@ -19,7 +19,7 @@ export class SuperAdminGuard implements CanActivate {
   constructor(
     @InjectRepository(AdminUser)
     private readonly adminUserRepo: Repository<AdminUser>,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<RequestWithUser>();

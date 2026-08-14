@@ -4,7 +4,7 @@ import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 
 /**
  * Một dòng trong danh sách brand/creator.
- * Khớp đúng ACCOUNT_LIST_FIELDS trong AdminService — 7 cột, không hơn.
+ * Khớp đúng BRAND_LIST_FIELDS / CREATOR_LIST_FIELDS — 7 cột, không hơn.
  */
 export class AccountFilterItemDto {
   @ApiProperty({ format: 'uuid' })

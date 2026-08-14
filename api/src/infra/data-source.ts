@@ -4,7 +4,7 @@ import { AuthEntity } from '../module/auth/entities/auth.entity';
 import { BrandProfile } from '../module/brand/entities/brand-profile.entity';
 import { CreatorProfile } from '../module/creator/entities/creator-profile.entity';
 import { SessionEventEntity } from '../module/auth/entities/session-event.entity';
-import { AdminUser } from '../module/admin/entities/admin_user.entity';
+import { AdminUser } from '../module/admin/entities/admin-user.entity';
 import { SocialAccountEntity } from '../module/social/entities/social-account.entity';
 
 /**

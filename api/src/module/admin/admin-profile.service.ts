@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { uniqueViolationOf } from '../../common/util/pg-error.util';
-import { AdminUser } from './entities/admin_user.entity';
+import { AdminUser } from './entities/admin-user.entity';
 import { UpdateAdminProfileDto } from './dto/update-admin-profile.dto';
 
 /**
@@ -23,7 +23,7 @@ export class AdminProfileService {
     private readonly adminRepository: Repository<AdminUser>,
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
-  ) {}
+  ) { }
 
   /**
    * Dòng admin_users có thể đã tồn tại (superadmin dựng bằng SQL, hoặc

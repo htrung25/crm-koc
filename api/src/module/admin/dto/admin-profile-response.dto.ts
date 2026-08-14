@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AdminUser } from '../entities/admin_user.entity';
+import { AdminUser } from '../entities/admin-user.entity';
 
 /**
  * Hồ sơ admin nằm chung bảng admin_users với cấu hình bảo mật, nên KHÔNG trả

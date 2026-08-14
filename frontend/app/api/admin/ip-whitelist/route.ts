@@ -100,7 +100,7 @@ export async function PATCH(request: Request) {
     // Ghi đè cả danh sách. Cùng đường dẫn với DELETE (xoá một phần tử) — hai
     // thao tác trên cùng một sub-resource, khác method.
     const result = await apiRequest<AdminResponse>(
-      `/admin/${session.adminId}/ip-whitelist`,
+      `/admin/${session.adminId}/:id`,
       {
         method: "PATCH",
         body: {
@@ -137,7 +137,7 @@ export async function DELETE(request: Request) {
 
   try {
     const result = await apiRequest<AdminResponse>(
-      `/admin/${session.adminId}/ip-whitelist?${query}`,
+      `/admin/${session.adminId}/:id?${query}`,
       {
         method: "DELETE",
         token: session.token,

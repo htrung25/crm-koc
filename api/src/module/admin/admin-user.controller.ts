@@ -26,16 +26,14 @@ import { ERole } from '../../common/enum/roles.enum';
 import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
-import { AdminService } from './admin.service';
-import { AccountFilterResponseDto } from './dto/account-filters-response.dto';
+import { AdminService } from './admin-user.service';
 import { AdminFilters } from './dto/admin-filters.dto';
-import { BrandFilterDto } from './dto/brand-filters.dto';
-import { CreatorFilterDto } from './dto/creator-filters.dto';
 import {
   AdminFilterResponseDto,
   AdminResponseDto,
 } from './dto/admin-response.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
+import { UpdateAdminDto } from './dto/update-admin.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 import { SuperAdminGuard } from './super-admin.guard';
 import { extractClientIp } from '../../common/util/ip.util';
@@ -48,16 +46,11 @@ import type { Request as ExpressRequest } from 'express';
 @ApiBearerAuth('access-token')
 // Thứ tự guard có ý nghĩa: JwtAuthGuard chạy trước để nạp request.user,
 // RolesGuard mới có cái để đọc. Đảo lại thì RolesGuard luôn thấy user rỗng.
-//
-// IpWhitelistGuard khai ĐÚNG MỘT LẦN ở đây vì nó áp cho mọi route của
-// controller. Khai lại ở cấp method không thay thế mà CỘNG THÊM: Nest chạy cả
-// guard cấp class lẫn cấp method, nên mỗi request phải đọc admin_users hai
-// lần. Route nào cần siết thêm thì chỉ khai phần siết thêm (SuperAdminGuard).
 @UseGuards(JwtAuthGuard, RolesGuard, IpWhitelistGuard)
 @Roles(ERole.ADMIN)
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(private readonly adminService: AdminService) { }
 
   @Get('/admin-list')
   @ApiOperation({ summary: 'List admin accounts, paginated' })
@@ -70,30 +63,8 @@ export class AdminController {
     return this.adminService.findAll(query);
   }
 
-  @Get('/brands-list')
-  @ApiOperation({ summary: 'List brand accounts, paginated' })
-  @ApiOkResponse({ type: AccountFilterResponseDto })
-  @ApiUnauthorizedResponse({
-    description: 'Token is missing, invalid or expired',
-  })
-  @ApiForbiddenResponse({ description: 'Requires admin role' })
-  findAllBrands(@Query() query: BrandFilterDto) {
-    return this.adminService.findAllBrands(query);
-  }
-
-  @Get('/creators-list')
-  @ApiOperation({ summary: 'List creator accounts, paginated' })
-  @ApiOkResponse({ type: AccountFilterResponseDto })
-  @ApiUnauthorizedResponse({
-    description: 'Token is missing, invalid or expired',
-  })
-  @ApiForbiddenResponse({ description: 'Requires admin role' })
-  findAllCreators(@Query() query: CreatorFilterDto) {
-    return this.adminService.findAllCreators(query);
-  }
-
-  // Đặt SAU /brands và /creators: '/:id/status' là route động, nếu khai
-  // trước thì Nest sẽ khớp '/brands' vào :id và ParseUUIDPipe ném 400.
+  // Route động phải khai sau mọi route tĩnh, nếu không '/admin-list' sẽ khớp
+  // vào :id và ParseUUIDPipe ném 400.
   @Patch('/:id/status')
   @ApiOperation({
     summary: 'Change account status; banning takes effect immediately',
@@ -112,10 +83,6 @@ export class AdminController {
   }
   /**
    * Chi tiết một tài khoản admin.
-   *
-   * PHẢI khai sau /admin-list, /brands-list, /creators-list: cùng method GET và
-   * cùng một đoạn đường dẫn, nên đặt trước thì '/admin-list' sẽ khớp vào :id và
-   * ParseUUIDPipe ném 400.
    */
   @Get('/:id')
   @ApiOperation({ summary: 'Read one admin account in detail' })
@@ -156,7 +123,7 @@ export class AdminController {
   })
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: AdminResponseDto,
+    @Body() dto: UpdateAdminDto,
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
   ) {
     // clientIp lấy từ request chứ không nhận từ body: để client tự khai IP của

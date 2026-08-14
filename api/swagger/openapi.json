@@ -370,75 +370,17 @@
         ]
       }
     },
-    "/admin/admin-list": {
+    "/admin/profile/me": {
       "get": {
-        "operationId": "AdminController_findAll",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "example": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 20,
-              "example": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "Search by name or email, case-insensitive",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "description": "Filter by account status",
-            "schema": {
-              "$ref": "#/components/schemas/EAccountStatus"
-            }
-          },
-          {
-            "name": "sortBy",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/EAccountSortField"
-            }
-          },
-          {
-            "name": "sortOrder",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/ESortOrder"
-            }
-          }
-        ],
+        "operationId": "AdminProfileController_getMe",
+        "parameters": [],
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminFilterResponseDto"
+                  "$ref": "#/components/schemas/AdminProfileResponseDto"
                 }
               }
             }
@@ -447,7 +389,10 @@
             "description": "Token is missing, invalid or expired"
           },
           "403": {
-            "description": "Requires admin role"
+            "description": "Not an admin, or IP not whitelisted"
+          },
+          "404": {
+            "description": "Account has no profile yet"
           }
         },
         "security": [
@@ -455,15 +400,62 @@
             "access-token": []
           }
         ],
-        "summary": "List admin accounts, paginated",
+        "summary": "Your own admin profile",
         "tags": [
-          "Admin"
+          "Admin-Profile"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminProfileController_updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProfileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Not an admin, or IP not whitelisted"
+          },
+          "404": {
+            "description": "Account has no profile yet"
+          },
+          "409": {
+            "description": "Email already taken"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Partially update your own admin profile",
+        "tags": [
+          "Admin-Profile"
         ]
       }
     },
     "/admin/brands-list": {
       "get": {
-        "operationId": "AdminController_findAllBrands",
+        "operationId": "BrandListController_findAll",
         "parameters": [
           {
             "name": "page",
@@ -591,7 +583,7 @@
     },
     "/admin/creators-list": {
       "get": {
-        "operationId": "AdminController_findAllCreators",
+        "operationId": "CreatorListController_findAll",
         "parameters": [
           {
             "name": "page",
@@ -726,6 +718,97 @@
         ]
       }
     },
+    "/admin/admin-list": {
+      "get": {
+        "operationId": "AdminController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by name or email, case-insensitive",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by account status",
+            "schema": {
+              "$ref": "#/components/schemas/EAccountStatus"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EAccountSortField"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ESortOrder"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminFilterResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List admin accounts, paginated",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/admin/{id}/status": {
       "patch": {
         "operationId": "AdminController_updateStatus",
@@ -845,7 +928,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminResponseDto"
+                "$ref": "#/components/schemas/UpdateAdminDto"
               }
             }
           }
@@ -934,89 +1017,6 @@
         "summary": "Delete one admin account. Super admin only",
         "tags": [
           "Admin"
-        ]
-      }
-    },
-    "/admin/profile/me": {
-      "get": {
-        "operationId": "AdminProfileController_getMe",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminProfileResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Token is missing, invalid or expired"
-          },
-          "403": {
-            "description": "Not an admin, or IP not whitelisted"
-          },
-          "404": {
-            "description": "Account has no profile yet"
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "Your own admin profile",
-        "tags": [
-          "Admin-Profile"
-        ]
-      },
-      "patch": {
-        "operationId": "AdminProfileController_updateMe",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAdminProfileDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminProfileResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Token is missing, invalid or expired"
-          },
-          "403": {
-            "description": "Not an admin, or IP not whitelisted"
-          },
-          "404": {
-            "description": "Account has no profile yet"
-          },
-          "409": {
-            "description": "Email already taken"
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "Partially update your own admin profile",
-        "tags": [
-          "Admin-Profile"
         ]
       }
     },
@@ -1688,6 +1688,69 @@
           "refreshToken"
         ]
       },
+      "AdminProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Same value as accounts.id"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Ho_Chi_Minh"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId",
+          "name",
+          "email",
+          "avatarUrl",
+          "timezone",
+          "updatedAt"
+        ]
+      },
+      "UpdateAdminProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "example": "John Doe",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "example": "admin@gmail.com",
+            "format": "email"
+          },
+          "avatarUrl": {
+            "type": "object",
+            "example": "https://cdn.example.com/a.png"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Ho_Chi_Minh",
+            "maxLength": 64
+          }
+        }
+      },
       "EAccountSortField": {
         "type": "string",
         "enum": [
@@ -1703,138 +1766,6 @@
         "enum": [
           "ASC",
           "DESC"
-        ]
-      },
-      "EAdminRole": {
-        "type": "string",
-        "enum": [
-          "admin",
-          "super_admin"
-        ]
-      },
-      "AdminResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "accountRole": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ERole"
-              }
-            ]
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "phone": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EAccountStatus"
-              }
-            ]
-          },
-          "statusReason": {
-            "type": "string",
-            "nullable": true
-          },
-          "emailVerifiedAt": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "phoneVerifiedAt": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "ipWhitelist": {
-            "type": "string",
-            "nullable": true,
-            "example": "203.0.113.1,10.0.0.0/24",
-            "description": "null hoặc rỗng = cho phép truy cập từ mọi IP"
-          },
-          "adminRole": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EAdminRole"
-              }
-            ]
-          },
-          "acknowledgeSelfLockout": {
-            "type": "boolean",
-            "default": false,
-            "description": "Accept a self-lockout when replacing your own IP whitelist"
-          }
-        },
-        "required": [
-          "id",
-          "accountRole",
-          "name",
-          "email",
-          "phone",
-          "status",
-          "statusReason",
-          "emailVerifiedAt",
-          "phoneVerifiedAt",
-          "createdAt",
-          "updatedAt",
-          "ipWhitelist",
-          "adminRole"
-        ]
-      },
-      "AdminFilterResponseDto": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminResponseDto"
-            }
-          },
-          "total": {
-            "type": "number",
-            "example": 42,
-            "description": "Total rows matching the filter"
-          },
-          "page": {
-            "type": "number",
-            "example": 1
-          },
-          "limit": {
-            "type": "number",
-            "example": 20
-          },
-          "totalPages": {
-            "type": "number",
-            "example": 3
-          }
-        },
-        "required": [
-          "data",
-          "total",
-          "page",
-          "limit",
-          "totalPages"
         ]
       },
       "AccountFilterItemDto": {
@@ -1929,6 +1860,133 @@
           3
         ]
       },
+      "EAdminRole": {
+        "type": "string",
+        "enum": [
+          "admin",
+          "super_admin"
+        ]
+      },
+      "AdminResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ERole"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAccountStatus"
+              }
+            ]
+          },
+          "statusReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "emailVerifiedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "phoneVerifiedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "ipWhitelist": {
+            "type": "string",
+            "nullable": true,
+            "example": "203.0.113.1,10.0.0.0/24",
+            "description": "null hoặc rỗng = cho phép truy cập từ mọi IP"
+          },
+          "adminRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAdminRole"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "accountRole",
+          "name",
+          "email",
+          "phone",
+          "status",
+          "statusReason",
+          "emailVerifiedAt",
+          "phoneVerifiedAt",
+          "createdAt",
+          "updatedAt",
+          "ipWhitelist",
+          "adminRole"
+        ]
+      },
+      "AdminFilterResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 42,
+            "description": "Total rows matching the filter"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
       "UpdateStatusDto": {
         "type": "object",
         "properties": {
@@ -1949,50 +2007,11 @@
           "status"
         ]
       },
-      "AdminProfileResponseDto": {
-        "type": "object",
-        "properties": {
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Same value as accounts.id"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "avatarUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "timezone": {
-            "type": "string",
-            "example": "Asia/Ho_Chi_Minh"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "accountId",
-          "name",
-          "email",
-          "avatarUrl",
-          "timezone",
-          "updatedAt"
-        ]
-      },
-      "UpdateAdminProfileDto": {
+      "UpdateAdminDto": {
         "type": "object",
         "properties": {
           "name": {
-            "type": "object",
+            "type": "string",
             "example": "John Doe",
             "maxLength": 255
           },
@@ -2001,14 +2020,33 @@
             "example": "admin@gmail.com",
             "format": "email"
           },
-          "avatarUrl": {
-            "type": "object",
-            "example": "https://cdn.example.com/a.png"
-          },
-          "timezone": {
+          "phone": {
             "type": "string",
-            "example": "Asia/Ho_Chi_Minh",
-            "maxLength": 64
+            "nullable": true,
+            "maxLength": 20
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAccountStatus"
+              }
+            ]
+          },
+          "statusReason": {
+            "type": "object",
+            "example": "Spamming campaigns",
+            "description": "Shown to the account owner when they are blocked"
+          },
+          "ipWhitelist": {
+            "type": "string",
+            "example": "203.0.113.1,10.0.0.0/24",
+            "maxLength": 2000,
+            "description": "CSV các IP/CIDR. Ghi đè toàn bộ. Rỗng = cho phép mọi IP."
+          },
+          "acknowledgeSelfLockout": {
+            "type": "boolean",
+            "default": false,
+            "description": "Bỏ qua kiểm tra tự khoá khi tự sửa whitelist của mình."
           }
         }
       },

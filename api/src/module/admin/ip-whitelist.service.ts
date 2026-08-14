@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Netmask } from 'netmask';
 import { BusinessCode } from './../../common/enum/business-code.enum';
-import { AdminUser } from './entities/admin_user.entity';
+import { AdminUser } from './entities/admin-user.entity';
 import { EAdminRole } from './enum/admin-roles.enum';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class IpWhitelistService {
   constructor(
     @InjectRepository(AdminUser)
     private readonly adminUserRepo: Repository<AdminUser>,
-  ) {}
+  ) { }
 
   private parseList(raw: string | null): string[] {
     if (!raw) return [];
