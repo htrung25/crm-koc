@@ -11,11 +11,6 @@ import { uniqueViolationOf } from '../../common/util/pg-error.util';
 import { AdminUser } from './entities/admin-user.entity';
 import { UpdateAdminProfileDto } from './dto/update-admin-profile.dto';
 
-/**
- * Chỉ phục vụ admin. Hồ sơ brand và creator do BrandProfileService và
- * CreatorProfileService của module tương ứng quản lý — mỗi vai trò một bảng,
- * một bộ cột, nên gom vào một service sẽ thành nơi chứa cả ba lược đồ.
- */
 @Injectable()
 export class AdminProfileService {
   constructor(
@@ -23,7 +18,7 @@ export class AdminProfileService {
     private readonly adminRepository: Repository<AdminUser>,
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
-  ) { }
+  ) {}
 
   /**
    * Dòng admin_users có thể đã tồn tại (superadmin dựng bằng SQL, hoặc

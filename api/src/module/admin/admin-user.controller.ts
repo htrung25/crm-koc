@@ -50,7 +50,7 @@ import type { Request as ExpressRequest } from 'express';
 @Roles(ERole.ADMIN)
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) { }
+  constructor(private readonly adminService: AdminService) {}
 
   @Get('/admin-list')
   @ApiOperation({ summary: 'List admin accounts, paginated' })

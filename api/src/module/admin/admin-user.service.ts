@@ -49,7 +49,7 @@ export class AdminService {
     private readonly adminUserRepository: Repository<AdminUser>,
     private readonly accountCache: AccountCacheService,
     private readonly ipWhitelistService: IpWhitelistService,
-  ) { }
+  ) {}
 
   async findAll(query: AdminFilters): Promise<PaginatedResult<AdminListRow>> {
     const qb = this.authRepository

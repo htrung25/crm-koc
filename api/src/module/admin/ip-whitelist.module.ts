@@ -9,4 +9,4 @@ import { IpWhitelistGuard } from './ip-whitelist.guard';
   providers: [IpWhitelistService, IpWhitelistGuard],
   exports: [IpWhitelistService, IpWhitelistGuard],
 })
-export class IpWhitelistModule { }
+export class IpWhitelistModule {}

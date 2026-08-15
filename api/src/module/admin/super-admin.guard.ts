@@ -19,7 +19,7 @@ export class SuperAdminGuard implements CanActivate {
   constructor(
     @InjectRepository(AdminUser)
     private readonly adminUserRepo: Repository<AdminUser>,
-  ) { }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<RequestWithUser>();

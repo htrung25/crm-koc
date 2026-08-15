@@ -89,7 +89,7 @@ import { SocialAccountEntity } from '../module/social/entities/social-account.en
 })
 export class DatabaseModule implements OnModuleInit {
   private readonly logger = new Logger(DatabaseModule.name);
-  constructor(private readonly dataSource: DataSource) { }
+  constructor(private readonly dataSource: DataSource) {}
 
   async onModuleInit() {
     try {

@@ -16,7 +16,7 @@ export class IpWhitelistService {
   constructor(
     @InjectRepository(AdminUser)
     private readonly adminUserRepo: Repository<AdminUser>,
-  ) { }
+  ) {}
 
   private parseList(raw: string | null): string[] {
     if (!raw) return [];
