@@ -51,7 +51,7 @@ export class CreatorProfileController {
     if (!profile) {
       throw new NotFoundException('profile not found');
     }
-    return CreatorProfileResponseDto.from(profile);
+    return profile;
   }
 
   @Patch('/me')
@@ -67,8 +67,6 @@ export class CreatorProfileController {
     @Request() request: { user: AuthenticatedAccount },
     @Body() dto: UpdateCreatorProfileDto,
   ): Promise<CreatorProfileResponseDto> {
-    return CreatorProfileResponseDto.from(
-      await this.creatorProfileService.update(request.user.id, dto),
-    );
+    return this.creatorProfileService.update(request.user.id, dto);
   }
 }

@@ -11,7 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { ERole } from '../../common/enum/roles.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { Transactional } from 'typeorm-transactional';
-import { normalizePhone } from '../../common/util/account.util';
+import { BCRYPT_ROUNDS, normalizePhone } from '../../common/util/account.util';
 import { BrandProfileService } from '../brand/brand-profile.service';
 import { CreatorProfileService } from '../creator/creator-profile.service';
 import { AdminProfileService } from '../admin/admin-profile.service';
@@ -19,7 +19,6 @@ import { AuthEntity } from './entities/auth.entity';
 import { AuthenticatedAccount } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
 
-const BCRYPT_ROUNDS = 10;
 const PG_UNIQUE_VIOLATION = '23505';
 
 /**

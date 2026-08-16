@@ -10,26 +10,26 @@ import {
 export class AdminVerifyOtpDto {
   @ApiProperty({ example: 'admin@gmail.com' })
   @IsEmail()
-  email!: string;
+  email: string;
 
   @ApiProperty({ example: '123456' })
   @IsString()
   @Length(6, 6)
   @Matches(/^\d{6}$/, { message: 'otp must be 6 digits' })
-  otp!: string;
+  otp: string;
 }
 
 export class AdminResendOtpDto {
   @ApiProperty({ example: 'admin@gmail.com' })
   @IsEmail()
   @IsNotEmpty()
-  email!: string;
+  email: string;
 }
 
 export class AdminLoginPendingResponseDto {
   @ApiProperty({ example: true })
-  requireOtp!: boolean;
+  requireOtp: boolean;
 
   @ApiProperty({ example: 'OTP has been sent to your email' })
-  message!: string;
+  message: string;
 }

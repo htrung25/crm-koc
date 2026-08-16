@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { AuthEntity } from '../../auth/entities/auth.entity';
+import { ECreatorContent } from '../../../common/enum/creator-content.enum';
 
 /**
  * Hồ sơ KOC. Quan hệ 1-1 với accounts: account_id vừa là PK vừa là FK.
@@ -58,9 +59,8 @@ export class CreatorProfile {
   @Column({ type: 'text', nullable: true })
   address: string | null;
 
-  /** beauty, food, tech... Mảng vì một KOC thường làm nhiều mảng. */
   @Column({ type: 'text', array: true, default: '{}' })
-  contentCategories: string[];
+  contentCategories: ECreatorContent[];
 
   @Column({ type: 'text', nullable: true })
   portfolioUrl: string | null;

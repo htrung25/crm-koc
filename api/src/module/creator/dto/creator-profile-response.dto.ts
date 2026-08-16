@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CreatorProfile } from '../entities/creator-profile.entity';
+import { ECreatorContent } from '../../../common/enum/creator-content.enum';
 
 export class CreatorProfileResponseDto {
   @ApiProperty({ format: 'uuid', description: 'Same value as accounts.id' })
@@ -36,8 +36,13 @@ export class CreatorProfileResponseDto {
   @ApiProperty({ nullable: true, type: String })
   address!: string | null;
 
-  @ApiProperty({ type: [String], example: ['beauty', 'fashion'] })
-  contentCategories!: string[];
+  @ApiProperty({
+    enum: ECreatorContent,
+    enumName: 'ECreatorContent',
+    isArray: true,
+    example: [ECreatorContent.BEAUTY, ECreatorContent.FASHION],
+  })
+  contentCategories!: ECreatorContent[];
 
   @ApiProperty({ nullable: true, type: String })
   portfolioUrl!: string | null;
@@ -47,23 +52,4 @@ export class CreatorProfileResponseDto {
 
   @ApiProperty({ format: 'date-time' })
   updatedAt!: Date;
-
-  static from(entity: CreatorProfile): CreatorProfileResponseDto {
-    return {
-      accountId: entity.accountId,
-      displayName: entity.displayName,
-      email: entity.email,
-      phone: entity.phone,
-      bio: entity.bio,
-      avatarUrl: entity.avatarUrl,
-      dateOfBirth: entity.dateOfBirth,
-      gender: entity.gender,
-      city: entity.city,
-      address: entity.address,
-      contentCategories: entity.contentCategories,
-      portfolioUrl: entity.portfolioUrl,
-      timezone: entity.timezone,
-      updatedAt: entity.updatedAt,
-    };
-  }
 }

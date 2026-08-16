@@ -11,6 +11,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { GendersEnum } from '../../../common/enum/genders.enum';
+import { ECreatorContent } from '../../../common/enum/creator-content.enum';
 
 // @IsOptional() bỏ qua validate khi giá trị là undefined HOẶC null,
 // nhờ đó vẫn gửi được null để xoá giá trị cũ.
@@ -74,14 +75,15 @@ export class UpdateCreatorProfileDto {
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(20)
-  @IsString({ each: true })
-  @MaxLength(64, { each: true })
+  @IsEnum(ECreatorContent, { each: true })
   @ApiPropertyOptional({
-    example: ['beauty', 'fashion'],
-    type: [String],
+    enum: ECreatorContent,
+    enumName: 'ECreatorContent',
+    isArray: true,
+    example: [ECreatorContent.BEAUTY, ECreatorContent.FASHION],
     maxItems: 20,
   })
-  contentCategories?: string[];
+  contentCategories?: ECreatorContent[];
 
   @IsOptional()
   @IsUrl()

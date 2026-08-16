@@ -9,37 +9,37 @@ import { EAdminRole } from '../enum/admin-roles.enum';
  */
 export class AdminResponseDto {
   @ApiProperty({ format: 'uuid' })
-  id!: string;
+  id: string;
 
   @ApiProperty({ enum: ERole, enumName: 'ERole' })
-  accountRole!: ERole;
+  accountRole: ERole;
 
   @ApiProperty({ maxLength: 255 })
-  name!: string;
+  name: string;
 
   @ApiProperty({ format: 'email' })
-  email!: string;
+  email: string;
 
   @ApiProperty({ nullable: true, type: String })
-  phone!: string | null;
+  phone: string | null;
 
   @ApiProperty({ enum: EAccountStatus, enumName: 'EAccountStatus' })
-  status!: EAccountStatus;
+  status: EAccountStatus;
 
   @ApiProperty({ nullable: true, type: String })
-  statusReason!: string | null;
+  statusReason: string | null;
 
   @ApiProperty({ nullable: true, type: String, format: 'date-time' })
-  emailVerifiedAt!: Date | null;
+  emailVerifiedAt: Date | null;
 
   @ApiProperty({ nullable: true, type: String, format: 'date-time' })
-  phoneVerifiedAt!: Date | null;
+  phoneVerifiedAt: Date | null;
 
   @ApiProperty({ format: 'date-time' })
-  createdAt!: Date;
+  createdAt: Date;
 
   @ApiProperty({ format: 'date-time' })
-  updatedAt!: Date;
+  updatedAt: Date;
 
   /** null hoặc rỗng = KHÔNG giới hạn IP, không phải chặn hết. */
   @ApiProperty({
@@ -48,27 +48,27 @@ export class AdminResponseDto {
     example: '203.0.113.1,10.0.0.0/24',
     description: 'null hoặc rỗng = cho phép truy cập từ mọi IP',
   })
-  ipWhitelist!: string | null;
+  ipWhitelist: string | null;
 
   /** FE dùng field này để render trình soạn thảo hay chế độ chỉ-đọc. */
   @ApiProperty({ enum: EAdminRole, enumName: 'EAdminRole' })
-  adminRole!: EAdminRole;
+  adminRole: EAdminRole;
 }
 
 /** Bọc phân trang — khớp đúng PaginatedResult<T> mà paginate() trả về. */
 export class AdminFilterResponseDto {
   @ApiProperty({ type: [AdminResponseDto] })
-  data!: AdminResponseDto[];
+  data: AdminResponseDto[];
 
   @ApiProperty({ example: 42, description: 'Total rows matching the filter' })
-  total!: number;
+  total: number;
 
   @ApiProperty({ example: 1 })
-  page!: number;
+  page: number;
 
   @ApiProperty({ example: 20 })
-  limit!: number;
+  limit: number;
 
   @ApiProperty({ example: 3 })
-  totalPages!: number;
+  totalPages: number;
 }

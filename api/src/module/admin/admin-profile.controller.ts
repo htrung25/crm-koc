@@ -2,12 +2,15 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   NotFoundException,
   Patch,
   Request,
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiForbiddenResponse,
@@ -25,6 +28,7 @@ import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
 import { AdminProfileService } from './admin-profile.service';
 import { UpdateAdminProfileDto } from './dto/update-admin-profile.dto';
 import { AdminProfileResponseDto } from './dto/admin-profile-response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 
 /**
@@ -73,5 +77,26 @@ export class AdminProfileController {
     return AdminProfileResponseDto.from(
       await this.profileService.update(request.user.id, dto),
     );
+  }
+
+  @Patch('/me/change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Change your own password. Revokes every session of this account',
+  })
+  @ApiOkResponse({ schema: { properties: { message: { type: 'string' } } } })
+  @ApiBadRequestResponse({
+    description: 'New password is weak, or same as the current one',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token invalid, or current password is incorrect',
+  })
+  @ApiForbiddenResponse({ description: 'Not an admin, or IP not whitelisted' })
+  @ApiNotFoundResponse({ description: 'Account not found' })
+  async changePassword(
+    @Request() request: { user: AuthenticatedAccount },
+    @Body() dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    return this.profileService.changePassword(request.user.id, dto);
   }
 }

@@ -1,23 +1,32 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Transactional } from 'typeorm-transactional';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { uniqueViolationOf } from '../../common/util/pg-error.util';
 import { AdminUser } from './entities/admin-user.entity';
 import { UpdateAdminProfileDto } from './dto/update-admin-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { BCRYPT_ROUNDS } from '../../common/util/account.util';
+import { SessionService } from '../../security/session.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdminProfileService {
+  private readonly logger = new Logger(AdminProfileService.name);
+
   constructor(
     @InjectRepository(AdminUser)
     private readonly adminRepository: Repository<AdminUser>,
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
+    private readonly sessionService: SessionService,
   ) {}
 
   /**
@@ -40,7 +49,6 @@ export class AdminProfileService {
     return this.adminRepository.findOneBy({ accountId });
   }
 
-  @Transactional()
   async update(
     accountId: string,
     dto: UpdateAdminProfileDto,
@@ -50,11 +58,13 @@ export class AdminProfileService {
       throw new NotFoundException('profile not found');
     }
 
-    // undefined = client không gửi field đó => giữ nguyên.
-    // null = client chủ động xoá giá trị => ghi null.
-    if (dto.name !== undefined) profile.name = dto.name;
-    if (dto.avatarUrl !== undefined) profile.avatarUrl = dto.avatarUrl;
-    if (dto.timezone !== undefined) profile.timezone = dto.timezone;
+    const { email: _email, ...fields } = dto;
+    Object.assign(
+      profile,
+      Object.fromEntries(
+        Object.entries(fields).filter(([, value]) => value !== undefined),
+      ),
+    );
 
     try {
       if (dto.email !== undefined) {
@@ -66,12 +76,47 @@ export class AdminProfileService {
 
       return await this.adminRepository.save(profile);
     } catch (error) {
-      // admin_users không có ràng buộc duy nhất riêng ngoài khoá chính, nên
-      // 23505 đi qua đây chỉ có thể đến từ accounts.email.
       if (uniqueViolationOf(error) !== null) {
         throw new ConflictException('email already exists');
       }
       throw error;
     }
+  }
+
+  async changePassword(
+    accountId: string,
+    dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const { oldPassword, newPassword } = dto;
+
+    // password khai select: false nên phải chỉ định tường minh.
+    const account = await this.authRepository.findOne({
+      where: { id: accountId },
+      select: { id: true, password: true },
+    });
+    if (!account) {
+      throw new NotFoundException('account not found');
+    }
+
+    // 401 chứ không phải 404: tài khoản có tồn tại, chỉ là xác thực lại sai.
+    if (!(await bcrypt.compare(oldPassword, account.password))) {
+      throw new UnauthorizedException('current password is incorrect');
+    }
+    if (await bcrypt.compare(newPassword, account.password)) {
+      throw new BadRequestException(
+        'new password must differ from the current one',
+      );
+    }
+
+    await this.authRepository.update(accountId, {
+      password: await bcrypt.hash(newPassword, BCRYPT_ROUNDS),
+    });
+
+    // Người ta đổi mật khẩu vì nghi bị chiếm tài khoản. Không huỷ phiên thì
+    // refresh token của kẻ tấn công còn sống tiếp 7 ngày.
+    const revoked = await this.sessionService.deleteAllByAccount(accountId);
+    this.logger.warn(`Admin ${accountId} đổi mật khẩu, huỷ ${revoked} phiên`);
+
+    return { message: 'Password changed successfully.' };
   }
 }

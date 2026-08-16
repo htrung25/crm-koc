@@ -8,7 +8,7 @@ export class UpdateStatusDto {
       'status must be 1 (pending), 2 (active), 3 (suspended) or 4 (banned)',
   })
   @ApiProperty({ enum: EAccountStatus, enumName: 'EAccountStatus' })
-  status!: EAccountStatus;
+  status: EAccountStatus;
 
   @IsOptional()
   @IsString()

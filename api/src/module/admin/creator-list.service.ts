@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ERole } from '../../common/enum/roles.enum';
@@ -17,6 +21,7 @@ import {
   assertNumericEnum,
 } from '../../common/util/enum-assert.util';
 import { AuthEntity } from '../auth/entities/auth.entity';
+import { AccountCacheService } from '../../security/account-cache.service';
 import { CreatorFilterDto } from './dto/creator-filters.dto';
 
 const CREATOR_LIST_FIELDS = [
@@ -40,10 +45,13 @@ export class CreatorListService {
   constructor(
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
+    private readonly accountCache: AccountCacheService,
   ) {}
 
   /** Danh sách creator, phân trang + lọc. */
-  findAll(query: CreatorFilterDto): Promise<PaginatedResult<CreatorListItem>> {
+  async findAll(
+    query: CreatorFilterDto,
+  ): Promise<PaginatedResult<CreatorListItem>> {
     const qb = this.authRepository
       .createQueryBuilder('account')
       .select(CREATOR_LIST_FIELDS.map((f) => `account.${f}`))
@@ -114,5 +122,21 @@ export class CreatorListService {
     qb.addOrderBy('account.id', ESortOrder.ASC);
 
     return paginate(qb, query);
+  }
+
+  async remove(accountId: string): Promise<{ message: string }> {
+    const account = await this.authRepository.findOneBy({ id: accountId });
+    if (!account) {
+      throw new NotFoundException('account not found');
+    }
+    // Chặn xoá nhầm vai trò khác qua endpoint này.
+    if (account.accountRole !== ERole.CREATOR) {
+      throw new BadRequestException('account is not a creator');
+    }
+
+    await this.authRepository.delete(accountId);
+    // Bỏ qua thì token cũ vẫn qua được JwtStrategy tới khi cache hết hạn.
+    await this.accountCache.invalidate(accountId);
+    return { message: 'Delete Creator account success' };
   }
 }

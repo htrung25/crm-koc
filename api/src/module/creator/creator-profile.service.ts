@@ -5,11 +5,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Transactional } from 'typeorm-transactional';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { uniqueViolationOf } from '../../common/util/pg-error.util';
 import { CreatorProfile } from './entities/creator-profile.entity';
 import { UpdateCreatorProfileDto } from './dto/update-creator-profile.dto';
+import { CreatorProfileResponseDto } from './dto/creator-profile-response.dto';
 
 @Injectable()
 export class CreatorProfileService {
@@ -20,45 +20,40 @@ export class CreatorProfileService {
     private readonly authRepository: Repository<AuthEntity>,
   ) {}
 
-  create(
+  async create(
     accountId: string,
     name: string | null,
     email: string,
-  ): Promise<CreatorProfile> {
-    return this.creatorRepository.save(
-      this.creatorRepository.create({ accountId, displayName: name, email }),
-    );
+  ): Promise<CreatorProfileResponseDto> {
+    const newProfile = this.creatorRepository.create({
+      accountId,
+      displayName: name,
+      email,
+    });
+    return this.creatorRepository.save(newProfile);
   }
 
-  findByAccountId(accountId: string): Promise<CreatorProfile | null> {
+  async findByAccountId(
+    accountId: string,
+  ): Promise<CreatorProfileResponseDto | null> {
     return this.creatorRepository.findOneBy({ accountId });
   }
 
-  @Transactional()
   async update(
     accountId: string,
     dto: UpdateCreatorProfileDto,
-  ): Promise<CreatorProfile> {
+  ): Promise<CreatorProfileResponseDto> {
     const profile = await this.creatorRepository.findOneBy({ accountId });
     if (!profile) {
       throw new NotFoundException('profile not found');
     }
-
-    // undefined = client không gửi field đó => giữ nguyên.
-    // null = client chủ động xoá giá trị => ghi null.
-    if (dto.displayName !== undefined) profile.displayName = dto.displayName;
-    if (dto.phone !== undefined) profile.phone = dto.phone;
-    if (dto.bio !== undefined) profile.bio = dto.bio;
-    if (dto.avatarUrl !== undefined) profile.avatarUrl = dto.avatarUrl;
-    if (dto.dateOfBirth !== undefined) profile.dateOfBirth = dto.dateOfBirth;
-    if (dto.gender !== undefined) profile.gender = dto.gender;
-    if (dto.city !== undefined) profile.city = dto.city;
-    if (dto.address !== undefined) profile.address = dto.address;
-    if (dto.contentCategories !== undefined) {
-      profile.contentCategories = dto.contentCategories;
-    }
-    if (dto.portfolioUrl !== undefined) profile.portfolioUrl = dto.portfolioUrl;
-    if (dto.timezone !== undefined) profile.timezone = dto.timezone;
+    const { email: _email, ...fields } = dto;
+    Object.assign(
+      profile,
+      Object.fromEntries(
+        Object.entries(fields).filter(([, value]) => value !== undefined),
+      ),
+    );
 
     try {
       if (dto.email !== undefined) {
@@ -70,8 +65,6 @@ export class CreatorProfileService {
 
       return await this.creatorRepository.save(profile);
     } catch (error) {
-      // creator_profiles không có ràng buộc duy nhất riêng, nên 23505 đi qua
-      // đây chỉ có thể đến từ accounts.email.
       if (uniqueViolationOf(error) !== null) {
         throw new ConflictException('email already exists');
       }

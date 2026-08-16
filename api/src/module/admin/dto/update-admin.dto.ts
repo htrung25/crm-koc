@@ -8,13 +8,6 @@ import {
   MaxLength,
 } from 'class-validator';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
-
-// Body của PATCH /admin/:id. Tách khỏi AdminResponseDto vì hai chiều khác tập
-// field: id/accountRole/createdAt/updatedAt chỉ đọc, còn adminRole cố tình
-// vắng mặt để phong super admin không đi qua đường này.
-//
-// Mọi field BẮT BUỘC có validator: ValidationPipe chạy với forbidNonWhitelisted
-// nên field thiếu decorator sẽ làm mọi request 400 "property should not exist".
 export class UpdateAdminDto {
   @IsOptional()
   @IsString()

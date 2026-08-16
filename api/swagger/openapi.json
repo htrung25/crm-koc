@@ -453,6 +453,59 @@
         ]
       }
     },
+    "/admin/profile/me/change-password": {
+      "patch": {
+        "operationId": "AdminProfileController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "New password is weak, or same as the current one"
+          },
+          "401": {
+            "description": "Token invalid, or current password is incorrect"
+          },
+          "403": {
+            "description": "Not an admin, or IP not whitelisted"
+          },
+          "404": {
+            "description": "Account not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Change your own password. Revokes every session of this account",
+        "tags": [
+          "Admin-Profile"
+        ]
+      }
+    },
     "/admin/brands-list": {
       "get": {
         "operationId": "BrandListController_findAll",
@@ -576,6 +629,55 @@
           }
         ],
         "summary": "List brand accounts, paginated",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/admin/brands-list/{id}": {
+      "delete": {
+        "operationId": "BrandListController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Brand profile not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Delete a brand profile",
         "tags": [
           "Admin"
         ]
@@ -713,6 +815,55 @@
           }
         ],
         "summary": "List creator accounts, paginated",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/admin/creators-list/{id}": {
+      "delete": {
+        "operationId": "CreatorListController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Creator profile not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Delete a creator profile",
         "tags": [
           "Admin"
         ]
@@ -1751,6 +1902,23 @@
           }
         }
       },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "oldPassword": {
+            "type": "string",
+            "description": "Mật khẩu hiện tại, dùng để xác thực lại"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "Abc@12345"
+          }
+        },
+        "required": [
+          "oldPassword",
+          "newPassword"
+        ]
+      },
       "EAccountSortField": {
         "type": "string",
         "enum": [
@@ -2206,6 +2374,35 @@
           }
         }
       },
+      "ECreatorContent": {
+        "type": "string",
+        "enum": [
+          "beauty",
+          "personal_care",
+          "fashion",
+          "food",
+          "travel",
+          "experience_culture",
+          "mom_baby",
+          "family",
+          "lifestyle_home",
+          "health",
+          "education",
+          "life_skills",
+          "finance",
+          "entertainment",
+          "art",
+          "gaming",
+          "streamer",
+          "business",
+          "b2b",
+          "sales",
+          "fitness",
+          "pet",
+          "automotive",
+          "music"
+        ]
+      },
       "CreatorProfileResponseDto": {
         "type": "object",
         "properties": {
@@ -2256,13 +2453,13 @@
             "nullable": true
           },
           "contentCategories": {
+            "type": "array",
             "example": [
               "beauty",
               "fashion"
             ],
-            "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/ECreatorContent"
             }
           },
           "portfolioUrl": {
@@ -2341,14 +2538,14 @@
             "example": "12 Nguyen Hue St, District 1, Ho Chi Minh City"
           },
           "contentCategories": {
+            "type": "array",
             "example": [
               "beauty",
               "fashion"
             ],
             "maxItems": 20,
-            "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/ECreatorContent"
             }
           },
           "portfolioUrl": {

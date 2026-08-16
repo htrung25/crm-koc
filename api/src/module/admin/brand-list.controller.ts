@@ -1,7 +1,16 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -35,5 +44,18 @@ export class BrandListController {
   @ApiForbiddenResponse({ description: 'Requires admin role' })
   findAll(@Query() query: BrandFilterDto) {
     return this.brandListService.findAll(query);
+  }
+
+  // 3 đoạn nên không tranh chấp với DELETE /admin/:id (xoá tài khoản admin).
+  @Delete('/brands-list/:id')
+  @ApiOperation({ summary: 'Delete a brand profile' })
+  @ApiOkResponse({ schema: { properties: { message: { type: 'string' } } } })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({ description: 'Requires admin role' })
+  @ApiNotFoundResponse({ description: 'Brand profile not found' })
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.brandListService.remove(id);
   }
 }
