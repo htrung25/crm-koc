@@ -1437,6 +1437,62 @@
         ]
       }
     },
+    "/creator/profile/me/change-password": {
+      "patch": {
+        "operationId": "CreatorProfileController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "New password is weak, or same as the current one"
+          },
+          "401": {
+            "description": "Token invalid, or current password is incorrect"
+          },
+          "403": {
+            "description": "Not a creator account"
+          },
+          "404": {
+            "description": "Account not found"
+          },
+          "429": {
+            "description": "Too many attempts"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Change your own password. Revokes every OTHER session, keeps this one",
+        "tags": [
+          "Creator-Profile"
+        ]
+      }
+    },
     "/social/connections": {
       "get": {
         "operationId": "SocialConnectionsController_list",

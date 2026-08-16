@@ -97,17 +97,33 @@ export class SessionService {
 
     const key = this.getUserKey(current.adminId);
     const all = await this.redis.hGetAll(key);
-    const ids = Object.keys(all);
-    if (ids.length <= cap) return;
+    const now = Date.now();
+
+    // Dọn xác TRƯỚC khi đếm: phiên quá hạn tuyệt đối vẫn còn field trong hash,
+    // để nguyên thì chúng chiếm slot và đá phiên đang sống thay mình.
+    const dead: string[] = [];
+    const live: { id: string; at: number }[] = [];
+    for (const [id, raw] of Object.entries(all)) {
+      const session = this.parseSession(raw);
+      if (!session || this.isExpired(session, now)) {
+        dead.push(id);
+        continue;
+      }
+      live.push({
+        id,
+        at: Date.parse(session.lastSeenAt ?? session.createdAt) || 0,
+      });
+    }
+    if (dead.length) await this.redis.hDel(key, dead);
+    if (live.length <= cap) return;
 
     // Đá thiết bị lâu không dùng nhất, không phải đăng nhập sớm nhất: máy dùng
     // hằng ngày từ tuần trước đáng giữ hơn điện thoại đăng nhập hôm qua rồi bỏ.
-    const victims = ids
-      .filter((id) => id !== current.sessionId)
-      .map((id) => ({ id, at: this.lastActivityOf(all[id]) }))
+    const victims = live
+      .filter((s) => s.id !== current.sessionId)
       .sort((a, b) => a.at - b.at)
-      .slice(0, ids.length - cap)
-      .map((v) => v.id);
+      .slice(0, live.length - cap)
+      .map((s) => s.id);
 
     if (!victims.length) return;
     await this.redis.hDel(key, victims);
@@ -128,16 +144,6 @@ export class SessionService {
     );
   }
 
-  /** JSON hỏng trả 0 => bị đá trước tiên, đúng ý vì nó vốn không đọc được. */
-  private lastActivityOf(raw: string): number {
-    try {
-      const s = JSON.parse(raw) as AdminSession;
-      return Date.parse(s.lastSeenAt ?? s.createdAt) || 0;
-    } catch {
-      return 0;
-    }
-  }
-
   /** HSET + HEXPIRE luôn đi cùng nhau: field không TTL sẽ sống mãi. */
   private async writeSession(
     session: AdminSession,
@@ -156,20 +162,29 @@ export class SessionService {
     const raw = await this.redis.hGet(key, sessionId);
     if (!raw) return null;
 
-    const session = JSON.parse(raw) as AdminSession;
-    const now = new Date();
-
-    // HEXPIRE đã dọn theo hạn nghỉ, nhưng vẫn kiểm lại ở đây vì hạn tuyệt đối
-    // chỉ nằm trong JSON — Redis không biết gì về nó.
-    const idleExpired = new Date(session.expiresAt) < now;
-    const absoluteExpired =
-      session.absoluteExpiresAt && new Date(session.absoluteExpiresAt) < now;
-
-    if (idleExpired || absoluteExpired) {
+    const session = this.parseSession(raw);
+    if (!session || this.isExpired(session, Date.now())) {
       await this.redis.hDel(key, sessionId);
       return null;
     }
     return session;
+  }
+
+  /** JSON hỏng coi như phiên chết: không đọc được thì không tin được. */
+  private parseSession(raw: string): AdminSession | null {
+    try {
+      return JSON.parse(raw) as AdminSession;
+    } catch {
+      return null;
+    }
+  }
+
+  private isExpired(session: AdminSession, nowMs: number): boolean {
+    if (Date.parse(session.expiresAt) < nowMs) return true;
+    return (
+      session.absoluteExpiresAt !== undefined &&
+      Date.parse(session.absoluteExpiresAt) < nowMs
+    );
   }
 
   async refreshSession(session: AdminSession): Promise<void> {
@@ -200,25 +215,32 @@ export class SessionService {
     exceptSessionId?: string,
   ): Promise<number> {
     const key = this.getUserKey(adminId);
-    const sessionIds = await this.redis.hKeys(key);
-    const targets = sessionIds.filter((id) => id !== exceptSessionId);
+    const all = await this.redis.hGetAll(key);
+    const now = Date.now();
+
+    // Xác cũng xoá, nhưng không tính vào số trả về: con số đó dùng để báo đã
+    // đá bao nhiêu thiết bị ĐANG hoạt động.
+    const targets: string[] = [];
+    let revoked = 0;
+    for (const [id, raw] of Object.entries(all)) {
+      const session = this.parseSession(raw);
+      const expired = !session || this.isExpired(session, now);
+      // Phiên được giữ mà đã chết thì vẫn xoá, giữ lại chẳng để làm gì.
+      if (id === exceptSessionId && !expired) continue;
+      targets.push(id);
+      if (!expired) revoked++;
+    }
     if (!targets.length) return 0;
 
-    // Xoa ca hash khi khong giu lai gi: re hon HDEL tung field.
-    if (targets.length === sessionIds.length) {
+    // Xoá cả hash khi không giữ lại gì: rẻ hơn HDEL từng field.
+    if (targets.length === Object.keys(all).length) {
       await this.redis.del(key);
     } else {
       await this.redis.hDel(key, targets);
     }
-    return targets.length;
+    return revoked;
   }
 
-  /**
-   * Doi currentJti mot cach NGUYEN TU: chi doi khi jti hien tai dung nhu mong
-   * doi. Dong thoi gia han phien (sliding) - refresh token la bang chung nguoi
-   * dung con hoat dong, nen phai day lui han nghi. Han TUYET DOI trong JSON
-   * khong bi dung toi, no van la tran cung.
-   */
   async rotateJti(
     adminId: string,
     sessionId: string,
