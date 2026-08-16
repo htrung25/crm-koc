@@ -12,7 +12,7 @@ import { AuthEntity } from '../auth/entities/auth.entity';
 import { uniqueViolationOf } from '../../common/util/pg-error.util';
 import { AdminUser } from './entities/admin-user.entity';
 import { UpdateAdminProfileDto } from './dto/update-admin-profile.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
+import { ChangePasswordDto } from '../../common/dto/change-password.dto';
 import { BCRYPT_ROUNDS } from '../../common/util/account.util';
 import { SessionService } from '../../security/session.service';
 import * as bcrypt from 'bcrypt';
@@ -86,6 +86,7 @@ export class AdminProfileService {
   async changePassword(
     accountId: string,
     dto: ChangePasswordDto,
+    currentSessionId?: string,
   ): Promise<{ message: string }> {
     const { oldPassword, newPassword } = dto;
 
@@ -113,9 +114,15 @@ export class AdminProfileService {
     });
 
     // Người ta đổi mật khẩu vì nghi bị chiếm tài khoản. Không huỷ phiên thì
-    // refresh token của kẻ tấn công còn sống tiếp 7 ngày.
-    const revoked = await this.sessionService.deleteAllByAccount(accountId);
-    this.logger.warn(`Admin ${accountId} đổi mật khẩu, huỷ ${revoked} phiên`);
+    // refresh token của kẻ tấn công còn sống tiếp 7 ngày. Giữ lại phiên đang
+    // gọi để admin không tự đăng xuất mình.
+    const revoked = await this.sessionService.deleteAllByAccount(
+      accountId,
+      currentSessionId,
+    );
+    this.logger.warn(
+      `Admin ${accountId} đổi mật khẩu, huỷ ${revoked} phiên khác`,
+    );
 
     return { message: 'Password changed successfully.' };
   }

@@ -49,7 +49,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // 2. Phiên phải còn sống. Đây là điểm thay thế cho blacklist theo jti:
     //    logout xoá phiên nên MỌI access token của phiên đó chết cùng lúc,
     //    không cần liệt kê từng token.
-    const session = await this.sessionService.getSession(payload.session_id);
+    const session = await this.sessionService.getSession(
+      payload.sub,
+      payload.session_id,
+    );
     if (!session) {
       throw new UnauthorizedException('session is no longer valid');
     }

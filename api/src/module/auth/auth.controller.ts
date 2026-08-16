@@ -368,7 +368,7 @@ export class AuthController {
 
     // Xoá phiên là đủ: mọi access token của phiên này chết ngay ở lần gọi
     // tiếp theo vì JwtStrategy không tìm thấy phiên nữa.
-    await this.jwtAuthService.logout(payload.session_id, {
+    await this.jwtAuthService.logout(payload.sub, payload.session_id, {
       ipAddress: extractClientIp(request),
       userAgent: request.headers['user-agent'] ?? null,
     });

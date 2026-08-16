@@ -10,6 +10,7 @@ import { CreatorProfile } from '../module/creator/entities/creator-profile.entit
 import { SessionEventEntity } from '../module/auth/entities/session-event.entity';
 import { AdminUser } from '../module/admin/entities/admin-user.entity';
 import { SocialAccountEntity } from '../module/social/entities/social-account.entity';
+import { Collaboration } from '../module/collaboration/entities/collaboration.entity';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { SocialAccountEntity } from '../module/social/entities/social-account.en
               SessionEventEntity,
               AdminUser,
               SocialAccountEntity,
+              Collaboration,
             ],
             migrations: migrationGlobals,
             migrationsRun: false,
@@ -64,6 +66,7 @@ import { SocialAccountEntity } from '../module/social/entities/social-account.en
             SessionEventEntity,
             AdminUser,
             SocialAccountEntity,
+            Collaboration,
           ],
           migrations: migrationGlobals,
           migrationsRun: false,

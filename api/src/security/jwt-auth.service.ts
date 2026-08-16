@@ -150,7 +150,10 @@ export class JwtAuthService {
       throw new UnauthorizedException('invalid token');
     }
 
-    const session = await this.sessionService.getSession(payload.session_id);
+    const session = await this.sessionService.getSession(
+      payload.sub,
+      payload.session_id,
+    );
     if (!session) {
       // Phiên đã logout, hết hạn, hoặc bị thu hồi
       throw new UnauthorizedException('session is no longer valid');
@@ -158,6 +161,7 @@ export class JwtAuthService {
 
     const newJti = uuidv7();
     const rotated = await this.sessionService.rotateJti(
+      payload.sub,
       payload.session_id,
       payload.jti,
       newJti,
@@ -168,7 +172,7 @@ export class JwtAuthService {
     }
 
     if (rotated === 'mismatch') {
-      await this.sessionService.deleteSession(payload.session_id);
+      await this.sessionService.deleteSession(payload.sub, payload.session_id);
       await this.sessionEventService.record({
         eventType: ESessionEventType.REVOKED_REUSE,
         accountId: session.adminId,
@@ -197,13 +201,17 @@ export class JwtAuthService {
     );
   }
 
-  async logout(sessionId: string, context: RequestContext = {}): Promise<void> {
-    const session = await this.sessionService.getSession(sessionId);
-    await this.sessionService.deleteSession(sessionId);
+  async logout(
+    accountId: string,
+    sessionId: string,
+    context: RequestContext = {},
+  ): Promise<void> {
+    const session = await this.sessionService.getSession(accountId, sessionId);
+    await this.sessionService.deleteSession(accountId, sessionId);
 
     await this.sessionEventService.record({
       eventType: ESessionEventType.LOGOUT,
-      accountId: session?.adminId ?? null,
+      accountId: session?.adminId ?? accountId,
       sessionId,
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,

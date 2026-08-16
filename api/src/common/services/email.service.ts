@@ -15,7 +15,7 @@ export class EmailService {
     const apiKey = configService.get<string>('SENDGRID_API_KEY', '');
     this.from = configService.get<string>(
       'SENDGRID_FROM',
-      'CRM-KOC System <no-reply@quickpay.asia>',
+      'CRM-KOC System <no-reply@crm-koc.asia>',
     );
     if (apiKey) {
       sgMail.setApiKey(apiKey);

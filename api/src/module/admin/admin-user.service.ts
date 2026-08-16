@@ -197,13 +197,6 @@ export class AdminService {
     return response;
   }
 
-  /**
-   * Ghi phần thuộc bảng accounts của UpdateAdminDto. Không gửi field nào thì
-   * không đụng tới DB.
-   *
-   * Trả về account đã lưu để chỗ gọi dựng response từ giá trị THẬT trong DB,
-   * không phải từ bản trong bộ nhớ.
-   */
   private async applyAccountFields(
     account: AuthEntity,
     dto: UpdateAdminDto,

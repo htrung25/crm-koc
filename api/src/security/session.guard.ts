@@ -37,13 +37,19 @@ export class SessionGuard implements CanActivate {
     const req = context.switchToHttp().getRequest<RequestWithUser>();
 
     // cookies là Record<string, any> nên giá trị lấy ra chưa chắc là chuỗi.
-    // Thu hẹp tường minh: nó sẽ đi thẳng vào khoá Redis ở getSession().
     const raw: unknown = req.cookies?.[this.cookieName];
     if (typeof raw !== 'string' || raw.length === 0) {
       throw new UnauthorizedException('SESSION_EXPIRED');
     }
 
-    const session = await this.sessionService.getSession(raw);
+    const separator = raw.indexOf('.');
+    if (separator <= 0) {
+      throw new UnauthorizedException('SESSION_EXPIRED');
+    }
+    const accountId = raw.slice(0, separator);
+    const sessionId = raw.slice(separator + 1);
+
+    const session = await this.sessionService.getSession(accountId, sessionId);
     if (!session) throw new UnauthorizedException('SESSION_EXPIRED');
 
     // Gia hạn idle timeout trên mỗi request hợp lệ

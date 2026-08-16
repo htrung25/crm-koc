@@ -29,7 +29,7 @@ import { AuthThrottle } from '../../security/auth-throttle.decorator';
 import { ERole } from '../../common/enum/roles.enum';
 import { ESocialPlatform } from '../../common/enum/social-platform.enum';
 import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
-import { SocialConnectionsService } from './connections.service';
+import { SocialConnectionsService } from './connection.service';
 import { SocialOAuthCallbackDto } from './dto/oauth-callback.dto';
 import { SocialConnectionResponseDto } from './dto/connections-response.dto';
 

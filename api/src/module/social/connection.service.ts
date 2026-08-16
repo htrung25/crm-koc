@@ -185,15 +185,6 @@ export class SocialConnectionsService {
     }
   }
 
-  /**
-   * ON CONFLICT cho (creator_profile_id, platform) — nối lại nền tảng đã có là
-   * chuyện bình thường, chỉ cần cấp token mới.
-   *
-   * KHÔNG kiểm tra trước bằng findOne rồi mới ghi: hai request đồng thời đều
-   * qua được bước kiểm rồi cùng ghi. Để DB làm trọng tài, và phân biệt lỗi
-   * bằng TÊN constraint — ON CONFLICT chỉ nuốt đúng ràng buộc được liệt kê,
-   * ràng buộc (platform, external_account_id) vẫn nổi lên dưới dạng 23505.
-   */
   private async upsertConnection(input: {
     creatorProfileId: string;
     platform: ESocialPlatform;

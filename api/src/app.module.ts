@@ -13,6 +13,7 @@ import { CreatorModule } from './module/creator/creator.module';
 import { SocialModule } from './module/social/social.module';
 import { AdminModule } from './module/admin/admin.module';
 import { AuthModule } from './module/auth/auth.module';
+import { CollaborationModule } from './module/collaboration/collaboration.module';
 import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
 
 @Module({
@@ -35,6 +36,7 @@ import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
     BrandModule,
     CreatorModule,
     SocialModule,
+    CollaborationModule,
     IpWhitelistModule,
   ],
   controllers: [],

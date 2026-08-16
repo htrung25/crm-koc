@@ -1,13 +1,24 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
 import { AuthEntity } from '../auth/entities/auth.entity';
-import { uniqueViolationOf } from '../../common/util/pg-error.util';
+import {
+  isForeignKeyViolation,
+  uniqueViolationOf,
+} from '../../common/util/pg-error.util';
+import { BCRYPT_ROUNDS } from '../../common/util/account.util';
+import { ChangePasswordDto } from '../../common/dto/change-password.dto';
+import { AccountCacheService } from '../../security/account-cache.service';
+import { SessionService } from '../../security/session.service';
+import * as bcrypt from 'bcrypt';
 import { BrandProfile } from './entities/brand-profile.entity';
 import { UpdateBrandProfileDto } from './dto/update-brand-profile.dto';
 
@@ -16,11 +27,15 @@ const TAX_CODE_CONSTRAINT = 'UQ_brand_profiles_tax_code';
 
 @Injectable()
 export class BrandProfileService {
+  private readonly logger = new Logger(BrandProfileService.name);
+
   constructor(
     @InjectRepository(BrandProfile)
     private readonly brandRepository: Repository<BrandProfile>,
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
+    private readonly sessionService: SessionService,
+    private readonly accountCache: AccountCacheService,
   ) {}
 
   async create(
@@ -47,20 +62,15 @@ export class BrandProfileService {
       throw new NotFoundException('profile not found');
     }
 
-    // undefined = client không gửi field đó => giữ nguyên.
-    // null = client chủ động xoá giá trị => ghi null.
-    if (dto.brandName !== undefined) profile.brandName = dto.brandName;
-    if (dto.companyName !== undefined) profile.companyName = dto.companyName;
-    if (dto.taxCode !== undefined) profile.taxCode = dto.taxCode;
-    if (dto.phone !== undefined) profile.phone = dto.phone;
-    if (dto.website !== undefined) profile.website = dto.website;
-    if (dto.industry !== undefined) profile.industry = dto.industry;
-    if (dto.logoUrl !== undefined) profile.logoUrl = dto.logoUrl;
-    if (dto.description !== undefined) profile.description = dto.description;
-    if (dto.address !== undefined) profile.address = dto.address;
-    if (dto.contactName !== undefined) profile.contactName = dto.contactName;
-    if (dto.contactPhone !== undefined) profile.contactPhone = dto.contactPhone;
-    if (dto.timezone !== undefined) profile.timezone = dto.timezone;
+    // undefined = client không gửi => giữ nguyên. null = chủ động xoá.
+    // email tách riêng vì phải chuẩn hoá và ghi thêm sang accounts.
+    const { email: _email, ...fields } = dto;
+    Object.assign(
+      profile,
+      Object.fromEntries(
+        Object.entries(fields).filter(([, value]) => value !== undefined),
+      ),
+    );
 
     try {
       if (dto.email !== undefined) {
@@ -72,9 +82,6 @@ export class BrandProfileService {
 
       return await this.brandRepository.save(profile);
     } catch (error) {
-      // Bảng này có HAI ràng buộc duy nhất đi qua cùng chỗ bắt lỗi, nên phải
-      // phân biệt bằng tên constraint. Chỉ nhìn mã 23505 sẽ báo "email trùng"
-      // cho cả trường hợp trùng mã số thuế.
       const constraint = uniqueViolationOf(error);
       if (constraint === TAX_CODE_CONSTRAINT) {
         throw new ConflictException('tax code already exists');
@@ -86,20 +93,71 @@ export class BrandProfileService {
     }
   }
 
-  // async remove(accountId: string) {
-  //   const profile = await this.brandRepository.profile.findUnique({
-  //     where: {accountId},
-  //   });
+  async changePassword(
+    accountId: string,
+    dto: ChangePasswordDto,
+    currentSessionId?: string,
+  ): Promise<{ message: string }> {
+    const { oldPassword, newPassword } = dto;
 
-  //   if(!profile){
-  //     throw new NotFoundException(`Profile and ID ${accountId} does not exist`);
-  //   }
-  //   await this.brandRepository.profile.delete({
-  //     where: {accountId},
-  //   });
-  //   return {
-  //     statusCode: 200,
-  //     mesage: 'Delete profile complete',
-  //   };
-  // }
+    // password khai select: false nên phải chỉ định tường minh.
+    const account = await this.authRepository.findOne({
+      where: { id: accountId },
+      select: { id: true, password: true },
+    });
+    if (!account) {
+      throw new NotFoundException('account not found');
+    }
+
+    // 401 chứ không phải 404: tài khoản có tồn tại, chỉ là xác thực lại sai.
+    if (!(await bcrypt.compare(oldPassword, account.password))) {
+      throw new UnauthorizedException('current password is incorrect');
+    }
+    if (await bcrypt.compare(newPassword, account.password)) {
+      throw new BadRequestException(
+        'new password must differ from the current one',
+      );
+    }
+
+    await this.authRepository.update(accountId, {
+      password: await bcrypt.hash(newPassword, BCRYPT_ROUNDS),
+    });
+
+    const revoked = await this.sessionService.deleteAllByAccount(
+      accountId,
+      currentSessionId,
+    );
+    this.logger.warn(
+      `Brand ${accountId} đổi mật khẩu, huỷ ${revoked} phiên khác`,
+    );
+
+    return { message: 'Password changed successfully.' };
+  }
+
+  /** Xoá tài khoản gốc; FK CASCADE tự dọn brand_profiles. */
+  async remove(accountId: string): Promise<{ message: string }> {
+    const account = await this.authRepository.findOneBy({ id: accountId });
+    if (!account) {
+      throw new NotFoundException('account not found');
+    }
+
+    try {
+      await this.authRepository.delete(accountId);
+    } catch (error) {
+      // collaborations.brand_id là RESTRICT: còn hợp tác thì không xoá được.
+      if (isForeignKeyViolation(error)) {
+        throw new ConflictException(
+          'account still has collaborations and cannot be deleted',
+        );
+      }
+      throw error;
+    }
+
+    // Token cũ vẫn qua được JwtStrategy tới khi cache hết hạn nếu bỏ hai dòng này.
+    await this.accountCache.invalidate(accountId);
+    await this.sessionService.deleteAllByAccount(accountId);
+    this.logger.warn(`Brand ${accountId} đã tự xoá tài khoản`);
+
+    return { message: 'Delete Brand account success' };
+  }
 }

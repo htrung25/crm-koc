@@ -1,9 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Matches } from 'class-validator';
-import {
-  PASSWORD_REGEX,
-  PASSWORD_REGEX_MESSAGE,
-} from '../../../common/util/account.util';
+import { PASSWORD_REGEX, PASSWORD_REGEX_MESSAGE } from '../util/account.util';
 
 export class ChangePasswordDto {
   @IsString()

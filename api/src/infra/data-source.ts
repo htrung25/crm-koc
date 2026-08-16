@@ -6,6 +6,7 @@ import { CreatorProfile } from '../module/creator/entities/creator-profile.entit
 import { SessionEventEntity } from '../module/auth/entities/session-event.entity';
 import { AdminUser } from '../module/admin/entities/admin-user.entity';
 import { SocialAccountEntity } from '../module/social/entities/social-account.entity';
+import { Collaboration } from '../module/collaboration/entities/collaboration.entity';
 
 /**
  * DataSource dành riêng cho TypeORM CLI (migration:run / migration:revert).
@@ -20,6 +21,7 @@ const entities = [
   SessionEventEntity,
   AdminUser,
   SocialAccountEntity,
+  Collaboration,
 ];
 
 // Chạy qua ts-node thì đọc migration .ts, chạy từ dist thì đọc .js đã build.

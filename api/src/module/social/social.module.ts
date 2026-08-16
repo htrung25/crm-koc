@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SocialAccountEntity } from './entities/social-account.entity';
-import { SocialConnectionsService } from './connections.service';
-import { SocialConnectionsController } from './connections.controller';
+import { SocialConnectionsService } from './connection.service';
+import { SocialConnectionsController } from './connection.controller';
 import { SocialProviderService } from './provider.service';
 import { SocialTokenService } from './token.service';
 import { TikTokService } from './tiktok.service';
