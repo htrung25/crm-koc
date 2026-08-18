@@ -41,7 +41,7 @@ import { BrandProfileResponseDto } from './dto/brand-profile-response.dto';
 import { ChangePasswordDto } from '../../common/dto/change-password.dto';
 import type { RequestWithToken } from '../../passport/jwt.strategy';
 
-@ApiTags('Brand')
+@ApiTags('Brand-Profile')
 @ApiBearerAuth('access-token')
 @Roles(ERole.BRAND)
 @UseGuards(JwtAuthGuard, RolesGuard)

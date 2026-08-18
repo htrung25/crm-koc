@@ -1248,7 +1248,7 @@
         ],
         "summary": "Your own brand profile",
         "tags": [
-          "Brand"
+          "Brand-Profile"
         ]
       },
       "patch": {
@@ -1295,7 +1295,7 @@
         ],
         "summary": "Partially update your own brand profile",
         "tags": [
-          "Brand"
+          "Brand-Profile"
         ]
       },
       "delete": {
@@ -1336,7 +1336,7 @@
         ],
         "summary": "Delete your own brand account. Irreversible",
         "tags": [
-          "Brand"
+          "Brand-Profile"
         ]
       }
     },
@@ -1392,7 +1392,7 @@
         ],
         "summary": "Change your own password. Revokes every OTHER session, keeps this one",
         "tags": [
-          "Brand"
+          "Brand-Profile"
         ]
       }
     },

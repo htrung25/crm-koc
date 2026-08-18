@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Transactional } from 'typeorm-transactional';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import {
   isForeignKeyViolation,
@@ -58,11 +57,28 @@ export class BrandProfileService {
     return this.brandRepository.findOneBy({ accountId });
   }
 
-  @Transactional()
   async update(
     accountId: string,
     dto: UpdateBrandProfileDto,
   ): Promise<BrandProfileResponseDto> {
+    const result = await this.updateInTransaction(accountId, dto);
+
+    // updateInTransaction đã commit xong tại đây; không tạo cửa sổ cache miss
+    // đọc lại email cũ khi transaction còn chưa hoàn tất.
+    if (result.emailChanged) {
+      await this.accountCache.invalidate(accountId);
+    }
+
+    return result.profile;
+  }
+
+  private async updateInTransaction(
+    accountId: string,
+    dto: UpdateBrandProfileDto,
+  ): Promise<{
+    profile: BrandProfileResponseDto;
+    emailChanged: boolean;
+  }> {
     const profile = await this.brandRepository.findOneBy({ accountId });
     if (!profile) {
       throw new NotFoundException('profile not found');
@@ -78,15 +94,18 @@ export class BrandProfileService {
       ),
     );
 
+    let emailChanged = false;
     try {
       if (dto.email !== undefined) {
         const email = dto.email.trim().toLowerCase();
+        emailChanged = profile.email !== email;
         profile.email = email;
         // accounts mới là nguồn gốc của email (UNIQUE nằm ở bảng đó).
         await this.authRepository.update({ id: accountId }, { email });
       }
 
-      return await this.brandRepository.save(profile);
+      const saved = await this.brandRepository.save(profile);
+      return { profile: saved, emailChanged };
     } catch (error) {
       const constraint = uniqueViolationOf(error);
       if (constraint === TAX_CODE_CONSTRAINT) {

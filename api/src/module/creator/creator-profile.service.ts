@@ -13,6 +13,7 @@ import { uniqueViolationOf } from '../../common/util/pg-error.util';
 import { BCRYPT_ROUNDS } from '../../common/util/account.util';
 import { ChangePasswordDto } from '../../common/dto/change-password.dto';
 import { SessionService } from '../../security/session.service';
+import { AccountCacheService } from '../../security/account-cache.service';
 import * as bcrypt from 'bcrypt';
 import { CreatorProfile } from './entities/creator-profile.entity';
 import { UpdateCreatorProfileDto } from './dto/update-creator-profile.dto';
@@ -28,6 +29,7 @@ export class CreatorProfileService {
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
     private readonly sessionService: SessionService,
+    private readonly accountCache: AccountCacheService,
   ) {}
 
   async create(
@@ -65,21 +67,30 @@ export class CreatorProfileService {
       ),
     );
 
+    let emailChanged = false;
+    let saved: CreatorProfileResponseDto;
     try {
       if (dto.email !== undefined) {
         const email = dto.email.trim().toLowerCase();
+        emailChanged = profile.email !== email;
         profile.email = email;
         // accounts mới là nguồn gốc của email (UNIQUE nằm ở bảng đó).
         await this.authRepository.update({ id: accountId }, { email });
       }
 
-      return await this.creatorRepository.save(profile);
+      saved = await this.creatorRepository.save(profile);
     } catch (error) {
       if (uniqueViolationOf(error) !== null) {
         throw new ConflictException('email already exists');
       }
       throw error;
     }
+
+    if (emailChanged) {
+      await this.accountCache.invalidate(accountId);
+    }
+
+    return saved;
   }
 
   async changePassword(

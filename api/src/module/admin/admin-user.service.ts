@@ -168,13 +168,6 @@ export class AdminService {
     return { ...this.toAdminResponse(account, entries), adminRole };
   }
 
-  /**
-   * Sửa một tài khoản admin qua PATCH /admin/:id.
-   *
-   * Ghi hai bảng nên phải @Transactional: email là nguồn ở accounts (UNIQUE
-   * nằm đó) nhưng admin_users giữ một bản sao cho hồ sơ admin — nửa vời sẽ để
-   * GET /admin/profile/me trả email cũ mãi mãi.
-   */
   @Transactional()
   async updateAdminById(
     id: string,

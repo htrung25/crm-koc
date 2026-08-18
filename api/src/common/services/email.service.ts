@@ -133,7 +133,7 @@ export class EmailService {
     const content = `
       <p style="margin:0 0 16px;font-size:16px;color:#111827;">Hello <strong>${displayName}</strong>,</p>
       <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-        You are attempting to log in to the CRM-KOC Admin Dashboard.
+        You are attempting to log in to the CRM-KOC platform.
       </p>
       <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">
         Your One-Time Password (OTP) for verification is:
@@ -157,8 +157,8 @@ export class EmailService {
     await sgMail.send({
       from: this.from,
       to,
-      subject: '[CRM-KOC] Action Required: Your Admin Login OTP',
-      text: `Hello ${displayName},\n\nYou are attempting to log in to the CRM-KOC Admin Dashboard.\n\nYour One-Time Password (OTP) for verification is: ${otp}\n\nNote: This OTP is valid for 5 minutes. If you did not request this code, please secure your account and contact the system administrator immediately.\n\nBest regards,\nCRM-KOC System`,
+      subject: '[CRM-KOC] Action Required: Your Login OTP',
+      text: `Hello ${displayName},\n\nYou are attempting to log in to the CRM-KOC platform.\n\nYour One-Time Password (OTP) for verification is: ${otp}\n\nNote: This OTP is valid for 5 minutes. If you did not request this code, please secure your account and contact the system administrator immediately.\n\nBest regards,\nCRM-KOC System`,
       html: this.getBaseHtml(content),
     });
 

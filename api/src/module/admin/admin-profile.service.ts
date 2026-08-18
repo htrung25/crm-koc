@@ -16,6 +16,7 @@ import { AdminProfileResponseDto } from './dto/admin-profile-response.dto';
 import { ChangePasswordDto } from '../../common/dto/change-password.dto';
 import { BCRYPT_ROUNDS } from '../../common/util/account.util';
 import { SessionService } from '../../security/session.service';
+import { AccountCacheService } from '../../security/account-cache.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -28,6 +29,7 @@ export class AdminProfileService {
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
     private readonly sessionService: SessionService,
+    private readonly accountCache: AccountCacheService,
   ) {}
 
   /**
@@ -81,9 +83,11 @@ export class AdminProfileService {
       ),
     );
 
+    let emailChanged = false;
     try {
       if (dto.email !== undefined) {
         const email = dto.email.trim().toLowerCase();
+        emailChanged = profile.email !== email;
         profile.email = email;
         // accounts mới là nguồn gốc của email (UNIQUE nằm ở bảng đó).
         await this.authRepository.update({ id: accountId }, { email });
@@ -95,6 +99,10 @@ export class AdminProfileService {
         throw new ConflictException('email already exists');
       }
       throw error;
+    }
+
+    if (emailChanged) {
+      await this.accountCache.invalidate(accountId);
     }
 
     // Đọc lại qua đường đã lọc cột: save() trả về entity đầy đủ, trả thẳng
