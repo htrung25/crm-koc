@@ -24,21 +24,3 @@ export class AccountFilterItemDto {
   @ApiProperty({ format: 'date-time' })
   createdAt: Date;
 }
-
-/** Bọc phân trang — khớp PaginatedResult<T> mà paginate() trả về. */
-export class AccountFilterResponseDto {
-  @ApiProperty({ type: [AccountFilterItemDto] })
-  data: AccountFilterItemDto[];
-
-  @ApiProperty({ example: 3, description: 'Total rows matching the filter' })
-  total: number;
-
-  @ApiProperty({ example: 1 })
-  page: number;
-
-  @ApiProperty({ example: 20 })
-  limit: number;
-
-  @ApiProperty({ example: 1 })
-  totalPages: number;
-}

@@ -21,7 +21,8 @@ import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { CreatorListService } from './creator-list.service';
-import { AccountFilterResponseDto } from './dto/account-filters-response.dto';
+import { AccountFilterItemDto } from './dto/account-filter-item.dto';
+import { ApiFilterResponse } from 'src/common/dto/filter-response.dto';
 import { CreatorFilterDto } from './dto/creator-filters.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 
@@ -37,7 +38,7 @@ export class CreatorListController {
 
   @Get('/creators-list')
   @ApiOperation({ summary: 'List creator accounts, paginated' })
-  @ApiOkResponse({ type: AccountFilterResponseDto })
+  @ApiFilterResponse(AccountFilterItemDto)
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
   })

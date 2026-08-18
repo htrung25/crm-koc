@@ -1,4 +1,4 @@
-export enum EAccountSortField {
+export enum ESortField {
   CREATED_AT = 'createdAt',
   UPDATED_AT = 'updatedAt',
   NAME = 'name',

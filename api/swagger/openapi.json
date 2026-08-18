@@ -558,7 +558,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/EAccountSortField"
+              "$ref": "#/components/schemas/ESortField"
             }
           },
           {
@@ -614,7 +614,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountFilterResponseDto"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/FilterResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AccountFilterItemDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -735,7 +749,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/EAccountSortField"
+              "$ref": "#/components/schemas/ESortField"
             }
           },
           {
@@ -800,7 +814,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountFilterResponseDto"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/FilterResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AccountFilterItemDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -922,7 +950,7 @@
             "required": false,
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/EAccountSortField"
+              "$ref": "#/components/schemas/ESortField"
             }
           },
           {
@@ -940,7 +968,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminFilterResponseDto"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/FilterResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AdminResponseDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2075,21 +2117,32 @@
           "newPassword"
         ]
       },
-      "EAccountSortField": {
-        "type": "string",
-        "enum": [
-          "createdAt",
-          "updatedAt",
-          "name",
-          "email",
-          "status"
-        ]
-      },
-      "ESortOrder": {
-        "type": "string",
-        "enum": [
-          "ASC",
-          "DESC"
+      "FilterResponseDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "example": 42,
+            "description": "Total rows matching the filter"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "limit",
+          "totalPages"
         ]
       },
       "AccountFilterItemDto": {
@@ -2141,39 +2194,21 @@
           "createdAt"
         ]
       },
-      "AccountFilterResponseDto": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AccountFilterItemDto"
-            }
-          },
-          "total": {
-            "type": "number",
-            "example": 3,
-            "description": "Total rows matching the filter"
-          },
-          "page": {
-            "type": "number",
-            "example": 1
-          },
-          "limit": {
-            "type": "number",
-            "example": 20
-          },
-          "totalPages": {
-            "type": "number",
-            "example": 1
-          }
-        },
-        "required": [
-          "data",
-          "total",
-          "page",
-          "limit",
-          "totalPages"
+      "ESortField": {
+        "type": "string",
+        "enum": [
+          "createdAt",
+          "updatedAt",
+          "name",
+          "email",
+          "status"
+        ]
+      },
+      "ESortOrder": {
+        "type": "string",
+        "enum": [
+          "ASC",
+          "DESC"
         ]
       },
       "GendersEnum": {
@@ -2274,41 +2309,6 @@
           "updatedAt",
           "ipWhitelist",
           "adminRole"
-        ]
-      },
-      "AdminFilterResponseDto": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminResponseDto"
-            }
-          },
-          "total": {
-            "type": "number",
-            "example": 42,
-            "description": "Total rows matching the filter"
-          },
-          "page": {
-            "type": "number",
-            "example": 1
-          },
-          "limit": {
-            "type": "number",
-            "example": 20
-          },
-          "totalPages": {
-            "type": "number",
-            "example": 3
-          }
-        },
-        "required": [
-          "data",
-          "total",
-          "page",
-          "limit",
-          "totalPages"
         ]
       },
       "UpdateStatusDto": {

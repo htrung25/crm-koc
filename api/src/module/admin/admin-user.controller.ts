@@ -28,10 +28,8 @@ import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { AdminService } from './admin-user.service';
 import { AdminFilters } from './dto/admin-filters.dto';
-import {
-  AdminFilterResponseDto,
-  AdminResponseDto,
-} from './dto/admin-response.dto';
+import { AdminResponseDto } from './dto/admin-response.dto';
+import { ApiFilterResponse } from 'src/common/dto/filter-response.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
@@ -54,7 +52,7 @@ export class AdminController {
 
   @Get('/admin-list')
   @ApiOperation({ summary: 'List admin accounts, paginated' })
-  @ApiOkResponse({ type: AdminFilterResponseDto })
+  @ApiFilterResponse(AdminResponseDto)
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
   })

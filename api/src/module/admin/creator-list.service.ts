@@ -7,10 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ERole } from '../../common/enum/roles.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
-import {
-  EAccountSortField,
-  ESortOrder,
-} from '../../common/enum/sort-fields.enum';
+import { ESortField, ESortOrder } from '../../common/enum/sort-fields.enum';
 import {
   PaginatedResult,
   escapeLike,
@@ -112,8 +109,8 @@ export class CreatorListService {
     // orderBy ghép chuỗi raw vào SQL => bắt buộc whitelist, không tin input
     const sortBy =
       query.sortBy === undefined
-        ? EAccountSortField.CREATED_AT
-        : assertEnum(EAccountSortField, query.sortBy, 'sortBy');
+        ? ESortField.CREATED_AT
+        : assertEnum(ESortField, query.sortBy, 'sortBy');
     const sortOrder =
       query.sortOrder === undefined
         ? ESortOrder.DESC

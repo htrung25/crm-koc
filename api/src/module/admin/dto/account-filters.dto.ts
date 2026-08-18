@@ -10,10 +10,7 @@ import {
 } from 'class-validator';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
-import {
-  EAccountSortField,
-  ESortOrder,
-} from '../../../common/enum/sort-fields.enum';
+import { ESortField, ESortOrder } from '../../../common/enum/sort-fields.enum';
 
 export class AccountFilterDto extends PaginationDto {
   @IsOptional()
@@ -35,15 +32,15 @@ export class AccountFilterDto extends PaginationDto {
   status?: EAccountStatus;
 
   @IsOptional()
-  @IsEnum(EAccountSortField, {
+  @IsEnum(ESortField, {
     message: 'sortBy must be createdAt, updatedAt, name, email or status',
   })
   @ApiPropertyOptional({
-    enum: EAccountSortField,
-    enumName: 'EAccountSortField',
-    default: EAccountSortField.CREATED_AT,
+    enum: ESortField,
+    enumName: 'ESortField',
+    default: ESortField.CREATED_AT,
   })
-  sortBy?: EAccountSortField;
+  sortBy?: ESortField;
 
   @IsOptional()
   @IsEnum(ESortOrder, { message: 'sortOrder must be ASC or DESC' })

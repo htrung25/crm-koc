@@ -54,21 +54,3 @@ export class AdminResponseDto {
   @ApiProperty({ enum: EAdminRole, enumName: 'EAdminRole' })
   adminRole: EAdminRole;
 }
-
-/** Bọc phân trang — khớp đúng PaginatedResult<T> mà paginate() trả về. */
-export class AdminFilterResponseDto {
-  @ApiProperty({ type: [AdminResponseDto] })
-  data: AdminResponseDto[];
-
-  @ApiProperty({ example: 42, description: 'Total rows matching the filter' })
-  total: number;
-
-  @ApiProperty({ example: 1 })
-  page: number;
-
-  @ApiProperty({ example: 20 })
-  limit: number;
-
-  @ApiProperty({ example: 3 })
-  totalPages: number;
-}
