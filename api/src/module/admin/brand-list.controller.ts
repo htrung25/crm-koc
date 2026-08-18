@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
@@ -22,8 +23,11 @@ import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { BrandListService } from './brand-list.service';
 import { AccountFilterItemDto } from './dto/account-filter-item.dto';
-import { ApiFilterResponse } from 'src/common/dto/filter-response.dto';
-import { BrandFilterDto } from './dto/brand-filters.dto';
+import { ApiFilterResponse } from '../../common/dto/filter-response.dto';
+import {
+  BrandFilterDto,
+  BrandListResponseDto,
+} from './dto/brand-list-response.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 
 @ApiTags('Admin')
@@ -49,12 +53,18 @@ export class BrandListController {
 
   @Get('/brands-list/:id')
   @ApiOperation({ summary: 'Brand account details' })
+  @ApiOkResponse({ type: BrandListResponseDto })
+  @ApiBadRequestResponse({ description: 'Account exists but is not a brand' })
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
   })
   @ApiForbiddenResponse({ description: 'Requires admin role' })
+  @ApiNotFoundResponse({ description: 'Account not found' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.brandListService.findBrandById(id);
+  }
 
-  // 3 đoạn nên không tranh chấp với DELETE /admin/:id (xoá tài khoản admin).
+  // Đường dẫn có 3 đoạn nên không tranh chấp với DELETE /admin/:id (xoá tài khoản admin).
   @Delete('/brands-list/:id')
   @ApiOperation({ summary: 'Delete a brand profile' })
   @ApiOkResponse({ schema: { properties: { message: { type: 'string' } } } })

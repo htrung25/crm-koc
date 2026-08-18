@@ -653,6 +653,52 @@
     },
     "/admin/brands-list/{id}": {
       "get": {
+        "operationId": "BrandListController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Account exists but is not a brand"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Account not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Brand account details",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "delete": {
         "operationId": "BrandListController_remove",
         "parameters": [
           {
@@ -680,10 +726,10 @@
             }
           },
           "401": {
-            "description": "Token is missing, invalid or expired\n\nToken is missing, invalid or expired"
+            "description": "Token is missing, invalid or expired"
           },
           "403": {
-            "description": "Requires admin role\n\nRequires admin role"
+            "description": "Requires admin role"
           },
           "404": {
             "description": "Brand profile not found"
@@ -694,7 +740,7 @@
             "access-token": []
           }
         ],
-        "summary": "Brand account details",
+        "summary": "Delete a brand profile",
         "tags": [
           "Admin"
         ]
@@ -852,6 +898,52 @@
       }
     },
     "/admin/creators-list/{id}": {
+      "get": {
+        "operationId": "CreatorListController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatorListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Account exists but is not a creator"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Account not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Creator account details",
+        "tags": [
+          "Admin"
+        ]
+      },
       "delete": {
         "operationId": "CreatorListController_remove",
         "parameters": [
@@ -977,7 +1069,7 @@
                         "data": {
                           "type": "array",
                           "items": {
-                            "$ref": "#/components/schemas/AdminResponseDto"
+                            "$ref": "#/components/schemas/AdminUserResponseDto"
                           }
                         }
                       }
@@ -1023,7 +1115,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateStatusDto"
+                "$ref": "#/components/schemas/UpdateAdminUserDto"
               }
             }
           }
@@ -1034,7 +1126,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminResponseDto"
+                  "$ref": "#/components/schemas/AdminUserResponseDto"
                 }
               }
             }
@@ -1079,7 +1171,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminResponseDto"
+                  "$ref": "#/components/schemas/AdminUserResponseDto"
                 }
               }
             }
@@ -1124,7 +1216,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateAdminDto"
+                "$ref": "#/components/schemas/UpdateAdminUserDto"
               }
             }
           }
@@ -1135,7 +1227,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminResponseDto"
+                  "$ref": "#/components/schemas/AdminUserResponseDto"
                 }
               }
             }
@@ -1187,7 +1279,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminResponseDto"
+                  "$ref": "#/components/schemas/AdminUserResponseDto"
                 }
               }
             }
@@ -2211,12 +2303,122 @@
           "DESC"
         ]
       },
+      "BrandListResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+84901111111"
+          },
+          "accountRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ERole"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAccountStatus"
+              }
+            ]
+          },
+          "emailVerifiedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "phone",
+          "accountRole",
+          "status",
+          "emailVerifiedAt",
+          "createdAt"
+        ]
+      },
       "GendersEnum": {
         "type": "string",
         "enum": [
           1,
           2,
           3
+        ]
+      },
+      "CreatorListResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+84901111111"
+          },
+          "accountRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ERole"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EAccountStatus"
+              }
+            ]
+          },
+          "emailVerifiedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "phone",
+          "accountRole",
+          "status",
+          "emailVerifiedAt",
+          "createdAt"
         ]
       },
       "EAdminRole": {
@@ -2226,7 +2428,7 @@
           "super_admin"
         ]
       },
-      "AdminResponseDto": {
+      "AdminUserResponseDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -2311,27 +2513,7 @@
           "adminRole"
         ]
       },
-      "UpdateStatusDto": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EAccountStatus"
-              }
-            ]
-          },
-          "statusReason": {
-            "type": "object",
-            "example": "Spamming campaigns",
-            "description": "Shown to the account owner when they are blocked"
-          }
-        },
-        "required": [
-          "status"
-        ]
-      },
-      "UpdateAdminDto": {
+      "UpdateAdminUserDto": {
         "type": "object",
         "properties": {
           "name": {

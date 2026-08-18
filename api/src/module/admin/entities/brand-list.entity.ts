@@ -1,6 +1,6 @@
-import { ERole } from 'src/common/enum/roles.enum';
+import { ERole } from '../../../common/enum/roles.enum';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { EAccountStatus } from 'src/common/enum/account-statuses.enum';
+import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 
 @Entity()
 export class BrandList {

@@ -27,11 +27,12 @@ import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { AdminService } from './admin-user.service';
-import { AdminFilters } from './dto/admin-filters.dto';
-import { AdminResponseDto } from './dto/admin-response.dto';
-import { ApiFilterResponse } from 'src/common/dto/filter-response.dto';
-import { UpdateStatusDto } from './dto/update-status.dto';
-import { UpdateAdminDto } from './dto/update-admin.dto';
+import {
+  AdminFilters,
+  AdminUserResponseDto,
+} from './dto/admin-user-response.dto';
+import { ApiFilterResponse } from '../../common/dto/filter-response.dto';
+import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 import { SuperAdminGuard } from './super-admin.guard';
 import { extractClientIp } from '../../common/util/ip.util';
@@ -52,7 +53,7 @@ export class AdminController {
 
   @Get('/admin-list')
   @ApiOperation({ summary: 'List admin accounts, paginated' })
-  @ApiFilterResponse(AdminResponseDto)
+  @ApiFilterResponse(AdminUserResponseDto)
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
   })
@@ -67,7 +68,7 @@ export class AdminController {
   @ApiOperation({
     summary: 'Change account status; banning takes effect immediately',
   })
-  @ApiOkResponse({ type: AdminResponseDto })
+  @ApiOkResponse({ type: AdminUserResponseDto })
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
   })
@@ -75,7 +76,7 @@ export class AdminController {
   @ApiNotFoundResponse({ description: 'Account not found' })
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateStatusDto,
+    @Body() dto: UpdateAdminUserDto,
   ) {
     return this.adminService.updateStatus(id, dto);
   }
@@ -84,7 +85,7 @@ export class AdminController {
    */
   @Get('/:id')
   @ApiOperation({ summary: 'Read one admin account in detail' })
-  @ApiOkResponse({ type: AdminResponseDto })
+  @ApiOkResponse({ type: AdminUserResponseDto })
   @ApiBadRequestResponse({ description: 'Account exists but is not an admin' })
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
@@ -100,7 +101,7 @@ export class AdminController {
   @ApiOperation({
     summary: 'Update one admin account. Super admin only',
   })
-  @ApiOkResponse({ type: AdminResponseDto })
+  @ApiOkResponse({ type: AdminUserResponseDto })
   @ApiBadRequestResponse({
     description:
       'Malformed body, malformed IP/CIDR, or account is not an admin',
@@ -121,7 +122,7 @@ export class AdminController {
   })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateAdminDto,
+    @Body() dto: UpdateAdminUserDto,
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
   ) {
     // clientIp lấy từ request chứ không nhận từ body: để client tự khai IP của
@@ -137,7 +138,7 @@ export class AdminController {
   @ApiOperation({
     summary: 'Delete one admin account. Super admin only',
   })
-  @ApiOkResponse({ type: AdminResponseDto })
+  @ApiOkResponse({ type: AdminUserResponseDto })
   @ApiBadRequestResponse({
     description: 'Account exists but is not an admin',
   })

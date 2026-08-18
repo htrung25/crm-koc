@@ -20,7 +20,7 @@ import {
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { AccountCacheService } from '../../security/account-cache.service';
 import { SessionService } from '../../security/session.service';
-import { CreatorFilterDto } from './dto/creator-filters.dto';
+import { CreatorFilterDto } from './dto/creator-list-response.dto';
 
 const CREATOR_LIST_FIELDS = [
   'id',
@@ -36,6 +36,23 @@ const CREATOR_LIST_FIELDS = [
 export type CreatorListItem = Pick<
   AuthEntity,
   (typeof CREATOR_LIST_FIELDS)[number]
+>;
+
+/** Chi tiết creator: đúng bằng các cột đã select, không kèm creator_profiles. */
+const CREATOR_DETAIL_COLUMNS = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  accountRole: true,
+  status: true,
+  emailVerifiedAt: true,
+  createdAt: true,
+} as const;
+
+export type CreatorDetail = Pick<
+  AuthEntity,
+  keyof typeof CREATOR_DETAIL_COLUMNS
 >;
 
 @Injectable()
@@ -121,6 +138,21 @@ export class CreatorListService {
     qb.addOrderBy('account.id', ESortOrder.ASC);
 
     return paginate(qb, query);
+  }
+
+  /** Chi tiết một creator. 404 nếu không có, 400 nếu account không phải creator. */
+  async findCreatorById(accountId: string): Promise<CreatorDetail> {
+    const account = await this.authRepository.findOne({
+      where: { id: accountId },
+      select: CREATOR_DETAIL_COLUMNS,
+    });
+    if (!account) {
+      throw new NotFoundException('account not found');
+    }
+    if (account.accountRole !== ERole.CREATOR) {
+      throw new BadRequestException('account is not a creator');
+    }
+    return account;
   }
 
   async remove(accountId: string): Promise<{ message: string }> {

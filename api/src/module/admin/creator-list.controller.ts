@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
@@ -22,8 +23,11 @@ import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { CreatorListService } from './creator-list.service';
 import { AccountFilterItemDto } from './dto/account-filter-item.dto';
-import { ApiFilterResponse } from 'src/common/dto/filter-response.dto';
-import { CreatorFilterDto } from './dto/creator-filters.dto';
+import { ApiFilterResponse } from '../../common/dto/filter-response.dto';
+import {
+  CreatorFilterDto,
+  CreatorListResponseDto,
+} from './dto/creator-list-response.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 
 @ApiTags('Admin')
@@ -47,7 +51,20 @@ export class CreatorListController {
     return this.creatorListService.findAll(query);
   }
 
-  // 3 đoạn nên không tranh chấp với DELETE /admin/:id (xoá tài khoản admin).
+  @Get('/creators-list/:id')
+  @ApiOperation({ summary: 'Creator account details' })
+  @ApiOkResponse({ type: CreatorListResponseDto })
+  @ApiBadRequestResponse({ description: 'Account exists but is not a creator' })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({ description: 'Requires admin role' })
+  @ApiNotFoundResponse({ description: 'Account not found' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.creatorListService.findCreatorById(id);
+  }
+
+  // Đường dẫn có 3 đoạn nên không tranh chấp với DELETE /admin/:id (xoá tài khoản admin).
   @Delete('/creators-list/:id')
   @ApiOperation({ summary: 'Delete a creator profile' })
   @ApiOkResponse({ schema: { properties: { message: { type: 'string' } } } })

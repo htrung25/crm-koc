@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Transactional } from 'typeorm-transactional';
 import { ECollaborationStatus } from '../../common/enum/collaboration-status.enum';
 import { Collaboration } from './entities/collaboration.entity';
 
@@ -12,7 +11,8 @@ export class CollaborationService {
     private readonly collaborationRepository: Repository<Collaboration>,
   ) {}
 
-  @Transactional()
+  // async getCollaboration(id: string)
+
   async updateStatus(
     id: string,
     next: ECollaborationStatus,

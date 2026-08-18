@@ -20,7 +20,7 @@ import {
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { AccountCacheService } from '../../security/account-cache.service';
 import { SessionService } from '../../security/session.service';
-import { BrandFilterDto } from './dto/brand-filters.dto';
+import { BrandFilterDto } from './dto/brand-list-response.dto';
 
 const BRAND_LIST_FIELDS = [
   'id',
@@ -37,6 +37,20 @@ export type BrandListItem = Pick<
   AuthEntity,
   (typeof BRAND_LIST_FIELDS)[number]
 >;
+
+/** Chi tiết brand: đúng bằng các cột đã select, không kèm brand_profiles. */
+const BRAND_DETAIL_COLUMNS = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  accountRole: true,
+  status: true,
+  emailVerifiedAt: true,
+  createdAt: true,
+} as const;
+
+export type BrandDetail = Pick<AuthEntity, keyof typeof BRAND_DETAIL_COLUMNS>;
 
 @Injectable()
 export class BrandListService {
@@ -112,6 +126,21 @@ export class BrandListService {
     qb.addOrderBy('account.id', ESortOrder.ASC);
 
     return paginate(qb, query);
+  }
+
+  /** Chi tiết một brand. 404 nếu không có, 400 nếu account không phải brand. */
+  async findBrandById(accountId: string): Promise<BrandDetail> {
+    const account = await this.authRepository.findOne({
+      where: { id: accountId },
+      select: BRAND_DETAIL_COLUMNS,
+    });
+    if (!account) {
+      throw new NotFoundException('account not found');
+    }
+    if (account.accountRole !== ERole.BRAND) {
+      throw new BadRequestException('account is not a brand');
+    }
+    return account;
   }
 
   async remove(accountId: string): Promise<{ message: string }> {

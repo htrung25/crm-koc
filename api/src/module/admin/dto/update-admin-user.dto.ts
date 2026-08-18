@@ -8,7 +8,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
-export class UpdateAdminDto {
+export class UpdateAdminUserDto {
   @IsOptional()
   @IsString()
   @MaxLength(255)

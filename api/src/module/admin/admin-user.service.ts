@@ -20,9 +20,8 @@ import {
 import { AccountCacheService } from '../../security/account-cache.service';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
-import { AdminFilters } from './dto/admin-filters.dto';
-import { UpdateStatusDto } from './dto/update-status.dto';
-import { UpdateAdminDto } from './dto/update-admin.dto';
+import { AdminFilters } from './dto/admin-user-response.dto';
+import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { EAdminRole } from './enum/admin-roles.enum';
 import { AdminUser } from './entities/admin-user.entity';
 import { IpWhitelistService } from './ip-whitelist.service';
@@ -106,7 +105,7 @@ export class AdminService {
 
   async updateStatus(
     id: string,
-    dto: UpdateStatusDto,
+    dto: UpdateAdminUserDto,
   ): Promise<AuthenticatedAccount> {
     const account = await this.authRepository.findOneBy({ id });
     if (!account) {
@@ -126,15 +125,7 @@ export class AdminService {
   }
 
   /**
-   * Cắt quyền truy cập của một account.
-   *
-   * Xoá PHIÊN trước rồi mới xoá cache, và thứ tự đó có chủ đích: phiên chết thì
-   * JwtStrategy chặn ngay ở bước getSession, không cần cache đúng. Nếu
-   * invalidate() ném (nó là hàm duy nhất trong AccountCacheService không bọc
-   * try/catch) thì quyền đã bị cắt xong rồi.
-   *
-   * Chỉ huỷ phiên khi bị khoá; mở khoá về ACTIVE thì không việc gì phải đá
-   * người dùng ra.
+   * Cắt quyền truy cập của một account về BANNED.
    */
   private async revokeAccess(
     accountId: string,
@@ -171,7 +162,7 @@ export class AdminService {
   @Transactional()
   async updateAdminById(
     id: string,
-    dto: UpdateAdminDto,
+    dto: UpdateAdminUserDto,
     caller: { accountId: string; clientIp: string },
   ): Promise<
     AuthenticatedAccount & { ipWhitelist: string | null; adminRole: EAdminRole }
@@ -223,7 +214,7 @@ export class AdminService {
 
   private async applyAccountFields(
     account: AuthEntity,
-    dto: UpdateAdminDto,
+    dto: UpdateAdminUserDto,
   ): Promise<AuthEntity> {
     // undefined = client không gửi => giữ nguyên. null = chủ động xoá.
     let touched = false;
