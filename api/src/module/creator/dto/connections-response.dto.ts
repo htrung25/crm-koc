@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ESocialPlatform } from '../../../common/enum/social-platform.enum';
-import { SocialAccountEntity } from '../entities/social-account.entity';
+import { SocialAccount } from '../entities/social-account.entity';
 
 export class SocialConnectionResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -54,7 +54,7 @@ export class SocialConnectionResponseDto {
   @ApiProperty({ format: 'date-time' })
   createdAt!: Date;
 
-  static from(entity: SocialAccountEntity): SocialConnectionResponseDto {
+  static from(entity: SocialAccount): SocialConnectionResponseDto {
     return {
       id: entity.id,
       platform: entity.platform,

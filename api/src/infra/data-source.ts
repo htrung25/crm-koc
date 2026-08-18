@@ -3,10 +3,10 @@ import { SnakeNamingStrategy } from './snake-naming.strategy';
 import { AuthEntity } from '../module/auth/entities/auth.entity';
 import { BrandProfile } from '../module/brand/entities/brand-profile.entity';
 import { CreatorProfile } from '../module/creator/entities/creator-profile.entity';
-import { SessionEventEntity } from '../module/auth/entities/session-event.entity';
+import { SessionEvent } from '../module/auth/entities/session-event.entity';
 import { AdminUser } from '../module/admin/entities/admin-user.entity';
-import { SocialAccountEntity } from '../module/social/entities/social-account.entity';
-import { Collaboration } from '../module/collaboration/entities/collaboration.entity';
+import { SocialAccount } from '../module/creator/entities/social-account.entity';
+import { Collaboration } from '../module/brand/entities/collaboration.entity';
 
 /**
  * DataSource dành riêng cho TypeORM CLI (migration:run / migration:revert).
@@ -18,9 +18,9 @@ const entities = [
   AuthEntity,
   BrandProfile,
   CreatorProfile,
-  SessionEventEntity,
+  SessionEvent,
   AdminUser,
-  SocialAccountEntity,
+  SocialAccount,
   Collaboration,
 ];
 

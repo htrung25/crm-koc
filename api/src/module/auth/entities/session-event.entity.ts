@@ -8,7 +8,7 @@ import {
 import { ESessionEventType } from '../../../common/enum/session-event-types.enum';
 
 @Entity('session_events')
-export class SessionEventEntity {
+export class SessionEvent {
   // bigint identity => driver trả về string, không phải number.
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id!: string;

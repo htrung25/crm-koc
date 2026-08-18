@@ -22,6 +22,7 @@ import {
 } from '../../common/util/enum-assert.util';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { AccountCacheService } from '../../security/account-cache.service';
+import { SessionService } from '../../security/session.service';
 import { BrandFilterDto } from './dto/brand-filters.dto';
 
 const BRAND_LIST_FIELDS = [
@@ -46,6 +47,7 @@ export class BrandListService {
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
     private readonly accountCache: AccountCacheService,
+    private readonly sessionService: SessionService,
   ) {}
 
   /** Danh sách brand, phân trang + lọc. */
@@ -126,7 +128,9 @@ export class BrandListService {
     }
 
     await this.authRepository.delete(accountId);
-    // Bỏ qua thì token cũ vẫn qua được JwtStrategy tới khi cache hết hạn.
+    // Xoá phiên TRƯỚC: phiên chết thì JwtStrategy chặn ngay, không phụ thuộc
+    // cache có xoá được hay không.
+    await this.sessionService.deleteAllByAccount(accountId);
     await this.accountCache.invalidate(accountId);
     return { message: 'Delete Brand account success' };
   }

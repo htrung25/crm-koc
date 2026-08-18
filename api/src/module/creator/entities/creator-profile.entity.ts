@@ -10,15 +10,6 @@ import {
 import { AuthEntity } from '../../auth/entities/auth.entity';
 import { ECreatorContent } from '../../../common/enum/creator-content.enum';
 
-/**
- * Hồ sơ KOC. Quan hệ 1-1 với accounts: account_id vừa là PK vừa là FK.
- *
- * Đây là bảng mà social_accounts.creator_profile_id trỏ tới.
- *
- * Cột hướng theo việc brand TÌM KOC: nhân khẩu học, địa bàn, lĩnh vực nội
- * dung. Số liệu người theo dõi không nằm ở đây mà ở social_accounts, vì mỗi
- * nền tảng một con số và chúng thay đổi liên tục.
- */
 @Entity('creator_profiles')
 export class CreatorProfile {
   @PrimaryColumn({ type: 'uuid' })

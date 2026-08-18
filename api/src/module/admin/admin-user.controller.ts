@@ -93,7 +93,7 @@ export class AdminController {
   })
   @ApiForbiddenResponse({ description: 'Requires admin role' })
   @ApiNotFoundResponse({ description: 'Account not found' })
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.adminService.findAdminById(id);
   }
 
@@ -121,7 +121,7 @@ export class AdminController {
     description:
       'Change would lock the caller out of their own whitelist; set acknowledgeSelfLockout to override',
   })
-  update(
+  async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateAdminDto,
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
@@ -152,7 +152,7 @@ export class AdminController {
   @ApiNotFoundResponse({
     description: 'Account not found',
   })
-  delete(@Param('id', ParseUUIDPipe) id: string) {
+  async delete(@Param('id', ParseUUIDPipe) id: string) {
     return this.adminService.deleteAdminById(id);
   }
 }

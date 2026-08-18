@@ -32,4 +32,31 @@ export class CollaborationService {
 
     return this.collaborationRepository.save(collab);
   }
+
+  async countSuccessfulCreators(brandId: string): Promise<number> {
+    const result = await this.collaborationRepository
+      .createQueryBuilder('collaboration')
+      .select(
+        'COUNT(DISTINCT collaboration.creatorId)',
+        'successfulCreatorCount',
+      )
+      .where('collaboration.brandId = :brandId', { brandId })
+      .andWhere('collaboration.status = :status', {
+        status: ECollaborationStatus.COMPLETED,
+      })
+      .getRawOne<{ successfulCreatorCount: string }>();
+
+    // COUNT trả bigint nên driver pg cho ra chuỗi; không ép kiểu thì "2" lọt ra API.
+    return Number(result?.successfulCreatorCount ?? 0);
+  }
+
+  /** Số LƯỢT hoàn thành. Khác countSuccessfulCreators: cùng creator tính nhiều lần. */
+  async countSuccessfulByBrand(brandId: string): Promise<number> {
+    return this.collaborationRepository.count({
+      where: {
+        brandId,
+        status: ECollaborationStatus.COMPLETED,
+      },
+    });
+  }
 }

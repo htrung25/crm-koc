@@ -42,7 +42,7 @@ export class CreatorListController {
     description: 'Token is missing, invalid or expired',
   })
   @ApiForbiddenResponse({ description: 'Requires admin role' })
-  findAll(@Query() query: CreatorFilterDto) {
+  async findAll(@Query() query: CreatorFilterDto) {
     return this.creatorListService.findAll(query);
   }
 
@@ -55,7 +55,7 @@ export class CreatorListController {
   })
   @ApiForbiddenResponse({ description: 'Requires admin role' })
   @ApiNotFoundResponse({ description: 'Creator profile not found' })
-  remove(@Param('id', ParseUUIDPipe) id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.creatorListService.remove(id);
   }
 }

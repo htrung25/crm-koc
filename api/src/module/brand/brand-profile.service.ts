@@ -21,6 +21,7 @@ import { SessionService } from '../../security/session.service';
 import * as bcrypt from 'bcrypt';
 import { BrandProfile } from './entities/brand-profile.entity';
 import { UpdateBrandProfileDto } from './dto/update-brand-profile.dto';
+import { BrandProfileResponseDto } from './dto/brand-profile-response.dto';
 
 /** Tên constraint đúng như migration đặt; đổi tên ở đó phải sửa cả ở đây. */
 const TAX_CODE_CONSTRAINT = 'UQ_brand_profiles_tax_code';
@@ -48,7 +49,12 @@ export class BrandProfileService {
     );
   }
 
-  async findByAccountId(accountId: string): Promise<BrandProfile | null> {
+  // Entity trả thẳng: 15 cột của brand_profiles khớp đúng BrandProfileResponseDto,
+  // và quan hệ `account` không được load nên không lọt ra. Join `account` vào
+  // thì phải lọc lại bằng select.
+  async findByAccountId(
+    accountId: string,
+  ): Promise<BrandProfileResponseDto | null> {
     return this.brandRepository.findOneBy({ accountId });
   }
 
@@ -56,7 +62,7 @@ export class BrandProfileService {
   async update(
     accountId: string,
     dto: UpdateBrandProfileDto,
-  ): Promise<BrandProfile> {
+  ): Promise<BrandProfileResponseDto> {
     const profile = await this.brandRepository.findOneBy({ accountId });
     if (!profile) {
       throw new NotFoundException('profile not found');

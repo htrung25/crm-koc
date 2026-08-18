@@ -42,9 +42,16 @@ export class BrandListController {
     description: 'Token is missing, invalid or expired',
   })
   @ApiForbiddenResponse({ description: 'Requires admin role' })
-  findAll(@Query() query: BrandFilterDto) {
+  async findAll(@Query() query: BrandFilterDto) {
     return this.brandListService.findAll(query);
   }
+
+  @Get('/brands-list/:id')
+  @ApiOperation({ summary: 'Brand account details' })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({ description: 'Requires admin role' })
 
   // 3 đoạn nên không tranh chấp với DELETE /admin/:id (xoá tài khoản admin).
   @Delete('/brands-list/:id')

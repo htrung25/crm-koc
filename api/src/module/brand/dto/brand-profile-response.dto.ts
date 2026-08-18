@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { BrandProfile } from '../entities/brand-profile.entity';
 
 export class BrandProfileResponseDto {
   @ApiProperty({ format: 'uuid', description: 'Same value as accounts.id' })
@@ -46,24 +45,4 @@ export class BrandProfileResponseDto {
 
   @ApiProperty({ format: 'date-time' })
   updatedAt!: Date;
-
-  static from(entity: BrandProfile): BrandProfileResponseDto {
-    return {
-      accountId: entity.accountId,
-      brandName: entity.brandName,
-      companyName: entity.companyName,
-      taxCode: entity.taxCode,
-      email: entity.email,
-      phone: entity.phone,
-      website: entity.website,
-      industry: entity.industry,
-      logoUrl: entity.logoUrl,
-      description: entity.description,
-      address: entity.address,
-      contactName: entity.contactName,
-      contactPhone: entity.contactPhone,
-      timezone: entity.timezone,
-      updatedAt: entity.updatedAt,
-    };
-  }
 }

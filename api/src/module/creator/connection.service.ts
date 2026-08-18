@@ -15,9 +15,9 @@ import type { RedisClientType } from 'redis';
 import { REDIS_CLIENT } from '../../infra/redis.module';
 import { ESocialPlatform } from '../../common/enum/social-platform.enum';
 import { uniqueViolationOf } from '../../common/util/pg-error.util';
-import { SocialAccountEntity } from './entities/social-account.entity';
-import { SocialProviderService } from './provider.service';
-import { SocialTokenService } from './token.service';
+import { SocialAccount } from './entities/social-account.entity';
+import { SocialProviderService } from './social-provider.service';
+import { SocialTokenService } from './social-token.service';
 import {
   CreateAuthorizationUrlInput,
   HandleCallbackInput,
@@ -40,8 +40,8 @@ export class SocialConnectionsService {
   private readonly callbackBaseUrl: string;
 
   constructor(
-    @InjectRepository(SocialAccountEntity)
-    private readonly socialAccountRepository: Repository<SocialAccountEntity>,
+    @InjectRepository(SocialAccount)
+    private readonly socialAccountRepository: Repository<SocialAccount>,
     private readonly providerService: SocialProviderService,
     private readonly tokenService: SocialTokenService,
     private readonly configService: ConfigService,
@@ -64,15 +64,6 @@ export class SocialConnectionsService {
     return `${this.callbackBaseUrl.replace(/\/+$/, '')}/${platform}`;
   }
 
-  /**
-   * Bước 1: sinh state, cất ngữ cảnh vào Redis, trả URL để chuyển hướng.
-   *
-   * Chuỗi `state` gửi ra ngoài chỉ là khoá tra cứu ngẫu nhiên 32 byte, KHÔNG
-   * mang dữ liệu. creatorProfileId và redirectUri nằm ở phía server nên client
-   * không sửa được — đây là lớp chống OAuth login CSRF: kẻ tấn công có ép nạn
-   * nhân mở callback với code của mình thì tài khoản social đó cũng chỉ gắn
-   * vào chính hồ sơ của kẻ tấn công.
-   */
   async createAuthorizationUrl(
     input: CreateAuthorizationUrlInput,
   ): Promise<{ authorizationUrl: string }> {
@@ -101,9 +92,7 @@ export class SocialConnectionsService {
   /**
    * Bước 2: đổi code lấy token, lấy hồ sơ, lưu kết nối.
    */
-  async handleCallback(
-    input: HandleCallbackInput,
-  ): Promise<SocialAccountEntity> {
+  async handleCallback(input: HandleCallbackInput): Promise<SocialAccount> {
     if (!input.code || !input.state) {
       throw new BadRequestException('INVALID_SOCIAL_CALLBACK');
     }
@@ -162,7 +151,7 @@ export class SocialConnectionsService {
     });
   }
 
-  findByCreator(creatorProfileId: string): Promise<SocialAccountEntity[]> {
+  findByCreator(creatorProfileId: string): Promise<SocialAccount[]> {
     return this.socialAccountRepository.find({
       where: { creatorProfileId },
       order: { platform: 'ASC' },
@@ -193,7 +182,7 @@ export class SocialConnectionsService {
     refreshTokenEncrypted: string | null;
     tokenExpiresAt: Date | null;
     grantedScopes: string[];
-  }): Promise<SocialAccountEntity> {
+  }): Promise<SocialAccount> {
     try {
       await this.socialAccountRepository.upsert(
         {

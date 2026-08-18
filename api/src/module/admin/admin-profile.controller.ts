@@ -68,7 +68,7 @@ export class AdminProfileController {
     if (!profile) {
       throw new NotFoundException('profile not found');
     }
-    return AdminProfileResponseDto.from(profile);
+    return profile;
   }
 
   @Patch('/me')
@@ -84,9 +84,7 @@ export class AdminProfileController {
     @Request() request: { user: AuthenticatedAccount },
     @Body() dto: UpdateAdminProfileDto,
   ): Promise<AdminProfileResponseDto> {
-    return AdminProfileResponseDto.from(
-      await this.profileService.update(request.user.id, dto),
-    );
+    return this.profileService.update(request.user.id, dto);
   }
 
   @Patch('/me/change-password')

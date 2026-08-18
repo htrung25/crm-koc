@@ -26,6 +26,7 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 import { EAdminRole } from './enum/admin-roles.enum';
 import { AdminUser } from './entities/admin-user.entity';
 import { IpWhitelistService } from './ip-whitelist.service';
+import { SessionService } from '../../security/session.service';
 import { uniqueViolationOf } from '../../common/util/pg-error.util';
 import {
   assertEnum,
@@ -49,6 +50,7 @@ export class AdminService {
     private readonly adminUserRepository: Repository<AdminUser>,
     private readonly accountCache: AccountCacheService,
     private readonly ipWhitelistService: IpWhitelistService,
+    private readonly sessionService: SessionService,
   ) {}
 
   async findAll(query: AdminFilters): Promise<PaginatedResult<AdminListRow>> {
@@ -117,10 +119,39 @@ export class AdminService {
     }
 
     const saved = await this.authRepository.save(account);
-    await this.accountCache.invalidate(id);
+    await this.revokeAccess(id, account.status);
 
     const { password: _password, ...result } = saved;
     return result;
+  }
+
+  /**
+   * Cắt quyền truy cập của một account.
+   *
+   * Xoá PHIÊN trước rồi mới xoá cache, và thứ tự đó có chủ đích: phiên chết thì
+   * JwtStrategy chặn ngay ở bước getSession, không cần cache đúng. Nếu
+   * invalidate() ném (nó là hàm duy nhất trong AccountCacheService không bọc
+   * try/catch) thì quyền đã bị cắt xong rồi.
+   *
+   * Chỉ huỷ phiên khi bị khoá; mở khoá về ACTIVE thì không việc gì phải đá
+   * người dùng ra.
+   */
+  private async revokeAccess(
+    accountId: string,
+    status?: EAccountStatus,
+  ): Promise<void> {
+    const locked =
+      status === undefined ||
+      status === EAccountStatus.SUSPENDED ||
+      status === EAccountStatus.BANNED;
+
+    if (locked) {
+      const revoked = await this.sessionService.deleteAllByAccount(accountId);
+      if (revoked) {
+        this.logger.warn(`Account ${accountId} bị khoá, huỷ ${revoked} phiên`);
+      }
+    }
+    await this.accountCache.invalidate(accountId);
   }
 
   async findAdminById(
@@ -193,7 +224,7 @@ export class AdminService {
   > {
     const response = await this.findAdminById(id);
     await this.authRepository.delete(id);
-    await this.accountCache.invalidate(id);
+    await this.revokeAccess(id);
     return response;
   }
 
@@ -251,7 +282,7 @@ export class AdminService {
     // Cache giữ nguyên cả AuthenticatedAccount, nên đổi bất kỳ cột nào cũng
     // phải xoá — không riêng status. Bỏ qua thì ban/đổi email không có hiệu
     // lực cho tới khi cache tự hết hạn.
-    await this.accountCache.invalidate(account.id);
+    await this.revokeAccess(account.id, account.status);
     return saved;
   }
 

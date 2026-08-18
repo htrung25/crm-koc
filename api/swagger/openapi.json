@@ -638,7 +638,7 @@
       }
     },
     "/admin/brands-list/{id}": {
-      "delete": {
+      "get": {
         "operationId": "BrandListController_remove",
         "parameters": [
           {
@@ -666,10 +666,10 @@
             }
           },
           "401": {
-            "description": "Token is missing, invalid or expired"
+            "description": "Token is missing, invalid or expired\n\nToken is missing, invalid or expired"
           },
           "403": {
-            "description": "Requires admin role"
+            "description": "Requires admin role\n\nRequires admin role"
           },
           "404": {
             "description": "Brand profile not found"
@@ -680,7 +680,7 @@
             "access-token": []
           }
         ],
-        "summary": "Delete a brand profile",
+        "summary": "Brand account details",
         "tags": [
           "Admin"
         ]

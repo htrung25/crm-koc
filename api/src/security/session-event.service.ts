@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ESessionEventType } from '../common/enum/session-event-types.enum';
-import { SessionEventEntity } from '../module/auth/entities/session-event.entity';
+import { SessionEvent } from '../module/auth/entities/session-event.entity';
 
 export interface SessionEventInput {
   eventType: ESessionEventType;
@@ -21,8 +21,8 @@ export class SessionEventService {
   private readonly logger = new Logger(SessionEventService.name);
 
   constructor(
-    @InjectRepository(SessionEventEntity)
-    private readonly eventRepository: Repository<SessionEventEntity>,
+    @InjectRepository(SessionEvent)
+    private readonly eventRepository: Repository<SessionEvent>,
   ) {}
 
   async record(input: SessionEventInput): Promise<void> {
@@ -46,10 +46,7 @@ export class SessionEventService {
   }
 
   /** Lịch sử của một account, mới nhất trước. */
-  async findByAccount(
-    accountId: string,
-    limit = 50,
-  ): Promise<SessionEventEntity[]> {
+  async findByAccount(accountId: string, limit = 50): Promise<SessionEvent[]> {
     return this.eventRepository.find({
       where: { accountId },
       order: { createdAt: 'DESC' },
@@ -58,7 +55,7 @@ export class SessionEventService {
   }
 
   /** Toàn bộ sự kiện của một phiên, dùng khi lần theo một sự cố cụ thể. */
-  async findBySession(sessionId: string): Promise<SessionEventEntity[]> {
+  async findBySession(sessionId: string): Promise<SessionEvent[]> {
     return this.eventRepository.find({
       where: { sessionId },
       order: { createdAt: 'ASC' },
@@ -69,7 +66,7 @@ export class SessionEventService {
   async findByType(
     eventType: ESessionEventType,
     limit = 100,
-  ): Promise<SessionEventEntity[]> {
+  ): Promise<SessionEvent[]> {
     return this.eventRepository.find({
       where: { eventType },
       order: { createdAt: 'DESC' },

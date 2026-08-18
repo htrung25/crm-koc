@@ -66,7 +66,7 @@ export class BrandProfileController {
     if (!profile) {
       throw new NotFoundException('profile not found');
     }
-    return BrandProfileResponseDto.from(profile);
+    return profile;
   }
 
   @Patch('/me')
@@ -82,9 +82,7 @@ export class BrandProfileController {
     @Request() request: { user: AuthenticatedAccount },
     @Body() dto: UpdateBrandProfileDto,
   ): Promise<BrandProfileResponseDto> {
-    return BrandProfileResponseDto.from(
-      await this.brandProfileService.update(request.user.id, dto),
-    );
+    return this.brandProfileService.update(request.user.id, dto);
   }
 
   @Patch('/me/change-password')

@@ -2,10 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ERole } from '../../../common/enum/roles.enum';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 
-/**
- * Một dòng trong danh sách brand/creator.
- * Khớp đúng BRAND_LIST_FIELDS / CREATOR_LIST_FIELDS — 7 cột, không hơn.
- */
 export class AccountFilterItemDto {
   @ApiProperty({ format: 'uuid' })
   id: string;

@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SessionEventEntity } from '../module/auth/entities/session-event.entity';
+import { SessionEvent } from '../module/auth/entities/session-event.entity';
 import { SessionEventService } from './session-event.service';
 import { SessionService } from './session.service';
 import { JwtAuthService } from './jwt-auth.service';
@@ -12,7 +12,7 @@ import { TokenBlacklistService } from './token-blacklist.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SessionEventEntity]),
+    TypeOrmModule.forFeature([SessionEvent]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

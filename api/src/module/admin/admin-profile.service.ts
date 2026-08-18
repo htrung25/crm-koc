@@ -12,6 +12,7 @@ import { AuthEntity } from '../auth/entities/auth.entity';
 import { uniqueViolationOf } from '../../common/util/pg-error.util';
 import { AdminUser } from './entities/admin-user.entity';
 import { UpdateAdminProfileDto } from './dto/update-admin-profile.dto';
+import { AdminProfileResponseDto } from './dto/admin-profile-response.dto';
 import { ChangePasswordDto } from '../../common/dto/change-password.dto';
 import { BCRYPT_ROUNDS } from '../../common/util/account.util';
 import { SessionService } from '../../security/session.service';
@@ -45,14 +46,28 @@ export class AdminProfileService {
     return this.adminRepository.findOneByOrFail({ accountId });
   }
 
-  async findByAccountId(accountId: string): Promise<AdminUser | null> {
-    return this.adminRepository.findOneBy({ accountId });
+  private static readonly PROFILE_COLUMNS = {
+    accountId: true,
+    name: true,
+    email: true,
+    avatarUrl: true,
+    timezone: true,
+    updatedAt: true,
+  } as const;
+
+  async findByAccountId(
+    accountId: string,
+  ): Promise<AdminProfileResponseDto | null> {
+    return this.adminRepository.findOne({
+      where: { accountId },
+      select: AdminProfileService.PROFILE_COLUMNS,
+    });
   }
 
   async update(
     accountId: string,
     dto: UpdateAdminProfileDto,
-  ): Promise<AdminUser> {
+  ): Promise<AdminProfileResponseDto> {
     const profile = await this.adminRepository.findOneBy({ accountId });
     if (!profile) {
       throw new NotFoundException('profile not found');
@@ -74,13 +89,20 @@ export class AdminProfileService {
         await this.authRepository.update({ id: accountId }, { email });
       }
 
-      return await this.adminRepository.save(profile);
+      await this.adminRepository.save(profile);
     } catch (error) {
       if (uniqueViolationOf(error) !== null) {
         throw new ConflictException('email already exists');
       }
       throw error;
     }
+
+    // Đọc lại qua đường đã lọc cột: save() trả về entity đầy đủ, trả thẳng
+    // sẽ lộ ipWhitelist và adminRole.
+    return this.adminRepository.findOneOrFail({
+      where: { accountId },
+      select: AdminProfileService.PROFILE_COLUMNS,
+    });
   }
 
   async changePassword(

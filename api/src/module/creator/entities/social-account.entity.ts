@@ -24,7 +24,7 @@ import { CreatorProfile } from '../../creator/entities/creator-profile.entity';
     unique: true,
   },
 )
-export class SocialAccountEntity {
+export class SocialAccount {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
