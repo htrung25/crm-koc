@@ -31,7 +31,7 @@ import { ESocialPlatform } from '../../common/enum/social-platform.enum';
 import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
 import { SocialConnectionsService } from './connection.service';
 import { SocialOAuthCallbackDto } from './dto/oauth-callback.dto';
-import { SocialConnectionDto } from './dto/connections-response.dto';
+import { SocialConnectionDto } from './dto/connection.dto';
 
 /**
  * Chỉ creator nối tài khoản mạng xã hội — brand và admin không có
@@ -58,10 +58,8 @@ export class SocialConnectionsController {
   async list(
     @Request() request: { user: AuthenticatedAccount },
   ): Promise<SocialConnectionDto[]> {
-    const connections = await this.connectionsService.findByCreator(
-      request.user.id,
-    );
-    return connections.map((c) => SocialConnectionDto.from(c));
+    // Service đã lọc cột bằng select nên trả thẳng, không map lại.
+    return this.connectionsService.findByCreator(request.user.id);
   }
 
   // Mỗi lần gọi là một state mới nằm trong Redis 10 phút; không giới hạn thì
@@ -107,13 +105,12 @@ export class SocialConnectionsController {
     platform: ESocialPlatform,
     @Body() dto: SocialOAuthCallbackDto,
   ): Promise<SocialConnectionDto> {
-    const connection = await this.connectionsService.handleCallback({
+    return this.connectionsService.handleCallback({
       platform,
       code: dto.code,
       state: dto.state,
       currentAccountId: request.user.id,
     });
-    return SocialConnectionDto.from(connection);
   }
 
   @Delete('/connections/:platform')

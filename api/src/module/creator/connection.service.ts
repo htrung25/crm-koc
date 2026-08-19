@@ -25,14 +25,39 @@ import {
   OAuthStatePayload,
 } from './types/social.types';
 
-/**
- * Cửa sổ để người dùng bấm xong nút đồng ý trên nền tảng. Dài hơn thì state cũ
- * nằm lại trong Redis lâu vô ích; ngắn hơn thì người dùng chậm tay sẽ hỏng.
- */
 const STATE_TTL_SECONDS = 10 * 60;
 
 /** Tên index đúng như migration đặt; đổi ở đó phải sửa cả ở đây. */
 const EXTERNAL_ID_INDEX = 'uq_social_accounts_platform_external_id';
+
+/**
+ * Cột được phép ra khỏi service. Entity còn accessTokenEncrypted,
+ * refreshTokenEncrypted, rawData, creatorProfileId — không cột nào được lọt ra API.
+ */
+const CONNECTION_COLUMNS = {
+  id: true,
+  platform: true,
+  externalAccountId: true,
+  username: true,
+  displayName: true,
+  biography: true,
+  profileUrl: true,
+  avatarUrl: true,
+  followerCount: true,
+  followingCount: true,
+  contentCount: true,
+  grantedScopes: true,
+  tokenExpiresAt: true,
+  lastSyncedAt: true,
+  syncError: true,
+  isActive: true,
+  createdAt: true,
+} as const;
+
+export type SocialConnection = Pick<
+  SocialAccount,
+  keyof typeof CONNECTION_COLUMNS
+>;
 
 @Injectable()
 export class SocialConnectionsService {
@@ -92,7 +117,7 @@ export class SocialConnectionsService {
   /**
    * Bước 2: đổi code lấy token, lấy hồ sơ, lưu kết nối.
    */
-  async handleCallback(input: HandleCallbackInput): Promise<SocialAccount> {
+  async handleCallback(input: HandleCallbackInput): Promise<SocialConnection> {
     if (!input.code || !input.state) {
       throw new BadRequestException('INVALID_SOCIAL_CALLBACK');
     }
@@ -136,7 +161,7 @@ export class SocialConnectionsService {
       profile.externalAccountId,
     );
 
-    return this.upsertConnection({
+    const saved = await this.upsertConnection({
       creatorProfileId: state.creatorProfileId,
       platform: input.platform,
       profile,
@@ -149,12 +174,19 @@ export class SocialConnectionsService {
         : null,
       grantedScopes: tokens.scopes ?? [],
     });
+
+    // save() trả entity đầy đủ, kể cả token vừa mã hoá. Đọc lại theo cột.
+    return this.socialAccountRepository.findOneOrFail({
+      where: { id: saved.id },
+      select: CONNECTION_COLUMNS,
+    });
   }
 
-  findByCreator(creatorProfileId: string): Promise<SocialAccount[]> {
+  findByCreator(creatorProfileId: string): Promise<SocialConnection[]> {
     return this.socialAccountRepository.find({
       where: { creatorProfileId },
       order: { platform: 'ASC' },
+      select: CONNECTION_COLUMNS,
     });
   }
 

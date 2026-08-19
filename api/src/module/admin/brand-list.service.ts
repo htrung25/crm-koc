@@ -20,7 +20,7 @@ import {
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { AccountCacheService } from '../../security/account-cache.service';
 import { SessionService } from '../../security/session.service';
-import { BrandFilterDto } from './dto/brand-list-response.dto';
+import { BrandFilterDto } from './dto/brand-list.dto';
 
 const BRAND_LIST_FIELDS = [
   'id',

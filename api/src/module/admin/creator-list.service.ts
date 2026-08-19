@@ -20,7 +20,7 @@ import {
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { AccountCacheService } from '../../security/account-cache.service';
 import { SessionService } from '../../security/session.service';
-import { CreatorFilterDto } from './dto/creator-list-response.dto';
+import { CreatorFilterDto } from './dto/creator-list.dto';
 
 const CREATOR_LIST_FIELDS = [
   'id',

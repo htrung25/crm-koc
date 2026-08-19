@@ -27,7 +27,7 @@ import { ApiFilterResponse } from '../../common/dto/filter-response.dto';
 import {
   CreatorFilterDto,
   CreatorListResponseDto,
-} from './dto/creator-list-response.dto';
+} from './dto/creator-list.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 
 @ApiTags('Admin')

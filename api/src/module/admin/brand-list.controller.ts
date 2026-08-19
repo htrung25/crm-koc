@@ -24,10 +24,7 @@ import { Roles } from '../../security/roles.decorator';
 import { BrandListService } from './brand-list.service';
 import { AccountFilterItemDto } from './dto/account-filter-item.dto';
 import { ApiFilterResponse } from '../../common/dto/filter-response.dto';
-import {
-  BrandFilterDto,
-  BrandListResponseDto,
-} from './dto/brand-list-response.dto';
+import { BrandFilterDto, BrandListResponseDto } from './dto/brand-list.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 
 @ApiTags('Admin')
