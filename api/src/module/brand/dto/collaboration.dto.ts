@@ -22,6 +22,32 @@ export const COLLABORATION_SORT_FIELDS = [
   ESortField.COMPLETED_AT,
 ] as const;
 
+/**
+ * Body của POST /brand/collaborations.
+ * KHÔNG có brandId: lấy từ token, nhận từ body là tạo hợp tác hộ brand khác.
+ */
+export class CreateCollaborationDto {
+  @IsUUID()
+  @ApiProperty({ format: 'uuid' })
+  creatorId: string;
+
+  @IsOptional()
+  @IsUUID()
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Bỏ trống nếu thoả thuận trực tiếp, không qua chiến dịch',
+  })
+  campaignId?: string;
+
+  // numeric(14,2) ở DB. Nhận number rồi để driver tự ép; đọc ra vẫn là chuỗi.
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @ApiPropertyOptional({ minimum: 0, example: 1500000 })
+  agreedPrice?: number;
+}
+
 /** Một dòng hợp tác trong danh sách. */
 export class CollaborationDto {
   @ApiProperty({ format: 'uuid' })

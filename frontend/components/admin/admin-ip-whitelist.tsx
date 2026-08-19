@@ -85,7 +85,7 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
   );
 }
 
-export function AdminSecurityManager() {
+export function AdminIpWhitelist() {
   const router = useRouter();
   const [admins, setAdmins] = useState<AdminResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,6 +102,13 @@ export function AdminSecurityManager() {
   // 403 REQUIRES_SUPER_ADMIN khoá UI về chỉ-đọc thay vì để bấm mãi rồi ăn 403.
   const [forbidden, setForbidden] = useState(false);
   const [deleting, setDeleting] = useState<AdminResponse | null>(null);
+  const [addingWhitelist, setAddingWhitelist] = useState(false);
+  const [selectedAdminId, setSelectedAdminId] = useState("");
+  const [newWhitelistEntry, setNewWhitelistEntry] = useState("");
+  const [addingWhitelistPending, setAddingWhitelistPending] = useState(false);
+  const [addingWhitelistError, setAddingWhitelistError] = useState<string | null>(null);
+  const [addingWhitelistLockoutIp, setAddingWhitelistLockoutIp] = useState<string | null>(null);
+  const [pendingWhitelistValue, setPendingWhitelistValue] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -272,6 +279,101 @@ export function AdminSecurityManager() {
     }
   };
 
+  const closeWhitelistForm = () => {
+    setAddingWhitelist(false);
+    setSelectedAdminId("");
+    setNewWhitelistEntry("");
+    setAddingWhitelistError(null);
+    setAddingWhitelistLockoutIp(null);
+    setPendingWhitelistValue(null);
+  };
+
+  const saveNewWhitelist = async (
+    payloadOverride?: string | null,
+    acknowledgeSelfLockout = false,
+  ) => {
+    const admin = admins.find((item) => item.id === selectedAdminId);
+    if (!admin) {
+      setAddingWhitelistError("Vui lòng chọn email của admin.");
+      return;
+    }
+
+    const entry = newWhitelistEntry.trim();
+    const validation =
+      payloadOverride === undefined && entry ? validateEntry(entry) : null;
+
+    if (validation) {
+      setAddingWhitelistError(validation);
+      return;
+    }
+
+    const ipWhitelist =
+      payloadOverride !== undefined
+        ? payloadOverride
+        : entry
+          ? serializeWhitelist([
+              ...parseWhitelist(admin.ipWhitelist),
+              entry,
+            ])
+          : null; // null = không giới hạn IP.
+
+    if ((ipWhitelist?.length ?? 0) > MAX_WHITELIST_LENGTH) {
+      setAddingWhitelistError(
+        `Danh sách vượt quá ${MAX_WHITELIST_LENGTH} ký tự.`,
+      );
+      return;
+    }
+
+    setAddingWhitelistPending(true);
+    setAddingWhitelistError(null);
+    setAddingWhitelistLockoutIp(null);
+
+    try {
+      const response = await apiFetch(`/api/admin/accounts/${admin.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ipWhitelist,
+          acknowledgeSelfLockout,
+        }),
+      });
+      const updated = (await responseBody(response)) as AdminResponse;
+      setAdmins((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      closeWhitelistForm();
+    } catch (failure) {
+      const requestError = failure as Error & {
+        status?: number;
+        clientIp?: string;
+      };
+
+      if (requestError.status === 401) {
+        router.replace("/admin");
+        return;
+      }
+      if (requestError.status === 422 && requestError.clientIp) {
+        setPendingWhitelistValue(ipWhitelist);
+        setAddingWhitelistLockoutIp(requestError.clientIp);
+        setAddingWhitelistError(requestError.message);
+        return;
+      }
+      if (
+        requestError.status === 403 &&
+        requestError.message === "REQUIRES_SUPER_ADMIN"
+      ) {
+        setForbidden(true);
+        setAddingWhitelistError(
+          "Chỉ super admin mới thay đổi được danh sách này.",
+        );
+        return;
+      }
+      setAddingWhitelistError(requestError.message);
+    } finally {
+      setAddingWhitelistPending(false);
+    }
+  };
+
   return (
     <section className="space-y-4">
       {forbidden && (
@@ -323,14 +425,100 @@ export function AdminSecurityManager() {
 
           <button
             type="button"
-            disabled
-            title="API tạo admin chưa được triển khai"
-            className="mt-auto flex h-12 cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-[#2D3B42]/12 px-5 text-sm font-extrabold text-[#8A7768]"
+            disabled={forbidden}
+            aria-expanded={addingWhitelist}
+            aria-controls="add-ip-whitelist-form"
+            onClick={() => {
+              setAddingWhitelist((current) => !current);
+              setAddingWhitelistError(null);
+            }}
+            className="mt-auto flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#2D3B42] px-5 text-sm font-extrabold text-white transition-colors hover:bg-[#1E282D] disabled:cursor-not-allowed disabled:bg-[#2D3B42]/12 disabled:text-[#8A7768]"
           >
             <IconPlus className="h-4 w-4" />
-            Thêm admin
+            Thêm IP Whitelist
           </button>
         </div>
+
+        {addingWhitelist && (
+          <form
+            id="add-ip-whitelist-form"
+            className="mt-4 grid gap-4 border-t border-[#2D3B42]/10 pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveNewWhitelist();
+            }}
+          >
+            <label className="block text-xs font-extrabold text-[#5C5049]">
+              Email admin
+              <span className="relative mt-2 block">
+                <select
+                  value={selectedAdminId}
+                  onChange={(event) => {
+                    setSelectedAdminId(event.target.value);
+                    setAddingWhitelistError(null);
+                  }}
+                  required
+                  className="h-12 w-full appearance-none rounded-2xl bg-white/65 px-4 pr-10 text-sm font-semibold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35"
+                >
+                  <option value="">Chọn email admin</option>
+                  {admins.map((admin) => (
+                    <option key={admin.id} value={admin.id}>
+                      {admin.email}
+                    </option>
+                  ))}
+                </select>
+                <IconChevronDown className="pointer-events-none absolute right-4 top-4 h-4 w-4 text-[#8A7768]" />
+              </span>
+            </label>
+
+            <label className="block text-xs font-extrabold text-[#5C5049]">
+              Thêm IP Whitelist
+              <input
+                value={newWhitelistEntry}
+                onChange={(event) => {
+                  setNewWhitelistEntry(event.target.value);
+                  setAddingWhitelistError(null);
+                }}
+                placeholder="Để trống để cho phép mọi IP"
+                aria-describedby="add-ip-whitelist-help"
+                className="mt-2 h-12 w-full rounded-2xl bg-white/65 px-4 font-mono text-sm font-semibold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 placeholder:font-sans placeholder:text-[#A89685] focus:ring-2 focus:ring-[#EF4623]/35"
+              />
+              <span
+                id="add-ip-whitelist-help"
+                className="mt-2 block text-[11px] font-semibold leading-relaxed text-[#8A7768]"
+              >
+                Nhập IPv4/CIDR để bổ sung; để trống sẽ bỏ giới hạn IP.
+              </span>
+            </label>
+
+            <div className="flex items-start gap-2 lg:pt-7">
+              <button
+                type="button"
+                disabled={addingWhitelistPending}
+                onClick={closeWhitelistForm}
+                className="h-12 rounded-2xl px-4 text-sm font-extrabold text-[#5C5049] hover:bg-white/50 disabled:opacity-50"
+              >
+                Huỷ
+              </button>
+              <button
+                type="submit"
+                disabled={addingWhitelistPending || !selectedAdminId}
+                className="h-12 rounded-2xl bg-gradient-to-br from-[#EF4623] to-[#D8410F] px-5 text-sm font-extrabold text-white shadow-lg shadow-[#EF4623]/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {addingWhitelistPending ? "Đang lưu…" : "Lưu whitelist"}
+              </button>
+            </div>
+
+            {addingWhitelistError && !addingWhitelistLockoutIp && (
+              <p
+                role="alert"
+                className="rounded-2xl bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-700 lg:col-span-3"
+              >
+                {addingWhitelistError}
+              </p>
+            )}
+          </form>
+        )}
       </div>
 
       <div className="glass overflow-hidden rounded-[26px]">
@@ -592,6 +780,26 @@ export function AdminSecurityManager() {
           }}
           onForce={() => void save(true)}
           onDismiss={() => setLockoutIp(null)}
+        />
+      )}
+
+      {addingWhitelistLockoutIp && (
+        <SelfLockoutDialog
+          clientIp={addingWhitelistLockoutIp}
+          pending={addingWhitelistPending}
+          error={addingWhitelistError}
+          onAddCurrentIp={() => {
+            const next = serializeWhitelist([
+              ...parseWhitelist(pendingWhitelistValue),
+              addingWhitelistLockoutIp,
+            ]);
+            setPendingWhitelistValue(next);
+            void saveNewWhitelist(next);
+          }}
+          onForce={() =>
+            void saveNewWhitelist(pendingWhitelistValue, true)
+          }
+          onDismiss={() => setAddingWhitelistLockoutIp(null)}
         />
       )}
 

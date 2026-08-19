@@ -4,6 +4,8 @@ export const PG_UNIQUE_VIOLATION = '23505';
 export const PG_FOREIGN_KEY_VIOLATION = '23503';
 /** Postgres dùng mã RIÊNG cho ON DELETE RESTRICT, không phải 23503. */
 export const PG_RESTRICT_VIOLATION = '23001';
+/** CHECK constraint. Khác 23505 lẫn 23503 — đoán nhầm là lỗi lọt ra thành 500. */
+export const PG_CHECK_VIOLATION = '23514';
 
 export function uniqueViolationOf(error: unknown): string | null {
   if (!(error instanceof QueryFailedError)) {
@@ -16,6 +18,24 @@ export function uniqueViolationOf(error: unknown): string | null {
   };
 
   if (driverError.code !== PG_UNIQUE_VIOLATION) {
+    return null;
+  }
+
+  return driverError.constraint ?? '';
+}
+
+/** Trả TÊN constraint khi CHECK bị vi phạm, null nếu là lỗi khác. */
+export function checkViolationOf(error: unknown): string | null {
+  if (!(error instanceof QueryFailedError)) {
+    return null;
+  }
+
+  const driverError = error as QueryFailedError & {
+    code?: string;
+    constraint?: string;
+  };
+
+  if (driverError.code !== PG_CHECK_VIOLATION) {
     return null;
   }
 

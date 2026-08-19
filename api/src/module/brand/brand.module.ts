@@ -8,11 +8,13 @@ import { SecurityModule } from '../../security/security.module';
 import { Collaboration } from './entities/collaboration.entity';
 import { CollaborationService } from './collaboration.service';
 import { CollaborationController } from './collaboration.controller';
+import { CreatorModule } from '../creator/creator.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([BrandProfile, AuthEntity, Collaboration]),
     SecurityModule,
+    CreatorModule,
   ],
   controllers: [BrandProfileController, CollaborationController],
   providers: [BrandProfileService, CollaborationService],

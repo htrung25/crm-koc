@@ -1,19 +1,31 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
+import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { ECollaborationStatus } from '../../common/enum/collaboration-status.enum';
 import { ESortField, ESortOrder } from '../../common/enum/sort-fields.enum';
 import { assertEnum } from '../../common/util/enum-assert.util';
 import { PaginatedResult, paginate } from '../../common/util/pagination.util';
+import { AuthEntity } from '../auth/entities/auth.entity';
+import { BrandProfileService } from './brand-profile.service';
+import { CreatorProfileService } from '../creator/creator-profile.service';
 import {
   COLLABORATION_SORT_FIELDS,
   CollaborationFilterDto,
+  CreateCollaborationDto,
 } from './dto/collaboration.dto';
 import { Collaboration } from './entities/collaboration.entity';
+
+/** Hợp tác đang dở: chặn tạo trùng. Xong hoặc huỷ rồi thì hợp tác lại được. */
+const OPEN_STATUSES = [
+  ECollaborationStatus.PENDING,
+  ECollaborationStatus.ACTIVE,
+];
 
 const COLLABORATION_LIST_FIELDS = [
   'id',
@@ -53,7 +65,79 @@ export class CollaborationService {
   constructor(
     @InjectRepository(Collaboration)
     private readonly collaborationRepository: Repository<Collaboration>,
+    @InjectRepository(AuthEntity)
+    private readonly authRepository: Repository<AuthEntity>,
+    private readonly brandProfileService: BrandProfileService,
+    private readonly creatorProfileService: CreatorProfileService,
   ) {}
+
+  async create(
+    brandId: string,
+    dto: CreateCollaborationDto,
+  ): Promise<Collaboration> {
+    // 1. Brand phải có hồ sơ: FK trỏ brand_profiles chứ không phải accounts.
+    const brand = await this.brandProfileService.findByAccountId(brandId);
+    if (!brand) {
+      throw new NotFoundException('brand profile not found');
+    }
+
+    // 2. Creator cũng vậy.
+    const creator = await this.creatorProfileService.findByAccountId(
+      dto.creatorId,
+    );
+    if (!creator) {
+      throw new NotFoundException('creator profile not found');
+    }
+
+    if (brandId === dto.creatorId) {
+      throw new BadRequestException(
+        'Brand cannot collaborate with its own creator profile',
+      );
+    }
+
+    // 4. Ban chỉ đổi accounts.status, dòng creator_profiles vẫn còn. Không
+    // kiểm ở đây thì brand vẫn hợp tác được với người vừa bị khoá tài khoản.
+    const creatorAccount = await this.authRepository.findOne({
+      where: { id: dto.creatorId },
+      select: { id: true, status: true },
+    });
+    if (
+      creatorAccount?.status === EAccountStatus.SUSPENDED ||
+      creatorAccount?.status === EAccountStatus.BANNED
+    ) {
+      throw new BadRequestException('creator account is not active');
+    }
+
+    // 5. Chặn trùng khi hợp tác trước còn dở. Đã completed/cancelled thì hợp
+    // tác lại được — DB cố tình không có unique trên bộ ba này.
+    const open = await this.collaborationRepository.findOne({
+      where: {
+        brandId,
+        creatorId: dto.creatorId,
+        campaignId: dto.campaignId ?? IsNull(),
+        status: In(OPEN_STATUSES),
+      },
+      select: { id: true },
+    });
+    if (open) {
+      throw new ConflictException(
+        'an open collaboration with this creator already exists',
+      );
+    }
+
+    // 6 + 7. numeric nhận number, đọc ra lại là chuỗi (D9) nên ép về String.
+    const collaboration = this.collaborationRepository.create({
+      brandId,
+      creatorId: dto.creatorId,
+      campaignId: dto.campaignId ?? null,
+      status: ECollaborationStatus.PENDING,
+      agreedPrice:
+        dto.agreedPrice === undefined ? null : String(dto.agreedPrice),
+    });
+
+    // 8. Entity trùng khít CollaborationDto nên trả thẳng, không map lại.
+    return this.collaborationRepository.save(collaboration);
+  }
 
   async findAll(
     brandId: string,

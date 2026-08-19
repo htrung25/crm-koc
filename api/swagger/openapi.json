@@ -1698,6 +1698,56 @@
         "tags": [
           "Brand-Collaboration"
         ]
+      },
+      "post": {
+        "operationId": "CollaborationController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollaborationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body, creator is your own account, or creator is not active"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Not a brand account"
+          },
+          "404": {
+            "description": "Brand or creator profile not found"
+          },
+          "409": {
+            "description": "An open collaboration with this creator already exists"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Start a collaboration with a creator",
+        "tags": [
+          "Brand-Collaboration"
+        ]
       }
     },
     "/creator/profile/me": {
@@ -3050,6 +3100,28 @@
           "cancelledAt",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "CreateCollaborationDto": {
+        "type": "object",
+        "properties": {
+          "creatorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "campaignId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Bỏ trống nếu thoả thuận trực tiếp, không qua chiến dịch"
+          },
+          "agreedPrice": {
+            "type": "number",
+            "minimum": 0,
+            "example": 1500000
+          }
+        },
+        "required": [
+          "creatorId"
         ]
       },
       "ECreatorContent": {
