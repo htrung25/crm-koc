@@ -13,12 +13,6 @@ import {
   PASSWORD_REGEX_MESSAGE,
 } from '../../../common/util/account.util';
 
-/**
- * Lớp 1 của phòng thủ nhiều lớp: DTO chỉ khai báo đúng những field client
- * được phép gửi. KHÔNG có accountRole và status ở đây — /register là endpoint
- * công khai, để client tự chọn role là mở đường leo thang quyền.
- * Việc tạo admin phải đi qua endpoint riêng do admin gọi.
- */
 export class RegisterDto {
   @IsString()
   @IsNotEmpty()

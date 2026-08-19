@@ -37,7 +37,9 @@ export class RolesGuard implements CanActivate {
       throw new UnauthorizedException('authentication required');
     }
 
-    if (!required.includes(user.accountRole)) {
+    // accountRole null = đăng nhập bằng Google nhưng chưa chọn vai trò. Fail
+    // closed: chỉ PATCH /auth/me (không gắn guard này) mới gọi được.
+    if (user.accountRole === null || !required.includes(user.accountRole)) {
       throw new ForbiddenException(`requires role: ${required.join(' or ')}`);
     }
 

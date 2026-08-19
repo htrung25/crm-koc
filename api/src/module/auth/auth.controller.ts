@@ -6,6 +6,7 @@ import {
   Body,
   HttpException,
   Logger,
+  Patch,
   Request,
   HttpCode,
   HttpStatus,
@@ -18,6 +19,7 @@ import {
   ApiBody,
   ApiConflictResponse,
   ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -48,6 +50,7 @@ import { Roles } from '../../security/roles.decorator';
 import type { RequestWithToken } from '../../passport/jwt.strategy';
 import { AuthenticatedAccount } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateMeDto, UpdateMeResponseDto } from './dto/update-me.dto';
 import { LoginDto, LoginAdminDto } from './dto/login.dto';
 import { LoginResponseDto, RegisterResponseDto } from './dto/auth.dto';
 import { RefreshTokenDto, TokenPairResponseDto } from './dto/refresh-token.dto';
@@ -88,19 +91,7 @@ export class AuthController {
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
   ): Promise<AuthLoginPendingResponseDto> {
     const account = this.assertRole(request.user, [ERole.ADMIN]);
-
-    const result = await this.otpService.generateAndStore(account.id);
-    if (result === EOtpResult.LOCKED) {
-      throw new ForbiddenException('too many failed attempts, try again later');
-    }
-
-    await this.sendOtp(account.email, result.otp, account.name);
-
-    // KHÔNG trả token ở đây: mật khẩu đúng mới chỉ qua được nửa đầu.
-    return {
-      requireOtp: true,
-      message: 'OTP has been sent to your email',
-    };
+    return this.startOtpChallenge(account);
   }
 
   /**
@@ -123,19 +114,7 @@ export class AuthController {
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
   ): Promise<AuthLoginPendingResponseDto> {
     const account = this.assertRole(request.user, [ERole.BRAND, ERole.CREATOR]);
-
-    const result = await this.otpService.generateAndStore(account.id);
-    if (result === EOtpResult.LOCKED) {
-      throw new ForbiddenException('too many failed attempts, try again later');
-    }
-
-    await this.sendOtp(account.email, result.otp, account.name);
-
-    // KHÔNG trả token ở đây: mật khẩu đúng mới chỉ qua được nửa đầu.
-    return {
-      requireOtp: true,
-      message: 'OTP has been sent to your email',
-    };
+    return this.startOtpChallenge(account);
   }
 
   // OTP chỉ có 6 chữ số nên đây là mục tiêu dò mã rõ ràng nhất: vượt hạn thì
@@ -168,6 +147,10 @@ export class AuthController {
 
     // Trạng thái có thể đã đổi trong lúc OTP còn hiệu lực
     this.assertUsable(account);
+
+    // OTP đi qua chính hòm thư này, nên nhập đúng là đã chứng minh sở hữu
+    // email. Không cần luồng xác minh riêng.
+    await this.authService.markEmailVerified(account.id);
 
     return this.issueTokens(account, request);
   }
@@ -247,7 +230,12 @@ export class AuthController {
     account: AuthenticatedAccount,
     allowed: ERole[],
   ): AuthenticatedAccount {
-    if (!allowed.includes(account.accountRole)) {
+    // Chưa chọn vai trò thì không khớp cổng đăng nhập nào: cả /login/admin lẫn
+    // /login/brand-creator đều đòi một vai trò cụ thể.
+    if (
+      account.accountRole === null ||
+      !allowed.includes(account.accountRole)
+    ) {
       throw new UnauthorizedException('invalid credentials');
     }
     return account;
@@ -262,6 +250,22 @@ export class AuthController {
         account.statusReason ?? `account is ${account.status}`,
       );
     }
+  }
+
+  /** Phát OTP và trả về lời nhắc. Dùng chung cho đăng ký và đăng nhập. */
+  private async startOtpChallenge(
+    account: AuthenticatedAccount,
+    message = 'OTP has been sent to your email',
+  ): Promise<AuthLoginPendingResponseDto> {
+    const result = await this.otpService.generateAndStore(account.id);
+    if (result === EOtpResult.LOCKED) {
+      throw new ForbiddenException('too many failed attempts, try again later');
+    }
+
+    await this.sendOtp(account.email, result.otp, account.name);
+
+    // KHÔNG trả token ở đây: mật khẩu đúng mới chỉ qua được nửa đầu.
+    return { requireOtp: true, message };
   }
 
   private async sendOtp(
@@ -299,23 +303,39 @@ export class AuthController {
   @Post('/register/brand')
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: RegisterDto })
-  @ApiOperation({ summary: 'Register a new brand account' })
-  @ApiOkResponse({ type: RegisterResponseDto })
+  @ApiOperation({
+    summary: 'Register a new brand account. Returns an OTP challenge',
+  })
+  @ApiOkResponse({ type: AuthLoginPendingResponseDto })
   @ApiBadRequestResponse({ description: 'Missing name, email or password' })
   @ApiConflictResponse({ description: 'Email or phone already exists' })
-  registerBrand(@Body() registerDto: RegisterDto) {
-    return this.authService.createAccountUser(registerDto, ERole.BRAND);
+  async registerBrand(
+    @Body() registerDto: RegisterDto,
+  ): Promise<AuthLoginPendingResponseDto> {
+    const account = await this.authService.createAccountUser(
+      registerDto,
+      ERole.BRAND,
+    );
+    return this.startOtpChallenge(account);
   }
 
   @Post('/register/creator')
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: RegisterDto })
-  @ApiOperation({ summary: 'Register a new creator account' })
-  @ApiOkResponse({ type: RegisterResponseDto })
+  @ApiOperation({
+    summary: 'Register a new creator account. Returns an OTP challenge',
+  })
+  @ApiOkResponse({ type: AuthLoginPendingResponseDto })
   @ApiBadRequestResponse({ description: 'Missing name, email or password' })
   @ApiConflictResponse({ description: 'Email or phone already exists' })
-  registerCreator(@Body() registerDto: RegisterDto) {
-    return this.authService.createAccountUser(registerDto, ERole.CREATOR);
+  async registerCreator(
+    @Body() registerDto: RegisterDto,
+  ): Promise<AuthLoginPendingResponseDto> {
+    const account = await this.authService.createAccountUser(
+      registerDto,
+      ERole.CREATOR,
+    );
+    return this.startOtpChallenge(account);
   }
 
   @Post('/refresh')
@@ -368,7 +388,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('/me')
+  @Get('auth/me')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Account attached to the current token' })
   @ApiOkResponse({ type: RegisterResponseDto })
@@ -379,5 +399,58 @@ export class AuthController {
   me(@Request() request: { user: AuthenticatedAccount }) {
     // JwtStrategy.validate() đã nạp sẵn account vào request.user
     return request.user;
+  }
+
+  // KHÔNG có RolesGuard: tài khoản vừa đăng nhập Google chưa có vai trò, mà
+  // đây chính là chỗ để họ chọn. Gắn RolesGuard là khoá họ ra khỏi lối duy nhất.
+  @UseGuards(JwtAuthGuard)
+  @Patch('auth/me')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Update your own name, phone, or active role',
+    description:
+      'Đổi vai trò sẽ cấp cặp token mới và huỷ phiên cũ; các trường hợp khác ' +
+      'trả accessToken/refreshToken = null và phiên hiện tại giữ nguyên.',
+  })
+  @ApiOkResponse({ type: UpdateMeResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Malformed body, or phone is not a valid Vietnam number',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiNotFoundResponse({ description: 'Account not found' })
+  @ApiConflictResponse({
+    description: 'Phone already belongs to another account',
+  })
+  async updateMe(
+    @Request()
+    request: ExpressRequest & RequestWithToken & { user: AuthenticatedAccount },
+    @Body() dto: UpdateMeDto,
+  ): Promise<UpdateMeResponseDto> {
+    const previousRole = request.user.accountRole;
+    // accountId lấy từ token, không nhận từ body.
+    const account = await this.authService.updateMe(request.user.id, dto);
+
+    // Sửa tên hay điện thoại thì không phải xoay token.
+    if (account.accountRole === previousRole) {
+      return { account, accessToken: null, refreshToken: null };
+    }
+
+    // Đổi quyền thì phải xoay phiên: token cũ mang vai trò cũ trong payload.
+    const issued = await this.issueTokens(account, request);
+    const previousSessionId = request.tokenPayload?.session_id;
+    if (previousSessionId) {
+      await this.jwtAuthService.logout(account.id, previousSessionId, {
+        ipAddress: extractClientIp(request),
+        userAgent: request.headers['user-agent'] ?? null,
+      });
+    }
+
+    return {
+      account,
+      accessToken: issued.accessToken,
+      refreshToken: issued.refreshToken,
+    };
   }
 }

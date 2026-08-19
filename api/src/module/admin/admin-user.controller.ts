@@ -59,24 +59,6 @@ export class AdminController {
     return this.adminService.findAll(query);
   }
 
-  // Route động phải khai sau mọi route tĩnh, nếu không '/admin-list' sẽ khớp
-  // vào :id và ParseUUIDPipe ném 400.
-  @Patch('/:id/status')
-  @ApiOperation({
-    summary: 'Change account status; banning takes effect immediately',
-  })
-  @ApiOkResponse({ type: AdminUserDto })
-  @ApiUnauthorizedResponse({
-    description: 'Token is missing, invalid or expired',
-  })
-  @ApiForbiddenResponse({ description: 'Requires admin role' })
-  @ApiNotFoundResponse({ description: 'Account not found' })
-  updateStatus(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateAdminUserDto,
-  ) {
-    return this.adminService.updateStatus(id, dto);
-  }
   /**
    * Chi tiết một tài khoản admin.
    */
@@ -150,5 +132,24 @@ export class AdminController {
   })
   async delete(@Param('id', ParseUUIDPipe) id: string) {
     return this.adminService.deleteAdminById(id);
+  }
+
+  // Route động phải khai sau mọi route tĩnh, nếu không '/admin-list' sẽ khớp
+  // vào :id và ParseUUIDPipe ném 400.
+  @Patch('/:id/status')
+  @ApiOperation({
+    summary: 'Change account status; banning takes effect immediately',
+  })
+  @ApiOkResponse({ type: AdminUserDto })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({ description: 'Requires admin role' })
+  @ApiNotFoundResponse({ description: 'Account not found' })
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateAdminUserDto,
+  ) {
+    return this.adminService.updateStatus(id, dto);
   }
 }

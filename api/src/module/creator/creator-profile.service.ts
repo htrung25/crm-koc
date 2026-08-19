@@ -109,6 +109,11 @@ export class CreatorProfileService {
       throw new NotFoundException('account not found');
     }
 
+    // Tài khoản chỉ đăng nhập bằng Google thì chưa có mật khẩu để đối chiếu.
+    if (account.password === null) {
+      throw new BadRequestException('account has no password set');
+    }
+
     // 401 chứ không phải 404: tài khoản có tồn tại, chỉ là xác thực lại sai.
     if (!(await bcrypt.compare(oldPassword, account.password))) {
       throw new UnauthorizedException('current password is incorrect');

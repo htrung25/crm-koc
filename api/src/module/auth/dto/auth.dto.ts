@@ -13,8 +13,9 @@ export class AuthDto {
   @ApiProperty({ maxLength: 255 })
   name: string;
 
-  @ApiProperty({ enum: ERole, enumName: 'ERole' })
-  accountRole: ERole;
+  /** null = đăng nhập bằng Google nhưng chưa chọn vai trò qua PATCH /auth/me. */
+  @ApiProperty({ enum: ERole, enumName: 'ERole', nullable: true })
+  accountRole: ERole | null;
 
   @ApiProperty({ enum: EAccountStatus, enumName: 'EAccountStatus' })
   status: EAccountStatus;

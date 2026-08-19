@@ -19,8 +19,9 @@ export class AuthEntity {
   @IsEnum(ERole, {
     message: 'AccountRole must be admin, brand or creator',
   })
-  @Column({ type: 'varchar', length: 32 })
-  accountRole!: ERole;
+  /** null = đăng nhập bằng Google nhưng chưa chọn vai trò (PATCH /auth/me). */
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  accountRole!: ERole | null;
 
   @Column({ type: 'varchar', length: 255 })
   name!: string;
@@ -33,8 +34,9 @@ export class AuthEntity {
   phone!: string | null;
 
   // select: false => password không bao giờ lọt ra ngoài trừ khi addSelect thủ công
-  @Column({ type: 'text', select: false })
-  password!: string;
+  /** null = tài khoản chỉ đăng nhập bằng Google, chưa từng đặt mật khẩu. */
+  @Column({ type: 'text', select: false, nullable: true })
+  password!: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
   emailVerifiedAt!: Date | null;

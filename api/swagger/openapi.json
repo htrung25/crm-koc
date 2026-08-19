@@ -222,7 +222,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterResponseDto"
+                  "$ref": "#/components/schemas/AuthLoginPendingResponseDto"
                 }
               }
             }
@@ -234,7 +234,7 @@
             "description": "Email or phone already exists"
           }
         },
-        "summary": "Register a new brand account",
+        "summary": "Register a new brand account. Returns an OTP challenge",
         "tags": [
           "Auth"
         ]
@@ -260,7 +260,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegisterResponseDto"
+                  "$ref": "#/components/schemas/AuthLoginPendingResponseDto"
                 }
               }
             }
@@ -272,7 +272,7 @@
             "description": "Email or phone already exists"
           }
         },
-        "summary": "Register a new creator account",
+        "summary": "Register a new creator account. Returns an OTP challenge",
         "tags": [
           "Auth"
         ]
@@ -337,7 +337,7 @@
         ]
       }
     },
-    "/me": {
+    "/auth/me": {
       "get": {
         "operationId": "AuthController_me",
         "parameters": [],
@@ -365,6 +365,54 @@
           }
         ],
         "summary": "Account attached to the current token",
+        "tags": [
+          "Auth"
+        ]
+      },
+      "patch": {
+        "description": "Đổi vai trò sẽ cấp cặp token mới và huỷ phiên cũ; các trường hợp khác trả accessToken/refreshToken = null và phiên hiện tại giữ nguyên.",
+        "operationId": "AuthController_updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateMeResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body, or phone is not a valid Vietnam number"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "404": {
+            "description": "Account not found"
+          },
+          "409": {
+            "description": "Phone already belongs to another account"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Update your own name, phone, or active role",
         "tags": [
           "Auth"
         ]
@@ -1097,61 +1145,6 @@
         ]
       }
     },
-    "/admin/{id}/status": {
-      "patch": {
-        "operationId": "AdminController_updateStatus",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAdminUserDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminUserDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Token is missing, invalid or expired"
-          },
-          "403": {
-            "description": "Requires admin role"
-          },
-          "404": {
-            "description": "Account not found"
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "Change account status; banning takes effect immediately",
-        "tags": [
-          "Admin"
-        ]
-      }
-    },
     "/admin/{id}": {
       "get": {
         "operationId": "AdminController_findOne",
@@ -1303,6 +1296,61 @@
           }
         ],
         "summary": "Delete one admin account. Super admin only",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/admin/{id}/status": {
+      "patch": {
+        "operationId": "AdminController_updateStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Account not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Change account status; banning takes effect immediately",
         "tags": [
           "Admin"
         ]
@@ -2106,6 +2154,7 @@
             "maxLength": 255
           },
           "accountRole": {
+            "nullable": true,
             "allOf": [
               {
                 "$ref": "#/components/schemas/ERole"
@@ -2209,6 +2258,7 @@
             "maxLength": 255
           },
           "accountRole": {
+            "nullable": true,
             "allOf": [
               {
                 "$ref": "#/components/schemas/ERole"
@@ -2289,6 +2339,50 @@
           }
         },
         "required": [
+          "accessToken",
+          "refreshToken"
+        ]
+      },
+      "UpdateMeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "John Doe",
+            "maxLength": 255
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+84901111111"
+          },
+          "accountRole": {
+            "type": "string",
+            "enum": [
+              "brand",
+              "creator"
+            ],
+            "description": "Vai trò đang hoạt động. Đổi qua lại được; hồ sơ của vai trò cũ giữ nguyên."
+          }
+        }
+      },
+      "UpdateMeResponseDto": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/RegisterResponseDto"
+          },
+          "accessToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "refreshToken": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "account",
           "accessToken",
           "refreshToken"
         ]

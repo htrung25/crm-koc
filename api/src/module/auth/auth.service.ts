@@ -2,30 +2,27 @@ import {
   Injectable,
   BadRequestException,
   ConflictException,
+  NotFoundException,
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
-import { QueryFailedError, Repository } from 'typeorm';
+import { IsNull, QueryFailedError, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { ERole } from '../../common/enum/roles.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
-import { Transactional } from 'typeorm-transactional';
 import { BCRYPT_ROUNDS, normalizePhone } from '../../common/util/account.util';
 import { BrandProfileService } from '../brand/brand-profile.service';
 import { CreatorProfileService } from '../creator/creator-profile.service';
 import { AdminProfileService } from '../admin/admin-profile.service';
+import { AccountCacheService } from '../../security/account-cache.service';
 import { AuthEntity } from './entities/auth.entity';
 import { AuthenticatedAccount } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
 
 const PG_UNIQUE_VIOLATION = '23505';
 
-/**
- * Role được phép tạo qua đăng ký công khai.
- * Cố tình KHÔNG có ADMIN: truyền ERole.ADMIN vào createAuth() sẽ
- * không compile được. Admin chỉ được tạo bởi admin khác.
- */
 export type PublicRole = ERole.BRAND | ERole.CREATOR;
 
 @Injectable()
@@ -36,14 +33,14 @@ export class AuthService {
     private readonly adminProfileService: AdminProfileService,
     private readonly brandProfileService: BrandProfileService,
     private readonly creatorProfileService: CreatorProfileService,
+    private readonly accountCache: AccountCacheService,
   ) {}
 
-  /**
-   * Mỗi vai trò một bảng hồ sơ do module tương ứng quản lý. Không đặt default
-   * trong switch: thêm vai trò mới vào ERole mà quên hồ sơ sẽ là lỗi biên
-   * dịch, không phải lỗi lúc chạy.
-   */
+  /** Chưa chọn vai trò thì chưa có hồ sơ nào để tạo — PATCH /auth/me lo sau. */
   private createProfileFor(account: AuthenticatedAccount): Promise<unknown> {
+    if (account.accountRole === null) {
+      return Promise.resolve(null);
+    }
     switch (account.accountRole) {
       case ERole.ADMIN:
         return this.adminProfileService.create(
@@ -77,7 +74,6 @@ export class AuthService {
     return this.createAccount(dto, ERole.ADMIN);
   }
 
-  @Transactional()
   private async createAccount(
     dto: RegisterDto,
     role: ERole,
@@ -85,13 +81,7 @@ export class AuthService {
     // Không kiểm tra rỗng ở đây nữa: @IsNotEmpty/@IsEmail/@MinLength trong
     // RegisterDto đã chặn từ tầng ValidationPipe.
 
-    let phone: string | null = null;
-    if (dto.phone?.trim()) {
-      phone = normalizePhone(dto.phone);
-      if (!phone) {
-        throw new BadRequestException('phone is not a valid Vietnam number');
-      }
-    }
+    const phone = this.resolvePhone(dto.phone);
 
     const account = this.authRepository.create({
       name: dto.name.trim(),
@@ -107,6 +97,7 @@ export class AuthService {
     try {
       const saved = await this.authRepository.save(account);
       await this.createProfileFor(saved);
+      // emailVerifiedAt để null: OTP nhập đúng lần đầu mới ghi mốc xác minh.
       const { password: _password, ...result } = saved;
       return result;
     } catch (error) {
@@ -118,6 +109,78 @@ export class AuthService {
         throw new ConflictException('email or phone already exists');
       }
       throw error;
+    }
+  }
+
+  async markEmailVerified(accountId: string): Promise<void> {
+    await this.authRepository.update(
+      { id: accountId, emailVerifiedAt: IsNull() },
+      { emailVerifiedAt: new Date() },
+    );
+  }
+
+  /** Rỗng, null hoặc không gửi = không có số. Sai định dạng = 400. */
+  private resolvePhone(input: string | null | undefined): string | null {
+    if (!input?.trim()) {
+      return null;
+    }
+    const phone = normalizePhone(input);
+    if (!phone) {
+      throw new BadRequestException('phone is not a valid Vietnam number');
+    }
+    return phone;
+  }
+
+  async updateMe(
+    accountId: string,
+    dto: UpdateMeDto,
+  ): Promise<AuthenticatedAccount> {
+    const account = await this.authRepository.findOneBy({ id: accountId });
+    if (!account) {
+      throw new NotFoundException('account not found');
+    }
+
+    if (dto.name !== undefined) {
+      account.name = dto.name.trim();
+    }
+    if (dto.phone !== undefined) {
+      account.phone = this.resolvePhone(dto.phone);
+    }
+    if (dto.accountRole !== undefined) {
+      await this.ensureProfileFor(account, dto.accountRole);
+      account.accountRole = dto.accountRole;
+    }
+
+    try {
+      const saved = await this.authRepository.save(account);
+      await this.accountCache.invalidate(saved.id);
+      const { password: _password, ...result } = saved;
+      return result;
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        (error as QueryFailedError & { code?: string }).code ===
+          PG_UNIQUE_VIOLATION
+      ) {
+        throw new ConflictException('phone already exists');
+      }
+      throw error;
+    }
+  }
+
+  /** Tạo hồ sơ cho vai trò đích nếu chưa có. Hồ sơ cũ không bị đụng tới. */
+  private async ensureProfileFor(
+    account: AuthEntity,
+    role: ERole.BRAND | ERole.CREATOR,
+  ): Promise<void> {
+    const service =
+      role === ERole.BRAND
+        ? this.brandProfileService
+        : this.creatorProfileService;
+
+    const existing = await service.findByAccountId(account.id);
+    if (!existing) {
+      await service.create(account.id, account.name, account.email);
     }
   }
 
@@ -145,7 +208,13 @@ export class AuthService {
     password: string,
   ): Promise<AuthenticatedAccount> {
     const account = await this.findByEmailWithPassword(email);
-    if (!account || !(await bcrypt.compare(password, account.password))) {
+    // password null = tài khoản chỉ có Google. Trả đúng thông điệp như sai mật
+    // khẩu: nói "tài khoản này dùng Google" là để lộ email nào đã đăng ký.
+    if (
+      !account ||
+      account.password === null ||
+      !(await bcrypt.compare(password, account.password))
+    ) {
       throw new UnauthorizedException('invalid credentials');
     }
 
@@ -161,4 +230,24 @@ export class AuthService {
     const { password: _password, ...result } = account;
     return result;
   }
+
+  // TODO(google): SocialProfile và googleOAuthService chưa tồn tại nên hai
+  // hàm dưới chưa compile được. Giữ nguyên làm bản phác, mở lại khi dựng xong
+  // ba tầng Google.
+  //
+  // async socialLogin(input: SocialProfile) {}
+  //
+  // async loginWithGoogle(code: string) {
+  //   const googleToken = await this.googleOAuthService.exchangeCode(code);
+  //   const profile = await this.googleOAuthService.getProfile(
+  //     googleToken.accessToken,
+  //   );
+  //   return this.socialLogin({
+  //     provider: 'google',
+  //     providerUserId: profile.sub,
+  //     email: profile.email,
+  //     displayName: profile.name,
+  //     avatarUrl: profile.picture,
+  //   });
+  // }
 }

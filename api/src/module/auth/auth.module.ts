@@ -24,9 +24,6 @@ import { RedisCacheService } from '../../common/services/redis.service';
     CreatorModule,
     PassportModule,
     SecurityModule,
-    // AdminModule import IpWhitelistModule nhưng không re-export, nên phải
-    // import trực tiếp: Nest dựng IpWhitelistGuard trong context của module
-    // khai controller (AuthModule), không dùng lại instance của module khác.
     IpWhitelistModule,
   ],
   controllers: [AuthController],

@@ -14,7 +14,8 @@ export interface AdminSession {
   adminId: string;
   email: string;
   displayName: string;
-  role: ERole;
+  /** null = chưa chọn vai trò; trần phiên khi đó tính theo mức brand/creator. */
+  role: ERole | null;
   csrfToken: string;
   currentJti: string;
   createdAt: string;

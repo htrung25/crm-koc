@@ -19,7 +19,8 @@ interface BaseJwtPayload {
 
 export interface AccessTokenPayload extends BaseJwtPayload {
   type: 'access';
-  role: ERole;
+  /** null = đăng nhập bằng Google nhưng chưa chọn vai trò. */
+  role: ERole | null;
 }
 
 export interface RefreshTokenPayload extends BaseJwtPayload {
@@ -35,7 +36,7 @@ export interface TokenPair {
 export interface LoginContext {
   email: string;
   displayName: string;
-  role: ERole;
+  role: ERole | null;
   ipAddress?: string | null;
   userAgent?: string | null;
 }
@@ -240,7 +241,7 @@ export class JwtAuthService {
     accountId: string,
     sessionId: string,
     jti: string,
-    role: ERole,
+    role: ERole | null,
   ): TokenPair {
     const accessToken = this.jwtService.sign(
       { sub: accountId, session_id: sessionId, type: 'access', role },
