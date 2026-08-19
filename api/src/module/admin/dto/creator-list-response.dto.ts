@@ -6,28 +6,6 @@ import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 import { GendersEnum } from '../../../common/enum/genders.enum';
 import { AccountFilterDto } from './account-filters.dto';
 
-/** Query của GET /admin/creators-list. */
-export class CreatorFilterDto extends AccountFilterDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  @ApiPropertyOptional({
-    description: 'Match against the address in the role profile table',
-  })
-  address?: string;
-
-  // gender là smallint => query string '1' phải ép về number trước khi @IsEnum
-  @IsOptional()
-  @Type(() => Number)
-  @IsEnum(GendersEnum, { message: 'gender must be 1, 2 or 3' })
-  @ApiPropertyOptional({
-    enum: GendersEnum,
-    enumName: 'GendersEnum',
-    description: '1 = male, 2 = female, 3 = other',
-  })
-  gender?: GendersEnum;
-}
-
 /** Response của GET /admin/creators-list/:id. */
 export class CreatorListResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -53,4 +31,26 @@ export class CreatorListResponseDto {
 
   @ApiProperty({ format: 'date-time' })
   createdAt: Date;
+}
+
+/** Query của GET /admin/creators-list. */
+export class CreatorFilterDto extends AccountFilterDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  @ApiPropertyOptional({
+    description: 'Match against the address in the role profile table',
+  })
+  address?: string;
+
+  // gender là smallint => query string '1' phải ép về number trước khi @IsEnum
+  @IsOptional()
+  @Type(() => Number)
+  @IsEnum(GendersEnum, { message: 'gender must be 1, 2 or 3' })
+  @ApiPropertyOptional({
+    enum: GendersEnum,
+    enumName: 'GendersEnum',
+    description: '1 = male, 2 = female, 3 = other',
+  })
+  gender?: GendersEnum;
 }

@@ -7,13 +7,14 @@ import { BrandProfileController } from './brand-profile.controller';
 import { SecurityModule } from '../../security/security.module';
 import { Collaboration } from './entities/collaboration.entity';
 import { CollaborationService } from './collaboration.service';
+import { CollaborationController } from './collaboration.controller';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([BrandProfile, AuthEntity, Collaboration]),
     SecurityModule,
   ],
-  controllers: [BrandProfileController],
+  controllers: [BrandProfileController, CollaborationController],
   providers: [BrandProfileService, CollaborationService],
   // export để AuthService tạo hồ sơ lúc đăng ký mà không tự khai lại repository
   exports: [BrandProfileService, CollaborationService],

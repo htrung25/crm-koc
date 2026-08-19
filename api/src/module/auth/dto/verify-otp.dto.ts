@@ -7,8 +7,8 @@ import {
   Matches,
 } from 'class-validator';
 
-export class AdminVerifyOtpDto {
-  @ApiProperty({ example: 'admin@gmail.com' })
+export class AuthVerifyOtpDto {
+  @ApiProperty({ example: 'user@gmail.com' })
   @IsEmail()
   email: string;
 
@@ -19,14 +19,14 @@ export class AdminVerifyOtpDto {
   otp: string;
 }
 
-export class AdminResendOtpDto {
-  @ApiProperty({ example: 'admin@gmail.com' })
+export class AuthResendOtpDto {
+  @ApiProperty({ example: 'user@gmail.com' })
   @IsEmail()
   @IsNotEmpty()
   email: string;
 }
 
-export class AdminLoginPendingResponseDto {
+export class AuthLoginPendingResponseDto {
   @ApiProperty({ example: true })
   requireOtp: boolean;
 

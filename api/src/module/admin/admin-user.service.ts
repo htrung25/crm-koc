@@ -20,7 +20,7 @@ import {
 import { AccountCacheService } from '../../security/account-cache.service';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
-import { AdminFilters } from './dto/admin-user-response.dto';
+import { AdminFilterDto } from './dto/admin-user.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { EAdminRole } from './enum/admin-roles.enum';
 import { AdminUser } from './entities/admin-user.entity';
@@ -52,7 +52,7 @@ export class AdminService {
     private readonly sessionService: SessionService,
   ) {}
 
-  async findAll(query: AdminFilters): Promise<PaginatedResult<AdminListRow>> {
+  async findAll(query: AdminFilterDto): Promise<PaginatedResult<AdminListRow>> {
     const qb = this.authRepository
       .createQueryBuilder('account')
       .where('account.accountRole = :role', { role: ERole.ADMIN });

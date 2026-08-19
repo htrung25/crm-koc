@@ -36,10 +36,10 @@ import { OtpService } from '../../security/otp.service';
 import { JwtAuthService } from '../../security/jwt-auth.service';
 import { EmailService } from '../../common/services/email.service';
 import {
-  AdminLoginPendingResponseDto,
-  AdminResendOtpDto,
-  AdminVerifyOtpDto,
-} from '../admin/dto/verify-otp.dto';
+  AuthLoginPendingResponseDto,
+  AuthResendOtpDto,
+  AuthVerifyOtpDto,
+} from './dto/verify-otp.dto';
 import { LocalAuthGuard } from '../../security/local-auth.guard';
 import { IpWhitelistGuard } from '../admin/ip-whitelist.guard';
 import { JwtAuthGuard } from '../../security/jwt-auth.guard';
@@ -49,7 +49,7 @@ import type { RequestWithToken } from '../../passport/jwt.strategy';
 import { AuthenticatedAccount } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto, LoginAdminDto } from './dto/login.dto';
-import { LoginResponseDto, RegisterResponseDto } from './dto/auth-response.dto';
+import { LoginResponseDto, RegisterResponseDto } from './dto/auth.dto';
 import { RefreshTokenDto, TokenPairResponseDto } from './dto/refresh-token.dto';
 import { extractClientIp } from '../../common/util/ip.util';
 // import type: isolatedModules + emitDecoratorMetadata cấm type thường trong
@@ -78,7 +78,7 @@ export class AuthController {
   // LocalAuthGuard đọc body trực tiếp qua passport nên không có @Body();
   // khai báo @ApiBody để Swagger vẫn mô tả đúng request shape.
   @ApiBody({ type: LoginAdminDto })
-  @ApiOkResponse({ type: AdminLoginPendingResponseDto })
+  @ApiOkResponse({ type: AuthLoginPendingResponseDto })
   @ApiUnauthorizedResponse({ description: 'Wrong email or password' })
   @ApiForbiddenResponse({
     description:
@@ -86,7 +86,7 @@ export class AuthController {
   })
   async loginAdmin(
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
-  ): Promise<AdminLoginPendingResponseDto> {
+  ): Promise<AuthLoginPendingResponseDto> {
     const account = this.assertRole(request.user, [ERole.ADMIN]);
 
     const result = await this.otpService.generateAndStore(account.id);
@@ -111,21 +111,31 @@ export class AuthController {
   @Post('/login/brand-creator')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Brand/creator log in. Returns the token pair directly',
+    summary: 'Brand/creator log in. Returns an OTP challenge, never a token',
   })
   @ApiBody({ type: LoginDto })
-  @ApiOkResponse({ type: LoginResponseDto })
+  @ApiOkResponse({ type: AuthLoginPendingResponseDto })
   @ApiUnauthorizedResponse({
     description: 'Wrong email or password',
   })
   @ApiForbiddenResponse({ description: 'Account is suspended or banned' })
-  async login(
+  async loginBrandOrCreator(
     @Request() request: ExpressRequest & { user: AuthenticatedAccount },
-  ): Promise<LoginResponseDto> {
-    return this.issueTokens(
-      this.assertRole(request.user, [ERole.BRAND, ERole.CREATOR]),
-      request,
-    );
+  ): Promise<AuthLoginPendingResponseDto> {
+    const account = this.assertRole(request.user, [ERole.BRAND, ERole.CREATOR]);
+
+    const result = await this.otpService.generateAndStore(account.id);
+    if (result === EOtpResult.LOCKED) {
+      throw new ForbiddenException('too many failed attempts, try again later');
+    }
+
+    await this.sendOtp(account.email, result.otp, account.name);
+
+    // KHÔNG trả token ở đây: mật khẩu đúng mới chỉ qua được nửa đầu.
+    return {
+      requireOtp: true,
+      message: 'OTP has been sent to your email',
+    };
   }
 
   // OTP chỉ có 6 chữ số nên đây là mục tiêu dò mã rõ ràng nhất: vượt hạn thì
@@ -140,10 +150,10 @@ export class AuthController {
     description: 'OTP is locked, or the account is suspended or banned',
   })
   async verifyOtp(
-    @Body() dto: AdminVerifyOtpDto,
+    @Body() dto: AuthVerifyOtpDto,
     @Request() request: ExpressRequest,
   ): Promise<LoginResponseDto> {
-    const account = await this.requireAdminByEmail(dto.email);
+    const account = await this.requireAccountByEmail(dto.email);
     const result = await this.otpService.verify(account.id, dto.otp);
 
     if (result === EOtpResult.LOCKED) {
@@ -167,14 +177,14 @@ export class AuthController {
   @Post('/resend-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send a new login OTP, subject to a cooldown' })
-  @ApiOkResponse({ type: AdminLoginPendingResponseDto })
-  @ApiUnauthorizedResponse({ description: 'Email is not an admin account' })
+  @ApiOkResponse({ type: AuthLoginPendingResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Email does not match any account' })
   @ApiForbiddenResponse({ description: 'OTP is locked' })
   @ApiTooManyRequestsResponse({ description: 'Cooldown has not elapsed yet' })
   async resendOtp(
-    @Body() dto: AdminResendOtpDto,
-  ): Promise<AdminLoginPendingResponseDto> {
-    const account = await this.requireAdminByEmail(dto.email);
+    @Body() dto: AuthResendOtpDto,
+  ): Promise<AuthLoginPendingResponseDto> {
+    const account = await this.requireAccountByEmail(dto.email);
     const result = await this.otpService.resend(account.id);
 
     if (result === EOtpResult.LOCKED) {
@@ -192,16 +202,11 @@ export class AuthController {
     return { requireOtp: true, message: 'A new OTP has been sent' };
   }
 
-  /**
-   * Tra account admin theo email.
-   *
-   * Email không tồn tại và email không phải admin đều trả CÙNG một lỗi
-   * `invalid otp` — nếu phân biệt, endpoint này thành công cụ dò xem email
-   * nào là tài khoản admin của hệ thống.
-   */
-  private async requireAdminByEmail(email: string) {
+  /** Dùng chung cho cả 3 vai trò: OTP gắn với account, không gắn với role. */
+  private async requireAccountByEmail(email: string) {
     const account = await this.authService.findByEmail(email);
-    if (!account || account.accountRole !== ERole.ADMIN) {
+    // Email lạ trả đúng thông điệp như OTP sai để không lộ email nào tồn tại.
+    if (!account) {
       throw new UnauthorizedException('invalid otp');
     }
     this.assertUsable(account);
@@ -210,12 +215,6 @@ export class AuthController {
     return result;
   }
 
-  /**
-   * Một chỗ duy nhất phát token, dùng cho cả /login lẫn /verify-otp.
-   *
-   * Phiên được tạo trong Redis nên logout và ban có hiệu lực tức thì; access
-   * token ngắn hạn còn refresh token dài hạn có xoay vòng.
-   */
   private async issueTokens(
     account: AuthenticatedAccount,
     request: ExpressRequest,
@@ -244,14 +243,6 @@ export class AuthController {
     };
   }
 
-  /**
-   * Mỗi cổng đăng nhập chỉ nhận đúng tập vai trò của nó.
-   *
-   * Sai vai trò trả về ĐÚNG thông điệp của sai mật khẩu ('invalid
-   * credentials', 401) chứ không phải 403 "requires role: admin" như
-   * RolesGuard. Trả lời khác đi là biến hai cổng thành máy dò: gõ một email
-   * vào /login mà nhận 403 tức là email đó tồn tại và là admin.
-   */
   private assertRole(
     account: AuthenticatedAccount,
     allowed: ERole[],

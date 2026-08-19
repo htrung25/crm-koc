@@ -27,10 +27,7 @@ import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { AdminService } from './admin-user.service';
-import {
-  AdminFilters,
-  AdminUserResponseDto,
-} from './dto/admin-user-response.dto';
+import { AdminFilterDto, AdminUserDto } from './dto/admin-user.dto';
 import { ApiFilterResponse } from '../../common/dto/filter-response.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
@@ -53,12 +50,12 @@ export class AdminController {
 
   @Get('/admin-list')
   @ApiOperation({ summary: 'List admin accounts, paginated' })
-  @ApiFilterResponse(AdminUserResponseDto)
+  @ApiFilterResponse(AdminUserDto)
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
   })
   @ApiForbiddenResponse({ description: 'Requires admin role' })
-  findAll(@Query() query: AdminFilters) {
+  findAll(@Query() query: AdminFilterDto) {
     return this.adminService.findAll(query);
   }
 
@@ -68,7 +65,7 @@ export class AdminController {
   @ApiOperation({
     summary: 'Change account status; banning takes effect immediately',
   })
-  @ApiOkResponse({ type: AdminUserResponseDto })
+  @ApiOkResponse({ type: AdminUserDto })
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
   })
@@ -85,7 +82,7 @@ export class AdminController {
    */
   @Get('/:id')
   @ApiOperation({ summary: 'Read one admin account in detail' })
-  @ApiOkResponse({ type: AdminUserResponseDto })
+  @ApiOkResponse({ type: AdminUserDto })
   @ApiBadRequestResponse({ description: 'Account exists but is not an admin' })
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
@@ -101,7 +98,7 @@ export class AdminController {
   @ApiOperation({
     summary: 'Update one admin account. Super admin only',
   })
-  @ApiOkResponse({ type: AdminUserResponseDto })
+  @ApiOkResponse({ type: AdminUserDto })
   @ApiBadRequestResponse({
     description:
       'Malformed body, malformed IP/CIDR, or account is not an admin',
@@ -138,7 +135,7 @@ export class AdminController {
   @ApiOperation({
     summary: 'Delete one admin account. Super admin only',
   })
-  @ApiOkResponse({ type: AdminUserResponseDto })
+  @ApiOkResponse({ type: AdminUserDto })
   @ApiBadRequestResponse({
     description: 'Account exists but is not an admin',
   })

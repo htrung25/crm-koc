@@ -21,7 +21,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminLoginPendingResponseDto"
+                  "$ref": "#/components/schemas/AuthLoginPendingResponseDto"
                 }
               }
             }
@@ -41,7 +41,7 @@
     },
     "/login/brand-creator": {
       "post": {
-        "operationId": "AuthController_login",
+        "operationId": "AuthController_loginBrandOrCreator",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -59,7 +59,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LoginResponseDto"
+                  "$ref": "#/components/schemas/AuthLoginPendingResponseDto"
                 }
               }
             }
@@ -71,7 +71,7 @@
             "description": "Account is suspended or banned"
           }
         },
-        "summary": "Brand/creator log in. Returns the token pair directly",
+        "summary": "Brand/creator log in. Returns an OTP challenge, never a token",
         "tags": [
           "Auth"
         ]
@@ -86,7 +86,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminVerifyOtpDto"
+                "$ref": "#/components/schemas/AuthVerifyOtpDto"
               }
             }
           }
@@ -124,7 +124,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminResendOtpDto"
+                "$ref": "#/components/schemas/AuthResendOtpDto"
               }
             }
           }
@@ -135,13 +135,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminLoginPendingResponseDto"
+                  "$ref": "#/components/schemas/AuthLoginPendingResponseDto"
                 }
               }
             }
           },
           "401": {
-            "description": "Email is not an admin account"
+            "description": "Email does not match any account"
           },
           "403": {
             "description": "OTP is locked"
@@ -1069,7 +1069,7 @@
                         "data": {
                           "type": "array",
                           "items": {
-                            "$ref": "#/components/schemas/AdminUserResponseDto"
+                            "$ref": "#/components/schemas/AdminUserDto"
                           }
                         }
                       }
@@ -1126,7 +1126,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminUserResponseDto"
+                  "$ref": "#/components/schemas/AdminUserDto"
                 }
               }
             }
@@ -1171,7 +1171,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminUserResponseDto"
+                  "$ref": "#/components/schemas/AdminUserDto"
                 }
               }
             }
@@ -1227,7 +1227,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminUserResponseDto"
+                  "$ref": "#/components/schemas/AdminUserDto"
                 }
               }
             }
@@ -1279,7 +1279,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminUserResponseDto"
+                  "$ref": "#/components/schemas/AdminUserDto"
                 }
               }
             }
@@ -1488,6 +1488,170 @@
         ]
       }
     },
+    "/brand/collaborations": {
+      "get": {
+        "operationId": "CollaborationController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ECollaborationStatus"
+            }
+          },
+          {
+            "name": "creatorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "campaignId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "createdFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date",
+              "example": "2026-01-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "createdTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date",
+              "example": "2026-12-31",
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPrice",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "example": 500000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "example": 5000000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "updatedAt",
+                "status",
+                "agreedPrice",
+                "completedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ESortOrder"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/FilterResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/CollaborationDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed filter or sort value"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Not a brand account"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List your own collaborations, paginated",
+        "tags": [
+          "Brand-Collaboration"
+        ]
+      }
+    },
     "/creator/profile/me": {
       "get": {
         "operationId": "CreatorProfileController_getMe",
@@ -1639,7 +1803,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SocialConnectionResponseDto"
+                    "$ref": "#/components/schemas/SocialConnectionDto"
                   }
                 }
               }
@@ -1750,7 +1914,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SocialConnectionResponseDto"
+                  "$ref": "#/components/schemas/SocialConnectionDto"
                 }
               }
             }
@@ -1855,7 +2019,7 @@
           "password"
         ]
       },
-      "AdminLoginPendingResponseDto": {
+      "AuthLoginPendingResponseDto": {
         "type": "object",
         "properties": {
           "requireOtp": {
@@ -1892,6 +2056,23 @@
           "password"
         ]
       },
+      "AuthVerifyOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@gmail.com"
+          },
+          "otp": {
+            "type": "string",
+            "example": "123456"
+          }
+        },
+        "required": [
+          "email",
+          "otp"
+        ]
+      },
       "ERole": {
         "type": "string",
         "enum": [
@@ -1909,7 +2090,7 @@
           4
         ]
       },
-      "AuthResponseDto": {
+      "AuthDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -1959,7 +2140,7 @@
             "description": "Dùng để lấy cặp token mới qua POST /refresh. Xoay vòng mỗi lần dùng."
           },
           "account": {
-            "$ref": "#/components/schemas/AuthResponseDto"
+            "$ref": "#/components/schemas/AuthDto"
           }
         },
         "required": [
@@ -1968,29 +2149,12 @@
           "account"
         ]
       },
-      "AdminVerifyOtpDto": {
+      "AuthResendOtpDto": {
         "type": "object",
         "properties": {
           "email": {
             "type": "string",
-            "example": "admin@gmail.com"
-          },
-          "otp": {
-            "type": "string",
-            "example": "123456"
-          }
-        },
-        "required": [
-          "email",
-          "otp"
-        ]
-      },
-      "AdminResendOtpDto": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "example": "admin@gmail.com"
+            "example": "user@gmail.com"
           }
         },
         "required": [
@@ -2293,7 +2457,9 @@
           "updatedAt",
           "name",
           "email",
-          "status"
+          "status",
+          "agreedPrice",
+          "completedAt"
         ]
       },
       "ESortOrder": {
@@ -2428,7 +2594,7 @@
           "super_admin"
         ]
       },
-      "AdminUserResponseDto": {
+      "AdminUserDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -2712,6 +2878,86 @@
           }
         }
       },
+      "ECollaborationStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "active",
+          "completed",
+          "cancelled",
+          "disputed"
+        ]
+      },
+      "CollaborationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "brandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "creatorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "campaignId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ECollaborationStatus"
+              }
+            ]
+          },
+          "agreedPrice": {
+            "type": "string",
+            "nullable": true,
+            "example": "1500000.00"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "completedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "brandId",
+          "creatorId",
+          "campaignId",
+          "status",
+          "agreedPrice",
+          "startedAt",
+          "completedAt",
+          "cancelledAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "ECreatorContent": {
         "type": "string",
         "enum": [
@@ -2906,7 +3152,7 @@
           "facebook"
         ]
       },
-      "SocialConnectionResponseDto": {
+      "SocialConnectionDto": {
         "type": "object",
         "properties": {
           "id": {

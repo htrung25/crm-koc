@@ -7,52 +7,7 @@ import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 import { ESortField, ESortOrder } from '../../../common/enum/sort-fields.enum';
 import { EAdminRole } from '../enum/admin-roles.enum';
 
-/** Query string của GET /admin/admin-list. page/limit kế thừa từ PaginationDto. */
-export class AdminFilters extends PaginationDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  @ApiPropertyOptional({
-    description: 'Search by name or email, case-insensitive',
-  })
-  search?: string;
-
-  @IsOptional()
-  // query string luôn là chuỗi: '2' phải thành 2 thì @IsEnum mới pass
-  @Type(() => Number)
-  @IsEnum(EAccountStatus, {
-    message:
-      'status must be 1 (pending), 2 (active), 3 (suspended) or 4 (banned)',
-  })
-  @ApiPropertyOptional({
-    enum: EAccountStatus,
-    enumName: 'EAccountStatus',
-    description: 'Filter by account status',
-  })
-  status?: EAccountStatus;
-
-  @IsOptional()
-  @IsEnum(ESortField, {
-    message: 'sortBy must be createdAt, updatedAt, name, email or status',
-  })
-  @ApiPropertyOptional({
-    enum: ESortField,
-    enumName: 'ESortField',
-    default: ESortField.CREATED_AT,
-  })
-  sortBy?: ESortField;
-
-  @IsOptional()
-  @IsEnum(ESortOrder, { message: 'sortOrder must be ASC or DESC' })
-  @ApiPropertyOptional({
-    enum: ESortOrder,
-    enumName: 'ESortOrder',
-    default: ESortOrder.DESC,
-  })
-  sortOrder?: ESortOrder;
-}
-
-export class AdminUserResponseDto {
+export class AdminUserDto {
   @ApiProperty({ format: 'uuid' })
   id: string;
 
@@ -98,4 +53,49 @@ export class AdminUserResponseDto {
   /** FE dùng field này để render trình soạn thảo hay chế độ chỉ-đọc. */
   @ApiProperty({ enum: EAdminRole, enumName: 'EAdminRole' })
   adminRole: EAdminRole;
+}
+
+/** Query string của GET /admin/admin-list. page/limit kế thừa từ PaginationDto. */
+export class AdminFilterDto extends PaginationDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  @ApiPropertyOptional({
+    description: 'Search by name or email, case-insensitive',
+  })
+  search?: string;
+
+  @IsOptional()
+  // query string luôn là chuỗi: '2' phải thành 2 thì @IsEnum mới pass
+  @Type(() => Number)
+  @IsEnum(EAccountStatus, {
+    message:
+      'status must be 1 (pending), 2 (active), 3 (suspended) or 4 (banned)',
+  })
+  @ApiPropertyOptional({
+    enum: EAccountStatus,
+    enumName: 'EAccountStatus',
+    description: 'Filter by account status',
+  })
+  status?: EAccountStatus;
+
+  @IsOptional()
+  @IsEnum(ESortField, {
+    message: 'sortBy must be createdAt, updatedAt, name, email or status',
+  })
+  @ApiPropertyOptional({
+    enum: ESortField,
+    enumName: 'ESortField',
+    default: ESortField.CREATED_AT,
+  })
+  sortBy?: ESortField;
+
+  @IsOptional()
+  @IsEnum(ESortOrder, { message: 'sortOrder must be ASC or DESC' })
+  @ApiPropertyOptional({
+    enum: ESortOrder,
+    enumName: 'ESortOrder',
+    default: ESortOrder.DESC,
+  })
+  sortOrder?: ESortOrder;
 }

@@ -37,15 +37,15 @@ export class OtpService {
   }
 
   async generateAndStore(
-    adminId: string,
+    accountId: string,
   ): Promise<{ otp: string } | EOtpResult.LOCKED> {
-    const lockValue = await this.redis.get(`${OTP_LOCK_PREFIX}${adminId}`);
+    const lockValue = await this.redis.get(`${OTP_LOCK_PREFIX}${accountId}`);
     if (lockValue !== null) return EOtpResult.LOCKED;
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
 
     await this.redis.set(
-      `${OTP_PENDING_PREFIX}${adminId}`,
+      `${OTP_PENDING_PREFIX}${accountId}`,
       JSON.stringify({ otp, attempts: 0 }),
       { EX: this.otpTtl },
     );
@@ -57,33 +57,33 @@ export class OtpService {
   }
 
   async verify(
-    adminId: string,
+    accountId: string,
     inputOtp: string,
   ): Promise<
-    | { adminId: string }
+    | { accountId: string }
     | EOtpResult.EXPIRED
     | EOtpResult.LOCKED
     | EOtpResult.INVALID
   > {
-    const raw = await this.redis.get(`${OTP_PENDING_PREFIX}${adminId}`);
+    const raw = await this.redis.get(`${OTP_PENDING_PREFIX}${accountId}`);
     if (!raw) return EOtpResult.EXPIRED;
 
     const data = JSON.parse(raw) as { otp: string; attempts: number };
 
     // Dùng get thay vì exists vì Redis cluster proxy không hỗ trợ exists
-    const lockValue = await this.redis.get(`${OTP_LOCK_PREFIX}${adminId}`);
+    const lockValue = await this.redis.get(`${OTP_LOCK_PREFIX}${accountId}`);
     if (lockValue !== null) return EOtpResult.LOCKED;
 
     if (inputOtp === data.otp) {
-      await this.redis.del(`${OTP_PENDING_PREFIX}${adminId}`);
-      await this.redis.del(`${OTP_RESEND_PREFIX}${adminId}`);
-      return { adminId };
+      await this.redis.del(`${OTP_PENDING_PREFIX}${accountId}`);
+      await this.redis.del(`${OTP_RESEND_PREFIX}${accountId}`);
+      return { accountId };
     }
 
     data.attempts += 1;
 
     if (data.attempts >= this.maxAttempts) {
-      await this.redis.set(`${OTP_LOCK_PREFIX}${adminId}`, '1', {
+      await this.redis.set(`${OTP_LOCK_PREFIX}${accountId}`, '1', {
         EX: this.lockTtl,
       });
       return EOtpResult.LOCKED;
@@ -91,7 +91,7 @@ export class OtpService {
 
     // Cập nhật lại số lần thử, giữ nguyên TTL còn lại
     await this.redis.set(
-      `${OTP_PENDING_PREFIX}${adminId}`,
+      `${OTP_PENDING_PREFIX}${accountId}`,
       JSON.stringify(data),
       { EX: this.otpTtl },
     );
@@ -105,12 +105,12 @@ export class OtpService {
    * Exceeding max resends triggers a 15-minute lockout.
    */
   async resend(
-    adminId: string,
+    accountId: string,
   ): Promise<{ otp: string } | EOtpResult.LOCKED | EOtpResult.COOLDOWN> {
-    const lockValue = await this.redis.get(`${OTP_LOCK_PREFIX}${adminId}`);
+    const lockValue = await this.redis.get(`${OTP_LOCK_PREFIX}${accountId}`);
     if (lockValue !== null) return EOtpResult.LOCKED;
 
-    const resendRaw = await this.redis.get(`${OTP_RESEND_PREFIX}${adminId}`);
+    const resendRaw = await this.redis.get(`${OTP_RESEND_PREFIX}${accountId}`);
     const now = Date.now();
     const prevCount = resendRaw
       ? (JSON.parse(resendRaw) as { count: number; lastResendAt: number }).count
@@ -123,11 +123,11 @@ export class OtpService {
       };
 
       if (resendMeta.count >= this.maxResends) {
-        await this.redis.set(`${OTP_LOCK_PREFIX}${adminId}`, '1', {
+        await this.redis.set(`${OTP_LOCK_PREFIX}${accountId}`, '1', {
           EX: this.lockTtl,
         });
-        await this.redis.del(`${OTP_PENDING_PREFIX}${adminId}`);
-        await this.redis.del(`${OTP_RESEND_PREFIX}${adminId}`);
+        await this.redis.del(`${OTP_PENDING_PREFIX}${accountId}`);
+        await this.redis.del(`${OTP_RESEND_PREFIX}${accountId}`);
         return EOtpResult.LOCKED;
       }
 
@@ -137,13 +137,13 @@ export class OtpService {
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
     await this.redis.set(
-      `${OTP_PENDING_PREFIX}${adminId}`,
+      `${OTP_PENDING_PREFIX}${accountId}`,
       JSON.stringify({ otp, attempts: 0 }),
       { EX: this.otpTtl },
     );
 
     await this.redis.set(
-      `${OTP_RESEND_PREFIX}${adminId}`,
+      `${OTP_RESEND_PREFIX}${accountId}`,
       JSON.stringify({ count: prevCount + 1, lastResendAt: now }),
       { EX: this.resendWindow },
     );
@@ -151,15 +151,15 @@ export class OtpService {
     return { otp };
   }
 
-  async isLocked(adminId: string): Promise<boolean> {
-    const value = await this.redis.get(`${OTP_LOCK_PREFIX}${adminId}`);
+  async isLocked(accountId: string): Promise<boolean> {
+    const value = await this.redis.get(`${OTP_LOCK_PREFIX}${accountId}`);
     return value !== null;
   }
 
-  async unlock(adminId: string): Promise<void> {
+  async unlock(accountId: string): Promise<void> {
     await Promise.all([
-      this.redis.del(`${OTP_LOCK_PREFIX}${adminId}`),
-      this.redis.del(`${OTP_RESEND_PREFIX}${adminId}`),
+      this.redis.del(`${OTP_LOCK_PREFIX}${accountId}`),
+      this.redis.del(`${OTP_RESEND_PREFIX}${accountId}`),
     ]);
   }
 }

@@ -31,7 +31,7 @@ import { ESocialPlatform } from '../../common/enum/social-platform.enum';
 import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
 import { SocialConnectionsService } from './connection.service';
 import { SocialOAuthCallbackDto } from './dto/oauth-callback.dto';
-import { SocialConnectionResponseDto } from './dto/connections-response.dto';
+import { SocialConnectionDto } from './dto/connections-response.dto';
 
 /**
  * Chỉ creator nối tài khoản mạng xã hội — brand và admin không có
@@ -52,16 +52,16 @@ export class SocialConnectionsController {
 
   @Get('/connections')
   @ApiOperation({ summary: 'Danh sách tài khoản mạng xã hội đã kết nối' })
-  @ApiOkResponse({ type: [SocialConnectionResponseDto] })
+  @ApiOkResponse({ type: [SocialConnectionDto] })
   @ApiUnauthorizedResponse({ description: 'Token thiếu, sai hoặc hết hạn' })
   @ApiForbiddenResponse({ description: 'Không phải tài khoản creator' })
   async list(
     @Request() request: { user: AuthenticatedAccount },
-  ): Promise<SocialConnectionResponseDto[]> {
+  ): Promise<SocialConnectionDto[]> {
     const connections = await this.connectionsService.findByCreator(
       request.user.id,
     );
-    return connections.map((c) => SocialConnectionResponseDto.from(c));
+    return connections.map((c) => SocialConnectionDto.from(c));
   }
 
   // Mỗi lần gọi là một state mới nằm trong Redis 10 phút; không giới hạn thì
@@ -91,7 +91,7 @@ export class SocialConnectionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Hoàn tất luồng OAuth và lưu kết nối' })
   @ApiParam({ name: 'platform', enum: ESocialPlatform })
-  @ApiOkResponse({ type: SocialConnectionResponseDto })
+  @ApiOkResponse({ type: SocialConnectionDto })
   @ApiUnauthorizedResponse({
     description: 'State hết hạn, sai, hoặc token hỏng',
   })
@@ -106,14 +106,14 @@ export class SocialConnectionsController {
     @Param('platform', new ParseEnumPipe(ESocialPlatform))
     platform: ESocialPlatform,
     @Body() dto: SocialOAuthCallbackDto,
-  ): Promise<SocialConnectionResponseDto> {
+  ): Promise<SocialConnectionDto> {
     const connection = await this.connectionsService.handleCallback({
       platform,
       code: dto.code,
       state: dto.state,
       currentAccountId: request.user.id,
     });
-    return SocialConnectionResponseDto.from(connection);
+    return SocialConnectionDto.from(connection);
   }
 
   @Delete('/connections/:platform')

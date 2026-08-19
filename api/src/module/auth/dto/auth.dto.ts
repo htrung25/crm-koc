@@ -3,7 +3,7 @@ import { ERole } from '../../../common/enum/roles.enum';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 
 /** Account tóm tắt kèm theo token khi login — không bao giờ chứa password. */
-export class AuthResponseDto {
+export class AuthDto {
   @ApiProperty({ format: 'uuid' })
   id: string;
 
@@ -21,8 +21,8 @@ export class AuthResponseDto {
 }
 
 /** Account đầy đủ trả về sau khi register. */
-export class RegisterResponseDto extends AuthResponseDto {
-  // name đã có ở AuthResponseDto, khai lại sẽ đè base property
+export class RegisterResponseDto extends AuthDto {
+  // name đã có ở AuthDto, khai lại sẽ đè base property
 
   @ApiProperty({ nullable: true, type: String })
   phone: string | null;
@@ -53,6 +53,6 @@ export class LoginResponseDto {
   })
   refreshToken: string;
 
-  @ApiProperty({ type: AuthResponseDto })
-  account: AuthResponseDto;
+  @ApiProperty({ type: AuthDto })
+  account: AuthDto;
 }
