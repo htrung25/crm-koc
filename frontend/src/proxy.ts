@@ -67,12 +67,6 @@ export function proxy(request: NextRequest) {
   return i18nResponse;
 }
 
-/**
- * Next 16 đổi tên file middleware -> proxy, nhưng export cấu hình VẪN là
- * `config`. Đặt tên `proxyConfig` thì Next không đọc thấy matcher, và proxy
- * chạy trên MỌI request — kể cả /_next/static — khiến next-intl redirect luôn
- * cả CSS/JS sang /vi/_next/... và toàn bộ trang 404.
- */
 export const config = {
   matcher: "/((?!api|_next|_vercel|.*\\..*).*)",
 };
