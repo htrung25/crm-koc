@@ -1,11 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
 import { useLogin } from "../use-login";
 
 export function EditorialLogin() {
+  const t = useTranslations("auth.login");
   const [showPassword, setShowPassword] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(true);
   const {
@@ -67,7 +70,7 @@ export function EditorialLogin() {
               </h1>
 
               <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-[42ch]">
-                Không gian quản trị chiến dịch sáng tạo, tự động hóa seeding mẫu thử và tối ưu doanh số Affiliate cho Thương hiệu &amp; KOC.
+                {t("heroSubtitle")}
               </p>
             </div>
 
@@ -77,7 +80,7 @@ export function EditorialLogin() {
                 <span className="absolute left-0 top-0 text-3xl text-[#EF4623] leading-none select-none">
                   “
                 </span>
-                Trải nghiệm điều hành trên CRM-KOC mượt mà và trực quan, giúp thương hiệu tăng trưởng 3.5x ROI trong từng chiến dịch.
+                {t("heroQuote")}
               </blockquote>
 
               <figcaption className="flex items-center gap-3">
@@ -107,11 +110,11 @@ export function EditorialLogin() {
                 <div>
                   <span className="block mb-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#EF4623]">
                     {step === "credentials"
-                      ? "Cổng đăng nhập hệ thống"
-                      : "Xác thực hai lớp"}
+                      ? t("eyebrowCredentials")
+                      : t("eyebrowOtp")}
                   </span>
                   <h2 className="font-serif text-3xl font-normal text-[#2D3B42]">
-                    {step === "credentials" ? "Đăng nhập Portal" : "Nhập mã OTP"}
+                    {step === "credentials" ? t("titleCredentials") : t("titleOtp")}
                   </h2>
                 </div>
 
@@ -159,7 +162,7 @@ export function EditorialLogin() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
-                Tiếp tục với Google
+                {t("google")}
               </button>
               )}
 
@@ -168,7 +171,7 @@ export function EditorialLogin() {
               <div className="flex items-center gap-3">
                 <div className="h-px bg-[#2D3B42]/10 flex-1" />
                 <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-bold">
-                  Hoặc email
+                  {t("orEmail")}
                 </span>
                 <div className="h-px bg-[#2D3B42]/10 flex-1" />
               </div>
@@ -183,7 +186,7 @@ export function EditorialLogin() {
                     htmlFor="login-email"
                     className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                   >
-                    Địa chỉ Email
+                    {t("email")}
                   </label>
                   <input
                     id="login-email"
@@ -205,13 +208,13 @@ export function EditorialLogin() {
                       htmlFor="login-password"
                       className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                     >
-                      Mật khẩu
+                      {t("password")}
                     </label>
                     <Link
                       href="/forgot-password"
                       className="text-xs font-semibold text-[#EF4623] hover:underline"
                     >
-                      Quên mật khẩu?
+                      {t("forgot")}
                     </Link>
                   </div>
                   <div className="relative">
@@ -229,10 +232,10 @@ export function EditorialLogin() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                      aria-label={showPassword ? t("hidePassword") : t("showPassword")}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#2D3B42] text-xs font-semibold px-1.5 py-1 rounded-md transition-colors"
                     >
-                      {showPassword ? "Ẩn" : "Hiện"}
+                      {showPassword ? t("hide") : t("show")}
                     </button>
                   </div>
                 </div>
@@ -269,7 +272,7 @@ export function EditorialLogin() {
                     </svg>
                   </span>
                   <span className="text-xs text-slate-600 font-medium">
-                    Duy trì đăng nhập trong 30 ngày
+                    {t("remember")}
                   </span>
                 </label>
 
@@ -279,14 +282,18 @@ export function EditorialLogin() {
                   disabled={isSubmitting}
                   className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "Đang kiểm tra…" : "Đăng nhập ngay →"}
+                  {isSubmitting ? t("checking") : t("signIn")}
                 </button>
               </form>
               ) : (
               <form onSubmit={verifyOtp} className="space-y-5">
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Mã gồm 6 chữ số đã được gửi tới{" "}
-                  <span className="font-bold text-[#2D3B42]">{email}</span>.
+                  {t.rich("otpSent", {
+                    email,
+                    strong: (chunks) => (
+                      <span className="font-bold text-[#2D3B42]">{chunks}</span>
+                    ),
+                  })}
                 </p>
 
                 <div className="space-y-1.5">
@@ -294,7 +301,7 @@ export function EditorialLogin() {
                     htmlFor="login-otp"
                     className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                   >
-                    Mã xác thực
+                    {t("verificationCode")}
                   </label>
                   <input
                     id="login-otp"
@@ -320,7 +327,7 @@ export function EditorialLogin() {
                   disabled={isSubmitting || otp.length !== 6}
                   className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "Đang xác thực…" : "Xác thực & đăng nhập →"}
+                  {isSubmitting ? t("verifying") : t("verifyAndSignIn")}
                 </button>
 
                 <div className="flex items-center justify-between gap-3 text-xs font-semibold">
@@ -329,7 +336,7 @@ export function EditorialLogin() {
                     onClick={backToCredentials}
                     className="text-slate-500 hover:text-[#2D3B42] transition-colors"
                   >
-                    ← Đổi tài khoản
+                    {t("changeAccount")}
                   </button>
                   <button
                     type="button"
@@ -337,7 +344,7 @@ export function EditorialLogin() {
                     disabled={isSubmitting}
                     className="text-[#EF4623] hover:underline disabled:opacity-50 disabled:no-underline"
                   >
-                    Gửi lại mã
+                    {t("resend")}
                   </button>
                 </div>
               </form>
@@ -346,9 +353,9 @@ export function EditorialLogin() {
               {/* Đăng ký */}
               <div className="pt-5 border-t border-[#2D3B42]/10 text-center">
                 <p className="text-xs text-slate-500">
-                  Chưa có tài khoản?{" "}
+                  {t("noAccount")}{" "}
                   <Link href="/register" className="text-[#EF4623] font-bold hover:underline">
-                    Đăng ký hợp tác ngay
+                    {t("registerNow")}
                   </Link>
                 </p>
               </div>

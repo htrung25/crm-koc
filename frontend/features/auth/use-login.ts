@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
+import { useRouter } from "@/i18n/navigation";
 import { postJson } from "@/lib/api/fetch-client";
 import type { LoginResult, UserRole } from "./types";
 

@@ -1,10 +1,13 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
 
 export function EditorialRegister() {
+  const t = useTranslations("auth.register");
   const [accountType, setAccountType] = useState<"CREATOR" | "BRAND">("CREATOR");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,17 +27,17 @@ export function EditorialRegister() {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError("Mật khẩu xác nhận không trùng khớp.");
+      setError(t("passwordMismatch"));
       return;
     }
 
     if (password.length < 6) {
-      setError("Mật khẩu phải có tối thiểu 6 ký tự.");
+      setError(t("passwordTooShort"));
       return;
     }
 
     if (!agreedTerms) {
-      setError("Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật.");
+      setError(t("mustAgree"));
       return;
     }
 
@@ -89,7 +92,7 @@ export function EditorialRegister() {
                 </h1>
 
                 <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-[42ch]">
-                  Tham gia hệ sinh thái kết nối 15,000+ KOC hàng đầu và 1,200+ Thương hiệu uy tín. Tối ưu hóa chiến dịch Seeding và bứt phá doanh số ngay hôm nay.
+                  {t("heroSubtitle")}
                 </p>
               </div>
 
@@ -100,8 +103,8 @@ export function EditorialRegister() {
                     ✨
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[#2D3B42]">Quản lý mẫu thử &amp; Seeding</h4>
-                    <p className="text-[11px] text-slate-600 mt-0.5">Đăng ký nhận sample từ các nhãn hàng chỉ với 1 click.</p>
+                    <h4 className="text-xs font-bold text-[#2D3B42]">{t("feature1Title")}</h4>
+                    <p className="text-[11px] text-slate-600 mt-0.5">{t("feature1Body")}</p>
                   </div>
                 </div>
 
@@ -110,8 +113,8 @@ export function EditorialRegister() {
                     ⚡
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[#2D3B42]">Đối soát doanh số tự động</h4>
-                    <p className="text-[11px] text-slate-600 mt-0.5">Theo dõi Affiliate GMV realtime và nhận hoa hồng minh bạch.</p>
+                    <h4 className="text-xs font-bold text-[#2D3B42]">{t("feature2Title")}</h4>
+                    <p className="text-[11px] text-slate-600 mt-0.5">{t("feature2Body")}</p>
                   </div>
                 </div>
 
@@ -120,8 +123,8 @@ export function EditorialRegister() {
                     🛡️
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[#2D3B42]">Bảo mật &amp; Hỗ trợ 24/7</h4>
-                    <p className="text-[11px] text-slate-600 mt-0.5">Cam kết bảo mật dữ liệu kênh &amp; thương hiệu tiêu chuẩn Enterprise.</p>
+                    <h4 className="text-xs font-bold text-[#2D3B42]">{t("feature3Title")}</h4>
+                    <p className="text-[11px] text-slate-600 mt-0.5">{t("feature3Body")}</p>
                   </div>
                 </div>
               </div>
@@ -133,7 +136,7 @@ export function EditorialRegister() {
                 <span className="absolute left-0 top-0 text-2xl text-[#EF4623] leading-none select-none">
                   “
                 </span>
-                Tạo tài khoản và kết nối chiến dịch đầu tiên chỉ trong 2 phút. Nền tảng tuyệt vời nhất cho Creators 2026.
+                {t("heroQuote")}
               </blockquote>
 
               <figcaption className="flex items-center gap-3">
@@ -162,10 +165,10 @@ export function EditorialRegister() {
               <div className="flex items-start justify-between gap-4 border-b border-[#2D3B42]/10 pb-4">
                 <div>
                   <span className="block mb-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#EF4623]">
-                    Đăng ký tài khoản mới
+                    {t("eyebrow")}
                   </span>
                   <h2 className="font-serif text-3xl font-normal text-[#2D3B42]">
-                    Tạo tài khoản
+                    {t("title")}
                   </h2>
                 </div>
 
@@ -196,7 +199,7 @@ export function EditorialRegister() {
                       : "text-slate-600 hover:text-[#2D3B42]"
                   }`}
                 >
-                  <span>🏢</span> Thương hiệu / Brand
+                  <span>🏢</span> {t("brand")}
                 </button>
               </div>
 
@@ -207,16 +210,21 @@ export function EditorialRegister() {
                     ✓
                   </div>
                   <div className="space-y-1">
-                    <h3 className="font-serif text-2xl font-normal text-[#2D3B42]">Đăng ký thành công!</h3>
+                    <h3 className="font-serif text-2xl font-normal text-[#2D3B42]">{t("successTitle")}</h3>
                     <p className="text-xs text-slate-600">
-                      Tài khoản <span className="font-bold text-[#EF4623]">{email}</span> đã được khởi tạo thành công.
+                      {t.rich("successBody", {
+                        email,
+                        strong: (chunks) => (
+                          <span className="font-bold text-[#EF4623]">{chunks}</span>
+                        ),
+                      })}
                     </p>
                   </div>
                   <Link
                     href="/login"
                     className="inline-block w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 transition-all duration-300"
                   >
-                    Đăng nhập ngay →
+                    {t("signInNow")}
                   </Link>
                 </div>
               ) : (
@@ -246,7 +254,7 @@ export function EditorialRegister() {
                           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                         />
                       </svg>
-                      Đăng ký nhanh với Google
+                      {t("google")}
                     </button>
 
                     {/* TikTok SSO Button (Chỉ hiển thị khi chọn role KOC / Creator) */}
@@ -258,7 +266,7 @@ export function EditorialRegister() {
                         <svg className="w-4 h-4 shrink-0 fill-current group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .58.04.85.12V9.33a6.33 6.33 0 0 0-1-.08 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.05a8.3 8.3 0 0 0 4.94 1.6V7.21a4.84 4.84 0 0 1-1.01-.52z"/>
                         </svg>
-                        Đăng ký nhanh với TikTok
+                        {t("tiktok")}
                       </button>
                     )}
                   </div>
@@ -267,7 +275,7 @@ export function EditorialRegister() {
                   <div className="flex items-center gap-3">
                     <div className="h-px bg-[#2D3B42]/10 flex-1" />
                     <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-bold">
-                      Hoặc điền thông tin
+                      {t("orFillIn")}
                     </span>
                     <div className="h-px bg-[#2D3B42]/10 flex-1" />
                   </div>
@@ -289,7 +297,7 @@ export function EditorialRegister() {
                         htmlFor="register-fullname"
                         className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                       >
-                        Họ và tên
+                        {t("fullName")}
                       </label>
                       <input
                         id="register-fullname"
@@ -298,7 +306,7 @@ export function EditorialRegister() {
                         required
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Nguyễn Văn A"
+                        placeholder={t("fullNamePlaceholder")}
                         className="w-full px-4 py-2.5 rounded-2xl bg-[#FDF1EE]/50 focus:bg-white border border-[#2D3B42]/15 text-[#2D3B42] text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#EF4623] focus:ring-4 focus:ring-[#EF4623]/20 transition-all duration-300"
                       />
                     </div>
@@ -329,7 +337,7 @@ export function EditorialRegister() {
                           htmlFor="register-phone"
                           className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                         >
-                          Số điện thoại / Zalo
+                          {t("phone")}
                         </label>
                         <input
                           id="register-phone"
@@ -352,7 +360,7 @@ export function EditorialRegister() {
                           htmlFor="register-password"
                           className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                         >
-                          Mật khẩu
+                          {t("password")}
                         </label>
                         <div className="relative">
                           <input
@@ -370,7 +378,7 @@ export function EditorialRegister() {
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#2D3B42] text-xs font-semibold px-1 py-0.5"
                           >
-                            {showPassword ? "Ẩn" : "Hiện"}
+                            {showPassword ? t("hide") : t("show")}
                           </button>
                         </div>
                       </div>
@@ -381,7 +389,7 @@ export function EditorialRegister() {
                           htmlFor="register-confirm-password"
                           className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                         >
-                          Xác nhận mật khẩu
+                          {t("confirmPassword")}
                         </label>
                         <div className="relative">
                           <input
@@ -399,7 +407,7 @@ export function EditorialRegister() {
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#2D3B42] text-xs font-semibold px-1 py-0.5"
                           >
-                            {showConfirmPassword ? "Ẩn" : "Hiện"}
+                            {showConfirmPassword ? t("hide") : t("show")}
                           </button>
                         </div>
                       </div>
@@ -440,13 +448,13 @@ export function EditorialRegister() {
                         </svg>
                       </span>
                       <span className="text-xs text-slate-600 leading-snug">
-                        Tôi đồng ý với{" "}
+                        {t("agreePrefix")}{" "}
                         <a href="#" className="text-[#EF4623] font-bold hover:underline">
-                          Điều khoản dịch vụ
+                          {t("terms")}
                         </a>{" "}
-                        và{" "}
+                        {t("agreeMiddle")}{" "}
                         <a href="#" className="text-[#EF4623] font-bold hover:underline">
-                          Chính sách bảo mật
+                          {t("privacy")}
                         </a>
                       </span>
                     </label>
@@ -457,7 +465,7 @@ export function EditorialRegister() {
                       disabled={isSubmitting}
                       className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed mt-1"
                     >
-                      {isSubmitting ? "Đang tạo tài khoản…" : "Tạo tài khoản ngay →"}
+                      {isSubmitting ? t("creating") : t("createAccount")}
                     </button>
                   </form>
                 </>
@@ -466,9 +474,9 @@ export function EditorialRegister() {
               {/* Login link */}
               <div className="pt-3 border-t border-[#2D3B42]/10 text-center">
                 <p className="text-xs text-slate-500">
-                  Đã có tài khoản?{" "}
+                  {t("haveAccount")}{" "}
                   <Link href="/login" className="text-[#EF4623] font-bold hover:underline">
-                    Đăng nhập ngay
+                    {t("signIn")}
                   </Link>
                 </p>
               </div>
