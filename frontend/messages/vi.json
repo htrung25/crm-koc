@@ -200,6 +200,38 @@
     "ipWhitelistPage": {
       "title": "IP Whitelist",
       "greeting": "Quản lý tài khoản admin và địa chỉ IP được phép truy cập."
+    },
+    "brands": {
+      "title": "Danh sách Brand",
+      "greeting": "Quản lý tài khoản thương hiệu đang hợp tác trên nền tảng.",
+      "heading": "Thương hiệu",
+      "count": "{count} thương hiệu",
+      "refresh": "Làm mới",
+      "search": "Tìm kiếm",
+      "searchPlaceholder": "Tên hoặc email thương hiệu",
+      "status": "Trạng thái",
+      "allStatuses": "Tất cả trạng thái",
+      "sort": "Sắp xếp",
+      "sortNewest": "Mới nhất",
+      "sortOldest": "Cũ nhất",
+      "sortName": "Tên A→Z",
+      "sortEmail": "Email A→Z",
+      "colBrand": "Thương hiệu",
+      "colContact": "Liên hệ",
+      "colStatus": "Trạng thái",
+      "colJoined": "Ngày tham gia",
+      "loading": "Đang tải danh sách…",
+      "empty": "Không tìm thấy thương hiệu nào.",
+      "emptyHint": "Thử bỏ bớt bộ lọc hoặc từ khoá tìm kiếm.",
+      "noPhone": "Chưa có số điện thoại",
+      "pagination": "Hiển thị {from}–{to} trên {total}",
+      "rowsPerPage": "dòng mỗi trang",
+      "statuses": {
+        "1": "Chờ duyệt",
+        "2": "Hoạt động",
+        "3": "Tạm ngưng",
+        "4": "Đã khoá"
+      }
     }
   },
   "marketing": {

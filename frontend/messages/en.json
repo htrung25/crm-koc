@@ -200,6 +200,38 @@
     "ipWhitelistPage": {
       "title": "IP whitelist",
       "greeting": "Manage admin accounts and the IP addresses allowed to sign in."
+    },
+    "brands": {
+      "title": "Brand list",
+      "greeting": "Manage the brand accounts partnering on the platform.",
+      "heading": "Brands",
+      "count": "{count, plural, one {# brand} other {# brands}}",
+      "refresh": "Refresh",
+      "search": "Search",
+      "searchPlaceholder": "Brand name or email",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "sort": "Sort",
+      "sortNewest": "Newest first",
+      "sortOldest": "Oldest first",
+      "sortName": "Name A→Z",
+      "sortEmail": "Email A→Z",
+      "colBrand": "Brand",
+      "colContact": "Contact",
+      "colStatus": "Status",
+      "colJoined": "Joined",
+      "loading": "Loading brands…",
+      "empty": "No brands found.",
+      "emptyHint": "Try removing a filter or changing your search.",
+      "noPhone": "No phone number",
+      "pagination": "Showing {from}–{to} of {total}",
+      "rowsPerPage": "rows per page",
+      "statuses": {
+        "1": "Pending",
+        "2": "Active",
+        "3": "Suspended",
+        "4": "Banned"
+      }
     }
   },
   "marketing": {
