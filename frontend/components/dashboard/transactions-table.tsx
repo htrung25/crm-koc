@@ -1,23 +1,18 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+
+import { Link } from "@/i18n/navigation";
 
 import type { TransactionsData, TransactionStatus } from "./types";
 
-const STATUS_STYLE: Record<TransactionStatus, { label: string; className: string }> = {
-  completed: {
-    label: "Đã thanh toán",
-    className: "bg-emerald-500/12 text-emerald-700",
-  },
-  processing: {
-    label: "Đang xử lý",
-    className: "bg-amber-500/14 text-amber-700",
-  },
-  pending: {
-    label: "Chờ duyệt",
-    className: "bg-rose-500/12 text-rose-600",
-  },
+const STATUS_STYLE: Record<TransactionStatus, string> = {
+  completed: "bg-emerald-500/12 text-emerald-700",
+  processing: "bg-amber-500/14 text-amber-700",
+  pending: "bg-rose-500/12 text-rose-600",
 };
 
-export function TransactionsTable({ data }: { data: TransactionsData }) {
+export async function TransactionsTable({ data }: { data: TransactionsData }) {
+  const t = await getTranslations("admin.transactions");
+
   return (
     <section className="rounded-[26px] glass p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -32,7 +27,7 @@ export function TransactionsTable({ data }: { data: TransactionsData }) {
           href={data.viewAllHref}
           className="text-xs font-extrabold text-[#EF4623] transition-opacity hover:opacity-70"
         >
-          Xem tất cả →
+          {t("viewAll")}
         </Link>
       </div>
 
@@ -42,16 +37,16 @@ export function TransactionsTable({ data }: { data: TransactionsData }) {
           <thead>
             <tr className="text-left text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A7768]">
               <th scope="col" className="pb-3 pr-3 font-bold">{data.subjectLabel}</th>
-              <th scope="col" className="pb-3 pr-3 font-bold">Chiến dịch</th>
-              <th scope="col" className="pb-3 pr-3 font-bold">Ngày</th>
-              <th scope="col" className="pb-3 pr-3 font-bold">Trạng thái</th>
+              <th scope="col" className="pb-3 pr-3 font-bold">{t("colCampaign")}</th>
+              <th scope="col" className="pb-3 pr-3 font-bold">{t("colDate")}</th>
+              <th scope="col" className="pb-3 pr-3 font-bold">{t("colStatus")}</th>
               <th scope="col" className="pb-3 text-right font-bold">{data.amountLabel}</th>
             </tr>
           </thead>
 
           <tbody>
             {data.items.map((tx) => {
-              const status = STATUS_STYLE[tx.status];
+              const statusClass = STATUS_STYLE[tx.status];
 
               return (
                 <tr
@@ -87,9 +82,9 @@ export function TransactionsTable({ data }: { data: TransactionsData }) {
 
                   <td className="py-3 pr-3">
                     <span
-                      className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${status.className}`}
+                      className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${statusClass}`}
                     >
-                      {status.label}
+                      {t(`status.${tx.status}`)}
                     </span>
                   </td>
 

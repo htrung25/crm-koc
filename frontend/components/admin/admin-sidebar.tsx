@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useId } from "react";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
+import { Link, usePathname } from "@/i18n/navigation";
 import {
   ADMIN_NAV_ITEMS,
   ADMIN_SYSTEM_ITEMS,
@@ -20,6 +20,7 @@ function NavGroup({
   items: NavigationItem[];
   pathname: string;
 }) {
+  const t = useTranslations("navigation");
   // useId thay vì ghép từ tiêu đề: "Điều hướng" có dấu cách, mà id chứa khoảng
   // trắng là không hợp lệ và aria-labelledby sẽ không trỏ tới được.
   const headingId = useId();
@@ -48,11 +49,11 @@ function NavGroup({
                 <li key={item.href}>
                   <span
                     aria-disabled="true"
-                    title="Sắp có"
+                    title={t("comingSoon")}
                     className="flex cursor-not-allowed items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-[#B4A091]"
                   >
                     <Icon className="h-[18px] w-[18px] shrink-0" />
-                    {item.label}
+                    {t(item.labelKey)}
                   </span>
                 </li>
               );
@@ -69,7 +70,7 @@ function NavGroup({
                     }`}
                 >
                   <Icon className="h-[18px] w-[18px] shrink-0" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               </li>
             );
@@ -90,6 +91,7 @@ function NavGroup({
  */
 export function AdminSidebar() {
   const pathname = usePathname();
+  const t = useTranslations("navigation");
 
   return (
     <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-[248px] shrink-0 flex-col gap-6 overflow-y-auto rounded-[28px] glass p-4 md:flex">
@@ -116,11 +118,11 @@ export function AdminSidebar() {
         </span>
       </Link>
 
-      <NavGroup title="Điều hướng" items={ADMIN_NAV_ITEMS} pathname={pathname} />
+      <NavGroup title={t("mainGroup")} items={ADMIN_NAV_ITEMS} pathname={pathname} />
 
       <div className="border-t border-[#2D3B42]/10 pt-5">
         <NavGroup
-          title="Cấu hình hệ thống"
+          title={t("systemGroup")}
           items={ADMIN_SYSTEM_ITEMS}
           pathname={pathname}
         />

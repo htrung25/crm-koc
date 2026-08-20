@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 type SelfLockoutDialogProps = {
   /** IP backend thấy, ĐÃ chuẩn hoá (127.0.0.1 chứ không phải ::ffff:127.0.0.1). */
@@ -37,6 +38,7 @@ export function SelfLockoutDialog({
   pending,
   error,
 }: SelfLockoutDialogProps) {
+  const t = useTranslations("admin.selfLockout");
   const [acknowledged, setAcknowledged] = useState(false);
   const titleId = useId();
   const checkboxId = useId();
@@ -104,22 +106,23 @@ export function SelfLockoutDialog({
         className="w-full max-w-lg rounded-[26px] bg-white p-6 shadow-2xl outline-none"
       >
         <h2 id={titleId} className="text-lg font-extrabold text-[#2D3B42]">
-          Thay đổi này sẽ khoá bạn ra ngoài
+          {t("title")}
         </h2>
 
         <p id={descriptionId} className="mt-3 text-sm leading-relaxed text-[#5C5049]">
-          IP hiện tại của bạn là{" "}
-          <code className="font-mono font-bold text-[#2D3B42]">{clientIp}</code>,
-          và nó không nằm trong danh sách mới. Nếu lưu, bạn sẽ mất quyền vào khu
-          vực quản trị ngay ở request kế tiếp.
+          {t.rich("body", {
+            clientIp,
+            code: (chunks) => (
+              <code className="font-mono font-bold text-[#2D3B42]">{chunks}</code>
+            ),
+          })}
         </p>
 
         <p
           id={consequenceId}
           className="mt-3 rounded-2xl bg-amber-500/12 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-800"
         >
-          Không có đường tự cứu. Đăng nhập lại cũng vô ích. Bạn sẽ phải nhờ một
-          super admin khác sửa hộ, hoặc sửa thẳng dưới cơ sở dữ liệu.
+          {t("noEscape")}
         </p>
 
         <button
@@ -128,7 +131,7 @@ export function SelfLockoutDialog({
           onClick={onAddCurrentIp}
           className="mt-5 w-full rounded-2xl bg-[#EF4623] px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-[#EF4623]/30 transition-colors hover:bg-[#D83B19] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30"
         >
-          {pending ? "Đang lưu…" : `Thêm ${clientIp} vào danh sách rồi lưu`}
+          {pending ? t("saving") : t("addAndSave", { clientIp })}
         </button>
 
         {error && (
@@ -152,7 +155,7 @@ export function SelfLockoutDialog({
               onChange={(e) => setAcknowledged(e.target.checked)}
               className="mt-0.5 h-4 w-4 shrink-0 accent-[#EF4623]"
             />
-            Tôi hiểu mình có thể mất quyền truy cập
+            {t("acknowledge")}
           </label>
 
           <div className="mt-3 flex flex-wrap gap-2">
@@ -162,7 +165,7 @@ export function SelfLockoutDialog({
               onClick={onForce}
               className="rounded-full border border-[#EF4623]/40 px-4 py-2 text-xs font-bold text-[#EF4623] transition-colors hover:bg-[#EF4623]/10 disabled:cursor-not-allowed disabled:border-[#2D3B42]/15 disabled:text-[#8A7768] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30"
             >
-              Vẫn lưu, tôi chấp nhận
+              {t("force")}
             </button>
 
             <button
@@ -171,7 +174,7 @@ export function SelfLockoutDialog({
               onClick={onDismiss}
               className="rounded-full px-4 py-2 text-xs font-bold text-[#5C5049] transition-colors hover:bg-[#2D3B42]/8 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2D3B42]/20"
             >
-              Huỷ
+              {t("cancel")}
             </button>
           </div>
         </div>

@@ -141,6 +141,33 @@
       "deleteBody": "Tài khoản <strong>{email}</strong> sẽ bị xoá vĩnh viễn.",
       "deleting": "Đang xoá…",
       "deleteConfirm": "Xoá tài khoản"
+    },
+    "selfLockout": {
+      "title": "Thay đổi này sẽ khoá bạn ra ngoài",
+      "body": "IP hiện tại của bạn là <code>{clientIp}</code>, và nó không nằm trong danh sách mới. Nếu lưu, bạn sẽ mất quyền vào khu vực quản trị ngay ở request kế tiếp.",
+      "noEscape": "Không có đường tự cứu. Đăng nhập lại cũng vô ích. Bạn sẽ phải nhờ một super admin khác sửa hộ, hoặc sửa thẳng dưới cơ sở dữ liệu.",
+      "addAndSave": "Thêm {clientIp} vào danh sách rồi lưu",
+      "saving": "Đang lưu…",
+      "acknowledge": "Tôi hiểu mình có thể mất quyền truy cập",
+      "force": "Vẫn lưu, tôi chấp nhận",
+      "cancel": "Huỷ"
+    },
+    "revenue": {
+      "title": "Doanh thu theo thời gian",
+      "thisYear": "Năm nay",
+      "lastYear": "Năm ngoái",
+      "ariaLabel": "Doanh thu tăng từ {from} lên {to} tỉ đồng trong 12 tháng"
+    },
+    "transactions": {
+      "viewAll": "Xem tất cả →",
+      "colCampaign": "Chiến dịch",
+      "colDate": "Ngày",
+      "colStatus": "Trạng thái",
+      "status": {
+        "completed": "Đã thanh toán",
+        "processing": "Đang xử lý",
+        "pending": "Chờ duyệt"
+      }
     }
   },
   "marketing": {

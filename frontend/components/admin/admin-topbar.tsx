@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
+import { Link, useRouter } from "@/i18n/navigation";
 import { requestLogout } from "@/features/auth/session";
 import {
   IconBell,
@@ -19,6 +19,7 @@ type AdminTopbarProps = {
 
 export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
   const router = useRouter();
+  const t = useTranslations("admin.topbar");
 
   const handleLogout = async () => {
     await requestLogout();
@@ -41,8 +42,8 @@ export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
           <IconSearch className="h-4 w-4 text-[#8A7768]" />
           <input
             type="search"
-            placeholder="Tìm KOC, thương hiệu, chiến dịch…"
-            aria-label="Tìm kiếm"
+            placeholder={t("searchPlaceholder")}
+            aria-label={t("search")}
             className="w-56 bg-transparent text-sm font-medium text-[#2D3B42] placeholder:text-[#A89685] focus:outline-none"
           />
           <kbd className="rounded-lg bg-white/70 px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#8A7768] ring-1 ring-white/80">
@@ -56,14 +57,14 @@ export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
           className="flex h-11 items-center gap-2 rounded-2xl glass-soft px-3.5 text-sm font-bold text-[#2D3B42] transition-colors hover:bg-white/70"
         >
           <IconCalendar className="h-4 w-4 text-[#EF4623]" />
-          <span className="hidden sm:inline">30 ngày qua</span>
+          <span className="hidden sm:inline">{t("last30Days")}</span>
           <IconChevronDown className="h-3.5 w-3.5 text-[#8A7768]" />
         </button>
 
         {/* Thông báo */}
         <button
           type="button"
-          aria-label="Thông báo"
+          aria-label={t("notifications")}
           className="relative grid h-11 w-11 place-items-center rounded-2xl glass-soft text-[#2D3B42] transition-colors hover:bg-white/70"
         >
           <IconBell className="h-[18px] w-[18px]" />
@@ -77,7 +78,7 @@ export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
         <div className="flex h-11 items-center gap-2.5 rounded-2xl glass-soft pl-1.5 pr-3">
           <Link
             href="/admin/profile"
-            aria-label="Mở hồ sơ admin"
+            aria-label={t("openProfile")}
             className="flex items-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/25"
           >
             <span
@@ -88,7 +89,7 @@ export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
             </span>
             <span className="hidden leading-tight sm:block">
               <span className="block text-xs font-extrabold text-[#2D3B42]">
-                Quản trị viên
+                {t("administrator")}
               </span>
               <span className="block text-[10px] font-semibold text-[#8A7768]">
                 RedSun Admin
@@ -98,7 +99,7 @@ export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
           <button
             type="button"
             onClick={handleLogout}
-            aria-label="Đăng xuất"
+            aria-label={t("logout")}
             className="ml-1 grid h-8 w-8 place-items-center rounded-xl text-[#8A7768] transition-colors hover:bg-[#EF4623]/10 hover:text-[#EF4623]"
           >
             <IconLogout className="h-4 w-4" />

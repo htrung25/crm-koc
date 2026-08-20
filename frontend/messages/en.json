@@ -141,6 +141,33 @@
       "deleteBody": "Account <strong>{email}</strong> will be permanently deleted.",
       "deleting": "Deleting…",
       "deleteConfirm": "Delete account"
+    },
+    "selfLockout": {
+      "title": "This change will lock you out",
+      "body": "Your current IP is <code>{clientIp}</code>, and it is not covered by the new list. If you save, you will lose access to the admin area on the very next request.",
+      "noEscape": "There is no way to recover on your own. Signing in again will not help. You will have to ask another super admin to fix it, or edit the database directly.",
+      "addAndSave": "Add {clientIp} to the list and save",
+      "saving": "Saving…",
+      "acknowledge": "I understand I may lose access",
+      "force": "Save anyway, I accept",
+      "cancel": "Cancel"
+    },
+    "revenue": {
+      "title": "Revenue over time",
+      "thisYear": "This year",
+      "lastYear": "Last year",
+      "ariaLabel": "Revenue grew from {from} to {to} billion VND over 12 months"
+    },
+    "transactions": {
+      "viewAll": "View all →",
+      "colCampaign": "Campaign",
+      "colDate": "Date",
+      "colStatus": "Status",
+      "status": {
+        "completed": "Paid",
+        "processing": "Processing",
+        "pending": "Pending"
+      }
     }
   },
   "marketing": {

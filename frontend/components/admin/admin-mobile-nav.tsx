@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
+import { Link, usePathname } from "@/i18n/navigation";
 import { ADMIN_NAV_ITEMS, ADMIN_SYSTEM_ITEMS } from "@/config/admin/navigation";
 import { NAV_ICONS, type NavIconName } from "@/components/ui/icons";
 
@@ -13,11 +13,12 @@ import { NAV_ICONS, type NavIconName } from "@/components/ui/icons";
  */
 export function AdminMobileNav() {
   const pathname = usePathname();
+  const t = useTranslations("navigation");
   const items = [...ADMIN_NAV_ITEMS, ...ADMIN_SYSTEM_ITEMS];
 
   return (
     <nav
-      aria-label="Điều hướng quản trị"
+      aria-label={t("adminNavigation")}
       className="md:hidden -mx-1 overflow-x-auto pb-1"
     >
       <ul className="flex min-w-max items-center gap-2 px-1">
@@ -50,7 +51,7 @@ export function AdminMobileNav() {
                   }`}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             </li>
           );

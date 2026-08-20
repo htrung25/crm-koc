@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { WORKSPACES } from "@/config/admin/navigation";
 import { requestLogout } from "@/features/auth/session";
 import type { UserRole } from "@/features/auth/types";
@@ -14,6 +14,7 @@ type AppShellProps = {
 };
 
 export function AppShell({ children, role }: AppShellProps) {
+  const t = useTranslations("navigation");
   const pathname = usePathname();
   const router = useRouter();
 
@@ -39,7 +40,7 @@ export function AppShell({ children, role }: AppShellProps) {
             </Link>
           </div>
 
-          <nav className="space-y-1 px-4" aria-label="Điều hướng chính">
+          <nav className="space-y-1 px-4" aria-label={t("mainGroup")}>
             {workspace.navigation.map((item) => {
               if (item.disabled) {
                 return (
@@ -48,7 +49,7 @@ export function AppShell({ children, role }: AppShellProps) {
                     className="block cursor-not-allowed rounded-xl px-4 py-3 text-sm font-medium text-slate-600"
                     aria-disabled="true"
                   >
-                    {item.label}
+                    {t(item.labelKey)}
                   </span>
                 );
               }
@@ -66,7 +67,7 @@ export function AppShell({ children, role }: AppShellProps) {
                       : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
                     }`}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               );
             })}
@@ -79,7 +80,7 @@ export function AppShell({ children, role }: AppShellProps) {
             onClick={handleLogout}
             className="w-full rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold transition hover:bg-red-950 hover:text-red-300"
           >
-            Đăng xuất
+            {t("workspace.logout")}
           </button>
         </div>
       </aside>
@@ -87,7 +88,7 @@ export function AppShell({ children, role }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-900/80 px-8 backdrop-blur">
           <h1 className="text-sm font-semibold text-slate-400">
-            {workspace.eyebrow}
+            {t(workspace.eyebrowKey)}
           </h1>
           <div className="flex items-center gap-3">
             <span
@@ -95,7 +96,7 @@ export function AppShell({ children, role }: AppShellProps) {
               aria-hidden="true"
             />
             <span className="text-sm font-bold text-slate-300">
-              {workspace.accountLabel}
+              {t(workspace.accountLabelKey)}
             </span>
           </div>
         </header>

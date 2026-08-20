@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+
+import { Link } from "@/i18n/navigation";
+import { LocaleSwitcher } from "@/components/ui/locale-switcher";
 
 interface RedSunNavProps {
   /**
@@ -12,6 +15,7 @@ interface RedSunNavProps {
 }
 
 export function RedSunNav({ tone = "light" }: RedSunNavProps) {
+  const t = useTranslations("marketing.navigation");
   const [scrolled, setScrolled] = useState(false);
   const isDark = tone === "dark";
   const brandText = isDark ? "text-white" : "text-[#2D3B42]";
@@ -63,49 +67,56 @@ export function RedSunNav({ tone = "light" }: RedSunNavProps) {
             href="/#hero"
             className={`text-sm font-semibold transition-colors ${linkText}`}
           >
-            Tổng quan
+            {t("overview")}
           </Link>
           <Link
             href="/#value-prop"
             className={`text-sm font-semibold transition-colors ${linkText}`}
           >
-            Mô phỏng UI
+            {t("simulation")}
           </Link>
           <Link
             href="/#features"
             className={`text-sm font-semibold transition-colors ${linkText}`}
           >
-            Tính năng
+            {t("features")}
           </Link>
           <Link
             href="/#pricing"
             className={`text-sm font-semibold transition-colors ${linkText}`}
           >
-            Bảng giá
+            {t("pricing")}
           </Link>
           <Link
             href="/#cta"
             className={`text-sm font-semibold transition-colors ${linkText}`}
           >
-            Giải pháp KOC
+            {t("solution")}
           </Link>
         </nav>
 
         {/* Right CTAs */}
         <div className="flex items-center gap-4">
+          <LocaleSwitcher
+            className={`rounded-full border px-3 py-2 text-xs font-bold outline-none transition-colors focus-visible:ring-4 focus-visible:ring-[#EF4623]/25 ${
+              isDark
+                ? "border-white/20 bg-white/10 text-white"
+                : "border-[#2D3B42]/15 bg-white/70 text-[#2D3B42]"
+            }`}
+          />
           <Link
             href="/login"
             className={`hidden sm:inline-block text-xs font-bold uppercase tracking-wider transition-colors px-3 py-2 ${
               isDark ? "text-white hover:text-[#EF4623]" : "text-[#2D3B42] hover:text-[#EF4623]"
             }`}
           >
-            Đăng nhập
+            {t("login")}
           </Link>
           <Link
             href="/register"
             className="inline-flex items-center justify-center px-6 py-2.5 rounded-[30px] bg-[#EF4623] text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/25 hover:bg-[#D83B19] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
           >
-            Bắt đầu ngay
+            {t("getStarted")}
           </Link>
         </div>
       </div>

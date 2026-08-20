@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 export function PricingSection() {
   const [events, setEvents] = useState<number>(10); // Volume slider (1K to 100K orders/month)
