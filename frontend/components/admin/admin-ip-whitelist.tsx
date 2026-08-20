@@ -92,6 +92,7 @@ export function AdminIpWhitelist() {
     message: string;
     businessCode?: string;
     clientIp?: string;
+    status?: number;
   }) => {
     const code = failure.businessCode;
     if (!code || !tError.has(code)) return failure.message;
@@ -99,6 +100,7 @@ export function AdminIpWhitelist() {
       clientIp: failure.clientIp ?? "",
       entry: failure.message.split(": ").slice(1).join(": "),
       max: MAX_WHITELIST_LENGTH,
+      status: failure.status ?? "",
     });
   };
   const router = useRouter();

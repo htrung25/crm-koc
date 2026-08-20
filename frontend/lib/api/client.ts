@@ -114,7 +114,9 @@ export async function apiRequest<T>(
     });
   } catch {
     // Backend chưa chạy / sai host: phân biệt rõ với lỗi nghiệp vụ 4xx.
-    throw new ApiError("Không kết nối được tới máy chủ. Vui lòng thử lại.", 503);
+    throw new ApiError("Không kết nối được tới máy chủ. Vui lòng thử lại.", 503, {
+      businessCode: "NETWORK_UNREACHABLE",
+    });
   }
 
   const raw = await response.text();
@@ -131,6 +133,9 @@ export async function apiRequest<T>(
           ? "Máy chủ trả về dữ liệu không hợp lệ."
           : `Máy chủ gặp sự cố (${response.status}).`,
         response.ok ? 502 : response.status,
+        {
+          businessCode: response.ok ? "INVALID_SERVER_RESPONSE" : "SERVER_ERROR",
+        },
       );
     }
   }
@@ -139,7 +144,9 @@ export async function apiRequest<T>(
     throw new ApiError(
       extractMessage(data, `Yêu cầu thất bại (${response.status})`),
       response.status,
-      data,
+      // Không có body thì gắn mã tổng hợp; có body thì giữ nguyên để
+      // businessCode thật của backend không bị che.
+      data ?? { businessCode: "REQUEST_FAILED" },
     );
   }
 

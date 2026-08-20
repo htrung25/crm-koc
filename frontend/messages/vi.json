@@ -505,6 +505,10 @@
     "MISSING_OTP": "Thiếu email hoặc mã OTP.",
     "OTP_LENGTH": "Mã OTP gồm 6 chữ số.",
     "MISSING_EMAIL": "Vui lòng nhập email.",
-    "WRONG_PORTAL": "Tài khoản này không có quyền truy cập cổng đăng nhập này."
+    "WRONG_PORTAL": "Tài khoản này không có quyền truy cập cổng đăng nhập này.",
+    "NETWORK_UNREACHABLE": "Không kết nối được tới máy chủ. Vui lòng thử lại.",
+    "INVALID_SERVER_RESPONSE": "Máy chủ trả về dữ liệu không hợp lệ.",
+    "SERVER_ERROR": "Máy chủ gặp sự cố ({status}).",
+    "REQUEST_FAILED": "Yêu cầu thất bại."
   }
 }

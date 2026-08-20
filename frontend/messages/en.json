@@ -505,6 +505,10 @@
     "MISSING_OTP": "Email or OTP code is missing.",
     "OTP_LENGTH": "The OTP code has 6 digits.",
     "MISSING_EMAIL": "Please enter your email.",
-    "WRONG_PORTAL": "This account cannot use this sign-in portal."
+    "WRONG_PORTAL": "This account cannot use this sign-in portal.",
+    "NETWORK_UNREACHABLE": "Could not reach the server. Please try again.",
+    "INVALID_SERVER_RESPONSE": "The server returned invalid data.",
+    "SERVER_ERROR": "The server ran into a problem ({status}).",
+    "REQUEST_FAILED": "The request failed."
   }
 }

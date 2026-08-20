@@ -54,6 +54,7 @@ export class ApiRequestError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    public readonly businessCode?: string,
   ) {
     super(message);
     this.name = "ApiRequestError";
@@ -82,9 +83,14 @@ export async function postJson<T>(
   }
 
   if (!response.ok) {
-    const message =
-      (data as { message?: string } | null)?.message ?? "Yêu cầu thất bại";
-    throw new ApiRequestError(message, response.status);
+    const failure = data as
+      | { message?: string; businessCode?: string }
+      | null;
+    throw new ApiRequestError(
+      failure?.message ?? "Yêu cầu thất bại",
+      response.status,
+      failure?.businessCode ?? "REQUEST_FAILED",
+    );
   }
 
   return data as T;
