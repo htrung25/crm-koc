@@ -1,15 +1,16 @@
 "use client";
 
+import { APP_ROUTES } from "@/config/route";
 import { useId } from "react";
 import { useTranslations } from "next-intl";
 
-import { Link, usePathname } from "@/src/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import {
   ADMIN_NAV_ITEMS,
   ADMIN_SYSTEM_ITEMS,
   type NavigationItem,
-} from "@/src/config/admin/navigation";
-import { NAV_ICONS, type NavIconName } from "@/src/components/ui/icons";
+} from "@/config/admin/navigation";
+import { NAV_ICONS, type NavIconName } from "@/components/ui/icons";
 
 function NavGroup({
   title,
@@ -96,7 +97,7 @@ export function AdminSidebar() {
   return (
     <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-[248px] shrink-0 flex-col gap-6 overflow-y-auto rounded-[28px] glass p-4 md:flex">
       <Link
-        href="/admin/dashboard"
+        href={APP_ROUTES.admin.dashboard}
         className="flex items-center gap-3 rounded-2xl px-1 py-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30"
       >
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#EF4623] to-[#F49E4C] shadow-lg shadow-[#EF4623]/30">

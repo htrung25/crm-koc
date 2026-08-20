@@ -1,11 +1,12 @@
 "use client";
 
+import { APP_ROUTES } from "@/config/route";
 import { useTranslations } from "next-intl";
 
 import { useState } from "react";
-import { Link } from "@/src/i18n/navigation";
-import { RedSunNav } from "@/src/components/layout/red-sun-nav";
-import { useLogin } from "../use-login";
+import { Link } from "@/i18n/navigation";
+import { RedSunNav } from "@/components/layout/red-sun-nav";
+import { useLogin } from "@/features/auth/use-login";
 
 export function EditorialLogin() {
   const t = useTranslations("auth.login");
@@ -211,7 +212,7 @@ export function EditorialLogin() {
                       {t("password")}
                     </label>
                     <Link
-                      href="/forgot-password"
+                      href={APP_ROUTES.forgotPassword}
                       className="text-xs font-semibold text-[#EF4623] hover:underline"
                     >
                       {t("forgot")}
@@ -354,7 +355,7 @@ export function EditorialLogin() {
               <div className="pt-5 border-t border-[#2D3B42]/10 text-center">
                 <p className="text-xs text-slate-500">
                   {t("noAccount")}{" "}
-                  <Link href="/register" className="text-[#EF4623] font-bold hover:underline">
+                  <Link href={APP_ROUTES.register} className="text-[#EF4623] font-bold hover:underline">
                     {t("registerNow")}
                   </Link>
                 </p>

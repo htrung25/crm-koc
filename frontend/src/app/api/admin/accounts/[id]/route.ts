@@ -1,13 +1,14 @@
+import { BACKEND_ROUTES } from "@/config/route";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ACCESS_COOKIE } from "@/src/features/auth/session";
-import { ApiError, apiRequest } from "@/src/lib/api/client";
-import { getClientContext } from "@/src/lib/api/client-context";
+import { ACCESS_COOKIE } from "@/features/auth/session";
+import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 import {
   SUPER_ADMIN_REQUIRED,
   type WhitelistErrorBody,
-} from "@/src/features/admin/ip-whitelist/types";
+} from "@/features/admin/ip-whitelist/types";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -45,7 +46,7 @@ export async function GET(_: Request, context: Context) {
   try {
     const { id } = await context.params;
     return NextResponse.json(
-      await apiRequest(`/admin/${id}`, { token, clientContext }),
+      await apiRequest(BACKEND_ROUTES.admin.detail(id), { token, clientContext }),
     );
   } catch (error) {
     return errorResponse(error);
@@ -65,7 +66,7 @@ export async function PATCH(request: Request, context: Context) {
     const body = await request.json();
     const { id } = await context.params;
     return NextResponse.json(
-      await apiRequest(`/admin/${id}`, {
+      await apiRequest(BACKEND_ROUTES.admin.detail(id), {
         method: "PATCH",
         body,
         token,
@@ -95,7 +96,7 @@ export async function DELETE(_: Request, context: Context) {
   try {
     const { id } = await context.params;
     return NextResponse.json(
-      await apiRequest(`/admin/${id}`, {
+      await apiRequest(BACKEND_ROUTES.admin.detail(id), {
         method: "DELETE",
         token,
         clientContext,

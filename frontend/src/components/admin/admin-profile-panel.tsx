@@ -1,23 +1,24 @@
 "use client";
 
+import { APP_ROUTES, API_ROUTES } from "@/config/route";
 import { useLocale, useTranslations } from "next-intl";
 
-import { LocaleSwitcher } from "@/src/components/ui/locale-switcher";
+import { LocaleSwitcher } from "@/components/ui/locale-switcher";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "@/src/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   IconCalendar,
   IconShield,
   IconUser,
-} from "@/src/components/ui/icons";
+} from "@/components/ui/icons";
 import type {
   AdminProfile,
   UpdateAdminProfile,
-} from "@/src/features/admin/profile/types";
-import { apiFetch } from "@/src/lib/api/fetch-client";
+} from "@/features/admin/profile/types";
+import { apiFetch } from "@/lib/api/fetch-client";
 
 const PROFILE_KEY = ["admin-profile"] as const;
 
@@ -52,12 +53,12 @@ async function readResponse(response: Response): Promise<AdminProfile> {
 }
 
 async function getProfile() {
-  return readResponse(await apiFetch("/api/admin/profile"));
+  return readResponse(await apiFetch(API_ROUTES.admin.profile));
 }
 
 async function updateProfile(payload: UpdateAdminProfile) {
   return readResponse(
-    await apiFetch("/api/admin/profile", {
+    await apiFetch(API_ROUTES.admin.profile, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -124,7 +125,7 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
     },
     onError: (failure) => {
       if (failure instanceof ProfileRequestError && failure.status === 401) {
-        router.replace("/admin");
+        router.replace(APP_ROUTES.admin.login);
         return;
       }
       setFormError(
@@ -407,7 +408,7 @@ export function AdminProfilePanel() {
     profileQuery.error.status === 401;
 
   useEffect(() => {
-    if (unauthorized) router.replace("/admin");
+    if (unauthorized) router.replace(APP_ROUTES.admin.login);
   }, [router, unauthorized]);
 
   if (profileQuery.isPending) return <ProfileSkeleton />;

@@ -5,7 +5,7 @@ import {
   IconTrendUp,
   IconUsers,
   IconWallet,
-} from "@/src/components/ui/icons";
+} from "@/components/ui/icons";
 
 const ICONS = {
   wallet: IconWallet,

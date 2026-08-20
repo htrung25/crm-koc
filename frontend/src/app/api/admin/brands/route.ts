@@ -1,9 +1,10 @@
+import { BACKEND_ROUTES } from "@/config/route";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ACCESS_COOKIE } from "@/src/features/auth/session";
-import { ApiError, apiRequest } from "@/src/lib/api/client";
-import { getClientContext } from "@/src/lib/api/client-context";
+import { ACCESS_COOKIE } from "@/features/auth/session";
+import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 
 /**
  * Danh sách brand, phân trang và lọc Ở PHÍA SERVER.
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
 
   try {
     return NextResponse.json(
-      await apiRequest(`/admin/brands-list?${query}`, {
+      await apiRequest(`${BACKEND_ROUTES.admin.brandList}?${query}`, {
         token,
         clientContext: await getClientContext(),
       }),

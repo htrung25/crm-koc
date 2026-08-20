@@ -3,9 +3,9 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
-import "../globals.css";
-import { Providers } from "../providers";
-import { routing } from "@/src/i18n/routing";
+import "@/app/globals.css";
+import { Providers } from "@/app/providers";
+import { routing } from "@/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("marketing");

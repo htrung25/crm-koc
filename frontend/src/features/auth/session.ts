@@ -1,5 +1,6 @@
+import { API_ROUTES } from "@/config/route";
 import type { NextResponse } from "next/server";
-import { ROLE_HOME, type UserRole } from "@/src/features/auth/types";
+import { ROLE_HOME, type UserRole } from "@/features/auth/types";
 
 export const ACCESS_COOKIE = "token";
 export const REFRESH_COOKIE = "refresh_token";
@@ -61,5 +62,5 @@ export function getRoleHome(role: UserRole) {
 
 /** Đăng xuất từ phía client: cookie httpOnly chỉ server xoá được. */
 export async function requestLogout(): Promise<void> {
-  await fetch("/api/auth/logout", { method: "POST" });
+  await fetch(API_ROUTES.auth.logout, { method: "POST" });
 }

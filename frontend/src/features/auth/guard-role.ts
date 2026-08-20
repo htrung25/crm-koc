@@ -1,7 +1,8 @@
+import { BACKEND_ROUTES } from "@/config/route";
 import { NextResponse } from "next/server";
 
-import { ApiError, apiRequest } from "@/src/lib/api/client";
-import type { ClientContext } from "@/src/lib/api/client-context";
+import { ApiError, apiRequest } from "@/lib/api/client";
+import type { ClientContext } from "@/lib/api/client-context";
 import { applySession } from "./session";
 import {
   isUserRole,
@@ -66,7 +67,7 @@ async function revokeToken(
   clientContext: ClientContext,
 ): Promise<void> {
   try {
-    await apiRequest("/logout", { method: "POST", token, clientContext });
+    await apiRequest(BACKEND_ROUTES.logout, { method: "POST", token, clientContext });
   } catch (error) {
     // Thu hồi hỏng cũng không được phép biến thành đăng nhập thành công.
     if (!(error instanceof ApiError)) throw error;

@@ -1,8 +1,9 @@
+import { BACKEND_ROUTES } from "@/config/route";
 import { NextResponse } from "next/server";
 
-import { ApiError, apiRequest } from "@/src/lib/api/client";
-import { getClientContext } from "@/src/lib/api/client-context";
-import type { LoginPendingResponse } from "@/src/features/auth/types";
+import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
+import type { LoginPendingResponse } from "@/features/auth/types";
 
 /** Gửi lại OTP đăng nhập. Backend có cooldown riêng, vượt sẽ trả 429. */
 export async function POST(request: Request) {
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await apiRequest<LoginPendingResponse>("/resend-otp", {
+    const result = await apiRequest<LoginPendingResponse>(BACKEND_ROUTES.resendOtp, {
       method: "POST",
       body: { email },
       clientContext: await getClientContext(),

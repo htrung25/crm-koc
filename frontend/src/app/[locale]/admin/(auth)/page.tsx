@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useLogin } from "@/src/features/auth/use-login";
+import { useLogin } from "@/features/auth/use-login";
 
 export default function AdminLoginPage() {
   const t = useTranslations("admin.login");

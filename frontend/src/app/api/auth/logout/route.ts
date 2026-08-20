@@ -1,12 +1,13 @@
+import { BACKEND_ROUTES } from "@/config/route";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ApiError, apiRequest } from "@/src/lib/api/client";
-import { getClientContext } from "@/src/lib/api/client-context";
+import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 import {
   clearSessionCookies,
   ACCESS_COOKIE,
-} from "@/src/features/auth/session";
+} from "@/features/auth/session";
 
 /**
  * Thu hồi token ở backend (đưa jti vào blacklist) rồi xoá cookie phiên.
@@ -17,7 +18,7 @@ export async function POST() {
 
   if (token) {
     try {
-      await apiRequest("/logout", {
+      await apiRequest(BACKEND_ROUTES.logout, {
         method: "POST",
         token,
         clientContext: await getClientContext(),

@@ -1,10 +1,11 @@
 "use client";
 
+import { APP_ROUTES } from "@/config/route";
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/src/i18n/navigation";
-import { LocaleToggle } from "@/src/components/ui/locale-toggle";
+import { Link } from "@/i18n/navigation";
+import { LocaleToggle } from "@/components/ui/locale-toggle";
 
 interface RedSunNavProps {
   /**
@@ -99,7 +100,7 @@ export function RedSunNav({ tone = "light" }: RedSunNavProps) {
         <div className="flex items-center gap-4">
           <LocaleToggle dark={isDark} />
           <Link
-            href="/login"
+            href={APP_ROUTES.login}
             className={`hidden sm:inline-block text-xs font-bold uppercase tracking-wider transition-colors px-3 py-2 ${
               isDark ? "text-white hover:text-[#EF4623]" : "text-[#2D3B42] hover:text-[#EF4623]"
             }`}
@@ -107,7 +108,7 @@ export function RedSunNav({ tone = "light" }: RedSunNavProps) {
             {t("login")}
           </Link>
           <Link
-            href="/register"
+            href={APP_ROUTES.register}
             className="inline-flex items-center justify-center px-6 py-2.5 rounded-[30px] bg-[#EF4623] text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/25 hover:bg-[#D83B19] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
           >
             {t("getStarted")}

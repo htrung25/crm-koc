@@ -3,8 +3,8 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useTransition, type ComponentProps } from "react";
 
-import { usePathname, useRouter } from "@/src/i18n/navigation";
-import { routing, type AppLocale } from "@/src/i18n/routing";
+import { usePathname, useRouter } from "@/i18n/navigation";
+import { routing, type AppLocale } from "@/i18n/routing";
 
 export type LocaleSwitcherProps = Omit<
   ComponentProps<"select">,

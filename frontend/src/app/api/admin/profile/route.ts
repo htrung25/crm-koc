@@ -1,10 +1,11 @@
+import { BACKEND_ROUTES } from "@/config/route";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ACCESS_COOKIE } from "@/src/features/auth/session";
-import type { UpdateAdminProfile } from "@/src/features/admin/profile/types";
-import { ApiError, apiRequest } from "@/src/lib/api/client";
-import { getClientContext } from "@/src/lib/api/client-context";
+import { ACCESS_COOKIE } from "@/features/auth/session";
+import type { UpdateAdminProfile } from "@/features/admin/profile/types";
+import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 
 async function session() {
   const token = (await cookies()).get(ACCESS_COOKIE)?.value;
@@ -30,7 +31,7 @@ export async function GET() {
 
   try {
     return NextResponse.json(
-      await apiRequest("/admin/profile/me", { token, clientContext }),
+      await apiRequest(BACKEND_ROUTES.admin.profileMe, { token, clientContext }),
     );
   } catch (error) {
     return errorResponse(error);
@@ -102,7 +103,7 @@ export async function PATCH(request: Request) {
     }
 
     return NextResponse.json(
-      await apiRequest("/admin/profile/me", {
+      await apiRequest(BACKEND_ROUTES.admin.profileMe, {
         method: "PATCH",
         body: payload,
         token,

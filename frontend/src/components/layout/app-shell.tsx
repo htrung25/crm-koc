@@ -1,12 +1,13 @@
 "use client";
 
+import { APP_ROUTES } from "@/config/route";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-import { Link, usePathname, useRouter } from "@/src/i18n/navigation";
-import { WORKSPACES } from "@/src/config/admin/navigation";
-import { requestLogout } from "@/src/features/auth/session";
-import type { UserRole } from "@/src/features/auth/types";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { WORKSPACES } from "@/config/admin/navigation";
+import { requestLogout } from "@/features/auth/session";
+import type { UserRole } from "@/features/auth/types";
 
 type AppShellProps = {
   children: ReactNode;
@@ -23,7 +24,7 @@ export function AppShell({ children, role }: AppShellProps) {
 
   const handleLogout = async () => {
     await requestLogout();
-    router.replace("/login");
+    router.replace(APP_ROUTES.login);
     router.refresh();
   };
 

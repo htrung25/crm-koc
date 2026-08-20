@@ -1,15 +1,16 @@
 "use client";
 
+import { APP_ROUTES } from "@/config/route";
 import { useTranslations } from "next-intl";
-import { LocaleToggle } from "@/src/components/ui/locale-toggle";
+import { LocaleToggle } from "@/components/ui/locale-toggle";
 
-import { Link, useRouter } from "@/src/i18n/navigation";
-import { requestLogout } from "@/src/features/auth/session";
+import { Link, useRouter } from "@/i18n/navigation";
+import { requestLogout } from "@/features/auth/session";
 import {
   IconBell,
   IconLogout,
   IconSearch,
-} from "@/src/components/ui/icons";
+} from "@/components/ui/icons";
 
 type AdminTopbarProps = {
   title: string;
@@ -22,7 +23,7 @@ export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
 
   const handleLogout = async () => {
     await requestLogout();
-    router.replace("/admin");
+    router.replace(APP_ROUTES.admin.login);
     router.refresh();
   };
 
@@ -68,7 +69,7 @@ export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
         {/* Tài khoản */}
         <div className="flex h-11 items-center gap-2.5 rounded-2xl glass-soft pl-1.5 pr-3">
           <Link
-            href="/admin/profile"
+            href={APP_ROUTES.admin.profile}
             aria-label={t("openProfile")}
             className="flex items-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/25"
           >

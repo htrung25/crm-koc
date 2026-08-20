@@ -1,10 +1,11 @@
 "use client";
 
+import { APP_ROUTES } from "@/config/route";
 import { useTranslations } from "next-intl";
 
 import { useState } from "react";
-import { Link } from "@/src/i18n/navigation";
-import { RedSunNav } from "@/src/components/layout/red-sun-nav";
+import { Link } from "@/i18n/navigation";
+import { RedSunNav } from "@/components/layout/red-sun-nav";
 
 export function EditorialRegister() {
   const t = useTranslations("auth.register");
@@ -221,7 +222,7 @@ export function EditorialRegister() {
                     </p>
                   </div>
                   <Link
-                    href="/login"
+                    href={APP_ROUTES.login}
                     className="inline-block w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 transition-all duration-300"
                   >
                     {t("signInNow")}
@@ -475,7 +476,7 @@ export function EditorialRegister() {
               <div className="pt-3 border-t border-[#2D3B42]/10 text-center">
                 <p className="text-xs text-slate-500">
                   {t("haveAccount")}{" "}
-                  <Link href="/login" className="text-[#EF4623] font-bold hover:underline">
+                  <Link href={APP_ROUTES.login} className="text-[#EF4623] font-bold hover:underline">
                     {t("signIn")}
                   </Link>
                 </p>

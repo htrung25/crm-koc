@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { AdminSidebar } from "@/src/components/admin/admin-sidebar";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
 /**
  * Khung dùng chung cho mọi trang quản trị: nền aurora ấm + sidebar bên trái.

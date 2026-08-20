@@ -3,8 +3,8 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useTransition } from "react";
 
-import { usePathname, useRouter } from "@/src/i18n/navigation";
-import { routing, type AppLocale } from "@/src/i18n/routing";
+import { usePathname, useRouter } from "@/i18n/navigation";
+import { routing, type AppLocale } from "@/i18n/routing";
 
 type LocaleToggleProps = {
   /** Nền tối (hero marketing) cần tương phản ngược lại. */

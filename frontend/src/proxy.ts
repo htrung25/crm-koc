@@ -2,9 +2,9 @@ import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { isUserRole, ROLE_HOME } from "@/src/features/auth/types";
-import { REFRESH_COOKIE, ROLE_COOKIE } from "@/src/features/auth/session";
-import { routing } from "@/src/i18n/routing";
+import { isUserRole, ROLE_HOME } from "@/features/auth/types";
+import { REFRESH_COOKIE, ROLE_COOKIE } from "@/features/auth/session";
+import { routing } from "@/i18n/routing";
 
 const handleI18nRouting = createMiddleware(routing);
 

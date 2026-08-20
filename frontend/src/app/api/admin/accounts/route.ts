@@ -1,9 +1,10 @@
+import { BACKEND_ROUTES } from "@/config/route";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ACCESS_COOKIE } from "@/src/features/auth/session";
-import { ApiError, apiRequest } from "@/src/lib/api/client";
-import { getClientContext } from "@/src/lib/api/client-context";
+import { ACCESS_COOKIE } from "@/features/auth/session";
+import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 
 function errorResponse(error: unknown) {
   if (!(error instanceof ApiError)) throw error;
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
   if (search) query.set("search", search);
 
   try {
-    const result = await apiRequest(`/admin/admin-list?${query}`, {
+    const result = await apiRequest(`${BACKEND_ROUTES.admin.adminList}?${query}`, {
       token,
       clientContext: await getClientContext(),
     });

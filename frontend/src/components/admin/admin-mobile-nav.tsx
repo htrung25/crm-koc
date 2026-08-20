@@ -2,9 +2,9 @@
 
 import { useTranslations } from "next-intl";
 
-import { Link, usePathname } from "@/src/i18n/navigation";
-import { ADMIN_NAV_ITEMS, ADMIN_SYSTEM_ITEMS } from "@/src/config/admin/navigation";
-import { NAV_ICONS, type NavIconName } from "@/src/components/ui/icons";
+import { Link, usePathname } from "@/i18n/navigation";
+import { ADMIN_NAV_ITEMS, ADMIN_SYSTEM_ITEMS } from "@/config/admin/navigation";
+import { NAV_ICONS, type NavIconName } from "@/components/ui/icons";
 
 /**
  * Sidebar bị ẩn dưới md, nên màn nhỏ cần một dải cuộn ngang.

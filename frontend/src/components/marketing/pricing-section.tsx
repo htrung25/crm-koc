@@ -1,9 +1,10 @@
 "use client";
 
+import { APP_ROUTES } from "@/config/route";
 import { useLocale, useTranslations } from "next-intl";
 
 import { useState } from "react";
-import { Link } from "@/src/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 
 export function PricingSection() {
   const t = useTranslations("marketing");
@@ -104,7 +105,7 @@ export function PricingSection() {
 
             <div className="pt-8 mt-6">
               <Link
-                href="/register"
+                href={APP_ROUTES.register}
                 className="block w-full py-3.5 text-center bg-[#2D3B42] text-white font-bold rounded-[30px] text-xs uppercase tracking-wider shadow-md hover:bg-[#EF4623] transition-colors"
               >
                 {t("pricing.starterCta")}
@@ -168,7 +169,7 @@ export function PricingSection() {
 
             <div className="pt-8 mt-6 space-y-3">
               <Link
-                href="/login"
+                href={APP_ROUTES.login}
                 className="block w-full py-4 text-center bg-[#EF4623] text-white font-extrabold rounded-[30px] text-xs uppercase tracking-wider shadow-xl shadow-[#EF4623]/35 hover:bg-[#D83B19] hover:scale-105 transition-all"
               >
                 {t("pricing.growthCta")}
@@ -225,7 +226,7 @@ export function PricingSection() {
 
             <div className="pt-8 mt-6">
               <Link
-                href="/login"
+                href={APP_ROUTES.login}
                 className="block w-full py-3.5 text-center bg-[#2D3B42] text-white font-bold rounded-[30px] text-xs uppercase tracking-wider shadow-md hover:bg-[#EF4623] transition-colors"
               >
                 {t("pricing.enterpriseCta")}
@@ -252,7 +253,7 @@ export function PricingSection() {
           </div>
 
           <Link
-            href="/register"
+            href={APP_ROUTES.register}
             className="shrink-0 px-6 py-3.5 rounded-[30px] bg-[#2D3B42] text-white text-xs font-extrabold uppercase tracking-wider hover:bg-[#EF4623] transition-colors"
           >
             {t("pricing.promoCta")}
@@ -349,7 +350,7 @@ export function PricingSection() {
                 </div>
 
                 <Link
-                  href="/login"
+                  href={APP_ROUTES.login}
                   className="block w-full py-4 text-center bg-[#EF4623] text-white font-extrabold rounded-[30px] text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:bg-[#D83B19] transition-all"
                 >
                   {t("pricing.calcCta")}

@@ -1,12 +1,14 @@
+import { APP_ROUTES } from "@/config/route";
+
 export const USER_ROLES = ["ADMIN", "BRAND", "CREATOR"] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 
 // TODO: trỏ BRAND/CREATOR về dashboard riêng khi các trang đó được dựng lại.
 export const ROLE_HOME: Record<UserRole, string> = {
-  ADMIN: "/admin/dashboard",
-  BRAND: "/",
-  CREATOR: "/",
+  ADMIN: APP_ROUTES.admin.dashboard,
+  BRAND: APP_ROUTES.home,
+  CREATOR: APP_ROUTES.home,
 };
 
 export function isUserRole(value: string | undefined): value is UserRole {

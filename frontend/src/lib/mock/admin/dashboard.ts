@@ -1,4 +1,4 @@
-import type { DashboardData } from "@/src/components/dashboard/types";
+import type { DashboardData } from "@/components/dashboard/types";
 
 /**
  * Dữ liệu dashboard của workspace ADMIN.

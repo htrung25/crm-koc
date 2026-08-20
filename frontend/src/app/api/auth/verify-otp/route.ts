@@ -1,12 +1,13 @@
+import { BACKEND_ROUTES } from "@/config/route";
 import { NextResponse } from "next/server";
 
-import { ApiError, apiRequest } from "@/src/lib/api/client";
-import { getClientContext } from "@/src/lib/api/client-context";
+import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 import {
   establishSession,
   parseExpectedRole,
-} from "@/src/features/auth/guard-role";
-import type { LoginTokenResponse } from "@/src/features/auth/types";
+} from "@/features/auth/guard-role";
+import type { LoginTokenResponse } from "@/features/auth/types";
 
 /**
  * Bước 2 của đăng nhập admin: đổi OTP lấy access token và ghi cookie phiên.
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
   const clientContext = await getClientContext();
 
   try {
-    const result = await apiRequest<LoginTokenResponse>("/verify-otp", {
+    const result = await apiRequest<LoginTokenResponse>(BACKEND_ROUTES.verifyOtp, {
       method: "POST",
       body: { email, otp },
       clientContext,

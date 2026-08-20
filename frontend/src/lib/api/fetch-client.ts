@@ -1,5 +1,6 @@
 "use client";
 
+import { API_ROUTES } from "@/config/route";
 /**
  * Interceptor fetch cho phía trình duyệt.
  *
@@ -15,7 +16,7 @@
 let pendingRefresh: Promise<boolean> | null = null;
 
 async function refreshSession(): Promise<boolean> {
-  pendingRefresh ??= fetch("/api/auth/refresh", { method: "POST" })
+  pendingRefresh ??= fetch(API_ROUTES.auth.refresh, { method: "POST" })
     .then((response) => response.ok)
     .catch(() => false)
     .finally(() => {

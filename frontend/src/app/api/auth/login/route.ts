@@ -1,16 +1,17 @@
+import { BACKEND_ROUTES } from "@/config/route";
 import { NextResponse } from "next/server";
 
-import { ApiError, apiRequest } from "@/src/lib/api/client";
-import { getClientContext } from "@/src/lib/api/client-context";
+import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 import {
   establishSession,
   parseExpectedRole,
-} from "@/src/features/auth/guard-role";
+} from "@/features/auth/guard-role";
 import {
   isPendingOtp,
   type LoginResponse,
   type LoginResult,
-} from "@/src/features/auth/types";
+} from "@/features/auth/types";
 
 export async function POST(request: Request) {
   let payload: { email?: string; password?: string; expectedRole?: unknown };
@@ -44,7 +45,8 @@ export async function POST(request: Request) {
 
   try {
     const result = await apiRequest<LoginResponse>(
-      expectedRole === "ADMIN" ? "/login/admin" : "/login/brand-creator",
+      expectedRole === "ADMIN" ? BACKEND_ROUTES.loginAdmin
+        : BACKEND_ROUTES.loginBrandCreator,
       {
         method: "POST",
         body: { email, password },

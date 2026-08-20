@@ -1,29 +1,30 @@
 "use client";
 
+import { APP_ROUTES, API_ROUTES } from "@/config/route";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/src/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 
 import {
   IconChevronDown,
   IconPlus,
   IconSearch,
   IconTrash,
-} from "@/src/components/ui/icons";
-import { SUPER_ADMIN_REQUIRED } from "@/src/features/admin/ip-whitelist/types";
+} from "@/components/ui/icons";
+import { SUPER_ADMIN_REQUIRED } from "@/features/admin/ip-whitelist/types";
 import type {
   AdminPage,
   AdminResponse,
   AdminRole,
-} from "@/src/features/admin/ip-whitelist/types";
+} from "@/features/admin/ip-whitelist/types";
 import {
   MAX_WHITELIST_LENGTH,
   parseWhitelist,
   serializeWhitelist,
   validateEntry,
-} from "@/src/features/admin/ip-whitelist/whitelist";
-import { apiFetch } from "@/src/lib/api/fetch-client";
-import { SelfLockoutDialog } from "@/src/components/admin/self-lockout-dialog";
+} from "@/features/admin/ip-whitelist/whitelist";
+import { apiFetch } from "@/lib/api/fetch-client";
+import { SelfLockoutDialog } from "@/components/admin/self-lockout-dialog";
 
 type EditorState = {
   admin: AdminResponse;
@@ -131,13 +132,13 @@ export function AdminIpWhitelist() {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiFetch("/api/admin/accounts");
+      const response = await apiFetch(API_ROUTES.admin.accounts);
       const result = (await responseBody(response)) as AdminPage;
       setAdmins(result.data);
     } catch (failure) {
       const status = (failure as Error & { status?: number }).status;
       if (status === 401) {
-        router.replace("/admin");
+        router.replace(APP_ROUTES.admin.login);
         return;
       }
       setError((failure as Error).message);
@@ -149,7 +150,7 @@ export function AdminIpWhitelist() {
   useEffect(() => {
     let active = true;
 
-    apiFetch("/api/admin/accounts")
+    apiFetch(API_ROUTES.admin.accounts)
       .then(responseBody)
       .then((result) => {
         if (active) setAdmins((result as AdminPage).data);
@@ -157,7 +158,7 @@ export function AdminIpWhitelist() {
       .catch((failure: Error & { status?: number }) => {
         if (!active) return;
         if (failure.status === 401) {
-          router.replace("/admin");
+          router.replace(APP_ROUTES.admin.login);
           return;
         }
         setError(failure.message);
@@ -192,7 +193,7 @@ export function AdminIpWhitelist() {
     setDialogError(null);
     setLockoutIp(null);
     try {
-      const response = await apiFetch(`/api/admin/accounts/${admin.id}`);
+      const response = await apiFetch(API_ROUTES.admin.account(admin.id));
       const detail = (await responseBody(response)) as AdminResponse;
       setEditor({
         admin: detail,
@@ -237,7 +238,7 @@ export function AdminIpWhitelist() {
     setDialogError(null);
     setLockoutIp(null);
     try {
-      const response = await apiFetch(`/api/admin/accounts/${editor.admin.id}`, {
+      const response = await apiFetch(API_ROUTES.admin.account(editor.admin.id), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -284,7 +285,7 @@ export function AdminIpWhitelist() {
     setSaving(true);
     setDialogError(null);
     try {
-      const response = await apiFetch(`/api/admin/accounts/${deleting.id}`, {
+      const response = await apiFetch(API_ROUTES.admin.account(deleting.id), {
         method: "DELETE",
       });
       await responseBody(response);
@@ -347,7 +348,7 @@ export function AdminIpWhitelist() {
     setAddingWhitelistLockoutIp(null);
 
     try {
-      const response = await apiFetch(`/api/admin/accounts/${admin.id}`, {
+      const response = await apiFetch(API_ROUTES.admin.account(admin.id), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -368,7 +369,7 @@ export function AdminIpWhitelist() {
       };
 
       if (requestError.status === 401) {
-        router.replace("/admin");
+        router.replace(APP_ROUTES.admin.login);
         return;
       }
       if (requestError.status === 422 && requestError.clientIp) {

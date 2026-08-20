@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
-import { AdminMobileNav } from "@/src/components/admin/admin-mobile-nav";
-import { AdminTopbar } from "@/src/components/admin/admin-topbar";
-import { AdminIpWhitelist } from "@/src/components/admin/admin-ip-whitelist";
+import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
+import { AdminTopbar } from "@/components/admin/admin-topbar";
+import { AdminIpWhitelist } from "@/components/admin/admin-ip-whitelist";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("admin.ipWhitelistPage");

@@ -1,20 +1,21 @@
 "use client";
 
+import { APP_ROUTES, API_ROUTES } from "@/config/route";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useFormatter, useTranslations } from "next-intl";
 
-import { useRouter } from "@/src/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 
-import { IconSearch } from "@/src/components/ui/icons";
+import { IconSearch } from "@/components/ui/icons";
 import {
   DEFAULT_QUERY,
   STATUS_CODES,
   type BrandPage,
   type BrandQuery,
   type BrandRow,
-} from "@/src/features/admin/brands/types";
-import { apiFetch } from "@/src/lib/api/fetch-client";
+} from "@/features/admin/brands/types";
+import { apiFetch } from "@/lib/api/fetch-client";
 
 /** Nền huy hiệu theo trạng thái. Khoá là EAccountStatus của backend. */
 const STATUS_STYLE: Record<number, string> = {
@@ -135,7 +136,7 @@ export function AdminBrandList() {
       if (query.search) params.set("search", query.search);
       if (query.status) params.set("status", String(query.status));
 
-      const response = await apiFetch(`/api/admin/brands?${params}`, { signal });
+      const response = await apiFetch(`${API_ROUTES.admin.brands}?${params}`, { signal });
       const body: unknown = await response.json().catch(() => null);
 
       if (!response.ok) {
@@ -160,7 +161,7 @@ export function AdminBrandList() {
   useEffect(() => {
     const status = (brandsQuery.error as (Error & { status?: number }) | null)
       ?.status;
-    if (status === 401) router.replace("/admin");
+    if (status === 401) router.replace(APP_ROUTES.admin.login);
   }, [brandsQuery.error, router]);
 
   const error =

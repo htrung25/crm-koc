@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { useState } from "react";
-import { ScrollReveal } from "@/src/components/ui/scroll-reveal";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export function BentoFeatures() {
   const t = useTranslations("marketing");

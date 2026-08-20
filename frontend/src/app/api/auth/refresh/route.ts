@@ -1,15 +1,16 @@
+import { BACKEND_ROUTES } from "@/config/route";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ApiError, apiRequest } from "@/src/lib/api/client";
-import { getClientContext } from "@/src/lib/api/client-context";
+import { ApiError, apiRequest } from "@/lib/api/client";
+import { getClientContext } from "@/lib/api/client-context";
 import {
   applySession,
   clearSessionCookies,
   REFRESH_COOKIE,
   ROLE_COOKIE,
-} from "@/src/features/auth/session";
-import { isUserRole } from "@/src/features/auth/types";
+} from "@/features/auth/session";
+import { isUserRole } from "@/features/auth/types";
 
 type TokenPair = {
   accessToken: string;
@@ -42,7 +43,7 @@ export async function POST() {
   }
 
   try {
-    const tokens = await apiRequest<TokenPair>("/refresh", {
+    const tokens = await apiRequest<TokenPair>(BACKEND_ROUTES.refresh, {
       method: "POST",
       body: { refreshToken },
       clientContext: await getClientContext(),

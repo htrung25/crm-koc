@@ -1,14 +1,15 @@
 "use client";
 
+import { APP_ROUTES } from "@/config/route";
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/src/i18n/navigation";
-import { RedSunNav } from "@/src/components/layout/red-sun-nav";
-import { UiSimulator } from "@/src/components/marketing/ui-simulator";
-import { BentoFeatures } from "@/src/components/marketing/bento-features";
-import { MarqueeCards } from "@/src/components/marketing/marquee-cards";
-import { PricingSection } from "@/src/components/marketing/pricing-section";
-import { ScrollReveal } from "@/src/components/ui/scroll-reveal";
+import { Link } from "@/i18n/navigation";
+import { RedSunNav } from "@/components/layout/red-sun-nav";
+import { UiSimulator } from "@/components/marketing/ui-simulator";
+import { BentoFeatures } from "@/components/marketing/bento-features";
+import { MarqueeCards } from "@/components/marketing/marquee-cards";
+import { PricingSection } from "@/components/marketing/pricing-section";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export default function Home() {
   const t = useTranslations("marketing");
@@ -50,7 +51,7 @@ export default function Home() {
           <div className="flex flex-wrap items-center justify-center gap-5 pt-4">
             {/* Primary Pill Button with shadow-2xl */}
             <Link
-              href="/login"
+              href={APP_ROUTES.login}
               className="inline-flex items-center justify-center px-9 py-4 rounded-[30px] bg-[#EF4623] text-white font-bold text-sm uppercase tracking-wider shadow-2xl shadow-[#EF4623]/35 hover:bg-[#D83B19] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
             >
               {t("hero.cta")}
@@ -220,13 +221,13 @@ export default function Home() {
 
             <div className="flex flex-wrap items-center justify-center gap-5 pt-4">
               <Link
-                href="/login"
+                href={APP_ROUTES.login}
                 className="inline-flex items-center justify-center px-10 py-4 rounded-[30px] bg-white text-[#EF4623] font-extrabold text-sm uppercase tracking-wider shadow-2xl hover:bg-[#FDF1EE] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
               >
                 {t("cta.primary")}
               </Link>
               <Link
-                href="/login"
+                href={APP_ROUTES.login}
                 className="inline-flex items-center justify-center px-8 py-4 rounded-[30px] border-2 border-white/40 text-white font-extrabold text-sm uppercase tracking-wider hover:bg-white hover:text-[#EF4623] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
               >
                 {t("cta.secondary")}
@@ -323,22 +324,22 @@ export default function Home() {
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <Link href="/login" className="hover:text-[#EF4623] transition-colors">
+                <Link href={APP_ROUTES.login} className="hover:text-[#EF4623] transition-colors">
                   {t("footer.adminPortal")}
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="hover:text-[#EF4623] transition-colors">
+                <Link href={APP_ROUTES.login} className="hover:text-[#EF4623] transition-colors">
                   {t("footer.brandPortal")}
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="hover:text-[#EF4623] transition-colors">
+                <Link href={APP_ROUTES.login} className="hover:text-[#EF4623] transition-colors">
                   {t("footer.creatorPortal")}
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="hover:text-[#EF4623] transition-colors">
+                <Link href={APP_ROUTES.login} className="hover:text-[#EF4623] transition-colors">
                   {t("footer.allPortals")}
                 </Link>
               </li>

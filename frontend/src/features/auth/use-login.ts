@@ -1,9 +1,10 @@
 "use client";
 
+import { API_ROUTES } from "@/config/route";
 import { useState } from "react";
 
-import { useRouter } from "@/src/i18n/navigation";
-import { postJson } from "@/src/lib/api/fetch-client";
+import { useRouter } from "@/i18n/navigation";
+import { postJson } from "@/lib/api/fetch-client";
 import type { LoginResult, UserRole } from "./types";
 
 export type LoginStep = "credentials" | "otp";
@@ -47,7 +48,7 @@ export function useLogin(expectedRole?: UserRole) {
 
     try {
       const result = await postJson<LoginResult>(
-        "/api/auth/login",
+        API_ROUTES.auth.login,
         { email, password, expectedRole },
         { skipRefresh: true },
       );
@@ -73,7 +74,7 @@ export function useLogin(expectedRole?: UserRole) {
     try {
       goHome(
         await postJson<LoginResult>(
-          "/api/auth/verify-otp",
+          API_ROUTES.auth.verifyOtp,
           { email, otp, expectedRole },
           { skipRefresh: true },
         ),
@@ -91,7 +92,7 @@ export function useLogin(expectedRole?: UserRole) {
 
     try {
       const result = await postJson<{ message: string }>(
-        "/api/auth/resend-otp",
+        API_ROUTES.auth.resendOtp,
         { email },
         { skipRefresh: true },
       );

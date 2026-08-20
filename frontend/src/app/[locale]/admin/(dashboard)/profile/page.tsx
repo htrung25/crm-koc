@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
-import { AdminMobileNav } from "@/src/components/admin/admin-mobile-nav";
-import { AdminProfilePanel } from "@/src/components/admin/admin-profile-panel";
-import { AdminTopbar } from "@/src/components/admin/admin-topbar";
+import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
+import { AdminProfilePanel } from "@/components/admin/admin-profile-panel";
+import { AdminTopbar } from "@/components/admin/admin-topbar";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("admin.profilePage");
