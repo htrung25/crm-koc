@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
-import { LocaleSwitcher } from "@/components/ui/locale-switcher";
+import { LocaleToggle } from "@/components/ui/locale-toggle";
 
 interface RedSunNavProps {
   /**
@@ -97,13 +97,7 @@ export function RedSunNav({ tone = "light" }: RedSunNavProps) {
 
         {/* Right CTAs */}
         <div className="flex items-center gap-4">
-          <LocaleSwitcher
-            className={`rounded-full border px-3 py-2 text-xs font-bold outline-none transition-colors focus-visible:ring-4 focus-visible:ring-[#EF4623]/25 ${
-              isDark
-                ? "border-white/20 bg-white/10 text-white"
-                : "border-[#2D3B42]/15 bg-white/70 text-[#2D3B42]"
-            }`}
-          />
+          <LocaleToggle dark={isDark} />
           <Link
             href="/login"
             className={`hidden sm:inline-block text-xs font-bold uppercase tracking-wider transition-colors px-3 py-2 ${

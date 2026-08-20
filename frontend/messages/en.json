@@ -52,7 +52,6 @@
     "topbar": {
       "searchPlaceholder": "Search KOCs, brands, campaigns…",
       "search": "Search",
-      "last30Days": "Last 30 days",
       "notifications": "Notifications",
       "openProfile": "Open admin profile",
       "administrator": "Administrator",

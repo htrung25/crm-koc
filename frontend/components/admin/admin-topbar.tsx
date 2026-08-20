@@ -1,13 +1,12 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { LocaleToggle } from "@/components/ui/locale-toggle";
 
 import { Link, useRouter } from "@/i18n/navigation";
 import { requestLogout } from "@/features/auth/session";
 import {
   IconBell,
-  IconCalendar,
-  IconChevronDown,
   IconLogout,
   IconSearch,
 } from "@/components/ui/icons";
@@ -51,15 +50,7 @@ export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
           </kbd>
         </div>
 
-        {/* Khoảng thời gian */}
-        <button
-          type="button"
-          className="flex h-11 items-center gap-2 rounded-2xl glass-soft px-3.5 text-sm font-bold text-[#2D3B42] transition-colors hover:bg-white/70"
-        >
-          <IconCalendar className="h-4 w-4 text-[#EF4623]" />
-          <span className="hidden sm:inline">{t("last30Days")}</span>
-          <IconChevronDown className="h-3.5 w-3.5 text-[#8A7768]" />
-        </button>
+        <LocaleToggle />
 
         {/* Thông báo */}
         <button
