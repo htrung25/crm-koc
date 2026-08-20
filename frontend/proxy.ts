@@ -2,9 +2,9 @@ import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { isUserRole, ROLE_HOME } from "@/features/auth/types";
-import { REFRESH_COOKIE, ROLE_COOKIE } from "@/features/auth/session";
-import { routing } from "@/i18n/routing";
+import { isUserRole, ROLE_HOME } from "@/src/features/auth/types";
+import { REFRESH_COOKIE, ROLE_COOKIE } from "@/src/features/auth/session";
+import { routing } from "@/src/i18n/routing";
 
 const handleI18nRouting = createMiddleware(routing);
 
@@ -12,18 +12,6 @@ function localizedPath(locale: string, pathname: string): string {
   return `/${locale}${pathname === "/" ? "" : pathname}`;
 }
 
-/**
- * Gác điều hướng cho toàn bộ khu vực có phân quyền.
- *
- * Xét phiên theo REFRESH token chứ không theo access token: access chỉ sống 15
- * phút, hết hạn là cookie biến mất, trong khi phiên vẫn còn hiệu lực tới 7
- * ngày. Nếu gác theo access thì cứ 15 phút không thao tác là người dùng bị đá
- * ra đăng nhập lại, dù interceptor hoàn toàn có thể xin cặp token mới.
- *
- * Proxy chỉ kiểm tra sự hiện diện của phiên, không gọi mạng: việc làm mới token
- * do /api/auth/refresh đảm nhiệm khi có request thật trả về 401. Thẩm quyền
- * cuối cùng vẫn là backend — cookie ở đây chỉ quyết định điều hướng.
- */
 export function proxy(request: NextRequest) {
   const i18nResponse = handleI18nRouting(request);
   const { pathname } = request.nextUrl;
