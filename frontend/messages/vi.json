@@ -13,7 +13,6 @@
     "tasks": "Nhiệm vụ",
     "reports": "Báo cáo",
     "profile": "Hồ sơ admin",
-    "security": "Bảo mật & IP",
     "settings": "Cấu hình chung",
     "faq": "Cấu hình FAQ",
     "brandHome": "Trang chủ",
@@ -38,16 +37,13 @@
       "creatorEyebrow": "Không gian làm việc Creator",
       "creatorAccount": "Tài khoản Creator",
       "logout": "Đăng xuất"
-    }
+    },
+    "ipWhitelist": "IP Whitelist"
   },
   "admin": {
     "dashboard": {
       "title": "Tổng quan",
       "greeting": "Chào buổi sáng — đây là tình hình hệ thống hôm nay."
-    },
-    "securityPage": {
-      "title": "Bảo mật",
-      "greeting": "Quản lý tài khoản admin và địa chỉ IP được phép truy cập."
     },
     "profilePage": {
       "title": "Hồ sơ admin",
@@ -201,6 +197,10 @@
       "saveChanges": "Lưu thay đổi",
       "loadError": "Không tải được hồ sơ",
       "retry": "Thử lại"
+    },
+    "ipWhitelistPage": {
+      "title": "IP Whitelist",
+      "greeting": "Quản lý tài khoản admin và địa chỉ IP được phép truy cập."
     }
   },
   "marketing": {

@@ -1,7 +1,7 @@
 import type { UserRole } from "@/features/auth/types";
 
 export type NavigationItem = {
-  label: string;
+  labelKey: string;
   href: string;
   disabled?: boolean;
   iconName?: string;
@@ -9,13 +9,13 @@ export type NavigationItem = {
 
 /** Nhóm "Điều hướng": các khu vực nghiệp vụ hằng ngày. */
 export const ADMIN_NAV_ITEMS: NavigationItem[] = [
-  { label: "Tổng quan", href: "/admin/dashboard", iconName: "dashboard" },
-  { label: "Danh sách KOC", href: "/admin/kocs", iconName: "users" },
-  { label: "Danh sách Brand", href: "/admin/brands", iconName: "building" },
-  { label: "Chiến dịch", href: "/admin/campaigns", iconName: "megaphone" },
-  { label: "Đơn đăng ký", href: "/admin/applications", iconName: "fileCheck" },
-  { label: "Nhiệm vụ", href: "/admin/tasks", iconName: "clipboardList" },
-  { label: "Báo cáo", href: "/admin/reports", iconName: "barChart" },
+  { labelKey: "overview", href: "/admin/dashboard", iconName: "dashboard" },
+  { labelKey: "kocs", href: "/admin/kocs", iconName: "users" },
+  { labelKey: "brands", href: "/admin/brands", iconName: "building" },
+  { labelKey: "campaigns", href: "/admin/campaigns", iconName: "megaphone" },
+  { labelKey: "applications", href: "/admin/applications", iconName: "fileCheck" },
+  { labelKey: "tasks", href: "/admin/tasks", iconName: "clipboardList" },
+  { labelKey: "reports", href: "/admin/reports", iconName: "barChart" },
 ];
 
 /**
@@ -25,23 +25,23 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
  */
 export const ADMIN_SYSTEM_ITEMS: NavigationItem[] = [
   {
-    label: "Hồ sơ admin",
+    labelKey: "profile",
     href: "/admin/profile",
     iconName: "user",
   },
   {
-    label: "Bảo mật & IP",
+    labelKey: "ipWhitelist",
     href: "/admin/ip-whitelist",
     iconName: "shield",
   },
   {
-    label: "Cấu hình chung",
+    labelKey: "settings",
     href: "/admin/settings",
     iconName: "settings",
     disabled: true,
   },
   {
-    label: "Cấu Hình FAQ",
+    labelKey: "faq",
     href: "/admin/faq-config",
     iconName: "help",
     disabled: true,
@@ -50,8 +50,8 @@ export const ADMIN_SYSTEM_ITEMS: NavigationItem[] = [
 
 export type WorkspaceConfig = {
   name: string;
-  eyebrow: string;
-  accountLabel: string;
+  eyebrowKey: string;
+  accountLabelKey: string;
   accentClassName: string;
   statusClassName: string;
   navigation: NavigationItem[];
@@ -60,38 +60,38 @@ export type WorkspaceConfig = {
 export const WORKSPACES: Record<UserRole, WorkspaceConfig> = {
   ADMIN: {
     name: "CRM-KOC",
-    eyebrow: "Hệ thống quản lý Admin",
-    accountLabel: "Admin Platform",
+    eyebrowKey: "workspace.adminEyebrow",
+    accountLabelKey: "workspace.adminAccount",
     accentClassName: "from-purple-400 to-pink-400",
     statusClassName: "bg-emerald-500",
     navigation: ADMIN_NAV_ITEMS,
   },
   BRAND: {
     name: "BRAND PORTAL",
-    eyebrow: "Cổng thông tin doanh nghiệp",
-    accountLabel: "Brand Space",
+    eyebrowKey: "workspace.brandEyebrow",
+    accountLabelKey: "workspace.brandAccount",
     accentClassName: "from-pink-400 to-amber-400",
     statusClassName: "bg-pink-500",
     navigation: [
-      { label: "Trang chủ", href: "/brand/dashboard" },
-      { label: "Chiến dịch của tôi", href: "/brand/campaigns", disabled: true },
-      { label: "Tìm kiếm KOC", href: "/brand/creators", disabled: true },
-      { label: "Quản lý hợp đồng", href: "/brand/contracts", disabled: true },
-      { label: "Báo cáo chiến dịch", href: "/brand/reports", disabled: true },
+      { labelKey: "brandHome", href: "/brand/dashboard" },
+      { labelKey: "brandCampaigns", href: "/brand/campaigns", disabled: true },
+      { labelKey: "findKocs", href: "/brand/creators", disabled: true },
+      { labelKey: "contracts", href: "/brand/contracts", disabled: true },
+      { labelKey: "campaignReports", href: "/brand/reports", disabled: true },
     ],
   },
   CREATOR: {
     name: "CREATOR SPACE",
-    eyebrow: "Không gian làm việc Creator",
-    accountLabel: "Creator Account",
+    eyebrowKey: "workspace.creatorEyebrow",
+    accountLabelKey: "workspace.creatorAccount",
     accentClassName: "from-violet-400 to-pink-400",
     statusClassName: "bg-violet-500",
     navigation: [
-      { label: "Trang chủ", href: "/creator/dashboard" },
-      { label: "Tìm chiến dịch", href: "/creator/campaigns", disabled: true },
-      { label: "Công việc đã nhận", href: "/creator/jobs", disabled: true },
-      { label: "Kênh liên kết", href: "/creator/channels", disabled: true },
-      { label: "Ví & thu nhập", href: "/creator/wallet", disabled: true },
+      { labelKey: "creatorHome", href: "/creator/dashboard" },
+      { labelKey: "findCampaigns", href: "/creator/campaigns", disabled: true },
+      { labelKey: "acceptedJobs", href: "/creator/jobs", disabled: true },
+      { labelKey: "connectedChannels", href: "/creator/channels", disabled: true },
+      { labelKey: "wallet", href: "/creator/wallet", disabled: true },
     ],
   },
 };

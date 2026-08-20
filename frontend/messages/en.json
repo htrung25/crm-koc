@@ -13,7 +13,6 @@
     "tasks": "Tasks",
     "reports": "Reports",
     "profile": "Admin profile",
-    "security": "Security & IP",
     "settings": "General settings",
     "faq": "FAQ settings",
     "brandHome": "Home",
@@ -38,16 +37,13 @@
       "creatorEyebrow": "Creator workspace",
       "creatorAccount": "Creator account",
       "logout": "Log out"
-    }
+    },
+    "ipWhitelist": "IP whitelist"
   },
   "admin": {
     "dashboard": {
       "title": "Overview",
       "greeting": "Good morning — here is today's system overview."
-    },
-    "securityPage": {
-      "title": "Security",
-      "greeting": "Manage admin accounts and allowed IP addresses."
     },
     "profilePage": {
       "title": "Admin profile",
@@ -201,6 +197,10 @@
       "saveChanges": "Save changes",
       "loadError": "Could not load the profile",
       "retry": "Try again"
+    },
+    "ipWhitelistPage": {
+      "title": "IP whitelist",
+      "greeting": "Manage admin accounts and the IP addresses allowed to sign in."
     }
   },
   "marketing": {
