@@ -42,7 +42,7 @@ export async function establishSession(
   if (expectedRole && role !== expectedRole) {
     await revokeToken(result.accessToken, clientContext);
     return NextResponse.json(
-      { message: "Tài khoản này không có quyền truy cập cổng đăng nhập này" },
+      { message: "Tài khoản này không có quyền truy cập cổng đăng nhập này", businessCode: "WRONG_PORTAL" },
       { status: 403 },
     );
   }

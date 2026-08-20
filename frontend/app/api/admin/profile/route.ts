@@ -22,7 +22,7 @@ function errorResponse(error: unknown) {
 export async function GET() {
   const { token, clientContext } = await session();
   if (!token) {
-    return NextResponse.json({ message: "Phiên đã kết thúc" }, { status: 401 });
+    return NextResponse.json({ message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" }, { status: 401 });
   }
 
   try {
@@ -37,13 +37,13 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const { token, clientContext } = await session();
   if (!token) {
-    return NextResponse.json({ message: "Phiên đã kết thúc" }, { status: 401 });
+    return NextResponse.json({ message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" }, { status: 401 });
   }
 
   try {
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null || Array.isArray(body)) {
-      return NextResponse.json({ message: "Body không hợp lệ" }, { status: 400 });
+      return NextResponse.json({ message: "Body không hợp lệ", businessCode: "INVALID_BODY" }, { status: 400 });
     }
 
     const source = body as Record<string, unknown>;
@@ -51,20 +51,20 @@ export async function PATCH(request: Request) {
 
     if ("name" in source) {
       if (source.name !== null && typeof source.name !== "string") {
-        return NextResponse.json({ message: "name không hợp lệ" }, { status: 400 });
+        return NextResponse.json({ message: "name không hợp lệ", businessCode: "INVALID_NAME" }, { status: 400 });
       }
       payload.name = source.name as string | null;
     }
     if ("email" in source) {
       if (typeof source.email !== "string") {
-        return NextResponse.json({ message: "email không hợp lệ" }, { status: 400 });
+        return NextResponse.json({ message: "email không hợp lệ", businessCode: "INVALID_EMAIL" }, { status: 400 });
       }
       payload.email = source.email;
     }
     if ("avatarUrl" in source) {
       if (source.avatarUrl !== null && typeof source.avatarUrl !== "string") {
         return NextResponse.json(
-          { message: "avatarUrl không hợp lệ" },
+          { message: "avatarUrl không hợp lệ", businessCode: "INVALID_AVATAR_URL" },
           { status: 400 },
         );
       }
@@ -73,7 +73,7 @@ export async function PATCH(request: Request) {
     if ("timezone" in source) {
       if (typeof source.timezone !== "string") {
         return NextResponse.json(
-          { message: "timezone không hợp lệ" },
+          { message: "timezone không hợp lệ", businessCode: "INVALID_TIMEZONE" },
           { status: 400 },
         );
       }
@@ -90,7 +90,7 @@ export async function PATCH(request: Request) {
     );
   } catch (error) {
     if (error instanceof SyntaxError) {
-      return NextResponse.json({ message: "Body không hợp lệ" }, { status: 400 });
+      return NextResponse.json({ message: "Body không hợp lệ", businessCode: "INVALID_BODY" }, { status: 400 });
     }
     return errorResponse(error);
   }

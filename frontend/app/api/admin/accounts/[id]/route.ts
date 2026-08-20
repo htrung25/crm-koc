@@ -27,7 +27,7 @@ function errorResponse(error: unknown) {
 export async function GET(_: Request, context: Context) {
   const { token, clientContext } = await session();
   if (!token) {
-    return NextResponse.json({ message: "Phiên đã kết thúc" }, { status: 401 });
+    return NextResponse.json({ message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" }, { status: 401 });
   }
 
   try {
@@ -43,7 +43,7 @@ export async function GET(_: Request, context: Context) {
 export async function PATCH(request: Request, context: Context) {
   const { token, clientContext } = await session();
   if (!token) {
-    return NextResponse.json({ message: "Phiên đã kết thúc" }, { status: 401 });
+    return NextResponse.json({ message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" }, { status: 401 });
   }
 
   try {
@@ -59,7 +59,7 @@ export async function PATCH(request: Request, context: Context) {
     );
   } catch (error) {
     if (error instanceof SyntaxError) {
-      return NextResponse.json({ message: "Body không hợp lệ" }, { status: 400 });
+      return NextResponse.json({ message: "Body không hợp lệ", businessCode: "INVALID_BODY" }, { status: 400 });
     }
     return errorResponse(error);
   }
@@ -68,7 +68,7 @@ export async function PATCH(request: Request, context: Context) {
 export async function DELETE(_: Request, context: Context) {
   const { token, clientContext } = await session();
   if (!token) {
-    return NextResponse.json({ message: "Phiên đã kết thúc" }, { status: 401 });
+    return NextResponse.json({ message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" }, { status: 401 });
   }
 
   try {

@@ -34,7 +34,7 @@ export async function POST() {
 
   if (!refreshToken || !isUserRole(role)) {
     return clearSessionCookies(
-      NextResponse.json({ message: "Phiên đã kết thúc" }, { status: 401 }),
+      NextResponse.json({ message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" }, { status: 401 }),
     );
   }
 

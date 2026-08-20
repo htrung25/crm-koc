@@ -97,6 +97,7 @@ export function AdminIpWhitelist() {
     return tError(code, {
       clientIp: failure.clientIp ?? "",
       entry: failure.message.split(": ").slice(1).join(": "),
+      max: MAX_WHITELIST_LENGTH,
     });
   };
   const router = useRouter();

@@ -16,7 +16,7 @@ function errorResponse(error: unknown) {
 export async function GET(request: Request) {
   const token = (await cookies()).get(ACCESS_COOKIE)?.value;
   if (!token) {
-    return NextResponse.json({ message: "Phiên đã kết thúc" }, { status: 401 });
+    return NextResponse.json({ message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" }, { status: 401 });
   }
 
   const search = new URL(request.url).searchParams.get("search")?.trim();

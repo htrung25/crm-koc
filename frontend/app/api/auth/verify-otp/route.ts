@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json({ message: "Body không hợp lệ" }, { status: 400 });
+    return NextResponse.json({ message: "Body không hợp lệ", businessCode: "INVALID_BODY" }, { status: 400 });
   }
 
   const email = payload.email?.trim();
@@ -23,14 +23,14 @@ export async function POST(request: Request) {
 
   if (!email || !otp) {
     return NextResponse.json(
-      { message: "Thiếu email hoặc mã OTP" },
+      { message: "Thiếu email hoặc mã OTP", businessCode: "MISSING_OTP" },
       { status: 400 },
     );
   }
 
   if (!/^\d{6}$/.test(otp)) {
     return NextResponse.json(
-      { message: "Mã OTP gồm 6 chữ số" },
+      { message: "Mã OTP gồm 6 chữ số", businessCode: "OTP_LENGTH" },
       { status: 400 },
     );
   }

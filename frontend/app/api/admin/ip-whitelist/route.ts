@@ -24,7 +24,7 @@ type Session = {
 async function resolveSession(): Promise<Session | NextResponse> {
   const token = (await cookies()).get(ACCESS_COOKIE)?.value;
   if (!token) {
-    return NextResponse.json({ message: "Phiên đã kết thúc" }, { status: 401 });
+    return NextResponse.json({ message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" }, { status: 401 });
   }
 
   // clientContext phải đi kèm MỌI lời gọi: thiếu nó backend thấy IP của server
@@ -36,6 +36,7 @@ async function resolveSession(): Promise<Session | NextResponse> {
       {
         message:
           "Không xác định được địa chỉ IP của bạn. Không thể thay đổi danh sách IP một cách an toàn.",
+        businessCode: "CLIENT_IP_UNKNOWN",
       },
       { status: 500 },
     );
@@ -77,21 +78,24 @@ export async function PATCH(request: Request) {
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json({ message: "Body không hợp lệ" }, { status: 400 });
+    return NextResponse.json({ message: "Body không hợp lệ", businessCode: "INVALID_BODY" }, { status: 400 });
   }
 
   // Chuỗi rỗng là giá trị HỢP LỆ (= cho phép mọi IP), nên phải kiểm kiểu chứ
   // không kiểm truthy.
   if (typeof payload.ipWhitelist !== "string") {
     return NextResponse.json(
-      { message: "Thiếu trường ipWhitelist" },
+      { message: "Thiếu trường ipWhitelist", businessCode: "MISSING_IP_WHITELIST" },
       { status: 400 },
     );
   }
 
   if (payload.ipWhitelist.length > MAX_WHITELIST_LENGTH) {
     return NextResponse.json(
-      { message: `Danh sách vượt quá ${MAX_WHITELIST_LENGTH} ký tự` },
+      {
+        message: `Danh sách vượt quá ${MAX_WHITELIST_LENGTH} ký tự`,
+        businessCode: "WHITELIST_TOO_LONG",
+      },
       { status: 400 },
     );
   }
@@ -124,7 +128,7 @@ export async function DELETE(request: Request) {
   const params = new URL(request.url).searchParams;
   const entry = params.get("entry")?.trim();
   if (!entry) {
-    return NextResponse.json({ message: "Thiếu tham số entry" }, { status: 400 });
+    return NextResponse.json({ message: "Thiếu tham số entry", businessCode: "MISSING_ENTRY" }, { status: 400 });
   }
 
   // encodeURIComponent vì CIDR chứa dấu '/'.

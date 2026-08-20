@@ -490,6 +490,21 @@
     "IP_WHITELIST_WOULD_LOCK_YOU_OUT": "This change would lock you out. Your current IP {clientIp} is not covered by the new list.",
     "INVALID_CIDR_FORMAT": "Invalid CIDR range: {entry}",
     "INVALID_IP_FORMAT": "Invalid IP address: {entry}",
-    "REQUIRES_SUPER_ADMIN": "Only a super admin can change this data."
+    "REQUIRES_SUPER_ADMIN": "Only a super admin can change this data.",
+    "SESSION_EXPIRED": "Your session has ended.",
+    "INVALID_BODY": "The submitted data is invalid.",
+    "MISSING_IP_WHITELIST": "The IP list field is missing.",
+    "MISSING_ENTRY": "No IP address given to remove.",
+    "WHITELIST_TOO_LONG": "The list exceeds {max} characters.",
+    "CLIENT_IP_UNKNOWN": "Your IP address could not be determined. The IP list cannot be changed safely.",
+    "INVALID_NAME": "Invalid full name.",
+    "INVALID_EMAIL": "Invalid email address.",
+    "INVALID_AVATAR_URL": "Invalid avatar URL.",
+    "INVALID_TIMEZONE": "Invalid timezone.",
+    "MISSING_CREDENTIALS": "Please enter your email and password.",
+    "MISSING_OTP": "Email or OTP code is missing.",
+    "OTP_LENGTH": "The OTP code has 6 digits.",
+    "MISSING_EMAIL": "Please enter your email.",
+    "WRONG_PORTAL": "This account cannot use this sign-in portal."
   }
 }

@@ -490,6 +490,21 @@
     "IP_WHITELIST_WOULD_LOCK_YOU_OUT": "Thay đổi này sẽ khoá bạn ra ngoài. IP hiện tại {clientIp} không nằm trong danh sách mới.",
     "INVALID_CIDR_FORMAT": "Dải CIDR không hợp lệ: {entry}",
     "INVALID_IP_FORMAT": "Địa chỉ IP không hợp lệ: {entry}",
-    "REQUIRES_SUPER_ADMIN": "Chỉ super admin mới thay đổi được dữ liệu này."
+    "REQUIRES_SUPER_ADMIN": "Chỉ super admin mới thay đổi được dữ liệu này.",
+    "SESSION_EXPIRED": "Phiên đã kết thúc.",
+    "INVALID_BODY": "Dữ liệu gửi lên không hợp lệ.",
+    "MISSING_IP_WHITELIST": "Thiếu trường danh sách IP.",
+    "MISSING_ENTRY": "Thiếu địa chỉ IP cần xoá.",
+    "WHITELIST_TOO_LONG": "Danh sách vượt quá {max} ký tự.",
+    "CLIENT_IP_UNKNOWN": "Không xác định được địa chỉ IP của bạn. Không thể thay đổi danh sách IP một cách an toàn.",
+    "INVALID_NAME": "Họ tên không hợp lệ.",
+    "INVALID_EMAIL": "Email không hợp lệ.",
+    "INVALID_AVATAR_URL": "URL ảnh đại diện không hợp lệ.",
+    "INVALID_TIMEZONE": "Múi giờ không hợp lệ.",
+    "MISSING_CREDENTIALS": "Vui lòng nhập email và mật khẩu.",
+    "MISSING_OTP": "Thiếu email hoặc mã OTP.",
+    "OTP_LENGTH": "Mã OTP gồm 6 chữ số.",
+    "MISSING_EMAIL": "Vui lòng nhập email.",
+    "WRONG_PORTAL": "Tài khoản này không có quyền truy cập cổng đăng nhập này."
   }
 }
