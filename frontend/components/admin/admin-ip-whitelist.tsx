@@ -10,6 +10,7 @@ import {
   IconSearch,
   IconTrash,
 } from "@/components/ui/icons";
+import { SUPER_ADMIN_REQUIRED } from "@/features/admin/ip-whitelist/types";
 import type {
   AdminPage,
   AdminResponse,
@@ -264,7 +265,7 @@ export function AdminIpWhitelist() {
       }
       if (
         requestError.status === 403 &&
-        requestError.message === "REQUIRES_SUPER_ADMIN"
+        requestError.businessCode === SUPER_ADMIN_REQUIRED
       ) {
         setForbidden(true);
         setDialogError(t("superAdminData"));
@@ -361,6 +362,7 @@ export function AdminIpWhitelist() {
       const requestError = failure as Error & {
         status?: number;
         clientIp?: string;
+        businessCode?: string;
       };
 
       if (requestError.status === 401) {
@@ -370,12 +372,12 @@ export function AdminIpWhitelist() {
       if (requestError.status === 422 && requestError.clientIp) {
         setPendingWhitelistValue(ipWhitelist);
         setAddingWhitelistLockoutIp(requestError.clientIp);
-        setAddingWhitelistError(requestError.message);
+        setAddingWhitelistError(describeError(requestError));
         return;
       }
       if (
         requestError.status === 403 &&
-        requestError.message === "REQUIRES_SUPER_ADMIN"
+        requestError.businessCode === SUPER_ADMIN_REQUIRED
       ) {
         setForbidden(true);
         setAddingWhitelistError(

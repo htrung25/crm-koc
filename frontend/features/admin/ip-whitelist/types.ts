@@ -36,7 +36,7 @@ export const LOCKOUT_CODE = "IP_WHITELIST_WOULD_LOCK_YOU_OUT";
  * KHÔNG phải businessCode do backend trả. SuperAdminGuard ném
  * ForbiddenException thô ('REQUIRES_SUPER_ADMIN' chỉ nằm ở field `message`
  * của Nest, không có `businessCode`). Đây là mã do Route Handler
- * (app/api/admin/me/ip-whitelist/route.ts, hàm toErrorResponse) tự gắn vào
+ * (app/api/admin/accounts/[id]/route.ts, hàm errorResponse) tự gắn vào
  * sau khi chuẩn hoá lỗi 403 đó — để lớp UI chỉ cần biết một hình dạng lỗi.
  */
 export const SUPER_ADMIN_REQUIRED = "REQUIRES_SUPER_ADMIN";
