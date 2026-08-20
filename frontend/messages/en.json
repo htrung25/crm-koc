@@ -306,7 +306,62 @@
       "step3Status": "Automatic"
     },
     "viewDetail": "View details",
-    "siteDescription": "A platform for managing collaboration between brands and KOCs."
+    "siteDescription": "A platform for managing collaboration between brands and KOCs.",
+    "testimonials": {
+      "1": {
+        "role": "Top tier-1 KOC • Beauty & skincare",
+        "statsLabel": "7-day live GMV",
+        "quote": "Red Sun AI surfaces exclusive cosmetics deals that fit my 850K follower base remarkably well.",
+        "stats": "340M VND"
+      },
+      "2": {
+        "role": "Menswear brand",
+        "statsLabel": "Campaign growth",
+        "quote": "The system approved 500 samples in minutes, keeping the campaign on schedule.",
+        "stats": "4.8x ROI"
+      },
+      "3": {
+        "role": "Tech review KOL",
+        "statsLabel": "Affiliate revenue",
+        "quote": "Commission and click-through reporting are fully transparent, in real time.",
+        "stats": "210M VND"
+      },
+      "4": {
+        "role": "Makeup brand",
+        "statsLabel": "Content reach",
+        "quote": "The AI agent filters out KOCs with overlapping audiences, cutting seeding costs by 40%.",
+        "stats": "1,200+ videos"
+      },
+      "5": {
+        "role": "Review specialist KOC",
+        "statsLabel": "Mega live session GMV",
+        "quote": "Receiving samples and signing the electronic contract took only 3 minutes.",
+        "stats": "1.2B VND"
+      },
+      "6": {
+        "role": "Home & living appliances",
+        "statsLabel": "KOC match accuracy",
+        "quote": "CRM-KOC lets Sunhouse manage over 120 KOCs across 5 product categories at once.",
+        "stats": "99.4% match"
+      },
+      "7": {
+        "role": "Mother & baby / home care creator",
+        "statsLabel": "Commission earnings",
+        "quote": "Commission payouts arrive fairly and automatically on the 15th of every month.",
+        "stats": "185M VND"
+      },
+      "8": {
+        "role": "Premium electronics accessories",
+        "statsLabel": "Order close rate",
+        "quote": "The Red Sun interface is modern and uncluttered — the ops team genuinely enjoys using it.",
+        "stats": "3.2x conversions"
+      }
+    },
+    "social": {
+      "title": "A KOC & brand ecosystem",
+      "titleAccent": "that never stops running",
+      "subtitle": "Real feedback from leading KOCs and major brands driving breakthrough revenue on the Red Sun platform."
+    }
   },
   "auth": {
     "login": {

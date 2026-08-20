@@ -1,12 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 interface CardData {
   id: string;
   name: string;
-  role: string;
-  stats: string;
-  statsLabel: string;
-  quote: string;
   tag: string;
   platform: string;
   avatarColor: string;
@@ -17,10 +15,6 @@ const marqueeCardsRow1: CardData[] = [
   {
     id: "1",
     name: "An Nhiên Beauty",
-    role: "Top KOC Tier 1 • Beauty & Skincare",
-    stats: "340 Tr VNĐ",
-    statsLabel: "GMV 7 Ngày Live",
-    quote: "Red Sun AI đề xuất các deal mỹ phẩm độc quyền cực kỳ khớp với tệp 850K Followers của mình.",
     tag: "🔥 Hot Creator",
     platform: "TikTok Shop",
     avatarColor: "bg-[#EF4623]",
@@ -29,10 +23,6 @@ const marqueeCardsRow1: CardData[] = [
   {
     id: "2",
     name: "Coolmate Official",
-    role: "Thương hiệu Thời trang Nam",
-    stats: "4.8x ROI",
-    statsLabel: "Tăng trưởng Chiến dịch",
-    quote: "Hệ thống tự động duyệt 500 mẫu thử chỉ trong vài phút, giúp campaign phủ sóng đúng tiến độ.",
     tag: "🏢 Brand Partner",
     platform: "Shopee Affiliate",
     avatarColor: "bg-[#2D3B42]",
@@ -41,10 +31,6 @@ const marqueeCardsRow1: CardData[] = [
   {
     id: "3",
     name: "Minh Tech Review",
-    role: "KOL Đánh giá Công nghệ",
-    stats: "210 Tr VNĐ",
-    statsLabel: "Doanh số Affiliate",
-    quote: "Hoa hồng và báo cáo click-through rate minh bạch 100% theo thời gian thực.",
     tag: "⚡ Tech Creator",
     platform: "YouTube Shorts",
     avatarColor: "bg-amber-500",
@@ -53,10 +39,6 @@ const marqueeCardsRow1: CardData[] = [
   {
     id: "4",
     name: "Lemonade Cosmetics",
-    role: "Nhãn hàng Trang điểm",
-    stats: "1,200+ Video",
-    statsLabel: "Content Đã Phủ Sóng",
-    quote: "AI Agent giúp lọc chính xác KOC không trùng lặp khán giả, tối ưu 40% chi phí Seeding.",
     tag: "✨ Premium Brand",
     platform: "Multi-Platform",
     avatarColor: "bg-[#EF4623]",
@@ -68,10 +50,6 @@ const marqueeCardsRow2: CardData[] = [
   {
     id: "5",
     name: "Hà Linh Skincare",
-    role: "KOC Chuyên gia Review",
-    stats: "1.2 Tỷ VNĐ",
-    statsLabel: "GMV Mega Live Session",
-    quote: "Quy trình nhận sample và ký hợp đồng điện tử Red Sun quá nhanh chóng, chỉ mất 3 phút.",
     tag: "👑 Top Star",
     platform: "TikTok Live",
     avatarColor: "bg-[#2D3B42]",
@@ -80,10 +58,6 @@ const marqueeCardsRow2: CardData[] = [
   {
     id: "6",
     name: "Sunhouse Appliances",
-    role: "Gia dụng & Đời sống",
-    stats: "99.4% Match",
-    statsLabel: "Độ chính xác KOC",
-    quote: "CRM-KOC giúp Sunhouse quản lý đồng thời hơn 120 KOC thuộc 5 ngành hàng khác nhau.",
     tag: "🏆 Enterprise Brand",
     platform: "Omnichannel",
     avatarColor: "bg-[#EF4623]",
@@ -92,10 +66,6 @@ const marqueeCardsRow2: CardData[] = [
   {
     id: "7",
     name: "Quỳnh Anh Lifestyle",
-    role: "Creator Mẹ & Bé / Home Care",
-    stats: "185 Tr VNĐ",
-    statsLabel: "Thu nhập Hoa hồng",
-    quote: "Nhận tiền thanh toán hoa hồng cực kỳ sòng phẳng và tự động vào ngày 15 hàng tháng.",
     tag: "💖 Verified KOC",
     platform: "Facebook Reels",
     avatarColor: "bg-emerald-500",
@@ -104,10 +74,6 @@ const marqueeCardsRow2: CardData[] = [
   {
     id: "8",
     name: "Baseus Vietnam",
-    role: "Phụ kiện Điện tử Premium",
-    stats: "3.2x Conversions",
-    statsLabel: "Tỷ lệ chốt đơn",
-    quote: "Giao diện Red Sun mang phong cách hiện đại, tinh gọn giúp đội ngũ vận hành làm việc mê say.",
     tag: "🚀 Tech Partner",
     platform: "Shopee & TikTok",
     avatarColor: "bg-[#2D3B42]",
@@ -116,6 +82,7 @@ const marqueeCardsRow2: CardData[] = [
 ];
 
 export function MarqueeCards() {
+  const t = useTranslations("marketing");
   // Duplicate arrays to create continuous infinite marquee loop
   const row1Duplicated = [...marqueeCardsRow1, ...marqueeCardsRow1, ...marqueeCardsRow1];
   const row2Duplicated = [...marqueeCardsRow2, ...marqueeCardsRow2, ...marqueeCardsRow2];
@@ -145,11 +112,11 @@ export function MarqueeCards() {
           className="text-4xl md:text-6xl font-normal text-white tracking-tight"
           style={{ fontFamily: "'Instrument Serif', serif" }}
         >
-          Hệ sinh thái KOC &amp; Brand <br />
-          <span className="italic text-[#EF4623]">Vận hành không gián đoạn</span>
+          {t("social.title")} <br />
+          <span className="italic text-[#EF4623]">{t("social.titleAccent")}</span>
         </h2>
         <p className="text-sm md:text-base text-slate-300 max-w-xl mx-auto font-sans">
-          Thẩm định ý kiến thực tế từ các KOC hàng đầu và nhãn hàng lớn đang tạo ra doanh số đột phá trên nền tảng Red Sun.
+          {t("social.subtitle")}
         </p>
       </div>
 
@@ -174,7 +141,7 @@ export function MarqueeCards() {
               </div>
 
               <blockquote className="text-sm sm:text-base font-medium leading-relaxed mb-6 italic opacity-95">
-                &ldquo;{card.quote}&rdquo;
+                &ldquo;{t(`testimonials.${card.id}.quote`)}&rdquo;
               </blockquote>
 
               <div className="pt-4 border-t border-current/10 flex items-center justify-between">
@@ -186,7 +153,7 @@ export function MarqueeCards() {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold leading-tight">{card.name}</h4>
-                    <p className="text-[11px] opacity-75">{card.role}</p>
+                    <p className="text-[11px] opacity-75">{t(`testimonials.${card.id}.role`)}</p>
                   </div>
                 </div>
 
@@ -195,10 +162,10 @@ export function MarqueeCards() {
                     className="text-xl font-normal block leading-none"
                     style={{ fontFamily: "'Instrument Serif', serif" }}
                   >
-                    {card.stats}
+                    {t(`testimonials.${card.id}.stats`)}
                   </span>
                   <span className="text-[10px] uppercase font-bold opacity-70">
-                    {card.statsLabel}
+                    {t(`testimonials.${card.id}.statsLabel`)}
                   </span>
                 </div>
               </div>
@@ -225,7 +192,7 @@ export function MarqueeCards() {
               </div>
 
               <blockquote className="text-sm sm:text-base font-medium leading-relaxed mb-6 italic opacity-95">
-                &ldquo;{card.quote}&rdquo;
+                &ldquo;{t(`testimonials.${card.id}.quote`)}&rdquo;
               </blockquote>
 
               <div className="pt-4 border-t border-current/10 flex items-center justify-between">
@@ -237,7 +204,7 @@ export function MarqueeCards() {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold leading-tight">{card.name}</h4>
-                    <p className="text-[11px] opacity-75">{card.role}</p>
+                    <p className="text-[11px] opacity-75">{t(`testimonials.${card.id}.role`)}</p>
                   </div>
                 </div>
 
@@ -246,10 +213,10 @@ export function MarqueeCards() {
                     className="text-xl font-normal block leading-none"
                     style={{ fontFamily: "'Instrument Serif', serif" }}
                   >
-                    {card.stats}
+                    {t(`testimonials.${card.id}.stats`)}
                   </span>
                   <span className="text-[10px] uppercase font-bold opacity-70">
-                    {card.statsLabel}
+                    {t(`testimonials.${card.id}.statsLabel`)}
                   </span>
                 </div>
               </div>

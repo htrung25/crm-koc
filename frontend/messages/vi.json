@@ -306,7 +306,62 @@
       "step3Status": "Tự động"
     },
     "viewDetail": "Xem chi tiết",
-    "siteDescription": "Nền tảng quản lý hợp tác giữa thương hiệu và KOC."
+    "siteDescription": "Nền tảng quản lý hợp tác giữa thương hiệu và KOC.",
+    "testimonials": {
+      "1": {
+        "role": "Top KOC Tier 1 • Beauty & Skincare",
+        "statsLabel": "GMV 7 Ngày Live",
+        "quote": "Red Sun AI đề xuất các deal mỹ phẩm độc quyền cực kỳ khớp với tệp 850K Followers của mình.",
+        "stats": "340 Tr VNĐ"
+      },
+      "2": {
+        "role": "Thương hiệu Thời trang Nam",
+        "statsLabel": "Tăng trưởng Chiến dịch",
+        "quote": "Hệ thống tự động duyệt 500 mẫu thử chỉ trong vài phút, giúp campaign phủ sóng đúng tiến độ.",
+        "stats": "4.8x ROI"
+      },
+      "3": {
+        "role": "KOL Đánh giá Công nghệ",
+        "statsLabel": "Doanh số Affiliate",
+        "quote": "Hoa hồng và báo cáo click-through rate minh bạch 100% theo thời gian thực.",
+        "stats": "210 Tr VNĐ"
+      },
+      "4": {
+        "role": "Nhãn hàng Trang điểm",
+        "statsLabel": "Content Đã Phủ Sóng",
+        "quote": "AI Agent giúp lọc chính xác KOC không trùng lặp khán giả, tối ưu 40% chi phí Seeding.",
+        "stats": "1,200+ Video"
+      },
+      "5": {
+        "role": "KOC Chuyên gia Review",
+        "statsLabel": "GMV Mega Live Session",
+        "quote": "Quy trình nhận sample và ký hợp đồng điện tử Red Sun quá nhanh chóng, chỉ mất 3 phút.",
+        "stats": "1.2 Tỷ VNĐ"
+      },
+      "6": {
+        "role": "Gia dụng & Đời sống",
+        "statsLabel": "Độ chính xác KOC",
+        "quote": "CRM-KOC giúp Sunhouse quản lý đồng thời hơn 120 KOC thuộc 5 ngành hàng khác nhau.",
+        "stats": "99.4% Match"
+      },
+      "7": {
+        "role": "Creator Mẹ & Bé / Home Care",
+        "statsLabel": "Thu nhập Hoa hồng",
+        "quote": "Nhận tiền thanh toán hoa hồng cực kỳ sòng phẳng và tự động vào ngày 15 hàng tháng.",
+        "stats": "185 Tr VNĐ"
+      },
+      "8": {
+        "role": "Phụ kiện Điện tử Premium",
+        "statsLabel": "Tỷ lệ chốt đơn",
+        "quote": "Giao diện Red Sun mang phong cách hiện đại, tinh gọn giúp đội ngũ vận hành làm việc mê say.",
+        "stats": "3.2x Conversions"
+      }
+    },
+    "social": {
+      "title": "Hệ sinh thái KOC & Brand",
+      "titleAccent": "Vận hành không gián đoạn",
+      "subtitle": "Thẩm định ý kiến thực tế từ các KOC hàng đầu và nhãn hàng lớn đang tạo ra doanh số đột phá trên nền tảng Red Sun."
+    }
   },
   "auth": {
     "login": {
