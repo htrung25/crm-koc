@@ -1,5 +1,9 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
+import { LocaleSwitcher } from "@/components/ui/locale-switcher";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,7 +45,7 @@ async function readResponse(response: Response): Promise<AdminProfile> {
       ? rawMessage.filter((item) => typeof item === "string").join(", ")
       : typeof rawMessage === "string"
         ? rawMessage
-        : "Không thể tải hồ sơ admin.";
+        : "PROFILE_LOAD_FAILED";
     throw new ProfileRequestError(message, response.status);
   }
   return body as AdminProfile;
@@ -61,19 +65,19 @@ async function updateProfile(payload: UpdateAdminProfile) {
   );
 }
 
-function initials(name: string | null) {
+function initials(name: string | null, locale: string) {
   const parts = (name ?? "Admin").trim().split(/\s+/).filter(Boolean);
   return parts
     .slice(-2)
-    .map((part) => part[0]?.toLocaleUpperCase("vi"))
+    .map((part) => part[0]?.toLocaleUpperCase(locale))
     .join("");
 }
 
-function formatUpdatedAt(value: string) {
+function formatUpdatedAt(value: string, locale: string, fallback: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
-    ? "Chưa xác định"
-    : new Intl.DateTimeFormat("vi-VN", {
+    ? fallback
+    : new Intl.DateTimeFormat(locale, {
         dateStyle: "medium",
         timeStyle: "short",
       }).format(date);
@@ -92,6 +96,8 @@ function ProfileSkeleton() {
 }
 
 function ProfileForm({ profile }: { profile: AdminProfile }) {
+  const t = useTranslations("admin.profile");
+  const locale = useLocale();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [name, setName] = useState(profile.name ?? "");
@@ -113,7 +119,7 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
       setEmail(updated.email);
       setAvatarUrl(updated.avatarUrl ?? "");
       setTimezone(updated.timezone);
-      setMessage("Hồ sơ đã được cập nhật.");
+      setMessage(t("updated"));
       router.refresh();
     },
     onError: (failure) => {
@@ -124,7 +130,7 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
       setFormError(
         failure instanceof Error
           ? failure.message
-          : "Không thể cập nhật hồ sơ.",
+          : t("updateFailed"),
       );
     },
   });
@@ -144,11 +150,11 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
     const normalizedAvatarUrl = avatarUrl.trim();
 
     if (normalizedName.length > 255) {
-      setFormError("Họ tên không được vượt quá 255 ký tự.");
+      setFormError(t("nameTooLong"));
       return;
     }
     if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
-      setFormError("Email không hợp lệ.");
+      setFormError(t("invalidEmail"));
       return;
     }
     if (normalizedAvatarUrl) {
@@ -158,7 +164,7 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
           throw new Error("unsupported protocol");
         }
       } catch {
-        setFormError("URL ảnh đại diện phải dùng http hoặc https.");
+        setFormError(t("avatarScheme"));
         return;
       }
     }
@@ -185,23 +191,23 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
             {avatarUrl ? (
               <span
                 role="img"
-                aria-label={name || "Ảnh đại diện admin"}
+                aria-label={name || t("avatarAlt")}
                 className="block h-24 w-24 rounded-[30px] bg-cover bg-center shadow-xl shadow-[#EF4623]/20 ring-4 ring-white/55"
                 style={{ backgroundImage: `url("${avatarUrl.replaceAll('"', "%22")}")` }}
               />
             ) : (
               <span className="grid h-24 w-24 place-items-center rounded-[30px] bg-gradient-to-br from-[#EF4623] to-[#F49E4C] text-2xl font-extrabold text-white shadow-xl shadow-[#EF4623]/25">
-                {initials(name)}
+                {initials(name, locale)}
               </span>
             )}
             <span
-              aria-label="Đang hoạt động"
+              aria-label={t("online")}
               className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full border-4 border-[#FFF7F1] bg-emerald-500"
             />
           </div>
 
           <h2 className="mt-4 text-lg font-extrabold text-[#2D3B42]">
-            {name.trim() || "Quản trị viên"}
+            {name.trim() || t("administrator")}
           </h2>
           <p className="mt-1 break-all text-xs font-semibold text-[#8A7768]">
             {email}
@@ -212,12 +218,12 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
               Admin
             </span>
             <span className="rounded-full bg-emerald-500/12 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-emerald-700">
-              Hoạt động
+              {t("active")}
             </span>
           </div>
 
           <label className="mt-5 block text-left text-xs font-extrabold text-[#5C5049]">
-            URL ảnh đại diện
+            {t("avatarUrl")}
             <input
               type="url"
               value={avatarUrl}
@@ -227,7 +233,7 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
             />
           </label>
           <p className="mt-2 text-left text-[10px] font-semibold leading-relaxed text-[#A89685]">
-            Nhập URL ảnh công khai. Chức năng tải file sẽ được bổ sung riêng.
+            {t("avatarHint")}
           </p>
         </div>
 
@@ -238,10 +244,10 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
             </span>
             <div>
               <h3 className="text-sm font-extrabold text-[#2D3B42]">
-                Thông tin tài khoản
+                {t("accountInfo")}
               </h3>
               <p className="text-[11px] font-semibold text-[#8A7768]">
-                Dữ liệu định danh không thể chỉnh sửa
+                {t("accountInfoHint")}
               </p>
             </div>
           </div>
@@ -256,9 +262,9 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3 text-xs">
-              <dt className="font-semibold text-[#8A7768]">Cập nhật gần nhất</dt>
+              <dt className="font-semibold text-[#8A7768]">{t("lastUpdated")}</dt>
               <dd className="text-right font-extrabold text-[#2D3B42]">
-                {formatUpdatedAt(profile.updatedAt)}
+                {formatUpdatedAt(profile.updatedAt, locale, t("unknown"))}
               </dd>
             </div>
           </dl>
@@ -273,22 +279,22 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
             </span>
             <div>
               <h2 className="text-base font-extrabold tracking-tight text-[#2D3B42]">
-                Thông tin cá nhân
+                {t("personalInfo")}
               </h2>
               <p className="text-xs font-semibold text-[#8A7768]">
-                Tên và email hiển thị của tài khoản quản trị
+                {t("personalInfoHint")}
               </p>
             </div>
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <label className="text-xs font-extrabold text-[#5C5049]">
-              Họ và tên
+              {t("fullName")}
               <input
                 value={name}
                 maxLength={255}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Nhập họ và tên"
+                placeholder={t("fullNamePlaceholder")}
                 className={fieldClass}
               />
             </label>
@@ -312,17 +318,17 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
             </span>
             <div>
               <h2 className="text-base font-extrabold tracking-tight text-[#2D3B42]">
-                Khu vực và thời gian
+                {t("regionTime")}
               </h2>
               <p className="text-xs font-semibold text-[#8A7768]">
-                Múi giờ dùng để hiển thị dữ liệu quản trị
+                {t("regionTimeHint")}
               </p>
             </div>
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <label className="text-xs font-extrabold text-[#5C5049]">
-              Múi giờ
+              {t("timezone")}
               <select
                 value={timezone}
                 onChange={(event) => setTimezone(event.target.value)}
@@ -336,10 +342,8 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
               </select>
             </label>
             <label className="text-xs font-extrabold text-[#5C5049]">
-              Ngôn ngữ
-              <select disabled value="vi" className={fieldClass}>
-                <option value="vi">Tiếng Việt</option>
-              </select>
+              {t("language")}
+              <LocaleSwitcher className={fieldClass} />
             </label>
           </div>
         </div>
@@ -360,10 +364,10 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
         <div className="glass flex flex-wrap items-center justify-between gap-4 rounded-[26px] p-5 sm:p-6">
           <div>
             <h2 className="text-sm font-extrabold text-[#2D3B42]">
-              Cập nhật hồ sơ
+              {t("updateProfile")}
             </h2>
             <p className="mt-1 text-xs font-semibold text-[#8A7768]">
-              Thay đổi được lưu trực tiếp vào hồ sơ admin của bạn.
+              {t("updateHint")}
             </p>
           </div>
           <div className="flex gap-2">
@@ -373,7 +377,7 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
               onClick={reset}
               className="rounded-xl px-4 py-2.5 text-sm font-extrabold text-[#5C5049] hover:bg-white/50 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Huỷ thay đổi
+              {t("discard")}
             </button>
             <button
               type="button"
@@ -381,7 +385,7 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
               onClick={submit}
               className="rounded-xl bg-gradient-to-br from-[#EF4623] to-[#D8410F] px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-[#EF4623]/20 disabled:cursor-not-allowed disabled:opacity-45"
             >
-              {mutation.isPending ? "Đang lưu…" : "Lưu thay đổi"}
+              {mutation.isPending ? t("saving") : t("saveChanges")}
             </button>
           </div>
         </div>
@@ -391,6 +395,7 @@ function ProfileForm({ profile }: { profile: AdminProfile }) {
 }
 
 export function AdminProfilePanel() {
+  const t = useTranslations("admin.profile");
   const router = useRouter();
   const profileQuery = useQuery({
     queryKey: PROFILE_KEY,
@@ -413,17 +418,19 @@ export function AdminProfilePanel() {
     return (
       <div className="glass rounded-[26px] p-8 text-center">
         <h2 className="text-lg font-extrabold text-[#2D3B42]">
-          Không tải được hồ sơ
+          {t("loadError")}
         </h2>
         <p className="mt-2 text-sm font-semibold text-[#8A7768]">
-          {profileQuery.error.message}
+          {profileQuery.error.message === "PROFILE_LOAD_FAILED"
+            ? t("loadFailed")
+            : profileQuery.error.message}
         </p>
         <button
           type="button"
           onClick={() => void profileQuery.refetch()}
           className="mt-5 rounded-xl bg-[#2D3B42] px-4 py-2.5 text-sm font-extrabold text-white"
         >
-          Thử lại
+          {t("retry")}
         </button>
       </div>
     );
