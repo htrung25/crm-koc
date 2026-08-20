@@ -1,4 +1,4 @@
-import { APP_ROUTES } from "@/config/route";
+import { APP_ROUTES } from "@/constants/routes";
 
 export const USER_ROLES = ["ADMIN", "BRAND", "CREATOR"] as const;
 

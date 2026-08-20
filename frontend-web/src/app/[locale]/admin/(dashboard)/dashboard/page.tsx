@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
-import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
-import { AdminTopbar } from "@/components/admin/admin-topbar";
-import { DashboardGrid } from "@/components/dashboard/dashboard-grid";
-import { ADMIN_DASHBOARD } from "@/lib/mock/admin/dashboard";
+import { AdminPageShell } from "@/features/admin/components/admin-page-shell";
+import { DashboardGrid } from "@/features/admin/dashboard/components/dashboard-grid";
+import { ADMIN_DASHBOARD } from "@/features/admin/dashboard/mock-data";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("admin.dashboard");
@@ -13,16 +12,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AdminDashboardPage() {
   const t = await getTranslations("admin.dashboard");
+
   return (
-    <>
-      <AdminTopbar
-        title={t("title")}
-        greeting={t("greeting")}
-      />
-
-      <AdminMobileNav />
-
+    <AdminPageShell title={t("title")} greeting={t("greeting")}>
       <DashboardGrid data={ADMIN_DASHBOARD} />
-    </>
+    </AdminPageShell>
   );
 }

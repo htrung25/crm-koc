@@ -1,8 +1,8 @@
-import { BACKEND_ROUTES } from "@/config/route";
+import { BACKEND_ROUTES } from "@/constants/routes";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ApiError, apiRequest } from "@/lib/api/client";
+import { ApiError, apiRequest } from "@/lib/api/server-client";
 import { getClientContext } from "@/lib/api/client-context";
 import {
   clearSessionCookies,

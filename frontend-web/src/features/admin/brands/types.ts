@@ -1,15 +1,4 @@
-/** Khớp EAccountStatus của backend — là SỐ, không phải chuỗi. */
-export const ACCOUNT_STATUS = {
-  PENDING: 1,
-  ACTIVE: 2,
-  SUSPENDED: 3,
-  BANNED: 4,
-} as const;
-
-export type AccountStatus =
-  (typeof ACCOUNT_STATUS)[keyof typeof ACCOUNT_STATUS];
-
-export const STATUS_CODES = [1, 2, 3, 4] as const;
+import type { AccountStatus } from "@/features/admin/types";
 
 /** Khớp ESortField; chỉ mở những trường danh sách này thật sự dùng. */
 export const SORT_FIELDS = ["createdAt", "name", "email", "status"] as const;

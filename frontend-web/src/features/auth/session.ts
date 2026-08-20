@@ -1,4 +1,4 @@
-import { API_ROUTES } from "@/config/route";
+import { API_ROUTES } from "@/constants/routes";
 import type { NextResponse } from "next/server";
 import { ROLE_HOME, type UserRole } from "@/features/auth/types";
 

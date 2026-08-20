@@ -266,6 +266,50 @@ export function IconDelta({
   );
 }
 
+/** Mũi tên phân trang. Dùng chung cho mọi bảng có nút trước/sau. */
+export function IconChevron({
+  direction,
+  className = "h-4 w-4",
+}: IconProps & { direction: "left" | "right" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d={direction === "left" ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"} />
+    </svg>
+  );
+}
+
+export function IconEye({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </Svg>
+  );
+}
+
+export function IconPencil({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z" />
+    </Svg>
+  );
+}
+
+export function IconBin({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" />
+    </Svg>
+  );
+}
+
 export const NAV_ICONS = {
   dashboard: IconDashboard,
   user: IconUser,

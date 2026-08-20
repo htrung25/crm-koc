@@ -1,12 +1,12 @@
 "use client";
 
-import { APP_ROUTES } from "@/config/route";
+import { APP_ROUTES } from "@/constants/routes";
 import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
-import { useLogin } from "@/features/auth/use-login";
+import { useLogin } from "@/features/auth/hooks/use-login";
 
 export function EditorialLogin() {
   const t = useTranslations("auth.login");

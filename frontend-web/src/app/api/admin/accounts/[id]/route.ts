@@ -1,66 +1,55 @@
-import { BACKEND_ROUTES } from "@/config/route";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ACCESS_COOKIE } from "@/features/auth/session";
-import { ApiError, apiRequest } from "@/lib/api/client";
-import { getClientContext } from "@/lib/api/client-context";
+import { BACKEND_ROUTES } from "@/constants/routes";
 import {
   SUPER_ADMIN_REQUIRED,
   type WhitelistErrorBody,
 } from "@/features/admin/ip-whitelist/types";
+import { ApiError, apiRequest } from "@/lib/api/server-client";
+import { errorResponse, requireSession } from "@/lib/api/route-session";
 
 type Context = { params: Promise<{ id: string }> };
 
-async function session() {
-  const token = (await cookies()).get(ACCESS_COOKIE)?.value;
-  return { token, clientContext: await getClientContext() };
-}
+/**
+ * SuperAdminGuard ném ForbiddenException nên Nest không kèm businessCode.
+ * Chuẩn hoá ở đây để UI so mã, không phải so chuỗi tiếng Anh của backend.
+ */
+function adminErrorResponse(error: unknown) {
+  if (
+    error instanceof ApiError &&
+    error.status === 403 &&
+    error.message === "REQUIRES_SUPER_ADMIN"
+  ) {
+    const body: WhitelistErrorBody = {
+      message: error.message,
+      businessCode: SUPER_ADMIN_REQUIRED,
+    };
+    return NextResponse.json(body, { status: error.status });
+  }
 
-function errorResponse(error: unknown) {
-  if (!(error instanceof ApiError)) throw error;
-
-  // SuperAdminGuard ném ForbiddenException nên Nest không kèm businessCode.
-  // Chuẩn hoá ở đây để UI so mã, không phải so chuỗi tiếng Anh của backend.
-  const body: WhitelistErrorBody =
-    error.status === 403 && error.message === "REQUIRES_SUPER_ADMIN"
-      ? { message: error.message, businessCode: SUPER_ADMIN_REQUIRED }
-      : {
-          message: error.message,
-          businessCode: error.businessCode,
-          clientIp: error.clientIp,
-        };
-
-  return NextResponse.json(body, { status: error.status });
+  return errorResponse(error);
 }
 
 export async function GET(_: Request, context: Context) {
-  const { token, clientContext } = await session();
-  if (!token) {
-    return NextResponse.json(
-      { message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" },
-      { status: 401 },
-    );
-  }
+  const session = await requireSession();
+  if (!session.ok) return session.response;
 
   try {
     const { id } = await context.params;
     return NextResponse.json(
-      await apiRequest(BACKEND_ROUTES.admin.detail(id), { token, clientContext }),
+      await apiRequest(BACKEND_ROUTES.admin.detail(id), {
+        token: session.token,
+        clientContext: session.clientContext,
+      }),
     );
   } catch (error) {
-    return errorResponse(error);
+    return adminErrorResponse(error);
   }
 }
 
 export async function PATCH(request: Request, context: Context) {
-  const { token, clientContext } = await session();
-  if (!token) {
-    return NextResponse.json(
-      { message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" },
-      { status: 401 },
-    );
-  }
+  const session = await requireSession();
+  if (!session.ok) return session.response;
 
   try {
     const body = await request.json();
@@ -69,40 +58,29 @@ export async function PATCH(request: Request, context: Context) {
       await apiRequest(BACKEND_ROUTES.admin.detail(id), {
         method: "PATCH",
         body,
-        token,
-        clientContext,
+        token: session.token,
+        clientContext: session.clientContext,
       }),
     );
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { message: "Body không hợp lệ", businessCode: "INVALID_BODY" },
-        { status: 400 },
-      );
-    }
-    return errorResponse(error);
+    return adminErrorResponse(error);
   }
 }
 
 export async function DELETE(_: Request, context: Context) {
-  const { token, clientContext } = await session();
-  if (!token) {
-    return NextResponse.json(
-      { message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" },
-      { status: 401 },
-    );
-  }
+  const session = await requireSession();
+  if (!session.ok) return session.response;
 
   try {
     const { id } = await context.params;
     return NextResponse.json(
       await apiRequest(BACKEND_ROUTES.admin.detail(id), {
         method: "DELETE",
-        token,
-        clientContext,
+        token: session.token,
+        clientContext: session.clientContext,
       }),
     );
   } catch (error) {
-    return errorResponse(error);
+    return adminErrorResponse(error);
   }
 }

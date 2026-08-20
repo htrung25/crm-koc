@@ -1,11 +1,11 @@
 "use client";
 
-import { APP_ROUTES } from "@/config/route";
+import { APP_ROUTES } from "@/constants/routes";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
-import { WORKSPACES } from "@/config/admin/navigation";
+import { WORKSPACES } from "@/constants/navigation";
 import { requestLogout } from "@/features/auth/session";
 import type { UserRole } from "@/features/auth/types";
 

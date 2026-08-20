@@ -1,10 +1,8 @@
-import { BACKEND_ROUTES } from "@/config/route";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ACCESS_COOKIE } from "@/features/auth/session";
-import { ApiError, apiRequest } from "@/lib/api/client";
-import { getClientContext } from "@/lib/api/client-context";
+import { BACKEND_ROUTES } from "@/constants/routes";
+import { apiRequest } from "@/lib/api/server-client";
+import { errorResponse, requireSession } from "@/lib/api/route-session";
 
 /**
  * Danh sách brand, phân trang và lọc Ở PHÍA SERVER.
@@ -26,13 +24,8 @@ const ALLOWED = [
 ] as const;
 
 export async function GET(request: Request) {
-  const token = (await cookies()).get(ACCESS_COOKIE)?.value;
-  if (!token) {
-    return NextResponse.json(
-      { message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" },
-      { status: 401 },
-    );
-  }
+  const session = await requireSession();
+  if (!session.ok) return session.response;
 
   const incoming = new URL(request.url).searchParams;
   const query = new URLSearchParams();
@@ -44,15 +37,11 @@ export async function GET(request: Request) {
   try {
     return NextResponse.json(
       await apiRequest(`${BACKEND_ROUTES.admin.brandList}?${query}`, {
-        token,
-        clientContext: await getClientContext(),
+        token: session.token,
+        clientContext: session.clientContext,
       }),
     );
   } catch (error) {
-    if (!(error instanceof ApiError)) throw error;
-    return NextResponse.json(
-      { message: error.message, businessCode: error.businessCode },
-      { status: error.status },
-    );
+    return errorResponse(error);
   }
 }

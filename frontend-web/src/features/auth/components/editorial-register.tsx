@@ -1,6 +1,6 @@
 "use client";
 
-import { APP_ROUTES } from "@/config/route";
+import { APP_ROUTES } from "@/constants/routes";
 import { useTranslations } from "next-intl";
 
 import { useState } from "react";
