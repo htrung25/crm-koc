@@ -479,5 +479,17 @@
       "haveAccount": "Already have an account?",
       "signIn": "Sign in"
     }
+  },
+  "errors": {
+    "EMPTY": "Enter an IP address or CIDR range.",
+    "IPV6_NOT_SUPPORTED": "Only IPv4 is supported. An IPv6 address would never match.",
+    "MULTIPLE_SLASHES": "Invalid format: only one “/” is allowed.",
+    "INVALID_SHAPE": "An IPv4 address has 4 groups, for example 203.0.113.9 or 203.0.113.0/24",
+    "OCTET_OUT_OF_RANGE": "Each group must be a number from 0 to 255.",
+    "PREFIX_OUT_OF_RANGE": "The CIDR prefix must be between 0 and 32, for example /24",
+    "IP_WHITELIST_WOULD_LOCK_YOU_OUT": "This change would lock you out. Your current IP {clientIp} is not covered by the new list.",
+    "INVALID_CIDR_FORMAT": "Invalid CIDR range: {entry}",
+    "INVALID_IP_FORMAT": "Invalid IP address: {entry}",
+    "REQUIRES_SUPER_ADMIN": "Only a super admin can change this data."
   }
 }

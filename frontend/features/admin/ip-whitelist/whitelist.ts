@@ -66,35 +66,39 @@ function maskOf(bits: number): number {
 }
 
 /**
- * Báo lỗi tiếng Việt, hoặc null nếu hợp lệ.
- *
  * Cố tình KHÔNG nhận IPv6: guard của backend chỉ quy đổi `::1` và
  * `::ffff:x.x.x.x` rồi so bằng netmask (chỉ IPv4), nên một entry IPv6 thuần sẽ
  * lưu được nhưng không bao giờ khớp — im lặng và khó truy.
  */
-export function validateEntry(raw: string): string | null {
+export type EntryError =
+  | "EMPTY"
+  | "IPV6_NOT_SUPPORTED"
+  | "MULTIPLE_SLASHES"
+  | "INVALID_SHAPE"
+  | "OCTET_OUT_OF_RANGE"
+  | "PREFIX_OUT_OF_RANGE";
+
+/**
+ * Trả MÃ chứ không phải câu chữ: hàm này chạy được ở cả server lẫn client và
+ * không có locale, nên việc dịch thuộc về nơi hiển thị.
+ */
+export function validateEntry(raw: string): EntryError | null {
   const value = raw.trim();
-  if (!value) return "Nhập địa chỉ IP hoặc dải CIDR.";
+  if (!value) return "EMPTY";
 
-  if (value.includes(":")) {
-    return "Chỉ hỗ trợ IPv4. Địa chỉ IPv6 sẽ không bao giờ khớp.";
-  }
+  if (value.includes(":")) return "IPV6_NOT_SUPPORTED";
 
-  if (value.split("/").length > 2) {
-    return "Sai định dạng: chỉ được có một dấu “/”.";
-  }
+  if (value.split("/").length > 2) return "MULTIPLE_SLASHES";
 
   const match = value.match(ENTRY_SHAPE);
-  if (!match) {
-    return "IPv4 gồm 4 nhóm số, ví dụ 203.0.113.9 hoặc 203.0.113.0/24";
-  }
+  if (!match) return "INVALID_SHAPE";
 
   if (match.slice(1, 5).some((octet) => Number(octet) > 255)) {
-    return "Mỗi nhóm phải là số từ 0 đến 255.";
+    return "OCTET_OUT_OF_RANGE";
   }
 
   if (match[5] !== undefined && Number(match[5]) > 32) {
-    return "Độ dài dải CIDR phải từ 0 đến 32, ví dụ /24";
+    return "PREFIX_OUT_OF_RANGE";
   }
 
   return null;

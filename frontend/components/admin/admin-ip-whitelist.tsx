@@ -38,9 +38,10 @@ async function responseBody(response: Response) {
   if (!response.ok) {
     const error = new Error(
       (body as { message?: string } | null)?.message ?? "Request failed.",
-    ) as Error & { status: number; clientIp?: string };
+    ) as Error & { status: number; clientIp?: string; businessCode?: string };
     error.status = response.status;
     error.clientIp = (body as { clientIp?: string } | null)?.clientIp;
+    error.businessCode = (body as { businessCode?: string } | null)?.businessCode;
     throw error;
   }
   return body;
@@ -83,6 +84,21 @@ const STATUS_CODES = [1, 2, 3, 4] as const;
 
 export function AdminIpWhitelist() {
   const t = useTranslations("admin.ipWhitelist");
+  const tError = useTranslations("errors");
+
+  /** Dịch theo businessCode; mã chưa có bản dịch thì giữ nguyên message thô. */
+  const describeError = (failure: {
+    message: string;
+    businessCode?: string;
+    clientIp?: string;
+  }) => {
+    const code = failure.businessCode;
+    if (!code || !tError.has(code)) return failure.message;
+    return tError(code, {
+      clientIp: failure.clientIp ?? "",
+      entry: failure.message.split(": ").slice(1).join(": "),
+    });
+  };
   const router = useRouter();
   const [admins, setAdmins] = useState<AdminResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -193,7 +209,7 @@ export function AdminIpWhitelist() {
     const value = draftIp.trim();
     const validation = validateEntry(value);
     if (validation) {
-      setDialogError(validation);
+      setDialogError(tError(validation));
       return;
     }
     const next = [...editor.entries, value];
@@ -238,10 +254,11 @@ export function AdminIpWhitelist() {
       const requestError = failure as Error & {
         status?: number;
         clientIp?: string;
+        businessCode?: string;
       };
       if (requestError.status === 422 && requestError.clientIp) {
         setLockoutIp(requestError.clientIp);
-        setDialogError(requestError.message);
+        setDialogError(describeError(requestError));
         return;
       }
       if (
@@ -252,7 +269,7 @@ export function AdminIpWhitelist() {
         setDialogError(t("superAdminData"));
         return;
       }
-      setDialogError(requestError.message);
+      setDialogError(describeError(requestError));
     } finally {
       setSaving(false);
     }
@@ -300,7 +317,7 @@ export function AdminIpWhitelist() {
       payloadOverride === undefined && entry ? validateEntry(entry) : null;
 
     if (validation) {
-      setAddingWhitelistError(validation);
+      setAddingWhitelistError(tError(validation));
       return;
     }
 

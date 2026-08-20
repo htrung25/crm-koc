@@ -479,5 +479,17 @@
       "haveAccount": "Đã có tài khoản?",
       "signIn": "Đăng nhập ngay"
     }
+  },
+  "errors": {
+    "EMPTY": "Nhập địa chỉ IP hoặc dải CIDR.",
+    "IPV6_NOT_SUPPORTED": "Chỉ hỗ trợ IPv4. Địa chỉ IPv6 sẽ không bao giờ khớp.",
+    "MULTIPLE_SLASHES": "Sai định dạng: chỉ được có một dấu “/”.",
+    "INVALID_SHAPE": "IPv4 gồm 4 nhóm số, ví dụ 203.0.113.9 hoặc 203.0.113.0/24",
+    "OCTET_OUT_OF_RANGE": "Mỗi nhóm phải là số từ 0 đến 255.",
+    "PREFIX_OUT_OF_RANGE": "Độ dài dải CIDR phải từ 0 đến 32, ví dụ /24",
+    "IP_WHITELIST_WOULD_LOCK_YOU_OUT": "Thay đổi này sẽ khoá bạn ra ngoài. IP hiện tại {clientIp} không nằm trong danh sách mới.",
+    "INVALID_CIDR_FORMAT": "Dải CIDR không hợp lệ: {entry}",
+    "INVALID_IP_FORMAT": "Địa chỉ IP không hợp lệ: {entry}",
+    "REQUIRES_SUPER_ADMIN": "Chỉ super admin mới thay đổi được dữ liệu này."
   }
 }
