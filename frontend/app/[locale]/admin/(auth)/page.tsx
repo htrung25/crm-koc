@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useLogin } from "@/features/auth/use-login";
 
-const HIGHLIGHTS = [
-  "Theo dõi hiệu suất & doanh thu KOC theo thời gian thực",
-  "Duyệt hợp đồng, hoa hồng và chiến dịch của Thương hiệu",
-  "Báo cáo vận hành toàn hệ thống trong một bảng điều khiển",
-];
-
 export default function AdminLoginPage() {
+  const t = useTranslations("admin.login");
+  const highlights = [t("highlight1"), t("highlight2"), t("highlight3")];
   const [showPassword, setShowPassword] = useState(false);
   const {
     step,
@@ -47,23 +44,22 @@ export default function AdminLoginPage() {
             <div className="relative z-10 flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#EF4623]" />
               <span className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#EF4623]">
-                Khu vực quản trị
+                {t("eyebrow")}
               </span>
             </div>
 
             <div className="relative z-10 space-y-4">
               <h1 className="font-serif font-normal tracking-tight leading-[1.05] text-[clamp(2.25rem,4.5vw,3.25rem)]">
-                Bảng điều khiển
-                <span className="block italic text-[#EF4623]">RedSun Admin.</span>
+                {t("heading")}
+                <span className="block italic text-[#EF4623]">{t("headingAccent")}</span>
               </h1>
               <p className="text-sm text-white/70 leading-relaxed max-w-[40ch]">
-                Cổng vận hành dành riêng cho đội ngũ nội bộ. Đăng nhập quản trị
-                có thêm bước xác thực OTP gửi qua email.
+                {t("description")}
               </p>
             </div>
 
             <ul className="relative z-10 space-y-3.5">
-              {HIGHLIGHTS.map((item) => (
+              {highlights.map((item) => (
                 <li key={item} className="flex items-start gap-3 text-sm text-white/85">
                   <span className="mt-0.5 w-5 h-5 shrink-0 rounded-full bg-[#EF4623]/20 text-[#EF4623] flex items-center justify-center text-[11px] font-bold">
                     ✓
@@ -81,11 +77,11 @@ export default function AdminLoginPage() {
                 <div>
                   <span className="block mb-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#EF4623]">
                     {step === "credentials"
-                      ? "Cổng quản trị nội bộ"
-                      : "Xác thực hai lớp"}
+                      ? t("portal")
+                      : t("twoFactor")}
                   </span>
                   <h2 className="font-serif text-3xl font-normal text-[#2D3B42]">
-                    {step === "credentials" ? "Đăng nhập Admin" : "Nhập mã OTP"}
+                    {step === "credentials" ? t("signIn") : t("enterOtp")}
                   </h2>
                 </div>
                 <span className="font-serif text-4xl leading-none text-[#EF4623]/30 select-none tabular-nums">
@@ -115,7 +111,7 @@ export default function AdminLoginPage() {
                       htmlFor="admin-email"
                       className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                     >
-                      Email quản trị
+                      {t("email")}
                     </label>
                     <input
                       id="admin-email"
@@ -135,7 +131,7 @@ export default function AdminLoginPage() {
                       htmlFor="admin-password"
                       className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                     >
-                      Mật khẩu
+                      {t("password")}
                     </label>
                     <div className="relative">
                       <input
@@ -152,10 +148,10 @@ export default function AdminLoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                        aria-label={showPassword ? t("hidePassword") : t("showPassword")}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#2D3B42] text-xs font-semibold px-1.5 py-1 rounded-md transition-colors"
                       >
-                        {showPassword ? "Ẩn" : "Hiện"}
+                        {showPassword ? t("hide") : t("show")}
                       </button>
                     </div>
                   </div>
@@ -165,14 +161,16 @@ export default function AdminLoginPage() {
                     disabled={isSubmitting}
                     className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? "Đang kiểm tra…" : "Tiếp tục →"}
+                    {isSubmitting ? t("checking") : t("continue")}
                   </button>
                 </form>
               ) : (
                 <form onSubmit={verifyOtp} className="space-y-5">
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Mã gồm 6 chữ số đã được gửi tới{" "}
-                    <span className="font-bold text-[#2D3B42]">{email}</span>.
+                    {t.rich("otpSent", {
+                      email,
+                      strong: (chunks) => <span className="font-bold text-[#2D3B42]">{chunks}</span>,
+                    })}
                   </p>
 
                   <div className="space-y-1.5">
@@ -180,7 +178,7 @@ export default function AdminLoginPage() {
                       htmlFor="admin-otp"
                       className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                     >
-                      Mã xác thực
+                      {t("verificationCode")}
                     </label>
                     <input
                       id="admin-otp"
@@ -206,7 +204,7 @@ export default function AdminLoginPage() {
                     disabled={isSubmitting || otp.length !== 6}
                     className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? "Đang xác thực…" : "Vào bảng điều khiển →"}
+                    {isSubmitting ? t("verifying") : t("openDashboard")}
                   </button>
 
                   <div className="flex items-center justify-between gap-3 text-xs font-semibold">
@@ -215,7 +213,7 @@ export default function AdminLoginPage() {
                       onClick={backToCredentials}
                       className="text-slate-500 hover:text-[#2D3B42] transition-colors"
                     >
-                      ← Đổi tài khoản
+                      {t("changeAccount")}
                     </button>
                     <button
                       type="button"
@@ -223,14 +221,14 @@ export default function AdminLoginPage() {
                       disabled={isSubmitting}
                       className="text-[#EF4623] hover:underline disabled:opacity-50 disabled:no-underline"
                     >
-                      Gửi lại mã
+                      {t("resend")}
                     </button>
                   </div>
                 </form>
               )}
 
               <p className="pt-5 border-t border-[#2D3B42]/10 text-center text-xs text-slate-500">
-                Tài khoản quản trị do hệ thống cấp. Cần hỗ trợ? Liên hệ đội vận hành RedSun.
+                {t("support")}
               </p>
             </div>
           </div>

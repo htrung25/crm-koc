@@ -1,19 +1,22 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
 import { AdminTopbar } from "@/components/admin/admin-topbar";
 import { AdminIpWhitelist } from "@/components/admin/admin-ip-whitelist";
 
-export const metadata: Metadata = {
-  title: "Bảo mật",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("admin.securityPage");
+  return { title: t("title") };
+}
 
 export default async function AdminSecurityPage() {
+  const t = await getTranslations("admin.securityPage");
   return (
     <>
       <AdminTopbar
-        title="Bảo mật"
-        greeting="Quản lý tài khoản admin và địa chỉ IP được phép truy cập."
+        title={t("title")}
+        greeting={t("greeting")}
       />
 
       <AdminMobileNav />

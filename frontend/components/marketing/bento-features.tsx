@@ -1,9 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export function BentoFeatures() {
+  const t = useTranslations("marketing");
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   return (
@@ -23,11 +26,11 @@ export function BentoFeatures() {
               className="text-4xl md:text-6xl font-normal text-white tracking-tight leading-none"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
-              Kiến tạo sức mạnh bứt phá cho <br className="hidden sm:block" />
-              <span className="italic text-[#EF4623]">Chiến dịch Creator & Brand</span>
+              {t("features.title")} <br className="hidden sm:block" />
+              <span className="italic text-[#EF4623]">{t("features.titleAccent")}</span>
             </h2>
             <p className="text-base md:text-lg text-slate-300 font-sans max-w-xl mx-auto leading-relaxed">
-              Hệ thống CRM toàn diện chuẩn Red Sun giúp kết nối, quản trị hợp tác và tối ưu hóa doanh thu Affiliate trên mọi nền tảng Social Commerce.
+              {t("features.subtitle")}
             </p>
           </div>
         </ScrollReveal>
@@ -60,11 +63,11 @@ export function BentoFeatures() {
                   className="text-3xl md:text-5xl font-normal text-[#2D3B42] leading-tight"
                   style={{ fontFamily: "'Instrument Serif', serif" }}
                 >
-                  Tự động tìm kiếm & ghép cặp <br />
-                  <span className="italic text-[#EF4623]">KOC có tỷ lệ chuyển đổi cao nhất</span>
+                  {t("features.aiTitle")} <br />
+                  <span className="italic text-[#EF4623]">{t("features.aiTitleAccent")}</span>
                 </h3>
                 <p className="text-slate-600 font-sans text-base leading-relaxed max-w-xl">
-                  Thuật toán độc quyền phân tích dữ liệu tệp người theo dõi, engagement rate real-time và lịch sử bán lẻ sản phẩm để đề xuất những KOC phù hợp nhất với ngân sách chiến dịch của nhãn hàng.
+                  {t("features.aiBody")}
                 </p>
               </div>
 
@@ -75,7 +78,7 @@ export function BentoFeatures() {
                       &gt; 98.4%
                     </span>
                     <span className="text-xs text-slate-500 font-medium">
-                      Độ chính xác AI Matching
+                      {t("features.aiStat1")}
                     </span>
                   </div>
                   <div className="w-px h-8 bg-slate-200" />
@@ -84,13 +87,13 @@ export function BentoFeatures() {
                       3.5x
                     </span>
                     <span className="text-xs text-slate-[#EF4623] font-medium">
-                      Tăng trưởng ROI trung bình
+                      {t("features.aiStat2")}
                     </span>
                   </div>
                 </div>
 
                 <button className="px-6 py-3 rounded-[30px] bg-[#2D3B42] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#EF4623] transition-colors duration-300">
-                  Khám phá AI Agent
+                  {t("features.aiCta")}
                 </button>
               </div>
             </div>
@@ -113,24 +116,24 @@ export function BentoFeatures() {
               </div>
               <div className="space-y-3">
                 <span className="text-xs font-bold text-[#EF4623] uppercase tracking-wider block">
-                  Quản lý mẫu thử & Kho hàng
+                  {t("features.sampleEyebrow")}
                 </span>
                 <h3
                   className="text-3xl font-normal text-white leading-tight"
                   style={{ fontFamily: "'Instrument Serif', serif" }}
                 >
-                  Gửi Seeding Sample <br />
-                  <span className="italic text-[#EF4623]">chỉ với 1-Click</span>
+                  {t("features.sampleTitle")} <br />
+                  <span className="italic text-[#EF4623]">{t("features.sampleTitleAccent")}</span>
                 </h3>
                 <p className="text-slate-300 font-sans text-sm leading-relaxed">
-                  Tự động hóa toàn bộ quy trình kho sample, theo dõi trạng thái vận chuyển và nhắc nhở KOC lên bài đúng Deadline cam kết.
+                  {t("features.sampleBody")}
                 </p>
               </div>
             </div>
 
             <div className="relative z-10 pt-6 mt-6 border-t border-white/10">
               <div className="flex items-center justify-between text-xs text-slate-300">
-                <span>Tự động cập nhật mã vận đơn</span>
+                <span>{t("features.sampleFoot")}</span>
                 <span className="text-[#EF4623] font-bold">ViettelPost & GHN</span>
               </div>
             </div>
@@ -156,24 +159,24 @@ export function BentoFeatures() {
               </div>
               <div className="space-y-3">
                 <span className="text-xs font-bold text-[#EF4623] uppercase tracking-wider block">
-                  Đối soát & Thu nhập
+                  {t("features.revenueEyebrow")}
                 </span>
                 <h3
                   className="text-3xl font-normal text-[#2D3B42] leading-tight"
                   style={{ fontFamily: "'Instrument Serif', serif" }}
                 >
-                  Báo cáo Doanh thu <br />
+                  {t("features.revenueTitle")} <br />
                   <span className="italic text-[#EF4623]">Real-time Analytics</span>
                 </h3>
                 <p className="text-slate-600 font-sans text-sm leading-relaxed">
-                  Minh bạch 100% doanh số TikTok Shop, Shopee Affiliate và hoa hồng dành cho KOC. Thanh toán tự động định kỳ đúng thời hạn.
+                  {t("features.revenueBody")}
                 </p>
               </div>
             </div>
 
             <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#2D3B42]">
-              <span>Tự động hóa 100% hóa đơn</span>
-              <span className="text-[#EF4623] font-sans">Chi tiết →</span>
+              <span>{t("features.revenueFoot")}</span>
+              <span className="text-[#EF4623] font-sans">{t("features.revenueCta")}</span>
             </div>
           </div>
           </ScrollReveal>
@@ -187,27 +190,27 @@ export function BentoFeatures() {
           >
             <div className="space-y-4 max-w-md">
               <div className="inline-block px-3 py-1 bg-[#EF4623] text-white text-xs font-bold rounded-full">
-                Bảo mật & Tuân thủ
+                {t("features.securityEyebrow")}
               </div>
               <h3
                 className="text-3xl md:text-4xl font-normal text-[#2D3B42]"
                 style={{ fontFamily: "'Instrument Serif', serif" }}
               >
-                Hợp đồng điện tử &amp; <br />
-                <span className="italic text-[#EF4623]">Cam kết bảo mật dữ liệu</span>
+                {t("features.securityTitle")} <br />
+                <span className="italic text-[#EF4623]">{t("features.securityTitleAccent")}</span>
               </h3>
               <p className="text-slate-700 font-sans text-sm leading-relaxed">
-                Tích hợp sẵn chữ ký số, hợp đồng mẫu chuẩn pháp lý KOC & Brand giúp hoàn tất ký kết trong chưa đầy 3 phút.
+                {t("features.securityBody")}
               </p>
             </div>
 
             <div className="w-full sm:w-auto shrink-0 bg-white p-6 rounded-3xl shadow-lg border border-[#EF4623]/10 space-y-3 text-center">
-              <div className="text-4xl font-bold text-[#EF4623]">3 Phút</div>
+              <div className="text-4xl font-bold text-[#EF4623]">{t("features.securityStat")}</div>
               <p className="text-xs font-bold text-[#2D3B42] uppercase tracking-wider">
-                Thời gian ký hợp đồng
+                {t("features.securityStatLabel")}
               </p>
               <div className="text-[11px] text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-semibold">
-                ✓ Pháp lý công nhận
+                {t("features.securityLegal")}
               </div>
             </div>
           </div>

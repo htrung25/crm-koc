@@ -1,8 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
 
 export function UiSimulator() {
+  const t = useTranslations("marketing");
   const [activeTab, setActiveTab] = useState<"campaigns" | "koc_analytics" | "automations">("campaigns");
   const [isSimulating, setIsSimulating] = useState(false);
 
@@ -53,7 +56,7 @@ export function UiSimulator() {
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              Chiến dịch KOC
+              {t("simulator.campaign")}
             </button>
             <button
               onClick={() => setActiveTab("koc_analytics")}
@@ -73,7 +76,7 @@ export function UiSimulator() {
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              Tự động hóa
+              {t("simulator.automation")}
             </button>
           </div>
 
@@ -84,10 +87,10 @@ export function UiSimulator() {
                 Doanh thu GMV
               </span>
               <span className="text-sm font-extrabold text-[#2D3B42]">
-                1.42 tỷ VNĐ
+                {t("simulator.revenue")}
               </span>
               <span className="text-[10px] text-emerald-600 font-semibold block mt-0.5">
-                ↑ +24.8% tuần này
+                {t("simulator.revenueDelta")}
               </span>
             </div>
             <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
@@ -103,13 +106,13 @@ export function UiSimulator() {
             </div>
             <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
               <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">
-                Tỷ lệ Chuyển đổi
+                {t("simulator.conversion")}
               </span>
               <span className="text-sm font-extrabold text-[#2D3B42]">
                 4.85%
               </span>
               <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">
-                Chuẩn ngành 3.2%
+                {t("simulator.benchmark")}
               </span>
             </div>
           </div>
@@ -132,7 +135,7 @@ export function UiSimulator() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-[#2D3B42]">
-                        An Nhiên Beauty
+                        {t("simulator.sampleKoc")}
                       </p>
                       <p className="text-[10px] text-slate-400">
                         TikTok 850K Followers
@@ -168,24 +171,24 @@ export function UiSimulator() {
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#2D3B42]">
-                  Quy trình Xét duyệt Sample
+                  {t("simulator.approvalTitle")}
                 </span>
                 <span className="text-[10px] bg-slate-200 px-2 py-0.5 rounded-full font-bold text-slate-600">
-                  Tự động
+                  {t("simulator.approvalAuto")}
                 </span>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100">
-                  <span className="text-slate-600 font-medium">Gửi sản phẩm thử</span>
-                  <span className="text-emerald-600 font-bold">✓ Đã duyệt</span>
+                  <span className="text-slate-600 font-medium">{t("simulator.step1")}</span>
+                  <span className="text-emerald-600 font-bold">{t("simulator.step1Status")}</span>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100">
-                  <span className="text-slate-600 font-medium">Duyệt kịch bản Clip</span>
-                  <span className="text-[#EF4623] font-bold">⚡ Đang chờ</span>
+                  <span className="text-slate-600 font-medium">{t("simulator.step2")}</span>
+                  <span className="text-[#EF4623] font-bold">{t("simulator.step2Status")}</span>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100">
-                  <span className="text-slate-600 font-medium">Đối soát hoa hồng</span>
-                  <span className="text-slate-400 font-medium">Tự động</span>
+                  <span className="text-slate-600 font-medium">{t("simulator.step3")}</span>
+                  <span className="text-slate-400 font-medium">{t("simulator.step3Status")}</span>
                 </div>
               </div>
             </div>

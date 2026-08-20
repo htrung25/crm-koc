@@ -1,6 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+
+import { Link } from "@/i18n/navigation";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
 import { UiSimulator } from "@/components/marketing/ui-simulator";
 import { BentoFeatures } from "@/components/marketing/bento-features";
@@ -9,6 +11,7 @@ import { PricingSection } from "@/components/marketing/pricing-section";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export default function Home() {
+  const t = useTranslations("marketing");
   return (
     <div className="min-h-screen bg-[#2D3B42] text-white font-sans selection:bg-[#EF4623] selection:text-white">
       {/* Top Glassmorphism Navigation */}
@@ -34,13 +37,13 @@ export default function Home() {
             className="text-5xl sm:text-7xl md:text-[9rem] leading-[0.9] font-normal tracking-tight text-[#2D3B42]"
             style={{ fontFamily: "'Instrument Serif', serif" }}
           >
-            Quản trị KOC <br />
-            <span className="italic text-[#EF4623] block mt-1">Đỉnh cao Sáng tạo</span>
+            {t("hero.title")} <br />
+            <span className="italic text-[#EF4623] block mt-1">{t("hero.titleAccent")}</span>
           </h1>
 
           {/* Subtext */}
           <p className="max-w-2xl mx-auto text-base sm:text-xl text-[#2D3B42]/70 font-sans font-medium leading-relaxed">
-            Giải pháp CRM chuyên sâu hỗ trợ Thương hiệu &amp; Creator quản lý chiến dịch, đối soát tự động và bứt phá doanh số Affiliate với trải nghiệm mượt mà vượt trội.
+            {t("hero.subtitle")}
           </p>
 
           {/* Action CTAs */}
@@ -50,7 +53,7 @@ export default function Home() {
               href="/login"
               className="inline-flex items-center justify-center px-9 py-4 rounded-[30px] bg-[#EF4623] text-white font-bold text-sm uppercase tracking-wider shadow-2xl shadow-[#EF4623]/35 hover:bg-[#D83B19] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
             >
-              Trải nghiệm Cổng Đăng nhập →
+              {t("hero.cta")}
             </Link>
 
             {/* Secondary Ghost Button */}
@@ -71,7 +74,7 @@ export default function Home() {
               >
                 15,000+
               </span>
-              <span className="text-xs font-semibold text-slate-500">KOC đã xác thực</span>
+              <span className="text-xs font-semibold text-slate-500">{t("hero.stat1")}</span>
             </div>
             <div>
               <span
@@ -80,7 +83,7 @@ export default function Home() {
               >
                 1,200+
               </span>
-              <span className="text-xs font-semibold text-slate-500">Nhãn hàng đồng hành</span>
+              <span className="text-xs font-semibold text-slate-500">{t("hero.stat2")}</span>
             </div>
             <div>
               <span
@@ -89,7 +92,7 @@ export default function Home() {
               >
                 $45M+
               </span>
-              <span className="text-xs font-semibold text-slate-500">GMV tạo ra 2025</span>
+              <span className="text-xs font-semibold text-slate-500">{t("hero.stat3")}</span>
             </div>
             <div>
               <span
@@ -98,7 +101,7 @@ export default function Home() {
               >
                 99.8%
               </span>
-              <span className="text-xs font-semibold text-slate-500">Đối soát chính xác</span>
+              <span className="text-xs font-semibold text-slate-500">{t("hero.stat4")}</span>
             </div>
           </div>
         </div>
@@ -118,12 +121,12 @@ export default function Home() {
                 className="text-4xl sm:text-6xl font-normal tracking-tight text-[#2D3B42] leading-[1.05]"
                 style={{ fontFamily: "'Instrument Serif', serif" }}
               >
-                Trải nghiệm điều hành <br />
-                <span className="italic text-[#EF4623]">Hiện đại &amp; Tốc độ</span>
+                {t("experience.title")} <br />
+                <span className="italic text-[#EF4623]">{t("experience.titleAccent")}</span>
               </h2>
 
               <p className="text-base sm:text-lg text-slate-700 font-sans leading-relaxed">
-                Thiết kế Red Sun loại bỏ sự phức tạp cồng kềnh. Giao diện trực quan cho phép điều phối hàng trăm chiến dịch cùng lúc mà không bỏ lỡ bất kỳ KOC nào.
+                {t("experience.subtitle")}
               </p>
 
               {/* Vertical Feature List using 56px rounded-2xl icon containers */}
@@ -134,10 +137,10 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-[#2D3B42]">
-                      Phân bổ Sample Siêu tốc
+                      {t("experience.item1Title")}
                     </h3>
                     <p className="text-sm text-slate-600 leading-relaxed mt-1">
-                      Tự động duyệt địa chỉ nhận mẫu thử, xuất kho và đồng bộ trạng thái giao vận real-time.
+                      {t("experience.item1Body")}
                     </p>
                   </div>
                 </div>
@@ -148,10 +151,10 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-[#2D3B42]">
-                      Theo dõi Doanh số Live Stream
+                      {t("experience.item2Title")}
                     </h3>
                     <p className="text-sm text-slate-600 leading-relaxed mt-1">
-                      Cập nhật từng giây đơn hàng thành công trong suốt phiên chốt đơn của KOC.
+                      {t("experience.item2Body")}
                     </p>
                   </div>
                 </div>
@@ -162,10 +165,10 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-[#2D3B42]">
-                      Tự động hóa Hợp đồng &amp; Hoa hồng
+                      {t("experience.item3Title")}
                     </h3>
                     <p className="text-sm text-slate-600 leading-relaxed mt-1">
-                      Ký điện tử tức thì và tính toán chi hoa hồng tự động theo từng cấp bậc KOC.
+                      {t("experience.item3Body")}
                     </p>
                   </div>
                 </div>
@@ -198,21 +201,21 @@ export default function Home() {
 
           <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8">
             <div className="inline-block px-5 py-2 bg-white/15 backdrop-blur-md rounded-full text-white text-xs font-extrabold uppercase tracking-widest border border-white/20">
-              Sẵn sàng tăng trưởng GMV KOC?
+              {t("cta.eyebrow")}
             </div>
 
             <h2
               className="text-5xl sm:text-7xl md:text-8xl font-normal leading-none tracking-tight text-white"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
-              Bắt đầu chiến dịch KOC <br />
+              {t("cta.title")} <br />
               <span className="italic underline underline-offset-8 decoration-white/40">
-                chỉ trong 5 phút
+                {t("cta.titleAccent")}
               </span>
             </h2>
 
             <p className="text-base sm:text-xl text-white/90 font-sans max-w-2xl mx-auto leading-relaxed">
-              Gia nhập hơn 1,200 nhãn hàng và 15,000 KOC đang sử dụng nền tảng CRM-KOC chuẩn Red Sun để tối đa hóa hiệu quả truyền thông.
+              {t("cta.subtitle")}
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-5 pt-4">
@@ -220,19 +223,19 @@ export default function Home() {
                 href="/login"
                 className="inline-flex items-center justify-center px-10 py-4 rounded-[30px] bg-white text-[#EF4623] font-extrabold text-sm uppercase tracking-wider shadow-2xl hover:bg-[#FDF1EE] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
               >
-                Đăng nhập Cổng Hệ Thống
+                {t("cta.primary")}
               </Link>
               <Link
                 href="/login"
                 className="inline-flex items-center justify-center px-8 py-4 rounded-[30px] border-2 border-white/40 text-white font-extrabold text-sm uppercase tracking-wider hover:bg-white hover:text-[#EF4623] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
               >
-                Dành cho Brand
+                {t("cta.secondary")}
               </Link>
             </div>
 
             {/* Trust-bar Footer */}
             <div className="pt-12 border-t border-white/20 text-xs uppercase tracking-widest font-bold text-white/80">
-              ⚡ Được tin dùng bởi Vinamilk • Sunhouse • Coolmate • Lemonade • Anker • Baseus
+              {t("cta.trusted")}
             </div>
           </div>
         </div>
@@ -262,7 +265,7 @@ export default function Home() {
             </div>
 
             <p className="text-sm text-slate-400 font-sans max-w-sm leading-relaxed">
-              Hệ thống quản trị hợp tác KOC &amp; Thương hiệu chuẩn Red Sun Editorial Design System. Tự động hóa chiến dịch, minh bạch dữ liệu và tối ưu hiệu suất Affiliate.
+              {t("footer.about")}
             </p>
 
             <div className="flex items-center gap-3">
@@ -284,7 +287,7 @@ export default function Home() {
               className="text-xl font-normal text-white"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
-              Sản phẩm
+              {t("footer.product")}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
@@ -294,17 +297,17 @@ export default function Home() {
               </li>
               <li>
                 <a href="#features" className="hover:text-white transition-colors">
-                  Quản lý Mẫu thử
+                  {t("footer.samples")}
                 </a>
               </li>
               <li>
                 <a href="#features" className="hover:text-white transition-colors">
-                  Đối soát Hoa hồng
+                  {t("footer.commission")}
                 </a>
               </li>
               <li>
                 <a href="#value-prop" className="hover:text-white transition-colors">
-                  Hợp đồng Điện tử
+                  {t("footer.contracts")}
                 </a>
               </li>
             </ul>
@@ -316,27 +319,27 @@ export default function Home() {
               className="text-xl font-normal text-white"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
-              Cổng Đăng Nhập
+              {t("footer.portals")}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
                 <Link href="/login" className="hover:text-[#EF4623] transition-colors">
-                  Cổng Quản trị Admin
+                  {t("footer.adminPortal")}
                 </Link>
               </li>
               <li>
                 <Link href="/login" className="hover:text-[#EF4623] transition-colors">
-                  Cổng Doanh Nghiệp
+                  {t("footer.brandPortal")}
                 </Link>
               </li>
               <li>
                 <Link href="/login" className="hover:text-[#EF4623] transition-colors">
-                  Cổng Creator / KOC
+                  {t("footer.creatorPortal")}
                 </Link>
               </li>
               <li>
                 <Link href="/login" className="hover:text-[#EF4623] transition-colors">
-                  Tổng hợp Cổng Truy cập
+                  {t("footer.allPortals")}
                 </Link>
               </li>
             </ul>
@@ -348,12 +351,12 @@ export default function Home() {
               className="text-xl font-normal text-white"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
-              Liên hệ
+              {t("footer.contact")}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>Hotline: 1900 6868</li>
               <li>Email: contact@redsun-koc.vn</li>
-              <li>Địa chỉ: Tòa nhà Red Sun Tower, Hà Nội</li>
+              <li>{t("footer.address")}</li>
             </ul>
           </div>
         </div>
@@ -363,13 +366,13 @@ export default function Home() {
           <p>© 2026 Red Sun CRM-KOC System. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <a href="#" className="hover:text-white transition-colors">
-              Điều khoản dịch vụ
+              {t("footer.terms")}
             </a>
             <a href="#" className="hover:text-white transition-colors">
-              Chính sách bảo mật
+              {t("footer.privacy")}
             </a>
             <a href="#" className="hover:text-white transition-colors">
-              Sơ đồ trang
+              {t("footer.sitemap")}
             </a>
           </div>
         </div>
