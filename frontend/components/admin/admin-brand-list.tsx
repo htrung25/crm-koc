@@ -59,6 +59,50 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function IconEye() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"
+      strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function IconPencil() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"
+      strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+      <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z" />
+    </svg>
+  );
+}
+
+function IconBin() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"
+      strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+      <path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" />
+    </svg>
+  );
+}
+
+/** Nền avatar xoay vòng theo id để mỗi thương hiệu có một sắc riêng ổn định. */
+const AVATAR_TINTS = [
+  "from-[#EF4623] to-[#F49E4C]",
+  "from-[#7C5CFF] to-[#A78BFA]",
+  "from-[#14B8A6] to-[#5EEAD4]",
+  "from-[#F59E0B] to-[#FCD34D]",
+  "from-[#EC4899] to-[#F9A8D4]",
+  "from-[#3B82F6] to-[#93C5FD]",
+];
+
+function tintFor(id: string) {
+  let hash = 0;
+  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return AVATAR_TINTS[hash % AVATAR_TINTS.length];
+}
+
 export function AdminBrandList() {
   const t = useTranslations("admin.brands");
   const format = useFormatter();
@@ -234,106 +278,145 @@ export function AdminBrandList() {
           </p>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-[#2D3B42]/10 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#8A7768]">
-                <th scope="col" className="px-5 py-4 sm:px-6">
-                  {t("colBrand")}
-                </th>
-                <th scope="col" className="px-4 py-4">
-                  {t("colContact")}
-                </th>
-                <th scope="col" className="px-4 py-4">
-                  {t("colStatus")}
-                </th>
-                <th scope="col" className="px-5 py-4">
-                  {t("colJoined")}
-                </th>
-              </tr>
-            </thead>
+        {loading ? (
+          <p className="px-5 py-12 text-center text-sm font-semibold text-[#8A7768] sm:px-6">
+            {t("loading")}
+          </p>
+        ) : rows.length === 0 ? (
+          <div className="px-5 py-14 text-center sm:px-6">
+            <p className="text-sm font-extrabold text-[#2D3B42]">{t("empty")}</p>
+            <p className="mt-1 text-xs font-semibold text-[#8A7768]">
+              {t("emptyHint")}
+            </p>
+          </div>
+        ) : (
+          <ul className="grid gap-4 p-4 sm:p-5 md:grid-cols-2 xl:grid-cols-3">
+            {rows.map((brand) => {
+              // Chỉ dựng hàng thống kê khi backend thật sự trả số. Ẩn hẳn còn
+              // hơn hiện ô rỗng khiến người xem tưởng thương hiệu chưa có
+              // chiến dịch nào.
+              const hasStats =
+                brand.campaignCount !== undefined ||
+                brand.kocCount !== undefined ||
+                brand.budget !== undefined;
 
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-5 py-10 text-center text-sm font-semibold text-[#8A7768]"
-                  >
-                    {t("loading")}
-                  </td>
-                </tr>
-              ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-5 py-12 text-center">
-                    <p className="text-sm font-extrabold text-[#2D3B42]">
-                      {t("empty")}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold text-[#8A7768]">
-                      {t("emptyHint")}
-                    </p>
-                  </td>
-                </tr>
-              ) : (
-                rows.map((brand) => (
-                  <tr
-                    key={brand.id}
-                    className="border-b border-[#2D3B42]/6 transition-colors last:border-0 hover:bg-white/45"
-                  >
-                    <td className="px-5 py-4 sm:px-6">
-                      <div className="flex items-center gap-3">
-                        <span
-                          aria-hidden="true"
-                          className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#EF4623]/85 to-[#F49E4C]/85 text-[11px] font-extrabold text-white"
-                        >
-                          {initials(brand.name)}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-extrabold text-[#2D3B42]">
-                            {brand.name}
-                          </span>
-                          <span className="block truncate font-mono text-[11px] font-semibold text-[#8A7768]">
-                            {brand.email}
-                          </span>
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-4">
-                      {brand.phone ? (
-                        <span className="font-mono text-xs font-bold text-[#5C5049] tnum">
-                          {brand.phone}
-                        </span>
-                      ) : (
-                        <span className="text-xs font-semibold text-[#8A7768]/70">
-                          {t("noPhone")}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="px-4 py-4">
+              return (
+                <li
+                  key={brand.id}
+                  className="flex flex-col rounded-[22px] bg-white/75 p-5 ring-1 ring-[#2D3B42]/8 transition-shadow hover:shadow-lg hover:shadow-[#2D3B42]/5"
+                >
+                  <div className="flex items-start gap-3">
+                    {brand.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={brand.logoUrl}
+                        alt=""
+                        className="h-14 w-14 shrink-0 rounded-2xl object-cover"
+                      />
+                    ) : (
                       <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                          STATUS_STYLE[brand.status] ?? "bg-[#2D3B42]/8 text-[#5C5049]"
-                        }`}
+                        aria-hidden="true"
+                        className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-base font-extrabold text-white ${tintFor(brand.id)}`}
                       >
-                        {t(`statuses.${brand.status}`)}
+                        {initials(brand.name)}
                       </span>
-                    </td>
+                    )}
 
-                    <td className="px-5 py-4">
-                      <span className="text-xs font-semibold text-[#5C5049] tnum">
-                        {format.dateTime(new Date(brand.createdAt), {
-                          dateStyle: "medium",
-                        })}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base font-extrabold leading-tight text-[#2D3B42]">
+                        {brand.name}
+                      </h3>
+                      <p className="mt-0.5 truncate text-xs font-semibold text-[#8A7768]">
+                        {brand.industry || t("noIndustry")}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                        STATUS_STYLE[brand.status] ??
+                        "bg-[#2D3B42]/8 text-[#5C5049]"
+                      }`}
+                    >
+                      {t(`statuses.${brand.status}`)}
+                    </span>
+                  </div>
+
+                  {hasStats ? (
+                    <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-[#2D3B42]/8 pt-4">
+                      {[
+                        ["statCampaigns", brand.campaignCount],
+                        ["statKocs", brand.kocCount],
+                        ["statBudget", brand.budget],
+                      ].map(([key, value]) => (
+                        <div key={key as string}>
+                          <dt className="text-[11px] font-semibold text-[#8A7768]">
+                            {t(key as string)}
+                          </dt>
+                          <dd className="mt-0.5 text-lg font-extrabold text-[#2D3B42] tnum">
+                            {typeof value === "number"
+                              ? format.number(value, { notation: "compact" })
+                              : "—"}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <dl className="mt-5 space-y-1.5 border-t border-[#2D3B42]/8 pt-4">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <dt className="text-[11px] font-semibold text-[#8A7768]">
+                          {t("colContact")}
+                        </dt>
+                        <dd className="min-w-0 truncate font-mono text-xs font-bold text-[#5C5049]">
+                          {brand.phone ?? t("noPhone")}
+                        </dd>
+                      </div>
+                      <div className="flex items-baseline justify-between gap-3">
+                        <dt className="text-[11px] font-semibold text-[#8A7768]">
+                          {t("colJoined")}
+                        </dt>
+                        <dd className="font-mono text-xs font-bold text-[#5C5049] tnum">
+                          {format.dateTime(new Date(brand.createdAt), {
+                            dateStyle: "medium",
+                          })}
+                        </dd>
+                      </div>
+                    </dl>
+                  )}
+
+                  <div className="mt-5 flex items-center gap-2 border-t border-[#2D3B42]/8 pt-4">
+                    <button
+                      type="button"
+                      disabled
+                      title={t("comingSoon")}
+                      className="flex h-10 flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#EF4623]/10 text-sm font-extrabold text-[#EF4623] opacity-70"
+                    >
+                      <IconEye />
+                      {t("view")}
+                    </button>
+                    <button
+                      type="button"
+                      disabled
+                      title={t("comingSoon")}
+                      aria-label={t("edit")}
+                      className="grid h-10 w-10 cursor-not-allowed place-items-center rounded-xl bg-[#2D3B42]/6 text-[#5C5049] opacity-70"
+                    >
+                      <IconPencil />
+                    </button>
+                    <button
+                      type="button"
+                      disabled
+                      title={t("comingSoon")}
+                      aria-label={t("delete")}
+                      className="grid h-10 w-10 cursor-not-allowed place-items-center rounded-xl bg-red-500/10 text-red-600 opacity-70"
+                    >
+                      <IconBin />
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#2D3B42]/10 px-5 py-4">
           <p className="text-xs font-semibold text-[#8A7768]">

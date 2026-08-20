@@ -16,7 +16,15 @@ export const SORT_FIELDS = ["createdAt", "name", "email", "status"] as const;
 export type SortField = (typeof SORT_FIELDS)[number];
 export type SortOrder = "ASC" | "DESC";
 
-/** Một dòng trong GET /admin/brands-list. */
+/**
+ * Một dòng trong GET /admin/brands-list.
+ *
+ * Năm field cuối KHÔNG có trong AccountFilterItemDto hiện tại nhưng đều có
+ * nguồn thật trong DB: industry/logoUrl ở brand_profiles, ba chỉ số còn lại
+ * suy ra từ bảng collaborations (campaign_id, creator_id, agreed_price).
+ * Khai optional để giao diện dựng sẵn chỗ, và tự hiện lên đúng lúc backend
+ * bổ sung — thay vì điền số giả rồi người xem tưởng là thật.
+ */
 export type BrandRow = {
   id: string;
   name: string;
@@ -25,6 +33,11 @@ export type BrandRow = {
   accountRole: string;
   status: AccountStatus;
   createdAt: string;
+  industry?: string | null;
+  logoUrl?: string | null;
+  campaignCount?: number;
+  kocCount?: number;
+  budget?: number;
 };
 
 /** Bọc phân trang dùng chung cho mọi danh sách của backend. */

@@ -216,9 +216,7 @@
       "sortOldest": "Oldest first",
       "sortName": "Name A→Z",
       "sortEmail": "Email A→Z",
-      "colBrand": "Brand",
       "colContact": "Contact",
-      "colStatus": "Status",
       "colJoined": "Joined",
       "loading": "Loading brands…",
       "empty": "No brands found.",
@@ -231,7 +229,15 @@
         "2": "Active",
         "3": "Suspended",
         "4": "Banned"
-      }
+      },
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "comingSoon": "Coming soon",
+      "statCampaigns": "Campaigns",
+      "statKocs": "KOCs",
+      "statBudget": "Budget",
+      "noIndustry": "Uncategorised"
     }
   },
   "marketing": {

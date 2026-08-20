@@ -216,9 +216,7 @@
       "sortOldest": "Cũ nhất",
       "sortName": "Tên A→Z",
       "sortEmail": "Email A→Z",
-      "colBrand": "Thương hiệu",
       "colContact": "Liên hệ",
-      "colStatus": "Trạng thái",
       "colJoined": "Ngày tham gia",
       "loading": "Đang tải danh sách…",
       "empty": "Không tìm thấy thương hiệu nào.",
@@ -231,7 +229,15 @@
         "2": "Hoạt động",
         "3": "Tạm ngưng",
         "4": "Đã khoá"
-      }
+      },
+      "view": "Xem",
+      "edit": "Sửa",
+      "delete": "Xoá",
+      "comingSoon": "Sắp có",
+      "statCampaigns": "Chiến dịch",
+      "statKocs": "KOC",
+      "statBudget": "Ngân sách",
+      "noIndustry": "Chưa phân loại"
     }
   },
   "marketing": {
