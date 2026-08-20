@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 
 import {
   IconChevronDown,
@@ -23,13 +24,6 @@ import {
 import { apiFetch } from "@/lib/api/fetch-client";
 import { SelfLockoutDialog } from "@/components/admin/self-lockout-dialog";
 
-const STATUS_LABEL: Record<number, string> = {
-  1: "Chờ duyệt",
-  2: "Hoạt động",
-  3: "Tạm ngưng",
-  4: "Đã khoá",
-};
-
 type EditorState = {
   admin: AdminResponse;
   name: string;
@@ -43,7 +37,7 @@ async function responseBody(response: Response) {
   const body = await response.json().catch(() => null);
   if (!response.ok) {
     const error = new Error(
-      (body as { message?: string } | null)?.message ?? "Yêu cầu thất bại.",
+      (body as { message?: string } | null)?.message ?? "Request failed.",
     ) as Error & { status: number; clientIp?: string };
     error.status = response.status;
     error.clientIp = (body as { clientIp?: string } | null)?.clientIp;
@@ -85,7 +79,10 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
   );
 }
 
+const STATUS_CODES = [1, 2, 3, 4] as const;
+
 export function AdminIpWhitelist() {
+  const t = useTranslations("admin.ipWhitelist");
   const router = useRouter();
   const [admins, setAdmins] = useState<AdminResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -201,7 +198,7 @@ export function AdminIpWhitelist() {
     }
     const next = [...editor.entries, value];
     if (serializeWhitelist(next).length > MAX_WHITELIST_LENGTH) {
-      setDialogError(`Danh sách vượt quá ${MAX_WHITELIST_LENGTH} ký tự.`);
+      setDialogError(t("tooLong", { max: MAX_WHITELIST_LENGTH }));
       return;
     }
     setEditor({ ...editor, entries: next });
@@ -252,7 +249,7 @@ export function AdminIpWhitelist() {
         requestError.message === "REQUIRES_SUPER_ADMIN"
       ) {
         setForbidden(true);
-        setDialogError("Chỉ super admin mới thay đổi được dữ liệu này.");
+        setDialogError(t("superAdminData"));
         return;
       }
       setDialogError(requestError.message);
@@ -294,7 +291,7 @@ export function AdminIpWhitelist() {
   ) => {
     const admin = admins.find((item) => item.id === selectedAdminId);
     if (!admin) {
-      setAddingWhitelistError("Vui lòng chọn email của admin.");
+      setAddingWhitelistError(t("pickEmail"));
       return;
     }
 
@@ -319,7 +316,7 @@ export function AdminIpWhitelist() {
 
     if ((ipWhitelist?.length ?? 0) > MAX_WHITELIST_LENGTH) {
       setAddingWhitelistError(
-        `Danh sách vượt quá ${MAX_WHITELIST_LENGTH} ký tự.`,
+        t("tooLong", { max: MAX_WHITELIST_LENGTH }),
       );
       return;
     }
@@ -364,7 +361,7 @@ export function AdminIpWhitelist() {
       ) {
         setForbidden(true);
         setAddingWhitelistError(
-          "Chỉ super admin mới thay đổi được danh sách này.",
+          t("superAdminList"),
         );
         return;
       }
@@ -378,7 +375,7 @@ export function AdminIpWhitelist() {
     <section className="space-y-4">
       {forbidden && (
         <p className="rounded-2xl bg-[#2D3B42]/8 px-4 py-3 text-xs font-semibold text-[#5C5049]">
-          Chỉ super admin mới thay đổi được dữ liệu này. Bạn đang ở chế độ xem.
+          {t("readOnlyBanner")}
         </p>
       )}
 
@@ -386,7 +383,7 @@ export function AdminIpWhitelist() {
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_230px_auto]">
           <label className="block">
             <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.14em] text-[#8A7768]">
-              Tìm kiếm
+              {t("search")}
             </span>
             <span className="flex h-12 items-center gap-3 rounded-2xl bg-white/65 px-4 ring-1 ring-[#2D3B42]/10 focus-within:ring-2 focus-within:ring-[#EF4623]/35">
               <IconSearch className="h-4 w-4 text-[#8A7768]" />
@@ -396,7 +393,7 @@ export function AdminIpWhitelist() {
                   setSearch(event.target.value);
                   setPage(1);
                 }}
-                placeholder="Tên, email hoặc địa chỉ IP"
+                placeholder={t("searchPlaceholder")}
                 className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#2D3B42] outline-none placeholder:text-[#A89685]"
               />
             </span>
@@ -404,7 +401,7 @@ export function AdminIpWhitelist() {
 
           <label className="block">
             <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.14em] text-[#8A7768]">
-              Vai trò
+              {t("role")}
             </span>
             <span className="relative block">
               <select
@@ -415,7 +412,7 @@ export function AdminIpWhitelist() {
                 }}
                 className="h-12 w-full appearance-none rounded-2xl bg-white/65 px-4 pr-10 text-sm font-bold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35"
               >
-                <option value="all">Tất cả vai trò</option>
+                <option value="all">{t("allRoles")}</option>
                 <option value="super_admin">Super admin</option>
                 <option value="admin">Admin</option>
               </select>
@@ -435,7 +432,7 @@ export function AdminIpWhitelist() {
             className="mt-auto flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#2D3B42] px-5 text-sm font-extrabold text-white transition-colors hover:bg-[#1E282D] disabled:cursor-not-allowed disabled:bg-[#2D3B42]/12 disabled:text-[#8A7768]"
           >
             <IconPlus className="h-4 w-4" />
-            Thêm IP Whitelist
+            {t("addWhitelist")}
           </button>
         </div>
 
@@ -460,7 +457,7 @@ export function AdminIpWhitelist() {
                   required
                   className="h-12 w-full appearance-none rounded-2xl bg-white/65 px-4 pr-10 text-sm font-semibold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35"
                 >
-                  <option value="">Chọn email admin</option>
+                  <option value="">{t("chooseEmail")}</option>
                   {admins.map((admin) => (
                     <option key={admin.id} value={admin.id}>
                       {admin.email}
@@ -472,14 +469,14 @@ export function AdminIpWhitelist() {
             </label>
 
             <label className="block text-xs font-extrabold text-[#5C5049]">
-              Thêm IP Whitelist
+              {t("addWhitelist")}
               <input
                 value={newWhitelistEntry}
                 onChange={(event) => {
                   setNewWhitelistEntry(event.target.value);
                   setAddingWhitelistError(null);
                 }}
-                placeholder="Để trống để cho phép mọi IP"
+                placeholder={t("ipPlaceholder")}
                 aria-describedby="add-ip-whitelist-help"
                 className="mt-2 h-12 w-full rounded-2xl bg-white/65 px-4 font-mono text-sm font-semibold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 placeholder:font-sans placeholder:text-[#A89685] focus:ring-2 focus:ring-[#EF4623]/35"
               />
@@ -487,7 +484,7 @@ export function AdminIpWhitelist() {
                 id="add-ip-whitelist-help"
                 className="mt-2 block text-[11px] font-semibold leading-relaxed text-[#8A7768]"
               >
-                Nhập IPv4/CIDR để bổ sung; để trống sẽ bỏ giới hạn IP.
+                {t("ipHint")}
               </span>
             </label>
 
@@ -498,14 +495,14 @@ export function AdminIpWhitelist() {
                 onClick={closeWhitelistForm}
                 className="h-12 rounded-2xl px-4 text-sm font-extrabold text-[#5C5049] hover:bg-white/50 disabled:opacity-50"
               >
-                Huỷ
+                {t("cancel")}
               </button>
               <button
                 type="submit"
                 disabled={addingWhitelistPending || !selectedAdminId}
                 className="h-12 rounded-2xl bg-gradient-to-br from-[#EF4623] to-[#D8410F] px-5 text-sm font-extrabold text-white shadow-lg shadow-[#EF4623]/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {addingWhitelistPending ? "Đang lưu…" : "Lưu whitelist"}
+                {addingWhitelistPending ? t("saving") : t("saveWhitelist")}
               </button>
             </div>
 
@@ -526,7 +523,7 @@ export function AdminIpWhitelist() {
           <div>
             <h2 className="text-base font-extrabold text-[#2D3B42]">IP Whitelist</h2>
             <p className="mt-0.5 text-xs font-semibold text-[#8A7768]">
-              {filtered.length} tài khoản quản trị
+              {t("accountCount", { count: filtered.length })}
             </p>
           </div>
           <button
@@ -534,7 +531,7 @@ export function AdminIpWhitelist() {
             onClick={() => void load()}
             className="rounded-xl px-3 py-2 text-xs font-extrabold text-[#EF4623] transition-colors hover:bg-[#EF4623]/10"
           >
-            Làm mới
+            {t("refresh")}
           </button>
         </div>
 
@@ -550,23 +547,23 @@ export function AdminIpWhitelist() {
               <tr className="bg-white/35 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#8A7768]">
                 <th className="w-16 px-5 py-4 text-center">STT</th>
                 <th className="px-4 py-4">Email</th>
-                <th className="px-4 py-4">Tên admin</th>
-                <th className="px-4 py-4">Vai trò</th>
-                <th className="px-4 py-4">Địa chỉ IP được phép</th>
-                <th className="px-5 py-4 text-right">Thao tác</th>
+                <th className="px-4 py-4">{t("colName")}</th>
+                <th className="px-4 py-4">{t("colRole")}</th>
+                <th className="px-4 py-4">{t("colIp")}</th>
+                <th className="px-5 py-4 text-right">{t("colActions")}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-16 text-center text-sm font-semibold text-[#8A7768]">
-                    Đang tải danh sách…
+                    {t("loading")}
                   </td>
                 </tr>
               ) : visible.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-16 text-center text-sm font-semibold text-[#8A7768]">
-                    Không tìm thấy tài khoản phù hợp.
+                    {t("empty")}
                   </td>
                 </tr>
               ) : (
@@ -597,7 +594,7 @@ export function AdminIpWhitelist() {
                               </code>
                             ))
                           ) : (
-                            <span className="text-xs font-semibold text-amber-700">Không giới hạn IP</span>
+                            <span className="text-xs font-semibold text-amber-700">{t("unrestricted")}</span>
                           )}
                         </div>
                       </td>
@@ -605,7 +602,7 @@ export function AdminIpWhitelist() {
                         <div className="flex justify-end gap-1.5">
                           {forbidden ? (
                             <span className="px-3 py-2 text-xs font-semibold text-[#8A7768]">
-                              Chỉ xem
+                              {t("viewOnly")}
                             </span>
                           ) : (
                           <>
@@ -615,7 +612,7 @@ export function AdminIpWhitelist() {
                             className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold text-[#5C5049] hover:bg-white/60 hover:text-[#2D3B42]"
                           >
                             <EditIcon />
-                            Sửa
+                            {t("edit")}
                           </button>
                           <button
                             type="button"
@@ -626,7 +623,7 @@ export function AdminIpWhitelist() {
                             className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold text-red-600 hover:bg-red-500/10"
                           >
                             <IconTrash className="h-4 w-4" />
-                            Xoá
+                            {t("delete")}
                           </button>
                           </>
                           )}
@@ -642,8 +639,11 @@ export function AdminIpWhitelist() {
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#2D3B42]/10 px-5 py-4">
           <p className="text-xs font-semibold text-[#8A7768]">
-            Hiển thị {filtered.length ? (safePage - 1) * rowsPerPage + 1 : 0}–
-            {Math.min(safePage * rowsPerPage, filtered.length)} trên {filtered.length}
+            {t("pagination", {
+              from: filtered.length ? (safePage - 1) * rowsPerPage + 1 : 0,
+              to: Math.min(safePage * rowsPerPage, filtered.length),
+              total: filtered.length,
+            })}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -680,7 +680,7 @@ export function AdminIpWhitelist() {
               <option value={10}>10</option>
               <option value={20}>20</option>
             </select>
-            dòng mỗi trang
+            {t("rowsPerPage")}
           </label>
         </div>
       </div>
@@ -690,15 +690,15 @@ export function AdminIpWhitelist() {
           <div role="dialog" aria-modal="true" aria-labelledby="edit-admin-title" className="glass max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[28px] p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#EF4623]">Tài khoản admin</p>
-                <h2 id="edit-admin-title" className="mt-1 text-xl font-extrabold text-[#2D3B42]">Chỉnh sửa quyền truy cập</h2>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#EF4623]">{t("editEyebrow")}</p>
+                <h2 id="edit-admin-title" className="mt-1 text-xl font-extrabold text-[#2D3B42]">{t("editTitle")}</h2>
               </div>
               <button type="button" onClick={() => setEditor(null)} className="grid h-9 w-9 place-items-center rounded-xl bg-white/50 text-lg font-bold text-[#8A7768]">×</button>
             </div>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <label className="text-xs font-extrabold text-[#5C5049]">
-                Tên admin
+                {t("fieldName")}
                 <input value={editor.name} onChange={(event) => setEditor({ ...editor, name: event.target.value })} className="mt-2 h-11 w-full rounded-xl bg-white/65 px-3 text-sm font-semibold outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35" />
               </label>
               <label className="text-xs font-extrabold text-[#5C5049]">
@@ -706,13 +706,13 @@ export function AdminIpWhitelist() {
                 <input type="email" value={editor.email} onChange={(event) => setEditor({ ...editor, email: event.target.value })} className="mt-2 h-11 w-full rounded-xl bg-white/65 px-3 text-sm font-semibold outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35" />
               </label>
               <label className="text-xs font-extrabold text-[#5C5049]">
-                Số điện thoại
+                {t("fieldPhone")}
                 <input value={editor.phone} onChange={(event) => setEditor({ ...editor, phone: event.target.value })} className="mt-2 h-11 w-full rounded-xl bg-white/65 px-3 text-sm font-semibold outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35" />
               </label>
               <label className="text-xs font-extrabold text-[#5C5049]">
-                Trạng thái
+                {t("fieldStatus")}
                 <select value={editor.status} onChange={(event) => setEditor({ ...editor, status: Number(event.target.value) })} className="mt-2 h-11 w-full rounded-xl bg-white/65 px-3 text-sm font-semibold outline-none ring-1 ring-[#2D3B42]/10">
-                  {Object.entries(STATUS_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  {STATUS_CODES.map((code) => <option key={code} value={code}>{t(`status.${code}`)}</option>)}
                 </select>
               </label>
             </div>
@@ -721,9 +721,9 @@ export function AdminIpWhitelist() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-extrabold text-[#2D3B42]">IP Whitelist</h3>
-                  <p className="text-[11px] font-semibold text-[#8A7768]">Danh sách trống nghĩa là cho phép mọi IP.</p>
+                  <p className="text-[11px] font-semibold text-[#8A7768]">{t("emptyMeansAll")}</p>
                 </div>
-                <span className="rounded-full bg-[#2D3B42]/8 px-2.5 py-1 font-mono text-[10px] font-bold text-[#5C5049]">{editor.entries.length} mục</span>
+                <span className="rounded-full bg-[#2D3B42]/8 px-2.5 py-1 font-mono text-[10px] font-bold text-[#5C5049]">{t("entryCount", { count: editor.entries.length })}</span>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {editor.entries.map((entry, index) => (
@@ -743,7 +743,7 @@ export function AdminIpWhitelist() {
                       addIp();
                     }
                   }}
-                  placeholder="Ví dụ 203.0.113.9 hoặc 10.0.0.0/24"
+                  placeholder={t("entryPlaceholder")}
                   className="h-11 min-w-0 flex-1 rounded-xl bg-white/75 px-3 font-mono text-xs font-semibold outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35"
                 />
                 <button type="button" onClick={addIp} className="grid h-11 w-11 place-items-center rounded-xl bg-[#2D3B42] text-white hover:bg-[#1E282D]"><IconPlus className="h-4 w-4" /></button>
@@ -757,9 +757,9 @@ export function AdminIpWhitelist() {
             )}
 
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setEditor(null)} className="rounded-xl px-4 py-2.5 text-sm font-extrabold text-[#5C5049] hover:bg-white/50">Huỷ</button>
+              <button type="button" onClick={() => setEditor(null)} className="rounded-xl px-4 py-2.5 text-sm font-extrabold text-[#5C5049] hover:bg-white/50">{t("cancel")}</button>
               <button type="button" disabled={saving || !editor.name.trim() || !editor.email.trim()} onClick={() => void save()} className="rounded-xl bg-gradient-to-br from-[#EF4623] to-[#D8410F] px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-[#EF4623]/20 disabled:opacity-50">
-                {saving ? "Đang lưu…" : "Lưu thay đổi"}
+                {saving ? t("saving") : t("saveChanges")}
               </button>
             </div>
           </div>
@@ -807,15 +807,20 @@ export function AdminIpWhitelist() {
         <div className="fixed inset-0 z-50 grid place-items-center bg-[#1E282D]/45 p-4 backdrop-blur-sm">
           <div role="alertdialog" aria-modal="true" className="glass w-full max-w-md rounded-[26px] p-6">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-red-500/12 text-red-600"><IconTrash className="h-5 w-5" /></span>
-            <h2 className="mt-4 text-lg font-extrabold text-[#2D3B42]">Xoá tài khoản admin?</h2>
+            <h2 className="mt-4 text-lg font-extrabold text-[#2D3B42]">{t("deleteTitle")}</h2>
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#8A7768]">
-              Tài khoản <strong className="text-[#2D3B42]">{deleting.email}</strong> sẽ bị xoá vĩnh viễn.
+              {t.rich("deleteBody", {
+                email: deleting.email,
+                strong: (chunks) => (
+                  <strong className="text-[#2D3B42]">{chunks}</strong>
+                ),
+              })}
             </p>
             {dialogError && <p className="mt-3 rounded-xl bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-700">{dialogError}</p>}
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setDeleting(null)} className="rounded-xl px-4 py-2.5 text-sm font-extrabold text-[#5C5049] hover:bg-white/50">Huỷ</button>
+              <button type="button" onClick={() => setDeleting(null)} className="rounded-xl px-4 py-2.5 text-sm font-extrabold text-[#5C5049] hover:bg-white/50">{t("cancel")}</button>
               <button type="button" disabled={saving} onClick={() => void confirmDelete()} className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-extrabold text-white disabled:opacity-50">
-                {saving ? "Đang xoá…" : "Xoá tài khoản"}
+                {saving ? t("deleting") : t("deleteConfirm")}
               </button>
             </div>
           </div>
