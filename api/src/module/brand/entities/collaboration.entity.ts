@@ -40,11 +40,7 @@ export class Collaboration {
   @Column({ type: 'uuid', nullable: true })
   campaignId: string | null;
 
-  @Column({
-    type: 'varchar',
-    length: 32,
-    default: ECollaborationStatus.PENDING,
-  })
+  @Column({ type: 'smallint', default: ECollaborationStatus.PENDING })
   status: ECollaborationStatus;
 
   @Column({ type: 'numeric', precision: 14, scale: 2, nullable: true })

@@ -1,7 +1,7 @@
 export enum ECollaborationStatus {
-  PENDING = 'pending',
-  ACTIVE = 'active',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  DISPUTED = 'disputed',
+  PENDING = 1,
+  ACTIVE = 2,
+  COMPLETED = 3,
+  CANCELLED = 4,
+  DISPUTED = 5,
 }

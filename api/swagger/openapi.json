@@ -3023,13 +3023,13 @@
         }
       },
       "ECollaborationStatus": {
-        "type": "string",
+        "type": "number",
         "enum": [
-          "pending",
-          "active",
-          "completed",
-          "cancelled",
-          "disputed"
+          1,
+          2,
+          3,
+          4,
+          5
         ]
       },
       "CollaborationDto": {

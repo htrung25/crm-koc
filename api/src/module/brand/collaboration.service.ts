@@ -9,7 +9,10 @@ import { In, IsNull, Repository } from 'typeorm';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { ECollaborationStatus } from '../../common/enum/collaboration-status.enum';
 import { ESortField, ESortOrder } from '../../common/enum/sort-fields.enum';
-import { assertEnum } from '../../common/util/enum-assert.util';
+import {
+  assertEnum,
+  assertNumericEnum,
+} from '../../common/util/enum-assert.util';
 import { PaginatedResult, paginate } from '../../common/util/pagination.util';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { BrandProfileService } from './brand-profile.service';
@@ -150,7 +153,7 @@ export class CollaborationService {
 
     if (query.status !== undefined) {
       qb.andWhere('collaboration.status = :status', {
-        status: assertEnum(ECollaborationStatus, query.status, 'status'),
+        status: assertNumericEnum(ECollaborationStatus, query.status, 'status'),
       });
     }
 

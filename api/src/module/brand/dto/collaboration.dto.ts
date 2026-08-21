@@ -91,8 +91,11 @@ export class CollaborationDto {
 /** Query của GET /brand/collaborations. brandId lấy từ token, không nhận ở đây. */
 export class CollaborationFilterDto extends PaginationDto {
   @IsOptional()
+  // query string luôn là chuỗi: '3' phải thành 3 thì @IsEnum mới pass
+  @Type(() => Number)
   @IsEnum(ECollaborationStatus, {
-    message: 'status must be pending, active, completed, cancelled or disputed',
+    message:
+      'status must be 1 (pending), 2 (active), 3 (completed), 4 (cancelled) or 5 (disputed)',
   })
   @ApiPropertyOptional({
     enum: ECollaborationStatus,
