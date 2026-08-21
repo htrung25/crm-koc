@@ -5,6 +5,7 @@ import { BrandProfile } from '../module/brand/entities/brand-profile.entity';
 import { CreatorProfile } from '../module/creator/entities/creator-profile.entity';
 import { SessionEvent } from '../module/auth/entities/session-event.entity';
 import { AdminUser } from '../module/admin/entities/admin-user.entity';
+import { SystemConfiguration } from '../module/admin/entities/system-configuration.entity';
 import { SocialAccount } from '../module/creator/entities/social-account.entity';
 import { Collaboration } from '../module/collaboration/entities/collaboration.entity';
 
@@ -20,6 +21,7 @@ const entities = [
   CreatorProfile,
   SessionEvent,
   AdminUser,
+  SystemConfiguration,
   SocialAccount,
   Collaboration,
 ];

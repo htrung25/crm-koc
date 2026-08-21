@@ -14,13 +14,6 @@ interface AuthThrottleOptions {
   blockMs?: number;
 }
 
-/**
- * Chính sách chung cho nhóm endpoint nhạy cảm: đăng nhập, xác thực OTP và
- * mọi endpoint có gửi email.
- *
- * Kèm luôn EMAIL_AND_IP: cả nhóm này đều chưa đăng nhập nhưng body có email,
- * nên đếm theo email chặn đúng tài khoản bị nhắm tới thay vì chặn cả dải IP.
- */
 export const AuthThrottle = (options: AuthThrottleOptions = {}) =>
   applyDecorators(
     Throttle({

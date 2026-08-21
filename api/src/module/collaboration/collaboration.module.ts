@@ -9,11 +9,6 @@ import { CollaborationService } from './collaboration.service';
 import { BrandCollaborationController } from './brand-collaboration.controller';
 import { CreatorCollaborationController } from './creator-collaboration.controller';
 
-/**
- * Hợp tác là việc của cả ba vai trò nên đứng riêng, không nằm trong BrandModule.
- * Nhờ vậy controller phía creator không phải mượn chỗ của brand, và BrandModule
- * hết phải import CreatorModule.
- */
 @Module({
   imports: [
     TypeOrmModule.forFeature([Collaboration, AuthEntity]),

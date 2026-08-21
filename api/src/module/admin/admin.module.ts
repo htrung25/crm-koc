@@ -9,6 +9,9 @@ import { BrandListService } from './brand-list.service';
 import { CreatorListController } from './creator-list.controller';
 import { CreatorListService } from './creator-list.service';
 import { AdminUser } from './entities/admin-user.entity';
+import { SystemConfiguration } from './entities/system-configuration.entity';
+import { SystemConfigurationService } from './system-configuration.service';
+import { SystemConfigurationController } from './system-configuration.controller';
 import { SuperAdminGuard } from './super-admin.guard';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { SecurityModule } from '../../security/security.module';
@@ -16,7 +19,7 @@ import { IpWhitelistModule } from './ip-whitelist.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AdminUser, AuthEntity]),
+    TypeOrmModule.forFeature([AdminUser, AuthEntity, SystemConfiguration]),
     SecurityModule,
     IpWhitelistModule,
   ],
@@ -28,6 +31,7 @@ import { IpWhitelistModule } from './ip-whitelist.module';
     AdminProfileController,
     BrandListController,
     CreatorListController,
+    SystemConfigurationController,
     AdminController,
   ],
   providers: [
@@ -36,7 +40,9 @@ import { IpWhitelistModule } from './ip-whitelist.module';
     BrandListService,
     CreatorListService,
     SuperAdminGuard,
+    SystemConfigurationService,
   ],
-  exports: [AdminService, AdminProfileService],
+  // SystemConfigurationService export ra ngoài cho AdminMaintenanceInterceptor.
+  exports: [AdminService, AdminProfileService, SystemConfigurationService],
 })
 export class AdminModule {}

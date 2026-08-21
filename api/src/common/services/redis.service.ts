@@ -60,4 +60,26 @@ export class RedisCacheService {
     await this.setJson(key, data, ttlSeconds);
     return data;
   }
+
+  // async rotate(sessionID: string, oldJti: string, newJti: string) {
+  //   try {
+  //     return await this.redisRotate(sessionID, oldJti, newJti);
+  //   } catch (e) {
+  //     if (!this.isConnErr(e)) throw e;
+  //     this.logger.warn('Redis down -> rotate over to Postgres ');
+  //   }
+  //   const { rowCount } = await this.db.query(
+  //     `UPDATE sessions SET current_jti = $1
+  //     WHERE id = $2 AND current_jti = $3 AND revoked_at IS NULL AND expires_at > now()`,
+  //     [newJti, sessionId, oldJti],
+  //   );
+  //   if (rowCount === 0) {
+  //     // jti không khớp = token cũ bị dùng lại → thu hồi cả chuỗi
+  //     await this.db.query(
+  //       `UPDATE sessions SET revoked_at = now() WHERE id = $1`,
+  //       [sessionId],
+  //     );
+  //     throw new UnauthorizedException('Token reuse detected');
+  //   }
+  // }
 }

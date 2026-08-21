@@ -1040,6 +1040,93 @@
         ]
       }
     },
+    "/admin/system-config": {
+      "get": {
+        "operationId": "SystemConfigurationController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SystemConfigurationDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List every system configuration",
+        "tags": [
+          "Admin-SystemConfiguration"
+        ]
+      },
+      "patch": {
+        "description": "Validate toàn bộ trước rồi mới ghi: một giá trị sai thì không giá trị nào được ghi. Chỉ sửa được value, không sửa được type hay group.",
+        "operationId": "SystemConfigurationController_updateMany",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSystemConfigurationsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SystemConfigurationDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Duplicated keys, or a value does not match its stored type"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires super admin role, or IP not whitelisted"
+          },
+          "404": {
+            "description": "One or more keys do not exist"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Update one or more configurations. Super admin only",
+        "tags": [
+          "Admin-SystemConfiguration"
+        ]
+      }
+    },
     "/admin/admin-list": {
       "get": {
         "operationId": "AdminController_findAll",
@@ -3017,6 +3104,100 @@
           "status",
           "emailVerifiedAt",
           "createdAt"
+        ]
+      },
+      "ESystemConfig": {
+        "type": "number",
+        "enum": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "SystemConfigurationDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "value": {
+            "type": "string",
+            "description": "Luôn là chuỗi; đọc theo type"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ESystemConfig"
+              }
+            ]
+          },
+          "group": {
+            "type": "string",
+            "maxLength": 64,
+            "example": "environment"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "type",
+          "group",
+          "description",
+          "updatedBy",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateSystemConfigurationItemDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "ENV_SYSTEM_ACTIVE",
+            "maxLength": 128
+          },
+          "value": {
+            "type": "string",
+            "example": "false",
+            "description": "Luôn gửi dạng chuỗi"
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ]
+      },
+      "UpdateSystemConfigurationsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateSystemConfigurationItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       },
       "EAdminRole": {

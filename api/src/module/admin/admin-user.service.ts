@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Transactional } from 'typeorm-transactional';
 import { ERole } from '../../common/enum/roles.enum';
 import { ESortField } from '../../common/enum/sort-fields.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
@@ -159,7 +158,6 @@ export class AdminService {
     return { ...this.toAdminResponse(account, entries), adminRole };
   }
 
-  @Transactional()
   async updateAdminById(
     id: string,
     dto: UpdateAdminUserDto,

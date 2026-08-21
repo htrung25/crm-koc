@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Netmask } from 'netmask';
-import { BusinessCode } from './../../common/enum/business-code.enum';
+import { EBusinessCode } from './../../common/enum/business-code.enum';
 import { AdminUser } from './entities/admin-user.entity';
 import { EAdminRole } from './enum/admin-roles.enum';
 
@@ -54,8 +54,8 @@ export class IpWhitelistService {
             ? `Invalid CIDR format: ${entry}`
             : `Invalid IP address format: ${entry}`,
           businessCode: isCidr
-            ? BusinessCode.INVALID_CIDR_FORMAT
-            : BusinessCode.INVALID_IP_FORMAT,
+            ? EBusinessCode.INVALID_CIDR_FORMAT
+            : EBusinessCode.INVALID_IP_FORMAT,
         },
         HttpStatus.BAD_REQUEST,
       );
@@ -72,7 +72,7 @@ export class IpWhitelistService {
         throw new HttpException(
           {
             message: 'Invalid CIDR format.',
-            businessCode: BusinessCode.INVALID_CIDR_FORMAT,
+            businessCode: EBusinessCode.INVALID_CIDR_FORMAT,
           },
           HttpStatus.BAD_REQUEST,
         );
@@ -80,7 +80,7 @@ export class IpWhitelistService {
       throw new HttpException(
         {
           message: 'Invalid IP address format.',
-          businessCode: BusinessCode.INVALID_IP_FORMAT,
+          businessCode: EBusinessCode.INVALID_IP_FORMAT,
         },
         HttpStatus.BAD_REQUEST,
       );
@@ -114,7 +114,7 @@ export class IpWhitelistService {
     throw new HttpException(
       {
         message: `This change would lock you out: your current IP ${normalized} is not covered by the new whitelist.`,
-        businessCode: BusinessCode.IP_WHITELIST_WOULD_LOCK_YOU_OUT,
+        businessCode: EBusinessCode.IP_WHITELIST_WOULD_LOCK_YOU_OUT,
         clientIp: normalized,
       },
       HttpStatus.UNPROCESSABLE_ENTITY,
