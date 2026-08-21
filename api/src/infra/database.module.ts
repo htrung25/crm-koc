@@ -10,7 +10,7 @@ import { CreatorProfile } from '../module/creator/entities/creator-profile.entit
 import { SessionEvent } from '../module/auth/entities/session-event.entity';
 import { AdminUser } from '../module/admin/entities/admin-user.entity';
 import { SocialAccount } from '../module/creator/entities/social-account.entity';
-import { Collaboration } from '../module/brand/entities/collaboration.entity';
+import { Collaboration } from '../module/collaboration/entities/collaboration.entity';
 
 @Module({
   imports: [

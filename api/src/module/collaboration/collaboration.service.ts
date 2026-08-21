@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,14 +16,16 @@ import {
 } from '../../common/util/enum-assert.util';
 import { PaginatedResult, paginate } from '../../common/util/pagination.util';
 import { AuthEntity } from '../auth/entities/auth.entity';
+import { ERole } from '../../common/enum/roles.enum';
 import {
-  ALLOWED_TRANSITIONS,
+  ALL_STATUSES,
+  TRANSITION_ACTORS,
   OPEN_STATUSES,
   STATUS_LABEL,
   STATUS_TIMESTAMP,
   COLLABORATION_LIST_FIELDS,
 } from './constants/collaboration.constants';
-import { BrandProfileService } from './brand-profile.service';
+import { BrandProfileService } from '../brand/brand-profile.service';
 import { CreatorProfileService } from '../creator/creator-profile.service';
 import {
   COLLABORATION_SORT_FIELDS,
@@ -30,6 +33,7 @@ import {
   CreateCollaborationDto,
 } from './dto/collaboration.dto';
 import { Collaboration } from './entities/collaboration.entity';
+import { CollaborationActor } from './types/collaboration.types';
 
 /** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
 export type CollaborationListItem = Pick<
@@ -130,13 +134,15 @@ export class CollaborationService {
   }
 
   async findAll(
-    brandId: string,
+    actor: CollaborationActor,
     query: CollaborationFilterDto,
   ): Promise<PaginatedResult<CollaborationListItem>> {
+    const scopeColumn = actor.role === ERole.CREATOR ? 'creatorId' : 'brandId';
+
     const qb = this.collaborationRepository
       .createQueryBuilder('collaboration')
       .select(COLLABORATION_LIST_FIELDS.map((f) => `collaboration.${f}`))
-      .where('collaboration.brandId = :brandId', { brandId });
+      .where(`collaboration.${scopeColumn} = :actorId`, { actorId: actor.id });
 
     if (query.status !== undefined) {
       qb.andWhere('collaboration.status = :status', {
@@ -197,52 +203,76 @@ export class CollaborationService {
   }
 
   async updateStatus(
+    actor: CollaborationActor,
     id: string,
     next: ECollaborationStatus,
   ): Promise<Collaboration> {
-    const collab = await this.collaborationRepository.findOne({
-      where: { id },
-      lock: { mode: 'pessimistic_write' },
-    });
-    if (!collab) {
+    const collab = await this.collaborationRepository.findOneBy({ id });
+    // Không phải bên nào của hợp tác này thì trả 404 chứ không 403: 403 xác
+    // nhận hợp tác có tồn tại, đủ để dò UUID.
+    if (!collab || !this.canSee(actor, collab)) {
       throw new NotFoundException('collaboration not found');
     }
 
-    // Chặn TRƯỚC khi gán: khoá pessimistic_write ở trên giữ dòng suốt giao
-    // dịch nên hai request song song không cùng đọc được một trạng thái cũ.
-    this.assertTransition(collab.status, next);
+    this.assertTransition(collab.status, next, actor.role);
 
-    collab.status = next;
-
-    // Chỉ ghi lần đầu vào trạng thái đó: quay lại qua ngả DISPUTED không được
-    // ghi đè mốc thanh toán thật.
+    const patch: Partial<Collaboration> = { status: next };
+    // Chỉ ghi lần đầu vào trạng thái đó: quay lại qua ngả DISPUTED hay bị trả
+    // bài không được ghi đè mốc thật.
     const field = STATUS_TIMESTAMP[next];
     if (field && collab[field] === null) {
-      collab[field] = new Date();
+      patch[field] = new Date();
     }
 
-    return this.collaborationRepository.save(collab);
+    const result = await this.collaborationRepository.update(
+      { id, status: collab.status },
+      patch,
+    );
+    if (result.affected === 0) {
+      throw new ConflictException(
+        'collaboration was changed by someone else, reload and try again',
+      );
+    }
+
+    return this.collaborationRepository.findOneByOrFail({ id });
+  }
+
+  /** Admin xem được tất cả; hai bên còn lại chỉ xem hợp tác của mình. */
+  private canSee(actor: CollaborationActor, collab: Collaboration): boolean {
+    return (
+      actor.role === ERole.ADMIN ||
+      collab.brandId === actor.id ||
+      collab.creatorId === actor.id
+    );
   }
 
   /** Lỗi dùng tên trạng thái chứ không phải số, để FE hiện thẳng cho người dùng. */
   private assertTransition(
     current: ECollaborationStatus,
     next: ECollaborationStatus,
+    role: ERole,
   ): void {
-    const allowed = ALLOWED_TRANSITIONS[current];
-    if (allowed.includes(next)) {
-      return;
-    }
-
+    const transitions = TRANSITION_ACTORS[current];
+    const actors = transitions[next];
     const from = STATUS_LABEL[current];
     const to = STATUS_LABEL[next];
-    throw new BadRequestException(
-      allowed.length === 0
-        ? `${from} is a final status and cannot be changed`
-        : `cannot change status from ${from} to ${to}; allowed: ${allowed
-            .map((status) => STATUS_LABEL[status])
-            .join(', ')}`,
-    );
+
+    if (!actors) {
+      const allowed = ALL_STATUSES.filter((status) => transitions[status]).map(
+        (status) => STATUS_LABEL[status],
+      );
+      throw new BadRequestException(
+        allowed.length === 0
+          ? `${from} is a final status and cannot be changed`
+          : `cannot change status from ${from} to ${to}; allowed: ${allowed.join(', ')}`,
+      );
+    }
+
+    if (!actors.includes(role)) {
+      throw new ForbiddenException(
+        `only ${actors.join(' or ')} can change status from ${from} to ${to}`,
+      );
+    }
   }
 
   async countSuccessfulCreators(brandId: string): Promise<number> {

@@ -1,4 +1,10 @@
 import { ECollaborationStatus } from '../../../common/enum/collaboration-status.enum';
+import { ERole } from '../../../common/enum/roles.enum';
+
+/** Enum số nên Object.values trả cả tên lẫn số; lọc lấy phần số có kiểu. */
+export const ALL_STATUSES = Object.values(ECollaborationStatus).filter(
+  (value): value is ECollaborationStatus => typeof value === 'number',
+);
 
 /** Hợp tác đang dở: chặn tạo trùng. Xong hoặc huỷ rồi thì hợp tác lại được. */
 export const OPEN_STATUSES = [
@@ -28,29 +34,37 @@ export const STATUS_LABEL: Record<ECollaborationStatus, string> = {
  * quay ngược được — lối ra duy nhất là khiếu nại. CANCELLED là trạng thái
  * cuối: huỷ rồi thì tạo hợp tác mới chứ không hồi sinh cái cũ.
  */
-export const ALLOWED_TRANSITIONS: Record<
+const BOTH_PARTIES = [ERole.BRAND, ERole.CREATOR];
+
+export const TRANSITION_ACTORS: Record<
   ECollaborationStatus,
-  ECollaborationStatus[]
+  Partial<Record<ECollaborationStatus, ERole[]>>
 > = {
-  [ECollaborationStatus.PENDING]: [
-    ECollaborationStatus.ACTIVE,
-    ECollaborationStatus.CANCELLED,
-  ],
-  [ECollaborationStatus.ACTIVE]: [
-    ECollaborationStatus.SUBMITTED,
-    ECollaborationStatus.CANCELLED,
-    ECollaborationStatus.DISPUTED,
-  ],
-  [ECollaborationStatus.SUBMITTED]: [
-    ECollaborationStatus.COMPLETED,
+  [ECollaborationStatus.PENDING]: {
+    // Chỉ creator nhận việc. Brand tự nhận thay là mất lớp bảo vệ duy nhất
+    // khiến completed có giá trị.
+    [ECollaborationStatus.ACTIVE]: [ERole.CREATOR],
+    [ECollaborationStatus.CANCELLED]: BOTH_PARTIES,
+  },
+  [ECollaborationStatus.ACTIVE]: {
+    [ECollaborationStatus.SUBMITTED]: [ERole.CREATOR],
+    [ECollaborationStatus.CANCELLED]: BOTH_PARTIES,
+    [ECollaborationStatus.DISPUTED]: BOTH_PARTIES,
+  },
+  [ECollaborationStatus.SUBMITTED]: {
+    [ECollaborationStatus.COMPLETED]: [ERole.BRAND],
     // Brand từ chối bài, trả về cho creator làm lại.
-    ECollaborationStatus.ACTIVE,
-    ECollaborationStatus.CANCELLED,
-    ECollaborationStatus.DISPUTED,
-  ],
-  [ECollaborationStatus.COMPLETED]: [ECollaborationStatus.DISPUTED],
-  [ECollaborationStatus.CANCELLED]: [],
-  [ECollaborationStatus.DISPUTED]: [ECollaborationStatus.COMPLETED],
+    [ECollaborationStatus.ACTIVE]: [ERole.BRAND],
+    [ECollaborationStatus.CANCELLED]: BOTH_PARTIES,
+    [ECollaborationStatus.DISPUTED]: BOTH_PARTIES,
+  },
+  [ECollaborationStatus.COMPLETED]: {
+    [ECollaborationStatus.DISPUTED]: BOTH_PARTIES,
+  },
+  [ECollaborationStatus.CANCELLED]: {},
+  [ECollaborationStatus.DISPUTED]: {
+    [ECollaborationStatus.COMPLETED]: [ERole.ADMIN],
+  },
 };
 
 export type CollaborationTimestamp =

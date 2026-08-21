@@ -5,20 +5,15 @@ import { BrandProfile } from './entities/brand-profile.entity';
 import { BrandProfileService } from './brand-profile.service';
 import { BrandProfileController } from './brand-profile.controller';
 import { SecurityModule } from '../../security/security.module';
-import { Collaboration } from './entities/collaboration.entity';
-import { CollaborationService } from './collaboration.service';
-import { CollaborationController } from './collaboration.controller';
-import { CreatorModule } from '../creator/creator.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([BrandProfile, AuthEntity, Collaboration]),
+    TypeOrmModule.forFeature([BrandProfile, AuthEntity]),
     SecurityModule,
-    CreatorModule,
   ],
-  controllers: [BrandProfileController, CollaborationController],
-  providers: [BrandProfileService, CollaborationService],
+  controllers: [BrandProfileController],
+  providers: [BrandProfileService],
   // export để AuthService tạo hồ sơ lúc đăng ký mà không tự khai lại repository
-  exports: [BrandProfileService, CollaborationService],
+  exports: [BrandProfileService],
 })
 export class BrandModule {}

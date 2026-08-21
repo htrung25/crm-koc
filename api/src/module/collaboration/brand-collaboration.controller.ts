@@ -2,6 +2,9 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Request,
@@ -14,6 +17,7 @@ import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -29,7 +33,9 @@ import {
   CollaborationFilterDto,
   CollaborationDto,
   CreateCollaborationDto,
+  UpdateCollaborationStatusDto,
 } from './dto/collaboration.dto';
+import { CollaborationActor } from './types/collaboration.types';
 
 @ApiTags('Brand-Collaboration')
 @ApiBearerAuth('access-token')
@@ -37,7 +43,7 @@ import {
 // JwtAuthGuard chạy trước để nạp request.user, RolesGuard mới có cái để đọc.
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('brand/collaborations')
-export class CollaborationController {
+export class BrandCollaborationController {
   constructor(private readonly collaborationService: CollaborationService) {}
 
   @Get()
@@ -52,9 +58,9 @@ export class CollaborationController {
     @Request() request: { user: AuthenticatedAccount },
     @Query() query: CollaborationFilterDto,
   ) {
-    // brandId lấy từ token, không nhận từ query: nhận từ query là đọc được
+    // Phạm vi lấy từ token, không nhận từ query: nhận từ query là đọc được
     // giá đã chốt của brand khác.
-    return this.collaborationService.findAll(request.user.id, query);
+    return this.collaborationService.findAll(this.actor(request.user), query);
   }
 
   @Post()
@@ -78,5 +84,44 @@ export class CollaborationController {
   ) {
     // brandId lấy từ token: nhận từ body là tạo hợp tác hộ brand khác.
     return this.collaborationService.create(request.user.id, dto);
+  }
+
+  @Patch('/:id/status')
+  @ApiOperation({
+    summary: 'Move a collaboration to the next status',
+    description:
+      'Brand duyệt bài (submitted -> completed), trả bài về (submitted -> ' +
+      'active), huỷ, hoặc mở tranh chấp. Nhận việc và nộp bài là quyền creator.',
+  })
+  @ApiOkResponse({ type: CollaborationDto })
+  @ApiBadRequestResponse({ description: 'Transition is not allowed' })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Not a brand account, or this transition belongs to the other party',
+  })
+  @ApiNotFoundResponse({
+    description: 'Collaboration not found, or not yours',
+  })
+  @ApiConflictResponse({
+    description: 'Someone else changed the status first',
+  })
+  async updateStatus(
+    @Request() request: { user: AuthenticatedAccount },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateCollaborationStatusDto,
+  ) {
+    return this.collaborationService.updateStatus(
+      this.actor(request.user),
+      id,
+      dto.status,
+    );
+  }
+
+  /** Vai trò lấy từ guard của controller, không đọc lại accountRole trên token. */
+  private actor(user: AuthenticatedAccount): CollaborationActor {
+    return { id: user.id, role: ERole.BRAND };
   }
 }

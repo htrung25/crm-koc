@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ECollaborationStatus } from '../../../common/enum/collaboration-status.enum';
-import { BrandProfile } from './brand-profile.entity';
+import { BrandProfile } from '../../brand/entities/brand-profile.entity';
 import { CreatorProfile } from '../../creator/entities/creator-profile.entity';
 
 @Index('idx_collaborations_brand_status', ['brandId', 'status'])

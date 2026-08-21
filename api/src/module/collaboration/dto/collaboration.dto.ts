@@ -48,6 +48,22 @@ export class CreateCollaborationDto {
   agreedPrice?: number;
 }
 
+/**
+ * Body của PATCH .../collaborations/:id/status.
+ * Trạng thái đích; ai được chuyển sang đâu do service quyết định theo vai trò.
+ */
+export class UpdateCollaborationStatusDto {
+  @IsEnum(ECollaborationStatus, {
+    message:
+      'status must be 1 (pending), 2 (active), 3 (submitted), 4 (completed), 5 (cancelled) or 6 (disputed)',
+  })
+  @ApiProperty({
+    enum: ECollaborationStatus,
+    enumName: 'ECollaborationStatus',
+  })
+  status: ECollaborationStatus;
+}
+
 /** Một dòng hợp tác trong danh sách. */
 export class CollaborationDto {
   @ApiProperty({ format: 'uuid' })
