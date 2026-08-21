@@ -76,6 +76,9 @@ export class CollaborationDto {
   startedAt: Date | null;
 
   @ApiProperty({ nullable: true, type: Date, format: 'date-time' })
+  submittedAt: Date | null;
+
+  @ApiProperty({ nullable: true, type: Date, format: 'date-time' })
   completedAt: Date | null;
 
   @ApiProperty({ nullable: true, type: Date, format: 'date-time' })
@@ -95,7 +98,7 @@ export class CollaborationFilterDto extends PaginationDto {
   @Type(() => Number)
   @IsEnum(ECollaborationStatus, {
     message:
-      'status must be 1 (pending), 2 (active), 3 (completed), 4 (cancelled) or 5 (disputed)',
+      'status must be 1 (pending), 2 (active), 3 (submitted), 4 (completed), 5 (cancelled) or 6 (disputed)',
   })
   @ApiPropertyOptional({
     enum: ECollaborationStatus,

@@ -49,6 +49,10 @@ export class Collaboration {
   @Column({ type: 'timestamptz', nullable: true })
   startedAt: Date | null;
 
+  /** Lúc creator nộp bài, chờ brand duyệt. */
+  @Column({ type: 'timestamptz', nullable: true })
+  submittedAt: Date | null;
+
   @Column({ type: 'timestamptz', nullable: true })
   completedAt: Date | null;
 

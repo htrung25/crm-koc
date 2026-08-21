@@ -15,6 +15,13 @@ import {
 } from '../../common/util/enum-assert.util';
 import { PaginatedResult, paginate } from '../../common/util/pagination.util';
 import { AuthEntity } from '../auth/entities/auth.entity';
+import {
+  ALLOWED_TRANSITIONS,
+  OPEN_STATUSES,
+  STATUS_LABEL,
+  STATUS_TIMESTAMP,
+  COLLABORATION_LIST_FIELDS,
+} from './constants/collaboration.constants';
 import { BrandProfileService } from './brand-profile.service';
 import { CreatorProfileService } from '../creator/creator-profile.service';
 import {
@@ -23,26 +30,6 @@ import {
   CreateCollaborationDto,
 } from './dto/collaboration.dto';
 import { Collaboration } from './entities/collaboration.entity';
-
-/** Hợp tác đang dở: chặn tạo trùng. Xong hoặc huỷ rồi thì hợp tác lại được. */
-const OPEN_STATUSES = [
-  ECollaborationStatus.PENDING,
-  ECollaborationStatus.ACTIVE,
-];
-
-const COLLABORATION_LIST_FIELDS = [
-  'id',
-  'brandId',
-  'creatorId',
-  'campaignId',
-  'status',
-  'agreedPrice',
-  'startedAt',
-  'completedAt',
-  'cancelledAt',
-  'createdAt',
-  'updatedAt',
-] as const;
 
 /** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
 export type CollaborationListItem = Pick<
@@ -221,12 +208,41 @@ export class CollaborationService {
       throw new NotFoundException('collaboration not found');
     }
 
+    // Chặn TRƯỚC khi gán: khoá pessimistic_write ở trên giữ dòng suốt giao
+    // dịch nên hai request song song không cùng đọc được một trạng thái cũ.
+    this.assertTransition(collab.status, next);
+
     collab.status = next;
-    if (next === ECollaborationStatus.COMPLETED) {
-      collab.completedAt = new Date();
+
+    // Chỉ ghi lần đầu vào trạng thái đó: quay lại qua ngả DISPUTED không được
+    // ghi đè mốc thanh toán thật.
+    const field = STATUS_TIMESTAMP[next];
+    if (field && collab[field] === null) {
+      collab[field] = new Date();
     }
 
     return this.collaborationRepository.save(collab);
+  }
+
+  /** Lỗi dùng tên trạng thái chứ không phải số, để FE hiện thẳng cho người dùng. */
+  private assertTransition(
+    current: ECollaborationStatus,
+    next: ECollaborationStatus,
+  ): void {
+    const allowed = ALLOWED_TRANSITIONS[current];
+    if (allowed.includes(next)) {
+      return;
+    }
+
+    const from = STATUS_LABEL[current];
+    const to = STATUS_LABEL[next];
+    throw new BadRequestException(
+      allowed.length === 0
+        ? `${from} is a final status and cannot be changed`
+        : `cannot change status from ${from} to ${to}; allowed: ${allowed
+            .map((status) => STATUS_LABEL[status])
+            .join(', ')}`,
+    );
   }
 
   async countSuccessfulCreators(brandId: string): Promise<number> {

@@ -17,38 +17,20 @@ import {
   assertEnum,
   assertNumericEnum,
 } from '../../common/util/enum-assert.util';
+import {
+  BRAND_LIST_FIELDS,
+  BRAND_DETAIL_COLUMNS,
+} from './constants/user-list.constants';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { AccountCacheService } from '../../security/account-cache.service';
 import { SessionService } from '../../security/session.service';
 import { BrandFilterDto } from './dto/brand-list.dto';
-
-const BRAND_LIST_FIELDS = [
-  'id',
-  'name',
-  'email',
-  'phone',
-  'accountRole',
-  'status',
-  'createdAt',
-] as const;
 
 /** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
 export type BrandListItem = Pick<
   AuthEntity,
   (typeof BRAND_LIST_FIELDS)[number]
 >;
-
-/** Chi tiết brand: đúng bằng các cột đã select, không kèm brand_profiles. */
-const BRAND_DETAIL_COLUMNS = {
-  id: true,
-  name: true,
-  email: true,
-  phone: true,
-  accountRole: true,
-  status: true,
-  emailVerifiedAt: true,
-  createdAt: true,
-} as const;
 
 export type BrandDetail = Pick<AuthEntity, keyof typeof BRAND_DETAIL_COLUMNS>;
 

@@ -17,38 +17,20 @@ import {
   assertEnum,
   assertNumericEnum,
 } from '../../common/util/enum-assert.util';
+import {
+  CREATOR_LIST_FIELDS,
+  CREATOR_DETAIL_COLUMNS,
+} from './constants/user-list.constants';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { AccountCacheService } from '../../security/account-cache.service';
 import { SessionService } from '../../security/session.service';
 import { CreatorFilterDto } from './dto/creator-list.dto';
-
-const CREATOR_LIST_FIELDS = [
-  'id',
-  'name',
-  'email',
-  'phone',
-  'accountRole',
-  'status',
-  'createdAt',
-] as const;
 
 /** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
 export type CreatorListItem = Pick<
   AuthEntity,
   (typeof CREATOR_LIST_FIELDS)[number]
 >;
-
-/** Chi tiết creator: đúng bằng các cột đã select, không kèm creator_profiles. */
-const CREATOR_DETAIL_COLUMNS = {
-  id: true,
-  name: true,
-  email: true,
-  phone: true,
-  accountRole: true,
-  status: true,
-  emailVerifiedAt: true,
-  createdAt: true,
-} as const;
 
 export type CreatorDetail = Pick<
   AuthEntity,
