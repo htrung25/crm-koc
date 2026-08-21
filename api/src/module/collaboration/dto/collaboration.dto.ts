@@ -12,16 +12,7 @@ import {
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { ECollaborationStatus } from '../../../common/enum/collaboration-status.enum';
 import { ESortField, ESortOrder } from '../../../common/enum/sort-fields.enum';
-
-/** collaborations không có cột name/email nên không nhận trọn ESortField. */
-export const COLLABORATION_SORT_FIELDS = [
-  ESortField.CREATED_AT,
-  ESortField.UPDATED_AT,
-  ESortField.STATUS,
-  ESortField.AGREED_PRICE,
-  ESortField.COMPLETED_AT,
-] as const;
-
+import { COLLABORATION_SORT_FIELDS } from '../constants/collaboration.constants';
 /**
  * Body của POST /brand/collaborations.
  * KHÔNG có brandId: lấy từ token, nhận từ body là tạo hợp tác hộ brand khác.

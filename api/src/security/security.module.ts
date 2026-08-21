@@ -9,6 +9,7 @@ import { SessionService } from './session.service';
 import { JwtAuthService } from './jwt-auth.service';
 import { AccountCacheService } from './account-cache.service';
 import { TokenBlacklistService } from './token-blacklist.service';
+import { StorageService } from '../common/services/storage.service';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { TokenBlacklistService } from './token-blacklist.service';
     SessionEventService,
     SessionService,
     JwtAuthService,
+    StorageService,
   ],
   exports: [
     AccountCacheService,
@@ -43,6 +45,7 @@ import { TokenBlacklistService } from './token-blacklist.service';
     SessionService,
     JwtAuthService,
     JwtModule,
+    StorageService,
   ],
 })
 export class SecurityModule {}

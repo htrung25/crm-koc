@@ -28,31 +28,15 @@ import {
 import { BrandProfileService } from '../brand/brand-profile.service';
 import { CreatorProfileService } from '../creator/creator-profile.service';
 import {
-  COLLABORATION_SORT_FIELDS,
   CollaborationFilterDto,
   CreateCollaborationDto,
 } from './dto/collaboration.dto';
+import {
+  CollaborationListItem,
+  assertSortField,
+} from './constants/collaboration.constants';
 import { Collaboration } from './entities/collaboration.entity';
 import { CollaborationActor } from './types/collaboration.types';
-
-/** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
-export type CollaborationListItem = Pick<
-  Collaboration,
-  (typeof COLLABORATION_LIST_FIELDS)[number]
->;
-
-/** sortBy đi thẳng vào SQL nên phải khớp danh sách cột cho phép. */
-function assertSortField(
-  value: string,
-): (typeof COLLABORATION_SORT_FIELDS)[number] {
-  const allowed = COLLABORATION_SORT_FIELDS as readonly string[];
-  if (!allowed.includes(value)) {
-    throw new BadRequestException(
-      `sortBy must be one of: ${allowed.join(', ')}`,
-    );
-  }
-  return value as (typeof COLLABORATION_SORT_FIELDS)[number];
-}
 
 @Injectable()
 export class CollaborationService {

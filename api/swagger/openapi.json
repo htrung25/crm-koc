@@ -1,6 +1,415 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/kyc/submissions": {
+      "post": {
+        "description": "Đã có hồ sơ đang mở thì trả lại chính nó — bấm hai lần không tạo hai hồ sơ. Lần trước bị từ chối thì mở lượt kế tiếp và kế thừa tài liệu cũ.",
+        "operationId": "KycController_open",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KycSubmissionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "KYC attempts exhausted"
+          },
+          "409": {
+            "description": "KYC is already verified for this role"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Open a KYC submission for your active role",
+        "tags": [
+          "KYC"
+        ]
+      }
+    },
+    "/kyc/submissions/me/documents": {
+      "post": {
+        "operationId": "KycController_uploadDocument",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "docType"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "docType": {
+                    "type": "integer",
+                    "example": 3
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KycDocumentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported file type, too large, or wrong doc type for role"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "404": {
+            "description": "No open submission"
+          },
+          "409": {
+            "description": "Submission is under review"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Upload one document to your open submission",
+        "tags": [
+          "KYC"
+        ]
+      }
+    },
+    "/kyc/submissions/me/submit": {
+      "post": {
+        "operationId": "KycController_submit",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KycSubmissionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required documents"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "404": {
+            "description": "No open submission"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Send your submission to the review queue",
+        "tags": [
+          "KYC"
+        ]
+      }
+    },
+    "/kyc/submissions/me": {
+      "get": {
+        "operationId": "KycController_findMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KycSubmissionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Your latest submission, its documents and attempts left",
+        "tags": [
+          "KYC"
+        ]
+      }
+    },
+    "/admin/kyc": {
+      "get": {
+        "operationId": "KycAdminController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EKycStatus"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "brand",
+                "creator"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/FilterResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/KycSubmissionDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed filter value"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Review queue: priority first, then submission order",
+        "tags": [
+          "Admin-KYC"
+        ]
+      }
+    },
+    "/admin/kyc/{id}": {
+      "get": {
+        "operationId": "KycAdminController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KycSubmissionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Submission not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "One submission with its document metadata",
+        "tags": [
+          "Admin-KYC"
+        ]
+      }
+    },
+    "/admin/kyc/{id}/documents/{documentId}": {
+      "get": {
+        "operationId": "KycAdminController_downloadDocument",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Buffer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires admin role"
+          },
+          "404": {
+            "description": "Submission not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Download document by documentId",
+        "tags": [
+          "Admin-KYC"
+        ]
+      }
+    },
+    "/admin/kyc/{id}/status": {
+      "patch": {
+        "description": "Từ chối ở lượt thứ 3 sẽ chuyển thẳng sang LOCKED — người dùng hết đường nộp lại và trạng thái phải nói đúng điều đó.",
+        "operationId": "KycAdminController_review",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewKycDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KycSubmissionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Transition not allowed, or missing reason/note"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Requires super admin role, or IP not whitelisted"
+          },
+          "404": {
+            "description": "Submission not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Approve, ask for more info, reject, or revoke. kyc.review only",
+        "tags": [
+          "Admin-KYC"
+        ]
+      }
+    },
     "/login/admin": {
       "post": {
         "operationId": "AuthController_loginAdmin",
@@ -2472,6 +2881,229 @@
       }
     },
     "schemas": {
+      "EKycStatus": {
+        "type": "number",
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "EKycRejectReason": {
+        "type": "number",
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "KycSubmissionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "brand",
+              "creator"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EKycStatus"
+              }
+            ]
+          },
+          "attemptNo": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "priority": {
+            "type": "boolean"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "reviewedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "reviewedBy": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "rejectReason": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EKycRejectReason"
+              }
+            ]
+          },
+          "reviewNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "role",
+          "status",
+          "attemptNo",
+          "priority",
+          "submittedAt",
+          "reviewedAt",
+          "reviewedBy",
+          "rejectReason",
+          "reviewNote",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "EKycDocumentType": {
+        "type": "number",
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "KycDocumentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "docType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EKycDocumentType"
+              }
+            ]
+          },
+          "originalName": {
+            "type": "string",
+            "nullable": true
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "deletedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "docType",
+          "originalName",
+          "mimeType",
+          "sizeBytes",
+          "deletedAt",
+          "createdAt"
+        ]
+      },
+      "FilterResponseDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "example": 42,
+            "description": "Total rows matching the filter"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "Buffer": {
+        "type": "object",
+        "properties": {}
+      },
+      "ReviewKycDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "number",
+            "enum": [
+              4,
+              3,
+              5,
+              7
+            ]
+          },
+          "rejectReason": {
+            "description": "Bắt buộc khi status = rejected",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EKycRejectReason"
+              }
+            ]
+          },
+          "reviewNote": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Bắt buộc khi rejectReason = 'other', hoặc khi status = more_info"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
       "LoginAdminDto": {
         "type": "object",
         "properties": {
@@ -2890,34 +3522,6 @@
         "required": [
           "oldPassword",
           "newPassword"
-        ]
-      },
-      "FilterResponseDto": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "number",
-            "example": 42,
-            "description": "Total rows matching the filter"
-          },
-          "page": {
-            "type": "number",
-            "example": 1
-          },
-          "limit": {
-            "type": "number",
-            "example": 20
-          },
-          "totalPages": {
-            "type": "number",
-            "example": 3
-          }
-        },
-        "required": [
-          "total",
-          "page",
-          "limit",
-          "totalPages"
         ]
       },
       "AccountFilterItemDto": {
