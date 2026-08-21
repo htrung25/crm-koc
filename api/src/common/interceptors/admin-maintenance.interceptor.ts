@@ -1,62 +1,85 @@
-// import {
-//   CallHandler,
-//   ExecutionContext,
-//   HttpException,
-//   HttpStatus,
-//   Injectable,
-//   NestInterceptor,
-// } from '@nestjs/common';
-// import { Observable } from 'rxjs';
-// import { SystemConfigurationService } from '../../module/admin/system-configuration.service';
+import {
+  CallHandler,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NestInterceptor,
+} from '@nestjs/common';
+import type { Request } from 'express';
+import { Observable } from 'rxjs';
+import { EBusinessCode } from '../enum/business-code.enum';
+import { ERole } from '../enum/roles.enum';
+import { SystemConfigurationService } from '../../module/admin/system-configuration.service';
+import { AuthenticatedAccount } from '../../module/auth/entities/authenticated.entity';
 
-// @Injectable()
-// export class AdminMaintenanceInterceptor implements NestInterceptor {
-//   constructor(
-//     private readonly systemConfigurationService: SystemConfigurationService,
-//   ) {}
+/** Kiểu thật của request sau khi guard chạy — guard luôn chạy TRƯỚC interceptor. */
+type MaintenanceRequest = Request & { user?: AuthenticatedAccount };
 
-//   async intercept(
-//     context: ExecutionContext,
-//     next: CallHandler,
-//   ): Promise<Observable<any>> {
-//     const toggles =
-//       await this.systemConfigurationService.getEnvironmentToggles();
-//     const isSystemActive = toggles?.ENV_SYSTEM_ACTIVE ?? true;
+/**
+ * Đường luôn cho qua kể cả khi đang bảo trì
+ * Endpoint sửa cấu hình không cần ở đây vì admin đã được miễn trừ theo vai trò.
+ */
+const ALWAYS_ALLOWED_PATHS = [
+  '/login/admin',
+  '/verify-otp',
+  '/resend-otp',
+  '/logout',
+];
 
-//     if (!isSystemActive) {
-//       const request = context.switchToHttp().getRequest();
-//       const url = request.url || '';
-//       const PUBLIC_ENDPOINTS = [
-//         '/apis/admin/login',
-//         '/apis/admin/verify-otp',
-//         '/apis/admin/resend-otp',
-//         '/apis/admin/logout',
-//       ];
+@Injectable()
+export class AdminMaintenanceInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(AdminMaintenanceInterceptor.name);
 
-//       // If it's a public auth endpoint, we must let it pass so users can log in
-//       if (PUBLIC_ENDPOINTS.some((ep) => url.includes(ep))) {
-//         return next.handle();
-//       }
+  constructor(
+    private readonly systemConfigurationService: SystemConfigurationService,
+  ) {}
 
-//       const adminInfo = request.admin;
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<unknown>> {
+    if (await this.isSystemActive()) {
+      return next.handle();
+    }
 
-//       // Allow if the user has ADMIN role (bypassing maintenance mode)
-//       const isSuperAdmin = adminInfo && adminInfo.role === 'admin';
+    const request = context.switchToHttp().getRequest<MaintenanceRequest>();
 
-//       if (!isSuperAdmin) {
-//         throw new HttpException(
-//           {
-//             statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-//             error: 'Service Unavailable',
-//             message:
-//               'Hệ thống đang bảo trì. Chỉ có Admin mới có thể thao tác lúc này.',
-//             code: 'ERR_MAINTENANCE',
-//           },
-//           HttpStatus.SERVICE_UNAVAILABLE,
-//         );
-//       }
-//     }
+    // So khớp trên path, không phải url: url còn mang query string nên
+    // includes() sẽ cho lọt cả '/x?next=/logout'.
+    if (ALWAYS_ALLOWED_PATHS.includes(request.path)) {
+      return next.handle();
+    }
 
-//     return next.handle();
-//   }
-// }
+    // request.user do guard nạp, KHÔNG phải request.admin. Và field là
+    // accountRole chứ không phải role — role chỉ có trong payload JWT.
+    if (request.user?.accountRole === ERole.ADMIN) {
+      return next.handle();
+    }
+
+    throw new HttpException(
+      {
+        businessCode: EBusinessCode.SYSTEM_UNDER_MAINTENANCE,
+        error: 'Service Unavailable',
+        message:
+          'Hệ thống đang bảo trì. Chỉ có Admin mới có thể thao tác lúc này.',
+      },
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
+  }
+
+  private async isSystemActive(): Promise<boolean> {
+    try {
+      const toggles =
+        await this.systemConfigurationService.getEnvironmentToggles();
+      return toggles.ENV_SYSTEM_ACTIVE !== false;
+    } catch (error) {
+      this.logger.error(
+        'Không đọc được cờ bảo trì, tạm coi hệ thống đang bật',
+        error instanceof Error ? error.stack : String(error),
+      );
+      return true;
+    }
+  }
+}

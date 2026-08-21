@@ -5,6 +5,7 @@
  *   2000-2999    admin / ip whitelist
  *   3000-3999    collaboration
  *   4000-4999    creator / social
+ *   5000-5999    hệ thống / vận hành
  */
 export enum EBusinessCode {
   SUCCESS = 0,
@@ -13,4 +14,6 @@ export enum EBusinessCode {
   INVALID_IP_FORMAT = 2000,
   INVALID_CIDR_FORMAT = 2001,
   IP_WHITELIST_WOULD_LOCK_YOU_OUT = 2002,
+
+  SYSTEM_UNDER_MAINTENANCE = 5000,
 }

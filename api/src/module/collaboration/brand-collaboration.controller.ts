@@ -37,7 +37,7 @@ import {
 } from './dto/collaboration.dto';
 import { CollaborationActor } from './types/collaboration.types';
 
-@ApiTags('Brand-Collaboration')
+@ApiTags('Collaboration')
 @ApiBearerAuth('access-token')
 @Roles(ERole.BRAND)
 // JwtAuthGuard chạy trước để nạp request.user, RolesGuard mới có cái để đọc.

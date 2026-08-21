@@ -2112,7 +2112,7 @@
         ],
         "summary": "List your own collaborations, paginated",
         "tags": [
-          "Brand-Collaboration"
+          "Collaboration"
         ]
       },
       "post": {
@@ -2162,7 +2162,7 @@
         ],
         "summary": "Start a collaboration with a creator",
         "tags": [
-          "Brand-Collaboration"
+          "Collaboration"
         ]
       }
     },
@@ -2224,7 +2224,7 @@
         ],
         "summary": "Move a collaboration to the next status",
         "tags": [
-          "Brand-Collaboration"
+          "Collaboration"
         ]
       }
     },
@@ -2388,7 +2388,7 @@
         ],
         "summary": "List collaborations you were invited to",
         "tags": [
-          "Creator-Collaboration"
+          "Collaboration"
         ]
       }
     },
@@ -2450,7 +2450,7 @@
         ],
         "summary": "Move a collaboration to the next status",
         "tags": [
-          "Creator-Collaboration"
+          "Collaboration"
         ]
       }
     }
