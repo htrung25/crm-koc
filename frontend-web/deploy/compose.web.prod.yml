@@ -1,0 +1,14 @@
+name: crm-koc-prod-web
+
+services:
+  web:
+    networks:
+      internal:
+      edge:
+        aliases:
+          - web-prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M

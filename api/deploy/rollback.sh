@@ -9,7 +9,8 @@ STACK="${1:?usage: rollback.sh <staging|prod> [image-tag]}"
 TAG="${2:-}"
 
 ROOT="${DEPLOY_ROOT:-/srv/crm-koc}"
-DIR="$ROOT/$STACK"
+DIR="$ROOT/api-$STACK"
+ENV_DIR="$ROOT/$STACK"
 REGISTRY="${REGISTRY:-ghcr.io}"
 OWNER="${IMAGE_OWNER:-htrung25}"
 READY_TIMEOUT="${READY_TIMEOUT:-90}"
@@ -25,20 +26,21 @@ if [ -z "$TAG" ]; then
 fi
 
 compose() {
-  docker compose \
+  STACK="$STACK" docker compose \
+    --env-file "$ENV_DIR/.env" \
     --env-file .env.deploy \
-    -f compose.base.yml \
-    -f "compose.$STACK.yml" \
+    -f compose.api.base.yml \
+    -f "compose.api.$STACK.yml" \
     "$@"
 }
 
 cat > .env.deploy <<EOF
 IMAGE_TAG=$TAG
 API_IMAGE=$REGISTRY/$OWNER/crm-koc-api:$TAG
-WEB_IMAGE=$REGISTRY/$OWNER/crm-koc-web:$TAG
+STACK=$STACK
 EOF
 
-echo "==> rollback $STACK về $TAG"
+echo "==> rollback API $STACK về $TAG"
 compose pull
 compose up -d --remove-orphans
 
@@ -50,12 +52,12 @@ while [ "$SECONDS" -lt "$deadline" ]; do
         .catch(() => process.exit(1));
     " 2>/dev/null; then
     echo "$TAG" > .last-good
-    echo "✅ $STACK đã về $TAG"
+    echo "✅ API $STACK đã về $TAG"
     exit 0
   fi
   sleep 3
 done
 
-echo "!! rollback cũng không xanh — mở docs/runbook/incident.md" >&2
+echo "!! rollback API cũng không xanh — mở docs/runbook/incident.md" >&2
 compose logs --tail 100 api api-migrate >&2 || true
 exit 1

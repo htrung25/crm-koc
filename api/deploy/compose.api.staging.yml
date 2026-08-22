@@ -1,0 +1,21 @@
+name: crm-koc-staging-api
+
+services:
+  api:
+    networks:
+      internal:
+      edge:
+        aliases:
+          - api-staging
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+
+  api-migrate:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M

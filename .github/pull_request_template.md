@@ -6,7 +6,7 @@
 
 - [ ] `api/`
 - [ ] `frontend-web/`
-- [ ] hạ tầng (`deploy/`, `.github/`)
+- [ ] hạ tầng (`infra/`, `.github/`)
 
 ## Migration
 

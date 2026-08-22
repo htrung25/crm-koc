@@ -3,8 +3,7 @@
 #
 #   ./deploy.sh staging sha-1a2b3c4
 #
-# Ghim tag bất biến (sha-*). KHÔNG bao giờ dùng `latest` hay tag nhánh: tag
-# nhánh trỏ vào image khác nhau theo thời gian nên rollback mất ý nghĩa.
+# Ghim tag bất biến (sha-*). KHÔNG bao giờ dùng `latest` hay tag nhánh.
 set -euo pipefail
 
 STACK="${1:?usage: deploy.sh <staging|prod> <image-tag>}"
@@ -26,7 +25,9 @@ case "$TAG" in
 esac
 
 ROOT="${DEPLOY_ROOT:-/srv/crm-koc}"
-DIR="$ROOT/$STACK"
+DIR="$ROOT/api-$STACK"
+ENV_DIR="$ROOT/$STACK"
+INFRA_DIR="$ROOT/infra"
 REGISTRY="${REGISTRY:-ghcr.io}"
 OWNER="${IMAGE_OWNER:-htrung25}"
 READY_TIMEOUT="${READY_TIMEOUT:-90}"
@@ -35,18 +36,27 @@ READY_TIMEOUT="${READY_TIMEOUT:-90}"
   echo "không thấy $DIR — chạy provision.sh trước" >&2
   exit 1
 }
-[ -f "$DIR/.env" ] || {
-  echo "không thấy $DIR/.env — job deploy phải ghi file này trước" >&2
+[ -f "$ENV_DIR/.env" ] || {
+  echo "không thấy $ENV_DIR/.env — job deploy phải ghi file này trước" >&2
   exit 1
 }
 
 cd "$DIR"
 
+# Đảm bảo database & redis stack đang chạy
+echo "==> kiểm tra database/cache stack ($STACK)"
+docker compose \
+  --env-file "$ENV_DIR/.env" \
+  -f "$INFRA_DIR/compose.db.yml" \
+  -p "crm-koc-${STACK}-db" \
+  up -d
+
 compose() {
-  docker compose \
+  STACK="$STACK" docker compose \
+    --env-file "$ENV_DIR/.env" \
     --env-file .env.deploy \
-    -f compose.base.yml \
-    -f "compose.$STACK.yml" \
+    -f compose.api.base.yml \
+    -f "compose.api.$STACK.yml" \
     "$@"
 }
 
@@ -88,15 +98,13 @@ fi
 cat > .env.deploy <<EOF
 IMAGE_TAG=$TAG
 API_IMAGE=$REGISTRY/$OWNER/crm-koc-api:$TAG
-WEB_IMAGE=$REGISTRY/$OWNER/crm-koc-web:$TAG
+STACK=$STACK
 EOF
 
-echo "==> pull $TAG"
+echo "==> pull API $TAG"
 compose pull
 
-echo "==> up"
-# api chỉ start sau khi api-migrate exit 0, nên migration hỏng là dừng ở đây và
-# container cũ vẫn đang phục vụ traffic.
+echo "==> up API"
 if ! compose up -d --remove-orphans; then
   echo "!! up thất bại" >&2
   auto_rollback
@@ -108,11 +116,10 @@ if ! wait_ready; then
   auto_rollback
 fi
 
-# Chỉ ghi .last-good sau khi đã xanh, để lần deploy hỏng kế tiếp có đích lùi.
 [ -f .last-good ] && cp .last-good .previous-good
 echo "$TAG" > .last-good
 
 echo "==> dọn image cũ"
 docker image prune -f > /dev/null
 
-echo "✅ $STACK đang chạy $TAG"
+echo "✅ API $STACK đang chạy $TAG"

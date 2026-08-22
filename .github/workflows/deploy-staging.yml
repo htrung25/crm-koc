@@ -65,7 +65,7 @@ jobs:
           STORAGE_BUCKET: ${{ secrets.STORAGE_BUCKET }}
         run: |
           umask 077
-          bash deploy/render-env.sh > rendered.env
+          bash infra/render-env.sh > rendered.env
           bash scripts/check-env.sh --compare api/.env.example rendered.env
 
       - name: Setup SSH
@@ -86,18 +86,21 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
         run: |
-          target="/srv/crm-koc/staging"
           ssh_opts="-i $HOME/.ssh/id_deploy -o StrictHostKeyChecking=yes"
+          ssh $ssh_opts "$SSH_USER@$SSH_HOST" "mkdir -p /srv/crm-koc/{infra,staging,api-staging,web-staging}"
 
-          rsync -az -e "ssh $ssh_opts" \
-            deploy/compose.base.yml deploy/compose.staging.yml \
-            deploy/deploy.sh deploy/rollback.sh deploy/backup.sh deploy/restore.sh \
-            scripts/check-env.sh api/.env.example \
-            "$SSH_USER@$SSH_HOST:$target/"
+          rsync -az -e "ssh $ssh_opts" infra/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/infra/"
+          rsync -az -e "ssh $ssh_opts" api/deploy/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/api-staging/"
+          rsync -az -e "ssh $ssh_opts" frontend-web/deploy/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/web-staging/"
 
-          scp $ssh_opts rendered.env "$SSH_USER@$SSH_HOST:$target/.env"
+          scp $ssh_opts rendered.env "$SSH_USER@$SSH_HOST:/srv/crm-koc/staging/.env"
 
           ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
-            "chmod 600 $target/.env && chmod +x $target/*.sh && \
-             GHCR_USER='$GHCR_USER' GHCR_TOKEN='$GHCR_TOKEN' \
-             $target/deploy.sh staging '$IMAGE_TAG'"
+            "chmod 600 /srv/crm-koc/staging/.env && \
+             chmod +x /srv/crm-koc/infra/*.sh /srv/crm-koc/api-staging/*.sh /srv/crm-koc/web-staging/*.sh && \
+             GHCR_USER='$GHCR_USER' GHCR_TOKEN='$GHCR_TOKEN' /srv/crm-koc/api-staging/deploy.sh staging '$IMAGE_TAG' && \
+             GHCR_USER='$GHCR_USER' GHCR_TOKEN='$GHCR_TOKEN' /srv/crm-koc/web-staging/deploy.sh staging '$IMAGE_TAG'"
+
+      - name: Cleanup secrets
+        if: always()
+        run: rm -f rendered.env ~/.ssh/id_deploy

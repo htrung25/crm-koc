@@ -1,0 +1,27 @@
+# Định nghĩa compose cho service Frontend Web.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
+services:
+  web:
+    image: ${WEB_IMAGE:?WEB_IMAGE chưa được set}
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      API_URL: http://api:3000
+    logging: *default-logging
+    networks:
+      - internal
+      - edge
+
+networks:
+  internal:
+    external: true
+    name: ${STACK:-staging}_internal
+  edge:
+    external: true
+    name: edge
