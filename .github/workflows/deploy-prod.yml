@@ -1,6 +1,6 @@
 name: deploy-prod
 
-# Tag v* => chờ approval của environment `production` => SSH => deploy.sh prod.
+# Tag v* => chờ approval của environment `production` => SSH => deploy.
 # Không build lại: tag phải trỏ vào commit đã có image trên GHCR (tức là commit
 # đã từng đi qua develop).
 on:
@@ -81,7 +81,7 @@ jobs:
           BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
         run: |
           umask 077
-          bash deploy/render-env.sh > rendered.env
+          bash infra/render-env.sh > rendered.env
           printf 'BACKUP_S3_BUCKET=%s\n' "$BACKUP_S3_BUCKET" >> rendered.env
           bash scripts/check-env.sh --compare api/.env.example rendered.env
 
@@ -103,18 +103,21 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
         run: |
-          target="/srv/crm-koc/prod"
           ssh_opts="-i $HOME/.ssh/id_deploy -o StrictHostKeyChecking=yes"
+          ssh $ssh_opts "$SSH_USER@$SSH_HOST" "mkdir -p /srv/crm-koc/{infra,prod,api-prod,web-prod}"
 
-          rsync -az -e "ssh $ssh_opts" \
-            deploy/compose.base.yml deploy/compose.prod.yml \
-            deploy/deploy.sh deploy/rollback.sh deploy/backup.sh deploy/restore.sh \
-            scripts/check-env.sh api/.env.example \
-            "$SSH_USER@$SSH_HOST:$target/"
+          rsync -az -e "ssh $ssh_opts" infra/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/infra/"
+          rsync -az -e "ssh $ssh_opts" api/deploy/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/api-prod/"
+          rsync -az -e "ssh $ssh_opts" frontend-web/deploy/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/web-prod/"
 
-          scp $ssh_opts rendered.env "$SSH_USER@$SSH_HOST:$target/.env"
+          scp $ssh_opts rendered.env "$SSH_USER@$SSH_HOST:/srv/crm-koc/prod/.env"
 
           ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
-            "chmod 600 $target/.env && chmod +x $target/*.sh && \
-             GHCR_USER='$GHCR_USER' GHCR_TOKEN='$GHCR_TOKEN' \
-             $target/deploy.sh prod '$IMAGE_TAG'"
+            "chmod 600 /srv/crm-koc/prod/.env && \
+             chmod +x /srv/crm-koc/infra/*.sh /srv/crm-koc/api-prod/*.sh /srv/crm-koc/web-prod/*.sh && \
+             GHCR_USER='$GHCR_USER' GHCR_TOKEN='$GHCR_TOKEN' /srv/crm-koc/api-prod/deploy.sh prod '$IMAGE_TAG' && \
+             GHCR_USER='$GHCR_USER' GHCR_TOKEN='$GHCR_TOKEN' /srv/crm-koc/web-prod/deploy.sh prod '$IMAGE_TAG'"
+
+      - name: Cleanup secrets
+        if: always()
+        run: rm -f rendered.env ~/.ssh/id_deploy

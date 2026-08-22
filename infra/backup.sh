@@ -12,9 +12,15 @@ set -euo pipefail
 STACK="${1:?usage: backup.sh <staging|prod>}"
 ROOT="${DEPLOY_ROOT:-/srv/crm-koc}"
 DIR="$ROOT/$STACK"
+INFRA_DIR="$ROOT/infra"
 OUT="$ROOT/backups/$STACK"
 KEEP_DAILY="${KEEP_DAILY:-7}"
 KEEP_WEEKLY="${KEEP_WEEKLY:-4}"
+
+[ -d "$DIR" ] || {
+  echo "không thấy $DIR" >&2
+  exit 1
+}
 
 cd "$DIR"
 # shellcheck disable=SC1091
@@ -27,17 +33,13 @@ mkdir -p "$OUT/daily" "$OUT/weekly"
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 file="$OUT/daily/${STACK}-${stamp}.sql.gz"
 
-compose() {
-  docker compose \
-    --env-file .env.deploy \
-    -f compose.base.yml \
-    -f "compose.$STACK.yml" \
-    "$@"
-}
-
 echo "==> pg_dump $STACK -> $file"
 # -T: không cấp TTY, nếu không gzip nhận thêm ký tự CR và file hỏng.
-compose exec -T postgres \
+docker compose \
+  --env-file "$DIR/.env" \
+  -f "$INFRA_DIR/compose.db.yml" \
+  -p "crm-koc-${STACK}-db" \
+  exec -T postgres \
   pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=plain --no-owner \
   | gzip -9 > "$file"
 
@@ -65,7 +67,6 @@ prune "$OUT/weekly" "$KEEP_WEEKLY"
 
 if [ -n "${BACKUP_S3_BUCKET:-}" ]; then
   echo "==> upload s3://$BACKUP_S3_BUCKET/$STACK/"
-  # Dùng aws-cli trong container để host không phải cài gì thêm.
   docker run --rm \
     -e AWS_ACCESS_KEY_ID="$STORAGE_ACCESS_KEY_ID" \
     -e AWS_SECRET_ACCESS_KEY="$STORAGE_SECRET_ACCESS_KEY" \

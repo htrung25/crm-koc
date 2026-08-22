@@ -1,5 +1,5 @@
-# Stack cửa ngõ: Caddy (TLS) + Uptime Kuma (giám sát). Deploy một lần, gần như
-# không đổi. Hai stack app cắm vào cùng network `edge`.
+# Stack cửa ngõ: Caddy (TLS) + Uptime Kuma (giám sát). Deploy một lần.
+# Các service khác cắm vào network `edge` để Caddy reverse proxy.
 #
 #   docker compose -f compose.edge.yml up -d
 name: crm-koc-edge

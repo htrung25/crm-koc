@@ -1,0 +1,58 @@
+# Định nghĩa compose cho service API & Migration.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
+services:
+  # One-shot. Migration hỏng => exit != 0 => `api` không khởi động => container
+  # cũ vẫn phục vụ traffic và job deploy fail.
+  api-migrate:
+    image: ${API_IMAGE:?API_IMAGE chưa được set}
+    restart: 'no'
+    env_file:
+      - .env
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: '5432'
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      RUN_MIGRATIONS: 'false'
+    command: ['npm', 'run', 'migration:run']
+    logging: *default-logging
+    networks:
+      - internal
+
+  api:
+    image: ${API_IMAGE:?API_IMAGE chưa được set}
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: '5432'
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      RUN_MIGRATIONS: 'false'
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      api-migrate:
+        condition: service_completed_successfully
+    logging: *default-logging
+    networks:
+      - internal
+      - edge
+
+networks:
+  internal:
+    external: true
+    name: ${STACK:-staging}_internal
+  edge:
+    external: true
+    name: edge
+
+volumes:
+  uploads:

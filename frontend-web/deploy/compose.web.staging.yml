@@ -1,0 +1,14 @@
+name: crm-koc-staging-web
+
+services:
+  web:
+    networks:
+      internal:
+      edge:
+        aliases:
+          - web-staging
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M

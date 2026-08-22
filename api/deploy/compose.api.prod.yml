@@ -1,0 +1,21 @@
+name: crm-koc-prod-api
+
+services:
+  api:
+    networks:
+      internal:
+      edge:
+        aliases:
+          - api-prod
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1536M
+
+  api-migrate:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
