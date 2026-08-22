@@ -8,6 +8,9 @@ import { AdminUser } from '../module/admin/entities/admin-user.entity';
 import { SystemConfiguration } from '../module/admin/entities/system-configuration.entity';
 import { SocialAccount } from '../module/creator/entities/social-account.entity';
 import { Collaboration } from '../module/collaboration/entities/collaboration.entity';
+import { KycSubmission } from '../module/kyc/entities/kyc-submission.entity';
+import { KycDocument } from '../module/kyc/entities/kyc-document.entity';
+import { KycDocumentView } from '../module/kyc/entities/kyc-document-view.entity';
 
 /**
  * DataSource dành riêng cho TypeORM CLI (migration:run / migration:revert).
@@ -24,6 +27,9 @@ const entities = [
   SystemConfiguration,
   SocialAccount,
   Collaboration,
+  KycSubmission,
+  KycDocument,
+  KycDocumentView,
 ];
 
 // Chạy qua ts-node thì đọc migration .ts, chạy từ dist thì đọc .js đã build.

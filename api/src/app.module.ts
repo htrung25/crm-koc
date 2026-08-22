@@ -1,17 +1,19 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import type { RedisClientType } from 'redis';
 import { DatabaseModule } from './infra/database.module';
 import { RedisModule, REDIS_CLIENT } from './infra/redis.module';
 import { SecurityModule } from './security/security.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { AdminMaintenanceInterceptor } from './common/interceptors/admin-maintenance.interceptor';
 import { AppThrottlerGuard } from './security/throttler.guard';
 import { RedisThrottlerStorage } from './security/throttler-redis.storage';
 import { BrandModule } from './module/brand/brand.module';
 import { CollaborationModule } from './module/collaboration/collaboration.module';
 import { CreatorModule } from './module/creator/creator.module';
+import { KycModule } from './module/kyc/kyc.module';
 import { AdminModule } from './module/admin/admin.module';
 import { AuthModule } from './module/auth/auth.module';
 import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
@@ -31,6 +33,9 @@ import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
         storage: new RedisThrottlerStorage(redis),
       }),
     }),
+    // KycModule phải đứng trước AuthModule để tránh /admin/:id
+    // của AdminController nuốt route /admin/kyc và gây lỗi UUID 400.
+    KycModule,
     AuthModule,
     AdminModule,
     BrandModule,
@@ -47,6 +52,10 @@ import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AdminMaintenanceInterceptor,
     },
   ],
 })

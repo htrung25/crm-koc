@@ -12,6 +12,9 @@ import { AdminUser } from '../module/admin/entities/admin-user.entity';
 import { SystemConfiguration } from '../module/admin/entities/system-configuration.entity';
 import { SocialAccount } from '../module/creator/entities/social-account.entity';
 import { Collaboration } from '../module/collaboration/entities/collaboration.entity';
+import { KycSubmission } from '../module/kyc/entities/kyc-submission.entity';
+import { KycDocument } from '../module/kyc/entities/kyc-document.entity';
+import { KycDocumentView } from '../module/kyc/entities/kyc-document-view.entity';
 
 @Module({
   imports: [
@@ -37,6 +40,9 @@ import { Collaboration } from '../module/collaboration/entities/collaboration.en
               SystemConfiguration,
               SocialAccount,
               Collaboration,
+              KycSubmission,
+              KycDocument,
+              KycDocumentView,
             ],
             migrations: migrationGlobals,
             migrationsRun: false,
@@ -70,6 +76,9 @@ import { Collaboration } from '../module/collaboration/entities/collaboration.en
             SystemConfiguration,
             SocialAccount,
             Collaboration,
+            KycSubmission,
+            KycDocument,
+            KycDocumentView,
           ],
           migrations: migrationGlobals,
           migrationsRun: false,

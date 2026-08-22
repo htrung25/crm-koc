@@ -16,4 +16,12 @@ export enum EBusinessCode {
   IP_WHITELIST_WOULD_LOCK_YOU_OUT = 2002,
 
   SYSTEM_UNDER_MAINTENANCE = 5000,
+
+  KYC_ALREADY_SUBMITTED = 6000,
+  /** Hết 3 lượt nộp, phải qua support. */
+  KYC_ATTEMPTS_EXHAUSTED = 6001,
+  /** Chức năng yêu cầu KYC đã duyệt. FE dùng mã này để mời đi làm KYC. */
+  KYC_NOT_VERIFIED = 6002,
+  KYC_MISSING_DOCUMENTS = 6003,
+  KYC_UNSUPPORTED_FILE = 6004,
 }

@@ -1,5 +1,8 @@
+import { BadRequestException } from '@nestjs/common';
 import { ECollaborationStatus } from '../../../common/enum/collaboration-status.enum';
 import { ERole } from '../../../common/enum/roles.enum';
+import { ESortField } from '../../../common/enum/sort-fields.enum';
+import { Collaboration } from '../entities/collaboration.entity';
 
 /** Enum số nên Object.values trả cả tên lẫn số; lọc lấy phần số có kiểu. */
 export const ALL_STATUSES = Object.values(ECollaborationStatus).filter(
@@ -25,14 +28,6 @@ export const STATUS_LABEL: Record<ECollaborationStatus, string> = {
 
 /**
  * Chuyển trạng thái hợp lệ.
- *
- * Creator nộp bài (ACTIVE -> SUBMITTED), brand duyệt (SUBMITTED -> COMPLETED).
- * ACTIVE KHÔNG đi thẳng sang COMPLETED: bỏ qua bước nộp bài là brand tự chốt
- * được một hợp tác hoàn chỉnh mà creator không tham gia.
- *
- * COMPLETED nghĩa là hợp đồng đã xong và đã thanh toán cho creator, nên không
- * quay ngược được — lối ra duy nhất là khiếu nại. CANCELLED là trạng thái
- * cuối: huỷ rồi thì tạo hợp tác mới chứ không hồi sinh cái cũ.
  */
 const BOTH_PARTIES = [ERole.BRAND, ERole.CREATOR];
 
@@ -97,3 +92,31 @@ export const COLLABORATION_LIST_FIELDS = [
   'createdAt',
   'updatedAt',
 ] as const;
+
+/** collaborations không có cột name/email nên không nhận trọn ESortField. */
+export const COLLABORATION_SORT_FIELDS = [
+  ESortField.CREATED_AT,
+  ESortField.UPDATED_AT,
+  ESortField.STATUS,
+  ESortField.AGREED_PRICE,
+  ESortField.COMPLETED_AT,
+] as const;
+
+/** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
+export type CollaborationListItem = Pick<
+  Collaboration,
+  (typeof COLLABORATION_LIST_FIELDS)[number]
+>;
+
+/** sortBy đi thẳng vào SQL nên phải khớp danh sách cột cho phép. */
+export function assertSortField(
+  value: string,
+): (typeof COLLABORATION_SORT_FIELDS)[number] {
+  const allowed = COLLABORATION_SORT_FIELDS as readonly string[];
+  if (!allowed.includes(value)) {
+    throw new BadRequestException(
+      `sortBy must be one of: ${allowed.join(', ')}`,
+    );
+  }
+  return value as (typeof COLLABORATION_SORT_FIELDS)[number];
+}
