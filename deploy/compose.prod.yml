@@ -1,0 +1,19 @@
+name: crm-koc-prod
+
+services:
+  api:
+    networks:
+      internal:
+      edge:
+        aliases:
+          - api-prod
+
+  web:
+    networks:
+      internal:
+      edge:
+        aliases:
+          - web-prod
+
+  # Prod không đặt limits: staging đã bị giới hạn nên phần còn lại của máy là
+  # của prod. Nếu sau này thêm stack thứ ba thì phải đặt limits ở đây.

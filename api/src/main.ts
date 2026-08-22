@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { setupSwagger } from './infra/swagger';
+import { JsonLogger } from './common/services/json.logger';
 import cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -13,8 +14,12 @@ async function bootstrap() {
   // Phải chạy TRƯỚC khi tạo app, nếu không @Transactional() sẽ không có context
   initializeTransactionalContext();
 
+  // Production ghi JSON ra stdout để Docker json-file gom được; dev giữ log màu.
+  const isProduction = process.env.NODE_ENV === 'production';
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    logger: ['log', 'error', 'warn'],
+    logger: isProduction
+      ? new JsonLogger({ logLevels: ['log', 'error', 'warn'] })
+      : ['log', 'error', 'warn'],
   });
 
   // Frontend Next gọi API thay cho trình duyệt nên IP thật nằm trong
@@ -67,4 +72,4 @@ async function bootstrap() {
 
   await app.listen(port, '0.0.0.0');
 }
-bootstrap();
+void bootstrap();

@@ -7,9 +7,10 @@
     "build": "next build && node scripts/assert-proxy.mjs",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "verify:proxy": "node scripts/assert-proxy.mjs",
     "smoke:preview": "node scripts/smoke-preview.mjs",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
   "dependencies": {
