@@ -101,6 +101,44 @@
         ]
       }
     },
+    "/kyc/submissions/me/documents/{documentId}": {
+      "get": {
+        "operationId": "KycController_downloadMyDocument",
+        "parameters": [
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File binary stream"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Forbidden access to this document"
+          },
+          "404": {
+            "description": "Document not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Stream/Download your own uploaded document",
+        "tags": [
+          "KYC"
+        ]
+      }
+    },
     "/kyc/submissions/me/submit": {
       "post": {
         "operationId": "KycController_submit",
@@ -317,18 +355,19 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Buffer"
-                }
-              }
-            }
+            "description": "File binary stream"
           },
           "401": {
             "description": "Token is missing, invalid or expired"
@@ -337,7 +376,7 @@
             "description": "Requires admin role"
           },
           "404": {
-            "description": "Submission not found"
+            "description": "Submission or document not found"
           }
         },
         "security": [
@@ -345,7 +384,7 @@
             "access-token": []
           }
         ],
-        "summary": "Download document by documentId",
+        "summary": "Stream and view/download document by documentId with audit trail",
         "tags": [
           "Admin-KYC"
         ]
@@ -3069,10 +3108,6 @@
           "limit",
           "totalPages"
         ]
-      },
-      "Buffer": {
-        "type": "object",
-        "properties": {}
       },
       "ReviewKycDto": {
         "type": "object",

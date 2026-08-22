@@ -3,8 +3,11 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseUUIDPipe,
   Post,
   Request,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -24,6 +27,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { ERole } from '../../common/enum/roles.enum';
 import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
@@ -104,6 +108,41 @@ export class KycController {
       file.buffer,
       file.originalname ?? null,
     );
+  }
+
+  @Get('/me/documents/:documentId')
+  @ApiOperation({ summary: 'Stream/Download your own uploaded document' })
+  @ApiOkResponse({ description: 'File binary stream' })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({ description: 'Forbidden access to this document' })
+  @ApiNotFoundResponse({ description: 'Document not found' })
+  async downloadMyDocument(
+    @Request() request: { user: AuthenticatedAccount },
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @Res() res: Response,
+  ) {
+    const { document, streamResult } = await this.kycService.getDocumentForUser(
+      request.user.id,
+      this.role(request.user),
+      documentId,
+    );
+
+    res.set({
+      'Content-Type':
+        streamResult.contentType ||
+        document.mimeType ||
+        'application/octet-stream',
+      'Content-Disposition': `inline; filename="${encodeURIComponent(
+        document.originalName || `kyc-document-${document.id}`,
+      )}"`,
+      ...(streamResult.contentLength
+        ? { 'Content-Length': streamResult.contentLength.toString() }
+        : {}),
+    });
+
+    streamResult.stream.pipe(res);
   }
 
   @Post('/me/submit')
