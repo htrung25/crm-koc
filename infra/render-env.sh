@@ -7,20 +7,38 @@
 set -euo pipefail
 
 : "${STACK:?STACK phải là staging hoặc prod}"
+case "$STACK" in
+  staging | prod) ;;
+  *) echo "render-env: STACK='$STACK' không hợp lệ, phải là staging hoặc prod" >&2; exit 1 ;;
+esac
 
-# Bắt buộc — không có mặc định, thiếu là fail.
-: "${DATABASE_USERNAME:?}"
-: "${DATABASE_PASSWORD:?}"
-: "${DATABASE_NAME:?}"
-: "${JWT_ACCESS_SECRET:?}"
-: "${JWT_REFRESH_SECRET:?}"
-: "${SOCIAL_TOKEN_ENCRYPTION_KEY:?}"
-: "${SOCIAL_OAUTH_CALLBACK_BASE_URL:?}"
-: "${CORS_ORIGIN:?}"
-: "${STORAGE_ENDPOINT:?}"
-: "${STORAGE_ACCESS_KEY_ID:?}"
-: "${STORAGE_SECRET_ACCESS_KEY:?}"
-: "${STORAGE_BUCKET:?}"
+# Bắt buộc — không có mặc định, thiếu là fail. Gom hết rồi báo một lần: fail
+# lần lượt từng biến bắt người cấu hình phải chạy lại deploy sau mỗi lần sửa.
+missing=()
+require() {
+  local name
+  for name in "$@"; do
+    [ -n "${!name:-}" ] || missing+=("$name")
+  done
+}
+
+require DATABASE_USERNAME DATABASE_PASSWORD DATABASE_NAME
+require JWT_ACCESS_SECRET JWT_REFRESH_SECRET
+require SOCIAL_TOKEN_ENCRYPTION_KEY SOCIAL_OAUTH_CALLBACK_BASE_URL
+require CORS_ORIGIN
+require STORAGE_ENDPOINT STORAGE_ACCESS_KEY_ID STORAGE_SECRET_ACCESS_KEY STORAGE_BUCKET
+
+if [ "${#missing[@]}" -gt 0 ]; then
+  {
+    echo "render-env: thiếu ${#missing[@]} biến bắt buộc cho stack '$STACK':"
+    printf '  %s\n' "${missing[@]}"
+    echo
+    echo "Đặt ở GitHub → Settings → Environments → $STACK."
+    echo "Giá trị không nhạy cảm vào Variables, phần còn lại vào Secrets; tên phải"
+    echo "khớp block 'env:' của step 'Render .env' trong workflow deploy tương ứng."
+  } >&2
+  exit 1
+fi
 
 cat <<EOF
 # Sinh tự động bởi workflow deploy — đừng sửa tay, lần deploy sau sẽ ghi đè.
