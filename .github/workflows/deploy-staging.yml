@@ -1,0 +1,103 @@
+name: deploy-staging
+
+# Chạy sau khi build-push xong trên develop. Không tự build lại: staging deploy
+# đúng image mà prod sẽ deploy sau này.
+on:
+  workflow_run:
+    workflows: [build-push]
+    types: [completed]
+    branches: [develop]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Tag sha-* muốn deploy'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - id: tag
+        env:
+          INPUT_TAG: ${{ inputs.image_tag }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            tag="$INPUT_TAG"
+          else
+            tag="sha-${HEAD_SHA:0:7}"
+          fi
+          echo "value=$tag" >> "$GITHUB_OUTPUT"
+          echo "deploy tag: $tag"
+
+      - name: Render .env
+        env:
+          STACK: staging
+          DATABASE_USERNAME: ${{ vars.DATABASE_USERNAME }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_NAME: ${{ vars.DATABASE_NAME }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          CORS_ORIGIN: ${{ vars.CORS_ORIGIN }}
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SOCIAL_TOKEN_ENCRYPTION_KEY: ${{ secrets.SOCIAL_TOKEN_ENCRYPTION_KEY }}
+          SOCIAL_OAUTH_CALLBACK_BASE_URL: ${{ vars.SOCIAL_OAUTH_CALLBACK_BASE_URL }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+          STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+          STORAGE_ACCESS_KEY_ID: ${{ secrets.STORAGE_ACCESS_KEY_ID }}
+          STORAGE_SECRET_ACCESS_KEY: ${{ secrets.STORAGE_SECRET_ACCESS_KEY }}
+          STORAGE_BUCKET: ${{ secrets.STORAGE_BUCKET }}
+        run: |
+          umask 077
+          bash deploy/render-env.sh > rendered.env
+          bash scripts/check-env.sh --compare api/.env.example rendered.env
+
+      - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Ship files and deploy
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          IMAGE_TAG: ${{ steps.tag.outputs.value }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: |
+          target="/srv/crm-koc/staging"
+          ssh_opts="-i $HOME/.ssh/id_deploy -o StrictHostKeyChecking=yes"
+
+          rsync -az -e "ssh $ssh_opts" \
+            deploy/compose.base.yml deploy/compose.staging.yml \
+            deploy/deploy.sh deploy/rollback.sh deploy/backup.sh deploy/restore.sh \
+            scripts/check-env.sh api/.env.example \
+            "$SSH_USER@$SSH_HOST:$target/"
+
+          scp $ssh_opts rendered.env "$SSH_USER@$SSH_HOST:$target/.env"
+
+          ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
+            "chmod 600 $target/.env && chmod +x $target/*.sh && \
+             GHCR_USER='$GHCR_USER' GHCR_TOKEN='$GHCR_TOKEN' \
+             $target/deploy.sh staging '$IMAGE_TAG'"

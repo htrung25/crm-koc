@@ -42,9 +42,9 @@ RUN mkdir -p /app/uploads/images && chown -R node:node /app/uploads
 USER node
 EXPOSE 3000
 
-# Chưa có endpoint /health nên dùng Swagger UI làm dấu hiệu app đã lên.
+# Liveness, không chạm Postgres/Redis — readiness là việc của deploy.sh.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/docs').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "dist/src/main.js"]

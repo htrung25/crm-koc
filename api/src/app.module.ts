@@ -17,6 +17,7 @@ import { KycModule } from './module/kyc/kyc.module';
 import { AdminModule } from './module/admin/admin.module';
 import { AuthModule } from './module/auth/auth.module';
 import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
+import { HealthModule } from './module/health/health.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
         storage: new RedisThrottlerStorage(redis),
       }),
     }),
+    HealthModule,
     // KycModule phải đứng trước AuthModule để tránh /admin/:id
     // của AdminController nuốt route /admin/kyc và gây lỗi UUID 400.
     KycModule,
