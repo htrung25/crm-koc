@@ -1,5 +1,4 @@
 import { randomBytes } from 'node:crypto';
-import { promisify } from 'node:util';
 import {
   CopyObjectCommand,
   DeleteObjectCommand,
@@ -14,6 +13,12 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
+export interface StorageStreamResult {
+  stream: NodeJS.ReadableStream;
+  contentType?: string;
+  contentLength?: number;
+}
 
 @Injectable()
 export class StorageService {
@@ -73,7 +78,7 @@ export class StorageService {
     }
   }
 
-  async generateKey(prefix: string): Promise<string> {
+  generateKey(prefix: string): string {
     return `${prefix}${randomBytes(16).toString('hex')}`;
   }
 
@@ -87,6 +92,29 @@ export class StorageService {
         ContentType: contentType,
       }),
     );
+  }
+
+  /** Lấy stream trực tiếp từ S3/R2 để truyền cho client, tránh nạp cả file vào RAM. */
+  async getStream(key: string): Promise<StorageStreamResult> {
+    this.assertConfigured();
+    try {
+      const result = await this.client.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+      if (!result.Body) {
+        throw new NotFoundException('document content is gone');
+      }
+      return {
+        stream: result.Body as unknown as NodeJS.ReadableStream,
+        contentType: result.ContentType,
+        contentLength: result.ContentLength,
+      };
+    } catch (error) {
+      if (this.isNotFound(error)) {
+        throw new NotFoundException('document content is gone');
+      }
+      throw error;
+    }
   }
 
   /** Object bị lifecycle xoá thì quy về 404, không để lỗi SDK lọt ra ngoài. */

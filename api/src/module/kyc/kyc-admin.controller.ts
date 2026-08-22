@@ -7,6 +7,7 @@ import {
   Patch,
   Query,
   Request,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -19,6 +20,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { ApiFilterResponse } from '../../common/dto/filter-response.dto';
 import { ERole } from '../../common/enum/roles.enum';
 import { JwtAuthGuard } from '../../security/jwt-auth.guard';
@@ -67,15 +69,62 @@ export class KycAdminController {
   }
 
   @Get('/:id/documents/:documentId')
-  @ApiOperation({ summary: 'Download document by documentId' })
-  @ApiOkResponse({ type: Buffer })
+  @ApiOperation({
+    summary: 'Stream and view/download document by documentId with audit trail',
+  })
+  @ApiOkResponse({ description: 'File binary stream' })
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
   })
   @ApiForbiddenResponse({ description: 'Requires admin role' })
-  @ApiNotFoundResponse({ description: 'Submission not found' })
-  async downloadDocument(@Param('id', ParseUUIDPipe) id: string) {
-    return this.kycService.findById(id);
+  @ApiNotFoundResponse({ description: 'Submission or document not found' })
+  async downloadDocument(
+    @Request()
+    request: {
+      user: AuthenticatedAccount;
+      ip?: string;
+      headers: Record<string, string | string[] | undefined>;
+    },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @Res() res: Response,
+  ) {
+    const rawForwarded = request.headers['x-forwarded-for'];
+    const ipAddress =
+      (typeof rawForwarded === 'string'
+        ? rawForwarded.split(',')[0]?.trim()
+        : Array.isArray(rawForwarded)
+          ? rawForwarded[0]?.trim()
+          : null) ||
+      request.ip ||
+      null;
+    const userAgent = (request.headers['user-agent'] as string) || null;
+
+    const { document, streamResult } =
+      await this.kycService.getDocumentForAdmin(
+        id,
+        documentId,
+        request.user.id,
+        {
+          ipAddress,
+          userAgent,
+        },
+      );
+
+    res.set({
+      'Content-Type':
+        streamResult.contentType ||
+        document.mimeType ||
+        'application/octet-stream',
+      'Content-Disposition': `inline; filename="${encodeURIComponent(
+        document.originalName || `kyc-document-${document.id}`,
+      )}"`,
+      ...(streamResult.contentLength
+        ? { 'Content-Length': streamResult.contentLength.toString() }
+        : {}),
+    });
+
+    streamResult.stream.pipe(res);
   }
 
   // Quyền kyc.review tạm ánh xạ sang SuperAdminGuard: repo chỉ có hai mức

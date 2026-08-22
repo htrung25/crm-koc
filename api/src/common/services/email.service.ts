@@ -276,4 +276,53 @@ export class EmailService {
       this.logger.error('Failed to send Recovery FX Alert email', err);
     }
   }
+
+  async sendKycStatusNotification(opts: {
+    to: string;
+    displayName: string;
+    status: string;
+    rejectReason?: string | null;
+    reviewNote?: string | null;
+  }): Promise<void> {
+    if (!(await this.isSystemEmailActive())) {
+      this.logger.warn(
+        `Email Service Toggled Off. Dropping KYC status notification to ${opts.to}.`,
+      );
+      return;
+    }
+
+    let detailSection = '';
+    if (opts.rejectReason) {
+      detailSection += `<p style="margin:0 0 10px;font-size:15px;color:#374151;"><strong>Reason:</strong> ${opts.rejectReason}</p>`;
+    }
+    if (opts.reviewNote) {
+      detailSection += `<p style="margin:0 0 10px;font-size:15px;color:#374151;"><strong>Note:</strong> ${opts.reviewNote}</p>`;
+    }
+
+    const content = `
+      <p style="margin:0 0 16px;font-size:16px;color:#111827;">Hello <strong>${opts.displayName}</strong>,</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+        Your KYC submission status has been updated to: <strong style="text-transform: uppercase;">${opts.status}</strong>.
+      </p>
+      ${detailSection ? `<div style="background:#f3f4f6;padding:16px;border-radius:6px;margin-bottom:16px;">${detailSection}</div>` : ''}
+      <p style="margin:16px 0 0;font-size:14px;color:#6b7280;line-height:1.6;">
+        Please log in to your CRM-KOC dashboard to review your account status and take necessary actions if required.
+      </p>
+    `;
+
+    try {
+      await sgMail.send({
+        from: this.from,
+        to: opts.to,
+        subject: `[CRM-KOC] KYC Status Update: ${opts.status.toUpperCase()}`,
+        text: `Hello ${opts.displayName},\n\nYour KYC submission status has been updated to: ${opts.status.toUpperCase()}.\n\nBest regards,\nCRM-KOC System`,
+        html: this.getBaseHtml(content),
+      });
+    } catch (err) {
+      this.logger.error(
+        `Failed to send KYC notification email to ${opts.to}`,
+        err,
+      );
+    }
+  }
 }

@@ -45,13 +45,11 @@ export const KYC_TRANSITION_ACTORS: Record<
     // Giấy tờ có hạn, và gian lận lộ ra sau khi duyệt.
     [EKycStatus.EXPIRED]: [ERole.ADMIN],
   },
-  [EKycStatus.REJECTED]: {
-    [EKycStatus.PENDING]: [ERole.BRAND, ERole.CREATOR],
-  },
+  // REJECTED và EXPIRED là trạng thái cuối của record cũ; người dùng nộp lại sẽ
+  // tạo record DRAFT mới thông qua openSubmission() thay vì chuyển status tại chỗ.
+  [EKycStatus.REJECTED]: {},
   [EKycStatus.LOCKED]: {},
-  [EKycStatus.EXPIRED]: {
-    [EKycStatus.PENDING]: [ERole.BRAND, ERole.CREATOR],
-  },
+  [EKycStatus.EXPIRED]: {},
 };
 
 /* Chuyển nào sinh dòng MỚI, chuyển nào sửa tại chỗ.*/
