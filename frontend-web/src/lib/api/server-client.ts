@@ -1,11 +1,20 @@
 import { clientIpOf, type ClientContext } from "./client-context";
 
-const API_BASE_URL = process.env.API_URL ?? "http://localhost:3000";
-
-if (!process.env.API_URL && process.env.NODE_ENV === "production") {
-  // Thiếu biến ở production mà vẫn chạy nghĩa là mọi request lặng lẽ đi tới
-  // localhost và hỏng theo kiểu khó truy nguyên. Chết sớm dễ sửa hơn.
-  throw new Error("Thiếu biến môi trường API_URL");
+// Đọc lúc gọi, KHÔNG đọc ở top-level: `next build` chạy với
+// NODE_ENV=production và có thu thập page data, nên throw ở top-level là chết
+// ngay lúc build — trong khi image được build một lần rồi dùng chung cho
+// staging lẫn prod, lúc đó chưa biết API_URL. Đây là ràng buộc runtime.
+function apiBaseUrl(): string {
+  const url = process.env.API_URL;
+  if (!url) {
+    // Thiếu biến ở production mà vẫn chạy nghĩa là mọi request lặng lẽ đi tới
+    // localhost và hỏng theo kiểu khó truy nguyên. Chết sớm dễ sửa hơn.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Thiếu biến môi trường API_URL");
+    }
+    return "http://localhost:3000";
+  }
+  return url;
 }
 
 export class ApiError extends Error {
@@ -99,7 +108,7 @@ export async function apiRequest<T>(
   let response: Response;
 
   try {
-    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    response = await fetch(`${apiBaseUrl()}${endpoint}`, {
       method,
       headers: buildHeaders(options),
       body: body ? JSON.stringify(body) : undefined,
