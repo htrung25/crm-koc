@@ -9,6 +9,18 @@ const OPENAPI_FILE = join(process.cwd(), 'swagger', 'openapi.json');
 export function setupSwagger(app: INestApplication): void {
   const logger = new Logger('Swagger');
 
+  // Production mặc định KHÔNG mở /api/docs. Muốn mở tạm thì đặt
+  // SWAGGER_ENABLED=true trong env của môi trường đó.
+  const isProduction = process.env.NODE_ENV === 'production';
+  const enabled = process.env.SWAGGER_ENABLED
+    ? process.env.SWAGGER_ENABLED === 'true'
+    : !isProduction;
+
+  if (!enabled) {
+    logger.log('Swagger tắt (NODE_ENV=production).');
+    return;
+  }
+
   const config = new DocumentBuilder()
     .setTitle('CRM KOC API')
     .setDescription('REST API for the CRM KOC system')

@@ -26,6 +26,10 @@ const ALWAYS_ALLOWED_PATHS = [
   '/verify-otp',
   '/resend-otp',
   '/logout',
+  // Health phải sống cả khi đang bảo trì, nếu không deploy gate và Uptime Kuma
+  // sẽ hiểu nhầm là app chết.
+  '/health',
+  '/health/ready',
 ];
 
 @Injectable()
