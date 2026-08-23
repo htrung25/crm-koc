@@ -161,120 +161,6 @@ export class EmailService {
       text: `Hello ${displayName},\n\nYou are attempting to log in to the CRM-KOC platform.\n\nYour One-Time Password (OTP) for verification is: ${otp}\n\nNote: This OTP is valid for 5 minutes. If you did not request this code, please secure your account and contact the system administrator immediately.\n\nBest regards,\nCRM-KOC System`,
       html: this.getBaseHtml(content),
     });
-
-    // Dev/Debug requirement: Log OTP to console on success
-    console.log(`[SUCCESS] OTP for ${to} is: ${otp}`);
-  }
-
-  async sendCriticalFxAlertEmail(
-    toEmails: string[],
-    lastSuccessfulTime: string,
-  ): Promise<void> {
-    if (!toEmails || toEmails.length === 0) return;
-    if (!(await this.isSystemEmailActive())) {
-      this.logger.warn(
-        'Email Service Toggled Off. Dropping sendCriticalFxAlertEmail.',
-      );
-      return;
-    }
-
-    const content = `
-      <p style="margin:0 0 16px;font-size:16px;color:#dc2626;font-weight:bold;">[CRITICAL] FX Rate Sync Delay</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">Hello Admin,</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-        The system has failed to sync FX rates from the provider for more than <strong>30 minutes</strong>.
-      </p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-        <strong>Last successful sync:</strong> ${lastSuccessfulTime}
-      </p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-        Please check the currency provider connection or API key immediately.
-      </p>
-    `;
-
-    try {
-      await sgMail.sendMultiple({
-        from: this.from,
-        to: toEmails,
-        subject: '[CRM-KOC Alert] CRITICAL: FX Rate Sync Delay (> 30 mins)',
-        html: this.getBaseHtml(content),
-      });
-    } catch (err) {
-      this.logger.error('Failed to send Critical FX Alert email', err);
-    }
-  }
-
-  async sendEmergencyFxAlertEmail(
-    toEmails: string[],
-    lastSuccessfulTime: string,
-  ): Promise<void> {
-    if (!toEmails || toEmails.length === 0) return;
-    if (!(await this.isSystemEmailActive())) {
-      this.logger.warn(
-        'Email Service Toggled Off. Dropping sendEmergencyFxAlertEmail.',
-      );
-      return;
-    }
-
-    const content = `
-      <p style="margin:0 0 16px;font-size:16px;color:#991b1b;font-weight:bold;">[EMERGENCY] FX Rate Sync Outage</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">Hello Admin,</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-        The system has failed to sync FX rates from the provider for more than <strong>3 hours</strong>.
-      </p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-        <strong>Last successful sync:</strong> ${lastSuccessfulTime}
-      </p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-        The system might be using extremely outdated rates which poses a financial risk. Immediate action is required.
-      </p>
-    `;
-
-    try {
-      await sgMail.sendMultiple({
-        from: this.from,
-        to: toEmails,
-        subject: '[CRM-KOC Alert] EMERGENCY: FX Rate Sync Outage (> 3 hours)',
-        html: this.getBaseHtml(content),
-      });
-    } catch (err) {
-      this.logger.error('Failed to send Emergency FX Alert email', err);
-    }
-  }
-
-  async sendRecoveryFxAlertEmail(
-    toEmails: string[],
-    outageDurationMinutes: number,
-  ): Promise<void> {
-    if (!toEmails || toEmails.length === 0) return;
-    if (!(await this.isSystemEmailActive())) {
-      this.logger.warn(
-        'Email Service Toggled Off. Dropping sendRecoveryFxAlertEmail.',
-      );
-      return;
-    }
-
-    const content = `
-      <p style="margin:0 0 16px;font-size:16px;color:#16a34a;font-weight:bold;">[RESOLVED] FX Rate Sync Restored</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">Hello Admin,</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-        The FX rate synchronization has been successfully restored.
-      </p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-        <strong>Total outage duration:</strong> ${outageDurationMinutes} minutes.
-      </p>
-    `;
-
-    try {
-      await sgMail.sendMultiple({
-        from: this.from,
-        to: toEmails,
-        subject: '[CRM-KOC Alert] RESOLVED: FX Rate Sync Restored',
-        html: this.getBaseHtml(content),
-      });
-    } catch (err) {
-      this.logger.error('Failed to send Recovery FX Alert email', err);
-    }
   }
 
   async sendKycStatusNotification(opts: {
@@ -310,19 +196,14 @@ export class EmailService {
       </p>
     `;
 
-    try {
-      await sgMail.send({
-        from: this.from,
-        to: opts.to,
-        subject: `[CRM-KOC] KYC Status Update: ${opts.status.toUpperCase()}`,
-        text: `Hello ${opts.displayName},\n\nYour KYC submission status has been updated to: ${opts.status.toUpperCase()}.\n\nBest regards,\nCRM-KOC System`,
-        html: this.getBaseHtml(content),
-      });
-    } catch (err) {
-      this.logger.error(
-        `Failed to send KYC notification email to ${opts.to}`,
-        err,
-      );
-    }
+    // KHÔNG bắt lỗi ở đây: lỗi phải nổi lên cho BullMQ retry. Nuốt lỗi thì job
+    // luôn "thành công" và toàn bộ cơ chế retry thành vô nghĩa.
+    await sgMail.send({
+      from: this.from,
+      to: opts.to,
+      subject: `[CRM-KOC] KYC Status Update: ${opts.status.toUpperCase()}`,
+      text: `Hello ${opts.displayName},\n\nYour KYC submission status has been updated to: ${opts.status.toUpperCase()}.\n\nBest regards,\nCRM-KOC System`,
+      html: this.getBaseHtml(content),
+    });
   }
 }
