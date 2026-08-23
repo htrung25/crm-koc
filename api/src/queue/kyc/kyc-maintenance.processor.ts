@@ -4,8 +4,10 @@ import type { Job } from 'bullmq';
 import { Queue } from 'bullmq';
 import { repeatableJobOptions } from '../job-options';
 import {
+  JOB_EXPIRE_VERIFIED,
   JOB_RECONCILE_NOTIFICATIONS,
   QUEUE_KYC,
+  SCHEDULER_EXPIRE_VERIFIED,
   SCHEDULER_RECONCILE,
 } from '../queue-names';
 import { KycExpiryService } from './kyc-expiry.service';
@@ -31,11 +33,20 @@ export class KycMaintenanceProcessor
       { pattern: '0 * * * *' },
       { name: JOB_RECONCILE_NOTIFICATIONS, opts: repeatableJobOptions() },
     );
+    await this.queue.upsertJobScheduler(
+      SCHEDULER_EXPIRE_VERIFIED,
+      { pattern: '0 2 * * *' },
+      { name: JOB_EXPIRE_VERIFIED, opts: repeatableJobOptions() },
+    );
   }
 
   async process(job: Job): Promise<void> {
     if (job.name === JOB_RECONCILE_NOTIFICATIONS) {
       await this.expiryService.reconcileNotifications();
+      return;
+    }
+    if (job.name === JOB_EXPIRE_VERIFIED) {
+      await this.expiryService.expireVerified();
       return;
     }
     this.logger.warn(`job kyc không nhận diện được: ${job.name}`);

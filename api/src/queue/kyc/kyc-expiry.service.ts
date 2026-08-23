@@ -51,4 +51,33 @@ export class KycExpiryService {
     }
     return rows.length;
   }
+
+  /**
+   * KHÔNG đi qua assertTransition(). Ma trận hiện cho VERIFIED → EXPIRED chỉ
+   * với ERole.ADMIN, và bịa thêm ERole.SYSTEM sẽ làm bẩn mọi guard đang dùng
+   * enum đó. Mệnh đề WHERE status = VERIFIED chính là bất biến cần bảo vệ, và
+   * nó được DB đảm bảo chứ không phải code.
+   */
+  async expireVerified(): Promise<number> {
+    const result = await this.submissionRepository
+      .createQueryBuilder()
+      .update(KycSubmission)
+      // Không đụng reviewNote/reviewedBy: ghi đè là mất ghi chú gốc của admin.
+      // status EXPIRED cộng expiresAt đã kể đủ câu chuyện.
+      .set({ status: EKycStatus.EXPIRED, notifiedAt: null })
+      .where('status = :verified', { verified: EKycStatus.VERIFIED })
+      .andWhere('expires_at < now()')
+      .returning('id')
+      .execute();
+
+    const rows = (result.raw ?? []) as { id: string }[];
+    for (const row of rows) {
+      await this.emailQueue.enqueueKycStatus(row.id);
+    }
+
+    if (rows.length) {
+      this.logger.log(`expire-verified: ${rows.length} hồ sơ KYC hết hạn`);
+    }
+    return rows.length;
+  }
 }
