@@ -18,12 +18,14 @@ import { AdminModule } from './module/admin/admin.module';
 import { AuthModule } from './module/auth/auth.module';
 import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
 import { HealthModule } from './module/health/health.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
     RedisModule,
+    QueueModule,
     SecurityModule,
     // forRootAsync để lấy được REDIS_CLIENT (RedisModule là @Global nên
     // không cần khai imports ở đây).
