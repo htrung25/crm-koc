@@ -11,7 +11,9 @@ import { KycSubmission } from '../../module/kyc/entities/kyc-submission.entity';
 import { JOB_SEND_KYC_STATUS, JOB_SEND_OTP, QUEUE_EMAIL } from '../queue-names';
 import type { SendKycStatusJob, SendOtpJob } from './email-job.types';
 
-@Processor(QUEUE_EMAIL)
+const EMAIL_PROCESSOR_CONCURRENCY = 5;
+
+@Processor(QUEUE_EMAIL, { concurrency: EMAIL_PROCESSOR_CONCURRENCY })
 export class EmailProcessor extends WorkerHost {
   private readonly logger = new Logger(EmailProcessor.name);
   private readonly otpTtlSeconds: number;
@@ -86,15 +88,7 @@ export class EmailProcessor extends WorkerHost {
         : null,
       reviewNote: submission.reviewNote,
     });
-
-    // Toggle tắt là một quyết định vận hành có chủ đích, không phải lỗi: job
-    // vẫn coi là thành công. Nhưng notifiedAt CHỈ ghi khi gửi thật — để lại
-    // NULL thì reconcileNotifications() sẽ thử lại khi toggle bật lại.
     if (!sent) return;
-
-    // Ghi SAU khi gửi xong. Cửa sổ giữa hai dòng này là lý do ngữ nghĩa là
-    // at-least-once chứ không phải exactly-once — không đóng được nếu không có
-    // giao dịch phân tán với SendGrid.
     await this.submissionRepository.update(
       { id: submissionId },
       { notifiedAt: new Date() },
