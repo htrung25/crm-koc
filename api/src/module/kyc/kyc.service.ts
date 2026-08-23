@@ -400,23 +400,6 @@ export class KycService {
       return submissionRepo.save(submission);
     });
 
-    // Enqueue SAU commit. Gọi trong transaction là job có thể chạy trước khi
-    // dữ liệu nhìn thấy được, và rollback thì email đã gửi mất rồi.
-    //
-    // NGOẠI LỆ CÓ CHỦ ĐÍCH so với quy tắc "không nuốt lỗi" mà nhánh này áp
-    // dụng ở mọi nơi khác: DB đã commit xong tại đây, review THỰC SỰ đã
-    // thành công. Nếu enqueue văng lỗi (Redis rớt) mà để 500 lọt ra ngoài,
-    // admin sẽ tưởng review thất bại và bấm duyệt lại — assertTransition() sẽ
-    // từ chối vì hồ sơ đã rời khỏi PENDING, tức là request lặp lại còn tệ hơn
-    // không làm gì. Cả hai job đều tự chữa lành: email có
-    // reconcileNotifications() chạy hàng giờ, promote-documents có
-    // reconcilePromotions() chạy cùng nhịp sweep() 15 phút. Vì vậy chỉ log
-    // warn ở đây chứ không rethrow. KHÔNG copy pattern này sang chỗ khác nếu
-    // không có state đã commit + reconciler tương ứng phía sau.
-    //
-    // Email trước vì đây là job người dùng nhìn thấy trực tiếp; đặt sau
-    // promote thì một promote-enqueue lỗi sẽ kéo luôn email theo, trong khi
-    // ngược lại thì không.
     try {
       await this.emailQueue.enqueueKycStatus(saved.id);
     } catch (error) {

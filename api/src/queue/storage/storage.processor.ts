@@ -53,10 +53,6 @@ export class StorageProcessor
       case JOB_PROMOTE_DOCUMENTS:
         return this.promote(job);
       case JOB_SWEEP:
-        // Hai việc độc lập chia sẻ cùng nhịp 15 phút của queue storage. Chạy
-        // tuần tự nhưng bọc riêng try/catch: sweep() lỗi không được cản
-        // reconcilePromotions() chạy, và ngược lại — mỗi bên tự log lỗi của
-        // mình, JOB_SWEEP không retry (xem repeatableJobOptions).
         try {
           await this.gcService.sweep();
         } catch (error) {

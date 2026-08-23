@@ -85,17 +85,6 @@ export class StorageGcService {
     return succeededIds.length;
   }
 
-  /**
-   * Bịt cửa sổ "review() commit xong nhưng promote-documents hết 5 lần retry
-   * (~2.5 phút) vì R2 sập lâu hơn thế". Hồ sơ vẫn VERIFIED, tài liệu vẫn đọc
-   * được qua storage_key trong DB — không mất gì, chỉ là tiền tố không hội tụ
-   * về verified/ nữa. Enqueue lại vô hại: promote() bỏ qua document đã ở
-   * verified/, và ledger ghi bằng upsert.
-   *
-   * ORDER BY updatedAt ASC + LIMIT giống sweep(): một hồ sơ hỏng vĩnh viễn chỉ
-   * chiếm một suất mỗi chu kỳ 15 phút, không thể chiếm hết batch và bỏ đói các
-   * hồ sơ mắc kẹt khác.
-   */
   async reconcilePromotions(): Promise<number> {
     const rows = await this.dataSource
       .createQueryBuilder()
