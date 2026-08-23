@@ -6,6 +6,7 @@ import { Queue } from 'bullmq';
 import { DataSource, Repository } from 'typeorm';
 import { StorageLedgerService } from '../../common/services/storage-ledger.service';
 import { StorageService } from '../../common/services/storage.service';
+import { StorageGcService } from './storage-gc.service';
 import {
   STORAGE_PREFIX_PENDING,
   STORAGE_PREFIX_VERIFIED,
@@ -34,6 +35,7 @@ export class StorageProcessor
     private readonly documentRepository: Repository<KycDocument>,
     private readonly dataSource: DataSource,
     @InjectQueue(QUEUE_STORAGE) private readonly queue: Queue,
+    private readonly gcService: StorageGcService,
   ) {
     super();
   }
@@ -47,11 +49,15 @@ export class StorageProcessor
   }
 
   async process(job: Job): Promise<void> {
-    if (job.name === JOB_PROMOTE_DOCUMENTS) {
-      return this.promote(job);
+    switch (job.name) {
+      case JOB_PROMOTE_DOCUMENTS:
+        return this.promote(job);
+      case JOB_SWEEP:
+        await this.gcService.sweep();
+        return;
+      default:
+        this.logger.warn(`job storage không nhận diện được: ${job.name}`);
     }
-    // JOB_SWEEP được nối ở task sau.
-    this.logger.warn(`job storage không nhận diện được: ${job.name}`);
   }
 
   /**

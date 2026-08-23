@@ -21,6 +21,7 @@ import { WorkerHealthController } from '../module/health/worker-health.controlle
 import { EmailProcessor } from '../queue/email/email.processor';
 import { KycExpiryService } from '../queue/kyc/kyc-expiry.service';
 import { KycMaintenanceProcessor } from '../queue/kyc/kyc-maintenance.processor';
+import { StorageGcService } from '../queue/storage/storage-gc.service';
 import { StorageProcessor } from '../queue/storage/storage.processor';
 import { QueueModule } from '../queue/queue.module';
 import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
@@ -49,6 +50,7 @@ import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
     StorageProcessor,
     StorageService,
     StorageLedgerService,
+    StorageGcService,
     {
       provide: BULL_HEALTH_QUEUES,
       inject: [

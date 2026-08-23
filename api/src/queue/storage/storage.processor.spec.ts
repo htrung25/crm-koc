@@ -35,6 +35,7 @@ describe('StorageProcessor · promote-documents', () => {
         docRepo as unknown as never,
         dataSource as unknown as never,
         {} as unknown as never,
+        {} as unknown as never,
       ),
       docRepo,
     };
