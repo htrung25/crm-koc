@@ -2,11 +2,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ERole } from '../../../common/enum/roles.enum';
 import { EKycRejectReason, EKycStatus } from '../../../common/enum/kyc.enum';
+import { AuthEntity } from '../../auth/entities/auth.entity';
 
 @Entity('kyc_submissions')
 export class KycSubmission {
@@ -15,6 +18,11 @@ export class KycSubmission {
 
   @Column({ type: 'uuid' })
   accountId: string;
+
+  /** Chỉ để processor lấy email/tên trong một truy vấn. Không cascade. */
+  @ManyToOne(() => AuthEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'account_id' })
+  account: AuthEntity;
 
   /** Chỉ brand hoặc creator — admin không nộp KYC. */
   @Column({ type: 'varchar', length: 32 })

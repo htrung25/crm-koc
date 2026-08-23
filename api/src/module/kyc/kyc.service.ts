@@ -21,8 +21,9 @@ import {
   StorageService,
   StorageStreamResult,
 } from '../../common/services/storage.service';
-import { EmailService } from '../../common/services/email.service';
 import { AuthEntity } from '../auth/entities/auth.entity';
+import { EmailQueueService } from '../../queue/email/email-queue.service';
+import { StorageQueueService } from '../../queue/storage/storage-queue.service';
 import {
   ALLOWED_DOCUMENTS_BY_ROLE,
   ALL_KYC_STATUSES,
@@ -57,6 +58,7 @@ export interface DocumentStreamPayload {
 export class KycService {
   private readonly logger = new Logger(KycService.name);
   private readonly maxFileSize: number;
+  private readonly validityDays: number;
 
   constructor(
     @InjectRepository(KycSubmission)
@@ -69,16 +71,18 @@ export class KycService {
     private readonly authRepository: Repository<AuthEntity>,
     private readonly dataSource: DataSource,
     private readonly storage: StorageService,
-    private readonly emailService: EmailService,
+    private readonly emailQueue: EmailQueueService,
+    private readonly storageQueue: StorageQueueService,
     configService: ConfigService,
   ) {
     // .env luôn trả chuỗi nên phải Number()
     this.maxFileSize = Number(
       configService.get('KYC_MAX_FILE_SIZE_BYTES', 10_485_760),
     );
+    this.validityDays = Number(configService.get('KYC_VALIDITY_DAYS', 365));
   }
 
-  // ---------------------------------------------------------------- người dùng
+  // ---------------------------------------------------------------- Customer
 
   async openSubmission(
     accountId: string,
@@ -341,7 +345,7 @@ export class KycService {
     dto: ReviewKycDto,
     reviewerId: string,
   ): Promise<KycSubmission> {
-    return this.dataSource.transaction(async (manager) => {
+    const saved = await this.dataSource.transaction(async (manager) => {
       const submissionRepo = manager.getRepository(KycSubmission);
       const submission = await submissionRepo
         .createQueryBuilder('kyc')
@@ -370,27 +374,30 @@ export class KycService {
           ? EKycStatus.LOCKED
           : dto.status;
 
-      if (next === EKycStatus.VERIFIED) {
-        await this.moveDocumentsToVerified(submission.id);
-      }
-
       submission.status = next;
       submission.reviewedAt = new Date();
       submission.reviewedBy = reviewerId;
       submission.rejectReason = dto.rejectReason ?? null;
       submission.reviewNote = dto.reviewNote ?? null;
-      const saved = await submissionRepo.save(submission);
+      if (next === EKycStatus.VERIFIED) {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + this.validityDays);
+        submission.expiresAt = expiresAt;
+      }
+      // Đổi status thì báo lại từ đầu.
+      submission.notifiedAt = null;
 
-      // Gửi email thông báo bất đồng bộ (fire-and-forget, không làm fail transaction)
-      this.notifyUserOnReview(submission, next, dto).catch((err) => {
-        this.logger.error(
-          `Failed to notify user for KYC submission ${submission.id}`,
-          err,
-        );
-      });
-
-      return saved;
+      return submissionRepo.save(submission);
     });
+
+    // Enqueue SAU commit. Gọi trong transaction là job có thể chạy trước khi
+    // dữ liệu nhìn thấy được, và rollback thì email đã gửi mất rồi.
+    if (saved.status === EKycStatus.VERIFIED) {
+      await this.storageQueue.enqueuePromoteDocuments(saved.id);
+    }
+    await this.emailQueue.enqueueKycStatus(saved.id);
+
+    return saved;
   }
 
   /** Ghi audit TRƯỚC khi trả nội dung: request đứt giữa chừng vẫn để lại vết. */
@@ -410,7 +417,7 @@ export class KycService {
     );
   }
 
-  // -------------------------------------------------------------------- riêng tư
+  // -------------------------------------------------------------------- private
 
   private findLatest(
     accountId: string,
@@ -503,30 +510,6 @@ export class KycService {
         );
       }),
     );
-  }
-
-  private async notifyUserOnReview(
-    submission: KycSubmission,
-    status: EKycStatus,
-    dto: ReviewKycDto,
-  ): Promise<void> {
-    const account = await this.authRepository.findOneBy({
-      id: submission.accountId,
-    });
-    if (!account?.email) return;
-
-    const statusLabel = KYC_STATUS_LABEL[status] || 'updated';
-    const rejectReasonText = dto.rejectReason
-      ? EKycRejectReason[dto.rejectReason]
-      : null;
-
-    await this.emailService.sendKycStatusNotification({
-      to: account.email,
-      displayName: account.name || 'Valued User',
-      status: statusLabel,
-      rejectReason: rejectReasonText,
-      reviewNote: dto.reviewNote,
-    });
   }
 
   private assertRejectPayload(dto: ReviewKycDto): void {

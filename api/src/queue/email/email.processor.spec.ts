@@ -1,6 +1,7 @@
 import type { Job } from 'bullmq';
 import { EmailProcessor } from './email.processor';
-import { JOB_SEND_OTP } from '../queue-names';
+import { JOB_SEND_OTP, JOB_SEND_KYC_STATUS } from '../queue-names';
+import { EKycStatus } from '../../common/enum/kyc.enum';
 
 const OTP_TTL_SECONDS = 300;
 
@@ -54,5 +55,93 @@ describe('EmailProcessor · send-otp', () => {
     await expect(makeProcessor().process(otpJob())).rejects.toThrow(
       'sendgrid 503',
     );
+  });
+});
+
+describe('EmailProcessor · send-kyc-status', () => {
+  const emailService = { sendKycStatusNotification: jest.fn() };
+  const config = { get: jest.fn().mockReturnValue(300) };
+
+  function job() {
+    return {
+      name: JOB_SEND_KYC_STATUS,
+      timestamp: Date.now(),
+      data: { submissionId: 'sub-1' },
+    } as unknown as never;
+  }
+
+  function repo(row: unknown) {
+    return {
+      findOne: jest.fn().mockResolvedValue(row),
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
+  }
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('bỏ qua khi notified_at đã có — đây là chốt chống gửi trùng', async () => {
+    const submissionRepo = repo({
+      id: 'sub-1',
+      notifiedAt: new Date(),
+      status: EKycStatus.VERIFIED,
+      account: { email: 'a@b.c', name: 'A' },
+    });
+    const p = new EmailProcessor(
+      emailService as unknown as never,
+      config as unknown as never,
+      submissionRepo as unknown as never,
+    );
+    await p.process(job());
+    expect(emailService.sendKycStatusNotification).not.toHaveBeenCalled();
+  });
+
+  it('gửi rồi mới ghi notified_at — thứ tự này quyết định ngữ nghĩa at-least-once', async () => {
+    const order: string[] = [];
+    emailService.sendKycStatusNotification.mockImplementation(() => {
+      order.push('send');
+      return Promise.resolve();
+    });
+    const submissionRepo = repo({
+      id: 'sub-1',
+      notifiedAt: null,
+      status: EKycStatus.VERIFIED,
+      rejectReason: null,
+      reviewNote: null,
+      account: { email: 'a@b.c', name: 'A' },
+    });
+    submissionRepo.update.mockImplementation(() => {
+      order.push('mark');
+      return Promise.resolve({ affected: 1 });
+    });
+
+    const p = new EmailProcessor(
+      emailService as unknown as never,
+      config as unknown as never,
+      submissionRepo as unknown as never,
+    );
+    await p.process(job());
+
+    expect(order).toEqual(['send', 'mark']);
+  });
+
+  it('không ghi notified_at khi gửi hỏng', async () => {
+    emailService.sendKycStatusNotification.mockRejectedValueOnce(
+      new Error('boom'),
+    );
+    const submissionRepo = repo({
+      id: 'sub-1',
+      notifiedAt: null,
+      status: EKycStatus.VERIFIED,
+      rejectReason: null,
+      reviewNote: null,
+      account: { email: 'a@b.c', name: 'A' },
+    });
+    const p = new EmailProcessor(
+      emailService as unknown as never,
+      config as unknown as never,
+      submissionRepo as unknown as never,
+    );
+    await expect(p.process(job())).rejects.toThrow('boom');
+    expect(submissionRepo.update).not.toHaveBeenCalled();
   });
 });
