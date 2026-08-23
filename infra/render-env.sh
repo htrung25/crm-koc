@@ -8,19 +8,38 @@ set -euo pipefail
 
 : "${STACK:?STACK phải là staging hoặc prod}"
 
-# Bắt buộc — không có mặc định, thiếu là fail.
-: "${DATABASE_USERNAME:?}"
-: "${DATABASE_PASSWORD:?}"
-: "${DATABASE_NAME:?}"
-: "${JWT_ACCESS_SECRET:?}"
-: "${JWT_REFRESH_SECRET:?}"
-: "${SOCIAL_TOKEN_ENCRYPTION_KEY:?}"
-: "${SOCIAL_OAUTH_CALLBACK_BASE_URL:?}"
-: "${CORS_ORIGIN:?}"
-: "${STORAGE_ENDPOINT:?}"
-: "${STORAGE_ACCESS_KEY_ID:?}"
-: "${STORAGE_SECRET_ACCESS_KEY:?}"
-: "${STORAGE_BUCKET:?}"
+REQUIRED_VARS="DATABASE_USERNAME DATABASE_NAME CORS_ORIGIN SOCIAL_OAUTH_CALLBACK_BASE_URL STORAGE_ENDPOINT"
+REQUIRED_SECRETS="DATABASE_PASSWORD JWT_ACCESS_SECRET JWT_REFRESH_SECRET SOCIAL_TOKEN_ENCRYPTION_KEY STORAGE_ACCESS_KEY_ID STORAGE_SECRET_ACCESS_KEY STORAGE_BUCKET"
+
+missing_vars=""
+missing_secrets=""
+for name in $REQUIRED_VARS; do
+  eval "value=\${$name:-}"
+  [ -n "$value" ] || missing_vars="$missing_vars    $name"$'\n'
+done
+for name in $REQUIRED_SECRETS; do
+  eval "value=\${$name:-}"
+  [ -n "$value" ] || missing_secrets="$missing_secrets    $name"$'\n'
+done
+
+if [ -n "$missing_vars" ] || [ -n "$missing_secrets" ]; then
+  {
+    echo "render-env: thiếu cấu hình cho environment '$STACK'."
+    echo
+    [ -z "$missing_vars" ] || {
+      echo "  Settings → Environments → $STACK → Variables:"
+      printf '%s' "$missing_vars"
+      echo
+    }
+    [ -z "$missing_secrets" ] || {
+      echo "  Settings → Environments → $STACK → Secrets:"
+      printf '%s' "$missing_secrets"
+      echo
+    }
+    echo "Lưu ý: biến đã tạo nhưng để rỗng cũng bị tính là thiếu."
+  } >&2
+  exit 1
+fi
 
 cat <<EOF
 # Sinh tự động bởi workflow deploy — đừng sửa tay, lần deploy sau sẽ ghi đè.
