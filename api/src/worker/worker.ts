@@ -1,7 +1,7 @@
 import { initializeTransactionalContext } from 'typeorm-transactional';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { JsonLogger } from './common/services/json.logger';
+import { JsonLogger } from '../common/services/json.logger';
 import { WorkerModule } from './worker.module';
 
 async function bootstrap() {
