@@ -11,6 +11,7 @@ import { Collaboration } from '../module/collaboration/entities/collaboration.en
 import { KycSubmission } from '../module/kyc/entities/kyc-submission.entity';
 import { KycDocument } from '../module/kyc/entities/kyc-document.entity';
 import { KycDocumentView } from '../module/kyc/entities/kyc-document-view.entity';
+import { StorageObject } from '../common/entities/storage-object.entity';
 
 /**
  * DataSource dành riêng cho TypeORM CLI (migration:run / migration:revert).
@@ -30,6 +31,7 @@ const entities = [
   KycSubmission,
   KycDocument,
   KycDocumentView,
+  StorageObject,
 ];
 
 // Chạy qua ts-node thì đọc migration .ts, chạy từ dist thì đọc .js đã build.

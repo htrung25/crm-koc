@@ -1,190 +1,6 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/health": {
-      "get": {
-        "operationId": "HealthController_liveness",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Liveness probe",
-        "tags": [
-          "health"
-        ]
-      }
-    },
-    "/health/ready": {
-      "get": {
-        "operationId": "HealthController_readiness",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "The Health Check is successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "example": "ok"
-                    },
-                    "info": {
-                      "type": "object",
-                      "example": {
-                        "database": {
-                          "status": "up"
-                        }
-                      },
-                      "additionalProperties": {
-                        "type": "object",
-                        "required": [
-                          "status"
-                        ],
-                        "properties": {
-                          "status": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": true
-                      },
-                      "nullable": true
-                    },
-                    "error": {
-                      "type": "object",
-                      "example": {},
-                      "additionalProperties": {
-                        "type": "object",
-                        "required": [
-                          "status"
-                        ],
-                        "properties": {
-                          "status": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": true
-                      },
-                      "nullable": true
-                    },
-                    "details": {
-                      "type": "object",
-                      "example": {
-                        "database": {
-                          "status": "up"
-                        }
-                      },
-                      "additionalProperties": {
-                        "type": "object",
-                        "required": [
-                          "status"
-                        ],
-                        "properties": {
-                          "status": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "The Health Check is not successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "example": "error"
-                    },
-                    "info": {
-                      "type": "object",
-                      "example": {
-                        "database": {
-                          "status": "up"
-                        }
-                      },
-                      "additionalProperties": {
-                        "type": "object",
-                        "required": [
-                          "status"
-                        ],
-                        "properties": {
-                          "status": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": true
-                      },
-                      "nullable": true
-                    },
-                    "error": {
-                      "type": "object",
-                      "example": {
-                        "redis": {
-                          "status": "down",
-                          "message": "Could not connect"
-                        }
-                      },
-                      "additionalProperties": {
-                        "type": "object",
-                        "required": [
-                          "status"
-                        ],
-                        "properties": {
-                          "status": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": true
-                      },
-                      "nullable": true
-                    },
-                    "details": {
-                      "type": "object",
-                      "example": {
-                        "database": {
-                          "status": "up"
-                        },
-                        "redis": {
-                          "status": "down",
-                          "message": "Could not connect"
-                        }
-                      },
-                      "additionalProperties": {
-                        "type": "object",
-                        "required": [
-                          "status"
-                        ],
-                        "properties": {
-                          "status": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "Readiness probe (Postgres + Redis)",
-        "tags": [
-          "health"
-        ]
-      }
-    },
     "/kyc/submissions": {
       "post": {
         "description": "Đã có hồ sơ đang mở thì trả lại chính nó — bấm hai lần không tạo hai hồ sơ. Lần trước bị từ chối thì mở lượt kế tiếp và kế thừa tài liệu cũ.",
@@ -2426,7 +2242,7 @@
         ],
         "summary": "Danh sách tài khoản mạng xã hội đã kết nối",
         "tags": [
-          "Social-Connections"
+          "Creator Social-Connections"
         ]
       }
     },
@@ -2478,7 +2294,7 @@
         ],
         "summary": "Lấy URL chuyển hướng để bắt đầu luồng OAuth",
         "tags": [
-          "Social-Connections"
+          "Creator Social-Connections"
         ]
       }
     },
@@ -2539,7 +2355,7 @@
         ],
         "summary": "Hoàn tất luồng OAuth và lưu kết nối",
         "tags": [
-          "Social-Connections"
+          "Creator Social-Connections"
         ]
       }
     },
@@ -2580,7 +2396,7 @@
         ],
         "summary": "Ngắt kết nối một nền tảng",
         "tags": [
-          "Social-Connections"
+          "Creator Social-Connections"
         ]
       }
     },
@@ -3083,6 +2899,190 @@
         "summary": "Move a collaboration to the next status",
         "tags": [
           "Collaboration"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_liveness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "HealthController_readiness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Readiness probe (Postgres + Redis)",
+        "tags": [
+          "health"
         ]
       }
     }

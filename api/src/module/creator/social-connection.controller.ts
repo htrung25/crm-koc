@@ -29,7 +29,7 @@ import { AuthThrottle } from '../../security/auth-throttle.decorator';
 import { ERole } from '../../common/enum/roles.enum';
 import { ESocialPlatform } from '../../common/enum/social-platform.enum';
 import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
-import { SocialConnectionsService } from './connection.service';
+import { SocialConnectionsService } from './social-connection.service';
 import { SocialOAuthCallbackDto } from './dto/oauth-callback.dto';
 import { SocialConnectionDto } from './dto/connection.dto';
 
@@ -42,7 +42,7 @@ import { SocialConnectionDto } from './dto/connection.dto';
  * endpoint này kèm bearer token. Nhờ vậy so được người đang đăng nhập với
  * creatorProfileId đã cất trong state.
  */
-@ApiTags('Social-Connections')
+@ApiTags('Creator Social-Connections')
 @ApiBearerAuth('access-token')
 @Roles(ERole.CREATOR)
 @UseGuards(JwtAuthGuard, RolesGuard)

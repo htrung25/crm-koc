@@ -11,7 +11,7 @@ import { SuperAdminGuard } from '../admin/super-admin.guard';
 import { AdminUser } from '../admin/entities/admin-user.entity';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { IpWhitelistModule } from '../admin/ip-whitelist.module';
-import { EmailService } from '../../common/services/email.service';
+import { QueueModule } from '../../queue/queue.module';
 
 /**
  * KYC phục vụ cả brand, creator lẫn admin nên đứng cùng cấp với các module vai
@@ -35,9 +35,10 @@ import { EmailService } from '../../common/services/email.service';
     // Guard được dựng trong context của module khai controller, không dùng lại
     // instance của AdminModule — nên phải import trực tiếp.
     IpWhitelistModule,
+    QueueModule,
   ],
   controllers: [KycController, KycAdminController],
-  providers: [KycService, SuperAdminGuard, EmailService],
+  providers: [KycService, SuperAdminGuard],
   exports: [KycService],
 })
 export class KycModule {}

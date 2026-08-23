@@ -69,6 +69,17 @@ Hệ thống hỗ trợ rollback **image trong ~30 giây**, nhưng database **kh
 
 ---
 
+## Chạy worker khi phát triển local (`api/`)
+
+OTP đăng nhập và email trạng thái KYC đi qua BullMQ, `api` (`start:dev`) chỉ là producer — không tự gửi mail. Không chạy `api-worker` thì job nằm im trong queue: API trả 200 nhưng không mail nào tới, không log lỗi nào cả.
+
+- `npm run start:worker:dev` — chạy worker local, tương tự `start:dev` (watch mode).
+- `npm run start:worker` — chạy bản đã build (`dist/src/worker/worker.js`), dùng cho container `api-worker`.
+
+Muốn test luồng OTP/KYC trọn vẹn, chạy song song cả `start:dev` và `start:worker:dev`.
+
+---
+
 ## Kiểm tra trước khi mở PR
 
 ```bash

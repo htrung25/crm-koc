@@ -15,6 +15,7 @@ import { Collaboration } from '../module/collaboration/entities/collaboration.en
 import { KycSubmission } from '../module/kyc/entities/kyc-submission.entity';
 import { KycDocument } from '../module/kyc/entities/kyc-document.entity';
 import { KycDocumentView } from '../module/kyc/entities/kyc-document-view.entity';
+import { StorageObject } from '../common/entities/storage-object.entity';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { KycDocumentView } from '../module/kyc/entities/kyc-document-view.entity
               KycSubmission,
               KycDocument,
               KycDocumentView,
+              StorageObject,
             ],
             migrations: migrationGlobals,
             migrationsRun: false,
@@ -79,6 +81,7 @@ import { KycDocumentView } from '../module/kyc/entities/kyc-document-view.entity
             KycSubmission,
             KycDocument,
             KycDocumentView,
+            StorageObject,
           ],
           migrations: migrationGlobals,
           migrationsRun: false,

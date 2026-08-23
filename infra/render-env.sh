@@ -14,28 +14,49 @@ esac
 
 # Bắt buộc — không có mặc định, thiếu là fail. Gom hết rồi báo một lần: fail
 # lần lượt từng biến bắt người cấu hình phải chạy lại deploy sau mỗi lần sửa.
-missing=()
-require() {
+#
+# Tách hai nhóm vì nơi đặt trên GitHub khác nhau. Đây cũng là nguồn sự thật duy
+# nhất về việc biến nào đặt ở đâu — docs/ nằm trong .gitignore nên tài liệu
+# không thể được CI kiểm chứng.
+missing_vars=()
+missing_secrets=()
+
+require_var() {
   local name
   for name in "$@"; do
-    [ -n "${!name:-}" ] || missing+=("$name")
+    [ -n "${!name:-}" ] || missing_vars+=("$name")
   done
 }
 
-require DATABASE_USERNAME DATABASE_PASSWORD DATABASE_NAME
-require JWT_ACCESS_SECRET JWT_REFRESH_SECRET
-require SOCIAL_TOKEN_ENCRYPTION_KEY SOCIAL_OAUTH_CALLBACK_BASE_URL
-require CORS_ORIGIN
-require STORAGE_ENDPOINT STORAGE_ACCESS_KEY_ID STORAGE_SECRET_ACCESS_KEY STORAGE_BUCKET
+require_secret() {
+  local name
+  for name in "$@"; do
+    [ -n "${!name:-}" ] || missing_secrets+=("$name")
+  done
+}
 
-if [ "${#missing[@]}" -gt 0 ]; then
+require_var DATABASE_USERNAME DATABASE_NAME CORS_ORIGIN
+require_var SOCIAL_OAUTH_CALLBACK_BASE_URL STORAGE_ENDPOINT
+require_secret DATABASE_PASSWORD JWT_ACCESS_SECRET JWT_REFRESH_SECRET
+require_secret SOCIAL_TOKEN_ENCRYPTION_KEY
+require_secret STORAGE_ACCESS_KEY_ID STORAGE_SECRET_ACCESS_KEY STORAGE_BUCKET
+
+if [ "${#missing_vars[@]}" -gt 0 ] || [ "${#missing_secrets[@]}" -gt 0 ]; then
   {
-    echo "render-env: thiếu ${#missing[@]} biến bắt buộc cho stack '$STACK':"
-    printf '  %s\n' "${missing[@]}"
+    echo "render-env: thiếu cấu hình cho environment '$STACK'."
     echo
-    echo "Đặt ở GitHub → Settings → Environments → $STACK."
-    echo "Giá trị không nhạy cảm vào Variables, phần còn lại vào Secrets; tên phải"
-    echo "khớp block 'env:' của step 'Render .env' trong workflow deploy tương ứng."
+    if [ "${#missing_vars[@]}" -gt 0 ]; then
+      echo "  Settings → Environments → $STACK → Variables:"
+      printf '    %s\n' "${missing_vars[@]}"
+      echo
+    fi
+    if [ "${#missing_secrets[@]}" -gt 0 ]; then
+      echo "  Settings → Environments → $STACK → Secrets:"
+      printf '    %s\n' "${missing_secrets[@]}"
+      echo
+    fi
+    echo "Tên phải khớp block 'env:' của step 'Render .env' trong workflow deploy."
+    echo "Lưu ý: biến đã tạo nhưng để rỗng cũng bị tính là thiếu."
   } >&2
   exit 1
 fi
@@ -104,4 +125,6 @@ STORAGE_SECRET_ACCESS_KEY=$STORAGE_SECRET_ACCESS_KEY
 STORAGE_BUCKET=$STORAGE_BUCKET
 
 KYC_MAX_FILE_SIZE_BYTES=${KYC_MAX_FILE_SIZE_BYTES:-10485760}
+KYC_VALIDITY_DAYS=${KYC_VALIDITY_DAYS:-365}
+STORAGE_SWEEP_PENDING_GRACE_MINUTES=${STORAGE_SWEEP_PENDING_GRACE_MINUTES:-60}
 EOF

@@ -46,6 +46,31 @@ services:
       - internal
       - edge
 
+  api-worker:
+    image: ${API_IMAGE:?API_IMAGE chưa được set}
+    command: ['node', 'dist/src/worker/worker.js']
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: '5432'
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      RUN_MIGRATIONS: 'false'
+    # 10s mặc định cắt ngang job đang chạy. BullExplorer.onApplicationShutdown()
+    # gọi worker.close() để chờ job xong — cho nó đủ thời gian.
+    stop_grace_period: 60s
+    depends_on:
+      api-migrate:
+        condition: service_completed_successfully
+    logging: *default-logging
+    # KHÔNG lên network edge: worker không phục vụ traffic ngoài.
+    # KHÔNG mount volume uploads.
+    networks:
+      - internal
+
 networks:
   internal:
     external: true
