@@ -8,13 +8,6 @@ export const BULL_HEALTH_QUEUES = 'BULL_HEALTH_QUEUES';
 /** Ngân sách timeout mặc định cho toàn bộ lần check, cùng mức với postgres. */
 export const BULL_HEALTH_TIMEOUT_MS = 3000;
 
-/**
- * Ping được Postgres/Redis chưa nói lên worker đang tiêu thụ job. Indicator này
- * khẳng định đúng thứ deploy gate cần biết: kết nối queue sống và không paused.
- *
- * Toàn bộ vòng check bị bó trong một ngân sách timeout duy nhất — queue nào
- * chưa xong khi hết hạn bị coi là down (timedOut), không được để treo request.
- */
 @Injectable()
 export class BullHealthIndicator {
   constructor(

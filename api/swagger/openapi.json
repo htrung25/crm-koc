@@ -2242,7 +2242,7 @@
         ],
         "summary": "Danh sách tài khoản mạng xã hội đã kết nối",
         "tags": [
-          "Social-Connections"
+          "Creator Social-Connections"
         ]
       }
     },
@@ -2294,7 +2294,7 @@
         ],
         "summary": "Lấy URL chuyển hướng để bắt đầu luồng OAuth",
         "tags": [
-          "Social-Connections"
+          "Creator Social-Connections"
         ]
       }
     },
@@ -2355,7 +2355,7 @@
         ],
         "summary": "Hoàn tất luồng OAuth và lưu kết nối",
         "tags": [
-          "Social-Connections"
+          "Creator Social-Connections"
         ]
       }
     },
@@ -2396,7 +2396,7 @@
         ],
         "summary": "Ngắt kết nối một nền tảng",
         "tags": [
-          "Social-Connections"
+          "Creator Social-Connections"
         ]
       }
     },
