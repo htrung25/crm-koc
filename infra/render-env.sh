@@ -7,35 +7,55 @@
 set -euo pipefail
 
 : "${STACK:?STACK phải là staging hoặc prod}"
+case "$STACK" in
+  staging | prod) ;;
+  *) echo "render-env: STACK='$STACK' không hợp lệ, phải là staging hoặc prod" >&2; exit 1 ;;
+esac
 
-REQUIRED_VARS="DATABASE_USERNAME DATABASE_NAME CORS_ORIGIN SOCIAL_OAUTH_CALLBACK_BASE_URL STORAGE_ENDPOINT"
-REQUIRED_SECRETS="DATABASE_PASSWORD JWT_ACCESS_SECRET JWT_REFRESH_SECRET SOCIAL_TOKEN_ENCRYPTION_KEY STORAGE_ACCESS_KEY_ID STORAGE_SECRET_ACCESS_KEY STORAGE_BUCKET"
+# Bắt buộc — không có mặc định, thiếu là fail. Gom hết rồi báo một lần: fail
+# lần lượt từng biến bắt người cấu hình phải chạy lại deploy sau mỗi lần sửa.
+#
+# Tách hai nhóm vì nơi đặt trên GitHub khác nhau. Đây cũng là nguồn sự thật duy
+# nhất về việc biến nào đặt ở đâu — docs/ nằm trong .gitignore nên tài liệu
+# không thể được CI kiểm chứng.
+missing_vars=()
+missing_secrets=()
 
-missing_vars=""
-missing_secrets=""
-for name in $REQUIRED_VARS; do
-  eval "value=\${$name:-}"
-  [ -n "$value" ] || missing_vars="$missing_vars    $name"$'\n'
-done
-for name in $REQUIRED_SECRETS; do
-  eval "value=\${$name:-}"
-  [ -n "$value" ] || missing_secrets="$missing_secrets    $name"$'\n'
-done
+require_var() {
+  local name
+  for name in "$@"; do
+    [ -n "${!name:-}" ] || missing_vars+=("$name")
+  done
+}
 
-if [ -n "$missing_vars" ] || [ -n "$missing_secrets" ]; then
+require_secret() {
+  local name
+  for name in "$@"; do
+    [ -n "${!name:-}" ] || missing_secrets+=("$name")
+  done
+}
+
+require_var DATABASE_USERNAME DATABASE_NAME CORS_ORIGIN
+require_var SOCIAL_OAUTH_CALLBACK_BASE_URL STORAGE_ENDPOINT
+require_secret DATABASE_PASSWORD JWT_ACCESS_SECRET JWT_REFRESH_SECRET
+require_secret SOCIAL_TOKEN_ENCRYPTION_KEY
+require_secret STORAGE_ACCESS_KEY_ID STORAGE_SECRET_ACCESS_KEY STORAGE_BUCKET
+
+if [ "${#missing_vars[@]}" -gt 0 ] || [ "${#missing_secrets[@]}" -gt 0 ]; then
   {
     echo "render-env: thiếu cấu hình cho environment '$STACK'."
     echo
-    [ -z "$missing_vars" ] || {
+    if [ "${#missing_vars[@]}" -gt 0 ]; then
       echo "  Settings → Environments → $STACK → Variables:"
-      printf '%s' "$missing_vars"
+      printf '    %s\n' "${missing_vars[@]}"
       echo
-    }
-    [ -z "$missing_secrets" ] || {
+    fi
+    if [ "${#missing_secrets[@]}" -gt 0 ]; then
       echo "  Settings → Environments → $STACK → Secrets:"
-      printf '%s' "$missing_secrets"
+      printf '    %s\n' "${missing_secrets[@]}"
       echo
-    }
+    fi
+    echo "Tên phải khớp block 'env:' của step 'Render .env' trong workflow deploy."
     echo "Lưu ý: biến đã tạo nhưng để rỗng cũng bị tính là thiếu."
   } >&2
   exit 1
