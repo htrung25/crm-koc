@@ -42,4 +42,24 @@ export default tseslint.config(
       '@typescript-eslint/no-require-imports': 'off',
     },
   },
+  {
+    // Processor tạo BullMQ Worker ngay tại module nạp nó. Chỉ worker.module.ts
+    // được phép chạm vào, nếu không container `api` cũng tiêu thụ job.
+    files: ['src/**/*.ts'],
+    ignores: ['src/worker/worker.module.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/*.processor'],
+              message:
+                'Processor chỉ được import từ src/worker/worker.module.ts. Import ở nơi khác sẽ khiến container api tiêu thụ job.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 );
