@@ -5,7 +5,6 @@ import {
   Post,
   Body,
   HttpException,
-  Logger,
   Patch,
   Request,
   HttpCode,
@@ -36,7 +35,7 @@ import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { EOtpResult } from '../../common/enum/otp-result.enum';
 import { OtpService } from '../../security/otp.service';
 import { JwtAuthService } from '../../security/jwt-auth.service';
-import { EmailService } from '../../common/services/email.service';
+import { EmailQueueService } from '../../queue/email/email-queue.service';
 import {
   AuthLoginPendingResponseDto,
   AuthResendOtpDto,
@@ -62,12 +61,10 @@ import type { Request as ExpressRequest } from 'express';
 @ApiTags('Auth')
 @Controller()
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
-
   constructor(
     private readonly authService: AuthService,
     private readonly otpService: OtpService,
-    private readonly emailService: EmailService,
+    private readonly emailQueue: EmailQueueService,
     private readonly jwtAuthService: JwtAuthService,
   ) {}
 
@@ -180,7 +177,7 @@ export class AuthController {
       );
     }
 
-    await this.sendOtp(account.email, result.otp, account.name);
+    await this.sendOtp(account.email, result.otp, account.name, account.id);
 
     return { requireOtp: true, message: 'A new OTP has been sent' };
   }
@@ -262,7 +259,7 @@ export class AuthController {
       throw new ForbiddenException('too many failed attempts, try again later');
     }
 
-    await this.sendOtp(account.email, result.otp, account.name);
+    await this.sendOtp(account.email, result.otp, account.name, account.id);
 
     // KHÔNG trả token ở đây: mật khẩu đúng mới chỉ qua được nửa đầu.
     return { requireOtp: true, message };
@@ -272,14 +269,17 @@ export class AuthController {
     email: string,
     otp: string,
     name: string,
+    accountId: string,
   ): Promise<void> {
-    try {
-      await this.emailService.sendOtpEmail(email, otp, name);
-    } catch (error) {
-      this.logger.warn(
-        `Không gửi được mail OTP tới ${email}: ${(error as Error).message}. OTP = ${otp}`,
-      );
-    }
+    // KHÔNG try/catch: enqueue hỏng nghĩa là Redis chết, mà OTP cũng lưu ở
+    // Redis nên generateAndStore() đã fail trước đó rồi. Báo 503 trung thực
+    // hơn để người dùng ngồi chờ một mã không bao giờ tới.
+    await this.emailQueue.enqueueOtp({
+      accountId,
+      email,
+      displayName: name,
+      otp,
+    });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
