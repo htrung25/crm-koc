@@ -125,6 +125,7 @@ export class EmailService {
     });
   }
 
+  // Không có toggle isSystemEmailActive() ở đây: OTP đăng nhập luôn phải gửi.
   async sendOtpEmail(
     to: string,
     otp: string,
@@ -163,18 +164,24 @@ export class EmailService {
     });
   }
 
+  /**
+   * Trả về false khi toggle tắt (không gửi thật). Caller (EmailProcessor) dựa
+   * vào giá trị này để quyết định có ghi notifiedAt hay không — ghi bừa khi
+   * toggle tắt thì reconcileNotifications() không bao giờ thử lại nữa, và
+   * người dùng vĩnh viễn không biết kết quả KYC của mình.
+   */
   async sendKycStatusNotification(opts: {
     to: string;
     displayName: string;
     status: string;
     rejectReason?: string | null;
     reviewNote?: string | null;
-  }): Promise<void> {
+  }): Promise<boolean> {
     if (!(await this.isSystemEmailActive())) {
       this.logger.warn(
         `Email Service Toggled Off. Dropping KYC status notification to ${opts.to}.`,
       );
-      return;
+      return false;
     }
 
     let detailSection = '';
@@ -205,5 +212,6 @@ export class EmailService {
       text: `Hello ${opts.displayName},\n\nYour KYC submission status has been updated to: ${opts.status.toUpperCase()}.\n\nBest regards,\nCRM-KOC System`,
       html: this.getBaseHtml(content),
     });
+    return true;
   }
 }

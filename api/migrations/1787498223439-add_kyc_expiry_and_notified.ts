@@ -24,13 +24,22 @@ export class AddKycExpiryAndNotified1787498223439 implements MigrationInterface 
         WHERE "notified_at" IS NULL AND "status" IN (3, 4, 5, 6, 7)
     `);
 
-    // Hồ sơ VERIFIED có sẵn trước migration này: gán hạn từ ngày duyệt, và
-    // coi như đã báo rồi để job reconcile không gửi mail hàng loạt cho lịch sử cũ.
+    // Hồ sơ VERIFIED có sẵn trước migration này: gán hạn từ ngày duyệt.
     await queryRunner.query(`
       UPDATE "kyc_submissions"
-      SET "expires_at"  = "reviewed_at" + interval '365 days',
-          "notified_at" = "reviewed_at"
+      SET "expires_at" = "reviewed_at" + interval '365 days'
       WHERE "status" = 4 AND "reviewed_at" IS NOT NULL
+    `);
+
+    // Mọi trạng thái NOTIFIABLE (3 MORE_INFO, 4 VERIFIED, 5 REJECTED,
+    // 6 LOCKED, 7 EXPIRED) coi như đã báo rồi, không riêng VERIFIED — nếu
+    // không, các dòng MORE_INFO/REJECTED/LOCKED có sẵn sẽ bị job reconcile
+    // gửi lại thông báo trong vòng 1 giờ sau khi deploy. COALESCE vì
+    // MORE_INFO có thể không có reviewed_at.
+    await queryRunner.query(`
+      UPDATE "kyc_submissions"
+      SET "notified_at" = COALESCE("reviewed_at", "updated_at")
+      WHERE "status" IN (3, 4, 5, 6, 7)
     `);
   }
 

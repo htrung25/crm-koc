@@ -44,18 +44,20 @@ export default tseslint.config(
   },
   {
     // Processor tạo BullMQ Worker ngay tại module nạp nó. Chỉ worker.module.ts
-    // được phép chạm vào, nếu không container `api` cũng tiêu thụ job.
+    // (và worker.ts, nơi duy nhất import worker.module) được phép chạm vào,
+    // nếu không container `api` cũng tiêu thụ job. worker.module.ts phải nằm
+    // trong nhóm bị chặn luôn: import nó là import cả 3 processor.
     files: ['src/**/*.ts'],
-    ignores: ['src/worker/worker.module.ts'],
+    ignores: ['src/worker/worker.module.ts', 'src/worker/worker.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             {
-              group: ['**/*.processor'],
+              group: ['**/*.processor', '**/worker.module'],
               message:
-                'Processor chỉ được import từ src/worker/worker.module.ts. Import ở nơi khác sẽ khiến container api tiêu thụ job.',
+                'Processor/worker.module chỉ được import từ src/worker/worker.ts. Import ở nơi khác sẽ khiến container api tiêu thụ job.',
             },
           ],
         },

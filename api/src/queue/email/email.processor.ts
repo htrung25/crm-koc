@@ -77,7 +77,7 @@ export class EmailProcessor extends WorkerHost {
       return;
     }
 
-    await this.emailService.sendKycStatusNotification({
+    const sent = await this.emailService.sendKycStatusNotification({
       to: email,
       displayName: submission.account.name || 'Valued User',
       status: KYC_STATUS_LABEL[submission.status],
@@ -86,6 +86,11 @@ export class EmailProcessor extends WorkerHost {
         : null,
       reviewNote: submission.reviewNote,
     });
+
+    // Toggle tắt là một quyết định vận hành có chủ đích, không phải lỗi: job
+    // vẫn coi là thành công. Nhưng notifiedAt CHỈ ghi khi gửi thật — để lại
+    // NULL thì reconcileNotifications() sẽ thử lại khi toggle bật lại.
+    if (!sent) return;
 
     // Ghi SAU khi gửi xong. Cửa sổ giữa hai dòng này là lý do ngữ nghĩa là
     // at-least-once chứ không phải exactly-once — không đóng được nếu không có
