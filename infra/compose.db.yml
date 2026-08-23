@@ -27,9 +27,17 @@ services:
       - internal
 
   redis:
-    image: redis:7-alpine
+    # Ghim 7.4: SessionService dùng HEXPIRE, lệnh chỉ có từ 7.4. Tag `7-alpine`
+    # là tag trôi, một lần pull về 7.2 là session ngừng ghi được.
+    image: redis:7.4-alpine
     restart: unless-stopped
-    command: ['redis-server', '--appendonly', 'yes']
+    # noeviction đặt tường minh: Redis dùng chung cho session/OTP/BullMQ, và
+    # key nội bộ của BullMQ bị evict là hỏng queue state không phục hồi được.
+    # Mặc định của Redis vốn đã là noeviction — đặt ra đây để nó không đúng
+    # một cách tình cờ. KHÔNG đặt maxmemory: đầy + noeviction là chặn mọi lệnh
+    # ghi, đăng nhập hỏng theo, cần số liệu thật mới quyết được ngưỡng.
+    command:
+      ['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction']
     volumes:
       - redis-data:/data
     healthcheck:
