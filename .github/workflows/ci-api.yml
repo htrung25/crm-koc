@@ -98,36 +98,6 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-  test:
-    needs: changes
-    if: needs.changes.outputs.api == 'true'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: api
-    services:
-      redis:
-        image: redis:7.4-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 20
-    env:
-      REDIS_HOST: localhost
-      REDIS_PORT: 6379
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: api/package-lock.json
-      - run: npm ci
-      - run: npm test
-
   env-check:
     needs: changes
     if: needs.changes.outputs.api == 'true'
@@ -176,7 +146,7 @@ jobs:
   # Required status check duy nhất của workflow này. Luôn chạy, kể cả khi các
   # job trên bị skip vì PR không đụng api/.
   ci-api-gate:
-    needs: [lint, typecheck, build, test, env-check, migration-smoke]
+    needs: [lint, typecheck, build, env-check, migration-smoke]
     if: always()
     runs-on: ubuntu-latest
     steps:

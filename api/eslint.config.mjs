@@ -44,11 +44,9 @@ export default tseslint.config(
   },
   {
     // Processor tạo BullMQ Worker ngay tại module nạp nó. Chỉ worker.module.ts
-    // được phép chạm vào, nếu không container `api` cũng tiêu thụ job. Spec
-    // file test bằng `new` trực tiếp, không qua Nest DI, nên không có rủi ro
-    // đó — loại trừ để unit test được import processor cần kiểm.
+    // được phép chạm vào, nếu không container `api` cũng tiêu thụ job.
     files: ['src/**/*.ts'],
-    ignores: ['src/worker/worker.module.ts', '**/*.spec.ts'],
+    ignores: ['src/worker/worker.module.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
