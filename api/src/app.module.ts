@@ -34,7 +34,6 @@ import { HealthModule } from './module/health/health.module';
         storage: new RedisThrottlerStorage(redis),
       }),
     }),
-    HealthModule,
     // KycModule phải đứng trước AuthModule để tránh /admin/:id
     // của AdminController nuốt route /admin/kyc và gây lỗi UUID 400.
     KycModule,
@@ -44,6 +43,7 @@ import { HealthModule } from './module/health/health.module';
     CreatorModule,
     CollaborationModule,
     IpWhitelistModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [
