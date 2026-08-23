@@ -47,6 +47,14 @@ export class KycSubmission {
   @Column({ type: 'text', nullable: true })
   reviewNote: string | null;
 
+  /** Chỉ có giá trị khi status = VERIFIED. Job expire-verified quét cột này. */
+  @Column({ type: 'timestamptz', nullable: true })
+  expiresAt: Date | null;
+
+  /** Đã báo cho người dùng về TRẠNG THÁI HIỆN TẠI chưa. Đổi status thì set null. */
+  @Column({ type: 'timestamptz', nullable: true })
+  notifiedAt: Date | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
