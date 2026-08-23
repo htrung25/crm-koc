@@ -21,6 +21,7 @@ import {
   StorageService,
   StorageStreamResult,
 } from '../../common/services/storage.service';
+import { StorageLedgerService } from '../../common/services/storage-ledger.service';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { EmailQueueService } from '../../queue/email/email-queue.service';
 import { StorageQueueService } from '../../queue/storage/storage-queue.service';
@@ -71,6 +72,7 @@ export class KycService {
     private readonly authRepository: Repository<AuthEntity>,
     private readonly dataSource: DataSource,
     private readonly storage: StorageService,
+    private readonly ledger: StorageLedgerService,
     private readonly emailQueue: EmailQueueService,
     private readonly storageQueue: StorageQueueService,
     configService: ConfigService,
@@ -172,6 +174,9 @@ export class KycService {
     }
 
     const storageKey = this.storage.generateKey(STORAGE_PREFIX_PENDING);
+    // Ghi ledger TRƯỚC khi put: object tồn tại mà không ai biết thì sweep
+    // không bao giờ dọn được.
+    await this.ledger.markPending(storageKey);
     await this.storage.put(storageKey, buffer, inspected.mimeType);
 
     // Thay file cũ cùng loại: xoá object cũ sau khi lưu file mới, tránh mồ côi
@@ -180,23 +185,28 @@ export class KycService {
       docType,
     });
 
-    const saved = await this.documentRepository.save(
-      this.documentRepository.create({
-        id: existing?.id, // nếu có existing thì update tại chỗ
-        submissionId: submission.id,
-        docType,
-        storageKey,
-        originalName,
-        mimeType: inspected.mimeType,
-        sizeBytes: inspected.sizeBytes,
-        checksum: inspected.checksum,
-      }),
-    );
+    const saved = await this.dataSource.transaction(async (manager) => {
+      const row = await manager.getRepository(KycDocument).save(
+        this.documentRepository.create({
+          id: existing?.id, // nếu có existing thì update tại chỗ
+          submissionId: submission.id,
+          docType,
+          storageKey,
+          originalName,
+          mimeType: inspected.mimeType,
+          sizeBytes: inspected.sizeBytes,
+          checksum: inspected.checksum,
+        }),
+      );
+      await this.ledger.markLinked(storageKey, manager);
+      if (existing) {
+        await this.ledger.markGarbage(existing.storageKey, manager);
+      }
+      return row;
+    });
 
-    if (existing) {
-      await this.storage.remove(existing.storageKey);
-    }
-
+    // KHÔNG xoá object cũ tại đây: sweep lo, và nó retry được. Xoá đồng bộ ở
+    // đây là lặp lại đúng lỗi cũ — I/O mạng cạnh transaction, hỏng thì mồ côi.
     return saved;
   }
 
@@ -471,6 +481,9 @@ export class KycService {
     const copiedDocs = await Promise.all(
       activeDocs.map(async (doc) => {
         const newKey = this.storage.generateKey(STORAGE_PREFIX_PENDING);
+        // Ghi ledger TRƯỚC khi copy: object tồn tại mà không ai biết thì
+        // sweep không bao giờ dọn được.
+        await this.ledger.markPending(newKey);
         await this.storage.copy(doc.storageKey, newKey);
         return this.documentRepository.create({
           submissionId: toSubmissionId,
@@ -485,7 +498,12 @@ export class KycService {
     );
 
     if (copiedDocs.length > 0) {
-      await this.documentRepository.save(copiedDocs);
+      await this.dataSource.transaction(async (manager) => {
+        await manager.getRepository(KycDocument).save(copiedDocs);
+        for (const doc of copiedDocs) {
+          await this.ledger.markLinked(doc.storageKey, manager);
+        }
+      });
     }
   }
 

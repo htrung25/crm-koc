@@ -10,10 +10,12 @@ import { JwtAuthService } from './jwt-auth.service';
 import { AccountCacheService } from './account-cache.service';
 import { TokenBlacklistService } from './token-blacklist.service';
 import { StorageService } from '../common/services/storage.service';
+import { StorageLedgerService } from '../common/services/storage-ledger.service';
+import { StorageObject } from '../common/entities/storage-object.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SessionEvent]),
+    TypeOrmModule.forFeature([SessionEvent, StorageObject]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -37,6 +39,7 @@ import { StorageService } from '../common/services/storage.service';
     SessionService,
     JwtAuthService,
     StorageService,
+    StorageLedgerService,
   ],
   exports: [
     AccountCacheService,
@@ -46,6 +49,7 @@ import { StorageService } from '../common/services/storage.service';
     JwtAuthService,
     JwtModule,
     StorageService,
+    StorageLedgerService,
   ],
 })
 export class SecurityModule {}
