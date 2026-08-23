@@ -19,3 +19,10 @@ services:
         limits:
           cpus: '1.0'
           memory: 768M
+
+  api-worker:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 384M

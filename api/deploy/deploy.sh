@@ -60,14 +60,19 @@ compose() {
     "$@"
 }
 
+ready_probe() {
+  compose exec -T "$1" node -e "
+      fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/health/ready')
+        .then(r => process.exit(r.ok ? 0 : 1))
+        .catch(() => process.exit(1));
+    " 2>/dev/null
+}
+
 wait_ready() {
   local deadline=$((SECONDS + READY_TIMEOUT))
   while [ "$SECONDS" -lt "$deadline" ]; do
-    if compose exec -T api node -e "
-        fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/health/ready')
-          .then(r => process.exit(r.ok ? 0 : 1))
-          .catch(() => process.exit(1));
-      " 2>/dev/null; then
+    # Worker xanh nhưng API đỏ (hoặc ngược lại) đều không phải deploy thành công.
+    if ready_probe api && ready_probe api-worker; then
       return 0
     fi
     sleep 3
@@ -76,7 +81,7 @@ wait_ready() {
 }
 
 auto_rollback() {
-  compose logs --tail 100 api api-migrate >&2 || true
+  compose logs --tail 100 api api-worker api-migrate >&2 || true
   if [ -f .last-good ]; then
     local previous
     previous=$(cat .last-good)

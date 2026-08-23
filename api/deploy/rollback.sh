@@ -44,13 +44,18 @@ echo "==> rollback API $STACK về $TAG"
 compose pull
 compose up -d --remove-orphans
 
-deadline=$((SECONDS + READY_TIMEOUT))
-while [ "$SECONDS" -lt "$deadline" ]; do
-  if compose exec -T api node -e "
+ready_probe() {
+  compose exec -T "$1" node -e "
       fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/health/ready')
         .then(r => process.exit(r.ok ? 0 : 1))
         .catch(() => process.exit(1));
-    " 2>/dev/null; then
+    " 2>/dev/null
+}
+
+deadline=$((SECONDS + READY_TIMEOUT))
+while [ "$SECONDS" -lt "$deadline" ]; do
+  # Worker xanh nhưng API đỏ (hoặc ngược lại) đều không phải rollback thành công.
+  if ready_probe api && ready_probe api-worker; then
     echo "$TAG" > .last-good
     echo "✅ API $STACK đã về $TAG"
     exit 0
@@ -59,5 +64,5 @@ while [ "$SECONDS" -lt "$deadline" ]; do
 done
 
 echo "!! rollback API cũng không xanh — mở docs/runbook/incident.md" >&2
-compose logs --tail 100 api api-migrate >&2 || true
+compose logs --tail 100 api api-worker api-migrate >&2 || true
 exit 1
