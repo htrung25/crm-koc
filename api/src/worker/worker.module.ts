@@ -5,8 +5,12 @@ import { TerminusModule } from '@nestjs/terminus';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import type { Queue } from 'bullmq';
 import { EmailService } from '../common/services/email.service';
+import { StorageLedgerService } from '../common/services/storage-ledger.service';
+import { StorageService } from '../common/services/storage.service';
+import { StorageObject } from '../common/entities/storage-object.entity';
 import { DatabaseModule } from '../infra/database.module';
 import { RedisModule } from '../infra/redis.module';
+import { KycDocument } from '../module/kyc/entities/kyc-document.entity';
 import { KycSubmission } from '../module/kyc/entities/kyc-submission.entity';
 import {
   BULL_HEALTH_QUEUES,
@@ -17,6 +21,7 @@ import { WorkerHealthController } from '../module/health/worker-health.controlle
 import { EmailProcessor } from '../queue/email/email.processor';
 import { KycExpiryService } from '../queue/kyc/kyc-expiry.service';
 import { KycMaintenanceProcessor } from '../queue/kyc/kyc-maintenance.processor';
+import { StorageProcessor } from '../queue/storage/storage.processor';
 import { QueueModule } from '../queue/queue.module';
 import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
 
@@ -31,7 +36,7 @@ import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
     RedisModule,
     QueueModule,
     TerminusModule,
-    TypeOrmModule.forFeature([KycSubmission]),
+    TypeOrmModule.forFeature([KycSubmission, KycDocument, StorageObject]),
   ],
   controllers: [WorkerHealthController],
   providers: [
@@ -41,6 +46,9 @@ import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
     EmailService,
     KycExpiryService,
     KycMaintenanceProcessor,
+    StorageProcessor,
+    StorageService,
+    StorageLedgerService,
     {
       provide: BULL_HEALTH_QUEUES,
       inject: [
