@@ -15,6 +15,8 @@ import {
 import { RedisHealthIndicator } from '../module/health/redis.health';
 import { WorkerHealthController } from '../module/health/worker-health.controller';
 import { EmailProcessor } from '../queue/email/email.processor';
+import { KycExpiryService } from '../queue/kyc/kyc-expiry.service';
+import { KycMaintenanceProcessor } from '../queue/kyc/kyc-maintenance.processor';
 import { QueueModule } from '../queue/queue.module';
 import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
 
@@ -37,6 +39,8 @@ import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
     BullHealthIndicator,
     EmailProcessor,
     EmailService,
+    KycExpiryService,
+    KycMaintenanceProcessor,
     {
       provide: BULL_HEALTH_QUEUES,
       inject: [
