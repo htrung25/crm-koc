@@ -1,11 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 import { BullHealthIndicator } from './bull.health';
+import type { HealthIndicatorService } from '@nestjs/terminus';
 import type { Queue } from 'bullmq';
 
 function fakeIndicatorService() {
   const up = jest.fn().mockReturnValue({ bull: { status: 'up' } });
   const down = jest.fn().mockReturnValue({ bull: { status: 'down' } });
-  return { service: { check: () => ({ up, down }) } as any, up, down };
+  return {
+    service: {
+      check: () => ({ up, down }),
+    } as unknown as HealthIndicatorService,
+    up,
+    down,
+  };
 }
 
 function fakeQueue(status: string, paused: boolean): Queue {
@@ -45,6 +51,24 @@ describe('BullHealthIndicator', () => {
     await indicator.isHealthy('bull');
     expect(down).toHaveBeenCalledWith(
       expect.objectContaining({ notReady: ['email'] }),
+    );
+  });
+
+  it('xuống đỏ khi queue.client treo mãi thay vì hang cả request', async () => {
+    const { service, down } = fakeIndicatorService();
+    const stuckQueue = {
+      name: 'stuck',
+      client: new Promise(() => {
+        /* never settles — simulates ioredis wedged mid-reconnect */
+      }),
+      isPaused: jest.fn().mockResolvedValue(false),
+    } as unknown as Queue;
+    const indicator = new BullHealthIndicator(service, [stuckQueue], 20);
+
+    await indicator.isHealthy('bull');
+
+    expect(down).toHaveBeenCalledWith(
+      expect.objectContaining({ timedOut: ['stuck'] }),
     );
   });
 });
