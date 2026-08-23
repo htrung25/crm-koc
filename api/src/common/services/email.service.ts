@@ -3,6 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import type { RedisClientType } from 'redis';
 import sgMail from '@sendgrid/mail';
 
+/**
+ * Một socket treo (không lỗi, không trả) mà không có timeout thì chiếm luôn
+ * slot concurrency vô thời hạn. sgMail.setTimeout() truyền thẳng xuống axios
+ * (@sendgrid/client), nên hết hạn là request thật sự bị abort và promise
+ * reject — không phải resolve giả — nên BullMQ retry được kích hoạt.
+ */
+const SENDGRID_SEND_TIMEOUT_MS = 10_000;
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -17,6 +25,7 @@ export class EmailService {
       'SENDGRID_FROM',
       'CRM-KOC System <no-reply@crm-koc.asia>',
     );
+    sgMail.setTimeout(SENDGRID_SEND_TIMEOUT_MS);
     if (apiKey) {
       sgMail.setApiKey(apiKey);
     } else {

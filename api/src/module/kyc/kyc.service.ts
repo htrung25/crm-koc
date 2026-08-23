@@ -400,12 +400,22 @@ export class KycService {
       return submissionRepo.save(submission);
     });
 
-    // Enqueue SAU commit. Gọi trong transaction là job có thể chạy trước khi
-    // dữ liệu nhìn thấy được, và rollback thì email đã gửi mất rồi.
-    if (saved.status === EKycStatus.VERIFIED) {
-      await this.storageQueue.enqueuePromoteDocuments(saved.id);
+    try {
+      await this.emailQueue.enqueueKycStatus(saved.id);
+    } catch (error) {
+      this.logger.warn(
+        `review: enqueue send-kyc-status thất bại cho submission ${saved.id}: ${(error as Error).message}`,
+      );
     }
-    await this.emailQueue.enqueueKycStatus(saved.id);
+    if (saved.status === EKycStatus.VERIFIED) {
+      try {
+        await this.storageQueue.enqueuePromoteDocuments(saved.id);
+      } catch (error) {
+        this.logger.warn(
+          `review: enqueue promote-documents thất bại cho submission ${saved.id}: ${(error as Error).message}`,
+        );
+      }
+    }
 
     return saved;
   }

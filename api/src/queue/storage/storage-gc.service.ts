@@ -4,8 +4,12 @@ import { DataSource, In } from 'typeorm';
 import { StorageObject } from '../../common/entities/storage-object.entity';
 import { EStorageObjectState } from '../../common/enum/storage-object-state.enum';
 import { StorageService } from '../../common/services/storage.service';
+import { EKycStatus } from '../../common/enum/kyc.enum';
+import { STORAGE_PREFIX_PENDING } from '../../module/kyc/constants/kyc-storage.constants';
+import { StorageQueueService } from './storage-queue.service';
 
 const SWEEP_BATCH = 100;
+const RECONCILE_PROMOTIONS_BATCH = 200;
 
 @Injectable()
 export class StorageGcService {
@@ -15,6 +19,7 @@ export class StorageGcService {
   constructor(
     private readonly storage: StorageService,
     private readonly dataSource: DataSource,
+    private readonly storageQueue: StorageQueueService,
     configService: ConfigService,
   ) {
     this.graceMinutes = Number(
@@ -78,6 +83,34 @@ export class StorageGcService {
         (failedIds.length ? `, ${failedIds.length} lỗi giữ lại thử sau` : ''),
     );
     return succeededIds.length;
+  }
+
+  async reconcilePromotions(): Promise<number> {
+    const rows = await this.dataSource
+      .createQueryBuilder()
+      .select('kyc.id', 'id')
+      .from('kyc_submissions', 'kyc')
+      .innerJoin(
+        'kyc_documents',
+        'doc',
+        'doc.submission_id = kyc.id AND doc.storage_key LIKE :pendingPrefix',
+        { pendingPrefix: `${STORAGE_PREFIX_PENDING}%` },
+      )
+      .where('kyc.status = :verified', { verified: EKycStatus.VERIFIED })
+      .orderBy('kyc.updated_at', 'ASC')
+      .limit(RECONCILE_PROMOTIONS_BATCH)
+      .getRawMany<{ id: string }>();
+
+    for (const row of rows) {
+      await this.storageQueue.enqueuePromoteDocuments(row.id);
+    }
+
+    if (rows.length) {
+      this.logger.log(
+        `reconcile-promotions: enqueue lại ${rows.length} hồ sơ KYC chưa promote xong`,
+      );
+    }
+    return rows.length;
   }
 
   private async claimBatch(): Promise<StorageObject[]> {

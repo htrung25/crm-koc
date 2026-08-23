@@ -11,23 +11,29 @@ const BASE: JobsOptions = {
   removeOnFail: { count: 100 },
 };
 
+const EMAIL_FAILED_JOB_MAX_AGE_SECONDS = 60 * 60;
+const EMAIL_BASE: JobsOptions = {
+  removeOnComplete: true,
+  removeOnFail: { age: EMAIL_FAILED_JOB_MAX_AGE_SECONDS, count: 100 },
+};
+
 export function emailJobOptions(jobName: string): JobsOptions {
   switch (jobName) {
     case JOB_SEND_OTP:
       // OTP sống 300s. Retry lâu hơn thế là gửi một mã đã chết.
       return {
-        ...BASE,
+        ...EMAIL_BASE,
         attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },
       };
     case JOB_SEND_KYC_STATUS:
       return {
-        ...BASE,
+        ...EMAIL_BASE,
         attempts: 5,
         backoff: { type: 'exponential', delay: 30_000 },
       };
     default:
-      return { ...BASE, attempts: 3 };
+      return { ...EMAIL_BASE, attempts: 3 };
   }
 }
 
