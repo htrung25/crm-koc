@@ -7,30 +7,47 @@ Monorepo: `api/` (NestJS 11) và `frontend-web/` (Next 16). Node 24.
 ```
 feat/*       ●───●
             /     \
-develop  ──●───────●───────────────────●  (staging)
-                    \                 ▲
-                     \ (merge commit) │ (back-merge)
-                      ▼               │
-main     ─────────────●───────────────●─── (production)
-                      │ \            /
-                  v1.4.0 \          / v1.4.1
-              (tag release)●───●───●
-                        hotfix/*
+develop  ──●───────●─────●─────────────────────●   (chỉ chạy CI)
+                          \                   ▲
+                           \ (merge commit)   │ (back-merge)
+                            ▼                 │
+staging  ───────────────────●─────────────●   │   (deploy Staging)
+                             \             \  │
+                              \             \ │
+                               ▼             ▼│
+main     ──────────────────────●─────────────●──── (deploy Production)
+                               │ \            /
+                           v1.4.0 \          / v1.4.1
+                       (tag release)●───●───●
+                                  hotfix/*
 ```
 
 ### Quy tắc cốt lõi:
-1. **`develop`** là nhánh mặc định, phản chiếu môi trường **Staging**.
-2. **`main`** phản chiếu môi trường **Production**. Chỉ nhận code qua Pull Request:
-   - Từ `develop` khi phát hành tính năng mới.
+1. **`develop`** là nhánh mặc định, nơi tích hợp mọi `feat/*`. Push vào đây **chỉ chạy CI**, không build image, không deploy.
+2. **`staging`** phản chiếu môi trường **Staging**. Mỗi lần merge vào đây sẽ build image lên GHCR rồi tự động deploy lên máy chủ staging.
+   - Nhận code qua Pull Request từ `develop`.
+3. **`main`** phản chiếu môi trường **Production**. Chỉ nhận code qua Pull Request:
+   - Từ `staging` khi phát hành tính năng mới (code đã được nghiệm thu trên staging).
    - Từ `hotfix/*` khi sửa lỗi khẩn cấp trực tiếp trên Production.
-3. **Tuyệt đối KHÔNG SQUASH khi merge `develop` ➔ `main`**:
-   - Luôn chọn **Create a merge commit** để bảo toàn toàn bộ lịch sử commit (tránh bị lệch commit SHA giữa 2 nhánh).
-4. **Quy trình Hotfix (`hotfix/*`)**:
+4. **Tuyệt đối KHÔNG SQUASH khi merge `develop` ➔ `staging` ➔ `main`**:
+   - Luôn chọn **Create a merge commit** để bảo toàn toàn bộ lịch sử commit (tránh bị lệch commit SHA giữa các nhánh).
+5. **Quy trình Hotfix (`hotfix/*`)**:
    - Tạo nhánh từ `main`: `git switch main && git switch -c hotfix/fix-login-error`
    - PR và merge vào `main` ➔ Gắn tag hotfix (ví dụ: `v1.4.1`).
-   - **Bắt buộc Back-merge**: Ngay sau khi tag hotfix, tạo PR hoặc merge `main` ngược lại về `develop` để đồng bộ bản vá.
-5. **Dọn dẹp nhánh**:
+   - **Bắt buộc Back-merge**: Ngay sau khi tag hotfix, merge `main` ngược về `staging`, rồi `staging` về `develop` để đồng bộ bản vá xuống cả hai nhánh.
+6. **Dọn dẹp nhánh**:
    - Toàn bộ nhánh `feat/*`, `fix/*`, `hotfix/*` phải được **xóa ngay sau khi merge**.
+   - `develop`, `staging`, `main` là nhánh thường trực, không bao giờ xóa.
+
+### Nhánh nào kích hoạt gì:
+
+| Sự kiện | ci-api / ci-web | build-push | deploy-staging | deploy-prod |
+|---|---|---|---|---|
+| PR (mọi nhánh đích) | ✅ | — | — | — |
+| push `develop` | ✅ | — | — | — |
+| push `staging` | ✅ | ✅ | ✅ (tự động) | — |
+| push `main` | ✅ | — | — | — |
+| push tag `v*` | — | ✅ | — | ✅ (chờ approval) |
 
 ---
 
@@ -41,13 +58,26 @@ main     ─────────────●─────────�
 
 ---
 
+## Quy trình phát hành lên Staging
+
+```bash
+# Mở PR develop ➔ staging, chọn "Create a merge commit"
+gh pr create --base staging --head develop --title "release: staging"
+```
+
+Merge xong, `build-push` build image rồi `deploy-staging` tự chạy. Không cần thao tác tay trên máy chủ.
+
+---
+
 ## Quy trình Release (Phát hành Production)
 
 ```bash
-# 1. Chuyển sang main và cập nhật mới nhất
+# 1. Mở PR staging ➔ main sau khi đã nghiệm thu trên staging, merge bằng merge commit
+
+# 2. Chuyển sang main và cập nhật mới nhất
 git switch main && git pull origin main
 
-# 2. Gắn tag semver và đẩy lên GitHub
+# 3. Gắn tag semver và đẩy lên GitHub
 git tag v1.4.0
 git push origin v1.4.0
 ```

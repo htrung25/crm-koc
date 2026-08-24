@@ -3,7 +3,7 @@ name: ci-api
 on:
   pull_request:
   push:
-    branches: [develop, main]
+    branches: [develop, staging, main]
 
 permissions:
   contents: read
