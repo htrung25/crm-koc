@@ -45,14 +45,14 @@ cd "$DIR"
 
 # Đảm bảo database & redis stack đang chạy
 echo "==> kiểm tra database/cache stack ($STACK)"
-docker compose \
+APP_ENV_FILE="$ENV_DIR/.env" STACK="$STACK" docker compose \
   --env-file "$ENV_DIR/.env" \
   -f "$INFRA_DIR/compose.db.yml" \
   -p "crm-koc-${STACK}-db" \
   up -d
 
 compose() {
-  STACK="$STACK" docker compose \
+  APP_ENV_FILE="$ENV_DIR/.env" STACK="$STACK" docker compose \
     --env-file "$ENV_DIR/.env" \
     --env-file .env.deploy \
     -f compose.api.base.yml \

@@ -26,7 +26,7 @@ if [ -z "$TAG" ]; then
 fi
 
 compose() {
-  STACK="$STACK" docker compose \
+  APP_ENV_FILE="$ENV_DIR/.env" STACK="$STACK" docker compose \
     --env-file "$ENV_DIR/.env" \
     --env-file .env.deploy \
     -f compose.api.base.yml \

@@ -35,7 +35,7 @@ file="$OUT/daily/${STACK}-${stamp}.sql.gz"
 
 echo "==> pg_dump $STACK -> $file"
 # -T: không cấp TTY, nếu không gzip nhận thêm ký tự CR và file hỏng.
-docker compose \
+APP_ENV_FILE="$DIR/.env" STACK="$STACK" docker compose \
   --env-file "$DIR/.env" \
   -f "$INFRA_DIR/compose.db.yml" \
   -p "crm-koc-${STACK}-db" \
