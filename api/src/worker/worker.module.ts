@@ -10,6 +10,7 @@ import { StorageService } from '../common/services/storage.service';
 import { StorageObject } from '../common/entities/storage-object.entity';
 import { DatabaseModule } from '../infra/database.module';
 import { RedisModule } from '../infra/redis.module';
+import { AuthEntity } from '../module/auth/entities/auth.entity';
 import { KycDocument } from '../module/kyc/entities/kyc-document.entity';
 import { KycSubmission } from '../module/kyc/entities/kyc-submission.entity';
 import {
@@ -25,11 +26,8 @@ import { StorageGcService } from '../queue/storage/storage-gc.service';
 import { StorageProcessor } from '../queue/storage/storage.processor';
 import { QueueModule } from '../queue/queue.module';
 import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
+import { OtpService } from '../security/otp.service';
 
-/**
- * Điểm DUY NHẤT được phép import processor. Container `api` chỉ là producer;
- * @Processor lọt vào AppModule là nó âm thầm rút job khỏi queue.
- */
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -37,7 +35,12 @@ import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
     RedisModule,
     QueueModule,
     TerminusModule,
-    TypeOrmModule.forFeature([KycSubmission, KycDocument, StorageObject]),
+    TypeOrmModule.forFeature([
+      KycSubmission,
+      KycDocument,
+      StorageObject,
+      AuthEntity,
+    ]),
   ],
   controllers: [WorkerHealthController],
   providers: [
@@ -45,6 +48,7 @@ import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
     BullHealthIndicator,
     EmailProcessor,
     EmailService,
+    OtpService,
     KycExpiryService,
     KycMaintenanceProcessor,
     StorageProcessor,

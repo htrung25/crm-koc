@@ -6,8 +6,10 @@ import type { Job } from 'bullmq';
 import { Repository } from 'typeorm';
 import { EmailService } from '../../common/services/email.service';
 import { EKycRejectReason } from '../../common/enum/kyc.enum';
+import { AuthEntity } from '../../module/auth/entities/auth.entity';
 import { KYC_STATUS_LABEL } from '../../module/kyc/constants/kyc.constants';
 import { KycSubmission } from '../../module/kyc/entities/kyc-submission.entity';
+import { OtpService } from '../../security/otp.service';
 import { JOB_SEND_KYC_STATUS, JOB_SEND_OTP, QUEUE_EMAIL } from '../queue-names';
 import type { SendKycStatusJob, SendOtpJob } from './email-job.types';
 
@@ -23,6 +25,9 @@ export class EmailProcessor extends WorkerHost {
     configService: ConfigService,
     @InjectRepository(KycSubmission)
     private readonly submissionRepository: Repository<KycSubmission>,
+    @InjectRepository(AuthEntity)
+    private readonly accountRepository: Repository<AuthEntity>,
+    private readonly otpService: OtpService,
   ) {
     super();
     this.otpTtlSeconds = Number(configService.get('OTP_TTL_SECONDS', 300));
@@ -42,17 +47,44 @@ export class EmailProcessor extends WorkerHost {
   private async sendOtp(job: Job): Promise<void> {
     const data = job.data as SendOtpJob;
 
-    // OTP sống 300s. Retry sau mốc đó là gửi một mã đã chết.
+    // Guard rẻ, chặn trước khi chạm Redis/DB. TTL của key mới là chốt thật.
     const ageSeconds = (Date.now() - job.timestamp) / 1000;
     if (ageSeconds > this.otpTtlSeconds) {
       this.logger.warn(`bỏ OTP quá hạn của account ${data.accountId}`);
       return;
     }
 
+    // Nhánh data.otp là payload cũ còn kẹt trong queue lúc rolling deploy.
+    // Gỡ ở release sau, cùng lúc với ba field optional trong SendOtpJob.
+    if (data.otp && data.email) {
+      await this.emailService.sendOtpEmail(
+        data.email,
+        data.otp,
+        data.displayName ?? 'Valued User',
+      );
+      return;
+    }
+
+    // Key hết hạn thì không còn gì đáng gửi: retry không gửi mã chết nữa.
+    const otp = await this.otpService.peek(data.accountId);
+    if (!otp) {
+      this.logger.warn(`OTP của account ${data.accountId} đã hết hạn, bỏ job`);
+      return;
+    }
+
+    const account = await this.accountRepository.findOne({
+      where: { id: data.accountId },
+      select: { email: true, name: true },
+    });
+    if (!account?.email) {
+      this.logger.warn(`account ${data.accountId} không có email để gửi`);
+      return;
+    }
+
     await this.emailService.sendOtpEmail(
-      data.email,
-      data.otp,
-      data.displayName,
+      account.email,
+      otp,
+      account.name || 'Valued User',
     );
   }
 

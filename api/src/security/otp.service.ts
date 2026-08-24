@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { RedisClientType } from 'redis';
@@ -42,7 +43,7 @@ export class OtpService {
     const lockValue = await this.redis.get(`${OTP_LOCK_PREFIX}${accountId}`);
     if (lockValue !== null) return EOtpResult.LOCKED;
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const otp = this.generateOtp();
 
     await this.redis.set(
       `${OTP_PENDING_PREFIX}${accountId}`,
@@ -135,7 +136,7 @@ export class OtpService {
       if (secondsSinceLast < this.resendCooldown) return EOtpResult.COOLDOWN;
     }
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const otp = this.generateOtp();
     await this.redis.set(
       `${OTP_PENDING_PREFIX}${accountId}`,
       JSON.stringify({ otp, attempts: 0 }),
@@ -161,5 +162,19 @@ export class OtpService {
       this.redis.del(`${OTP_LOCK_PREFIX}${accountId}`),
       this.redis.del(`${OTP_RESEND_PREFIX}${accountId}`),
     ]);
+  }
+
+  /**
+   * Đọc mã đang chờ để gửi mail. KHÔNG xoá: verify() còn cần key này.
+   * null nghĩa là TTL đã hết — không còn gì đáng gửi.
+   */
+  async peek(accountId: string): Promise<string | null> {
+    const raw = await this.redis.get(`${OTP_PENDING_PREFIX}${accountId}`);
+    if (!raw) return null;
+    return (JSON.parse(raw) as { otp: string }).otp;
+  }
+
+  private generateOtp(): string {
+    return String(randomInt(100_000, 1_000_000));
   }
 }
