@@ -1,12 +1,12 @@
 name: deploy-staging
 
-# Chạy sau khi build-push xong trên develop. Không tự build lại: staging deploy
-# đúng image mà prod sẽ deploy sau này.
+# Chạy sau khi build-push xong trên nhánh `staging`. Không tự build lại: staging
+# deploy đúng image mà prod sẽ deploy sau này.
 on:
   workflow_run:
     workflows: [build-push]
     types: [completed]
-    branches: [develop]
+    branches: [staging]
   workflow_dispatch:
     inputs:
       image_tag:
@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 concurrency:
   group: deploy-staging

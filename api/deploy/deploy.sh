@@ -18,7 +18,7 @@ case "$STACK" in
 esac
 
 case "$TAG" in
-  latest | develop | main)
+  latest | develop | staging | main)
     echo "từ chối deploy tag di động '$TAG'; dùng sha-*" >&2
     exit 2
     ;;
