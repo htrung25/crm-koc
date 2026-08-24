@@ -2,11 +2,8 @@ name: crm-koc-prod-web
 
 services:
   web:
-    networks:
-      internal:
-      edge:
-        aliases:
-          - web-prod
+    ports:
+      - '127.0.0.1:3012:3000'
     deploy:
       resources:
         limits:

@@ -12,16 +12,13 @@ services:
     init: true
     environment:
       NODE_ENV: production
+      # Gọi thẳng service `api` trong network internal, không vòng qua nginx.
       API_URL: http://api:3000
     logging: *default-logging
     networks:
       - internal
-      - edge
 
 networks:
   internal:
     external: true
     name: ${STACK:-staging}_internal
-  edge:
-    external: true
-    name: edge
