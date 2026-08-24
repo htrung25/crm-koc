@@ -177,7 +177,7 @@ export class AuthController {
       );
     }
 
-    await this.sendOtp(account.email, result.otp, account.name, account.id);
+    await this.sendOtp(account.id);
 
     return { requireOtp: true, message: 'A new OTP has been sent' };
   }
@@ -259,27 +259,14 @@ export class AuthController {
       throw new ForbiddenException('too many failed attempts, try again later');
     }
 
-    await this.sendOtp(account.email, result.otp, account.name, account.id);
+    await this.sendOtp(account.id);
 
     // KHÔNG trả token ở đây: mật khẩu đúng mới chỉ qua được nửa đầu.
     return { requireOtp: true, message };
   }
 
-  private async sendOtp(
-    email: string,
-    otp: string,
-    name: string,
-    accountId: string,
-  ): Promise<void> {
-    // KHÔNG try/catch: enqueue hỏng nghĩa là Redis chết, mà OTP cũng lưu ở
-    // Redis nên generateAndStore() đã fail trước đó rồi. Báo 503 trung thực
-    // hơn để người dùng ngồi chờ một mã không bao giờ tới.
-    await this.emailQueue.enqueueOtp({
-      accountId,
-      email,
-      displayName: name,
-      otp,
-    });
+  private async sendOtp(accountId: string): Promise<void> {
+    await this.emailQueue.enqueueOtp({ accountId });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
