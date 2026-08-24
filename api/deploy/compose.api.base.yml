@@ -12,7 +12,7 @@ services:
     image: ${API_IMAGE:?API_IMAGE chưa được set}
     restart: 'no'
     env_file:
-      - .env
+      - ${APP_ENV_FILE:?APP_ENV_FILE chưa được set}
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: '5432'
@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
     init: true
     env_file:
-      - .env
+      - ${APP_ENV_FILE:?APP_ENV_FILE chưa được set}
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: '5432'
@@ -51,7 +51,7 @@ services:
     restart: unless-stopped
     init: true
     env_file:
-      - .env
+      - ${APP_ENV_FILE:?APP_ENV_FILE chưa được set}
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: '5432'

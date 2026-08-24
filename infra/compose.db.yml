@@ -14,7 +14,7 @@ services:
     image: postgres:18-bookworm
     restart: unless-stopped
     env_file:
-      - .env
+      - ${APP_ENV_FILE:?APP_ENV_FILE chưa được set}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
