@@ -77,7 +77,7 @@ chmod 600 "/home/$DEPLOY_USER/.ssh/authorized_keys"
 echo "    → dán public key CI vào /home/$DEPLOY_USER/.ssh/authorized_keys"
 
 echo "==> thư mục $ROOT"
-for d in staging prod backups infra; do
+for d in staging prod backups infra api-staging web-staging api-prod web-prod; do
   install -d -m 750 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$ROOT/$d"
 done
 
