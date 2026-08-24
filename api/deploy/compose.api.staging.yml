@@ -2,11 +2,10 @@ name: crm-koc-staging-api
 
 services:
   api:
-    networks:
-      internal:
-      edge:
-        aliases:
-          - api-staging
+    # Cửa ngõ là nginx chạy trên host. Bind vào 127.0.0.1 để cổng này chỉ nginx
+    # gọi được, không lộ ra internet — ufw chỉ mở 22/80/443.
+    ports:
+      - '127.0.0.1:3001:3000'
     deploy:
       resources:
         limits:

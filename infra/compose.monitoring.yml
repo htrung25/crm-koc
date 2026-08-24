@@ -1,0 +1,24 @@
+# Uptime Kuma — giám sát uptime + hạn cert. Deploy một lần, không thuộc stack
+# staging/prod nào:
+#
+#   docker compose -f compose.monitoring.yml up -d
+#
+# Publish ra loopback, nginx trên host reverse proxy (xem infra/nginx/status.conf).
+name: crm-koc-monitoring
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:3003:3001'
+    volumes:
+      - kuma-data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
+
+volumes:
+  kuma-data:

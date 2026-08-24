@@ -44,7 +44,6 @@ services:
     logging: *default-logging
     networks:
       - internal
-      - edge
 
   api-worker:
     image: ${API_IMAGE:?API_IMAGE chưa được set}
@@ -66,7 +65,7 @@ services:
       api-migrate:
         condition: service_completed_successfully
     logging: *default-logging
-    # KHÔNG lên network edge: worker không phục vụ traffic ngoài.
+    # KHÔNG publish port: worker không phục vụ traffic ngoài.
     # KHÔNG mount volume uploads.
     networks:
       - internal
@@ -75,9 +74,6 @@ networks:
   internal:
     external: true
     name: ${STACK:-staging}_internal
-  edge:
-    external: true
-    name: edge
 
 volumes:
   uploads:
