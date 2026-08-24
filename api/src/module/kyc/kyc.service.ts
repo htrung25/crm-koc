@@ -35,10 +35,7 @@ import {
   REQUIRED_DOCUMENTS,
   RESUBMIT_FROM_STATUSES,
 } from './constants/kyc.constants';
-import {
-  STORAGE_PREFIX_PENDING,
-  STORAGE_PREFIX_VERIFIED,
-} from './constants/kyc-storage.constants';
+import { STORAGE_PREFIX_PENDING } from './constants/kyc-storage.constants';
 import {
   KYC_LIST_FIELDS,
   KycListItem,
@@ -515,29 +512,6 @@ export class KycService {
         }
       });
     }
-  }
-
-  /** Chuyển song song sang tiền tố `verified/` khi duyệt. */
-  private async moveDocumentsToVerified(submissionId: string): Promise<void> {
-    const documents = await this.documentRepository.findBy({ submissionId });
-    const pendingDocs = documents.filter((doc) =>
-      doc.storageKey.startsWith(STORAGE_PREFIX_PENDING),
-    );
-
-    await Promise.all(
-      pendingDocs.map(async (doc) => {
-        const newKey = doc.storageKey.replace(
-          STORAGE_PREFIX_PENDING,
-          STORAGE_PREFIX_VERIFIED,
-        );
-        await this.storage.copy(doc.storageKey, newKey);
-        await this.storage.remove(doc.storageKey);
-        await this.documentRepository.update(
-          { id: doc.id },
-          { storageKey: newKey },
-        );
-      }),
-    );
   }
 
   private assertRejectPayload(dto: ReviewKycDto): void {

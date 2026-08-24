@@ -12,6 +12,7 @@ const BASE: JobsOptions = {
 };
 
 const EMAIL_FAILED_JOB_MAX_AGE_SECONDS = 60 * 60;
+const OTP_FAILED_JOB_MAX_AGE_SECONDS = 5 * 60;
 const EMAIL_BASE: JobsOptions = {
   removeOnComplete: true,
   removeOnFail: { age: EMAIL_FAILED_JOB_MAX_AGE_SECONDS, count: 100 },
@@ -23,6 +24,9 @@ export function emailJobOptions(jobName: string): JobsOptions {
       // OTP sống 300s. Retry lâu hơn thế là gửi một mã đã chết.
       return {
         ...EMAIL_BASE,
+        // Job hỏng chỉ còn accountId, nhưng giữ lâu hơn vòng đời OTP thì cũng
+        // không còn gì để chẩn đoán.
+        removeOnFail: { age: OTP_FAILED_JOB_MAX_AGE_SECONDS, count: 100 },
         attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },
       };
