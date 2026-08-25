@@ -4,8 +4,6 @@ export class CreateSessionEvents1785603284060 implements MigrationInterface {
   name = 'CreateSessionEvents1785603284060';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // session_events: nhật ký append-only phục vụ điều tra, không phải nơi
-    // lưu trạng thái. Không có updated_at vì bản ghi không bao giờ bị sửa.
     await queryRunner.query(`
       CREATE TABLE "session_events" (
         "id"          bigint       GENERATED ALWAYS AS IDENTITY,

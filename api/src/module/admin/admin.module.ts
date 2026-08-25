@@ -16,10 +16,18 @@ import { SuperAdminGuard } from './super-admin.guard';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { SecurityModule } from '../../security/security.module';
 import { IpWhitelistModule } from './ip-whitelist.module';
+import { AuditLogController } from './audit-log.controller';
+import { AuditLogService } from './audit-log.service';
+import { AuditLog } from './entities/audit-log.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AdminUser, AuthEntity, SystemConfiguration]),
+    TypeOrmModule.forFeature([
+      AdminUser,
+      AuthEntity,
+      SystemConfiguration,
+      AuditLog,
+    ]),
     SecurityModule,
     IpWhitelistModule,
   ],
@@ -32,6 +40,7 @@ import { IpWhitelistModule } from './ip-whitelist.module';
     BrandListController,
     CreatorListController,
     SystemConfigurationController,
+    AuditLogController,
     AdminController,
   ],
   providers: [
@@ -41,6 +50,7 @@ import { IpWhitelistModule } from './ip-whitelist.module';
     CreatorListService,
     SuperAdminGuard,
     SystemConfigurationService,
+    AuditLogService,
   ],
   // SystemConfigurationService export ra ngoài cho AdminMaintenanceInterceptor.
   exports: [AdminService, AdminProfileService, SystemConfigurationService],
