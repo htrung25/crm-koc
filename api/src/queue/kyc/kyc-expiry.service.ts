@@ -4,10 +4,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EKycStatus } from '../../common/enum/kyc.enum';
 import { KycSubmission } from '../../module/kyc/entities/kyc-submission.entity';
+import { KycStateMachine } from '../../module/kyc/kyc-state-machine';
 import { EmailQueueService } from '../email/email-queue.service';
+import { KYC_SYSTEM_ACTOR } from 'src/module/kyc/constants/kyc.constants';
 
 /** Trạng thái đáng báo cho người dùng. DRAFT/PENDING thì chưa có gì để báo. */
-const NOTIFIABLE = [
+export const NOTIFIABLE = [
   EKycStatus.MORE_INFO,
   EKycStatus.VERIFIED,
   EKycStatus.REJECTED,
@@ -15,7 +17,7 @@ const NOTIFIABLE = [
   EKycStatus.EXPIRED,
 ];
 
-const RECONCILE_BATCH = 200;
+export const RECONCILE_BATCH = 200;
 
 @Injectable()
 export class KycExpiryService {
@@ -26,6 +28,7 @@ export class KycExpiryService {
     private readonly submissionRepository: Repository<KycSubmission>,
     private readonly emailQueue: EmailQueueService,
     private readonly configService: ConfigService,
+    private readonly stateMachine: KycStateMachine,
   ) {}
 
   /**
@@ -52,13 +55,14 @@ export class KycExpiryService {
     return rows.length;
   }
 
-  /**
-   * KHÔNG đi qua assertTransition(). Ma trận hiện cho VERIFIED → EXPIRED chỉ
-   * với ERole.ADMIN, và bịa thêm ERole.SYSTEM sẽ làm bẩn mọi guard đang dùng
-   * enum đó. Mệnh đề WHERE status = VERIFIED chính là bất biến cần bảo vệ, và
-   * nó được DB đảm bảo chứ không phải code.
-   */
+  /** Bulk compare-and-set ở DB giữ tính nguyên tử; state machine giữ luật actor. */
   async expireVerified(): Promise<number> {
+    this.stateMachine.assertTransition(
+      EKycStatus.VERIFIED,
+      EKycStatus.EXPIRED,
+      KYC_SYSTEM_ACTOR,
+    );
+
     const result = await this.submissionRepository
       .createQueryBuilder()
       .update(KycSubmission)

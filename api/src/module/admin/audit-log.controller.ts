@@ -16,7 +16,7 @@ import { AuditLogFilterDto, AuditLogListItemDto } from './dto/audit-log.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 import { SuperAdminGuard } from './super-admin.guard';
 
-@ApiTags('Admin')
+@ApiTags('Admin-AuditLog')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard, IpWhitelistGuard, SuperAdminGuard)
 @Roles(ERole.ADMIN)

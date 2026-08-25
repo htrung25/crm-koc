@@ -27,7 +27,7 @@ import { ApiFilterResponse } from '../../common/dto/filter-response.dto';
 import { BrandFilterDto, BrandListResponseDto } from './dto/brand-list.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 
-@ApiTags('Admin')
+@ApiTags('Admin-UserList')
 @ApiBearerAuth('access-token')
 // Thứ tự guard có ý nghĩa: JwtAuthGuard chạy trước để nạp request.user,
 // RolesGuard mới có cái để đọc.

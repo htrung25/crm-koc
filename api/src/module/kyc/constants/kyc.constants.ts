@@ -1,11 +1,7 @@
 import { EKycDocumentType, EKycStatus } from '../../../common/enum/kyc.enum';
 import { ERole } from '../../../common/enum/roles.enum';
 import { KycSubmission } from '../entities/kyc-submission.entity';
-
-/** Enum số nên Object.values trả cả tên lẫn số; lọc lấy phần số có kiểu. */
-export const ALL_KYC_STATUSES = Object.values(EKycStatus).filter(
-  (value): value is EKycStatus => typeof value === 'number',
-);
+import { EKycRejectReason } from '../../../common/enum/kyc.enum';
 
 /** Enum là số nên thông điệp lỗi phải tự dịch, không thì FE nhận "3" trơ trọi. */
 export const KYC_STATUS_LABEL: Record<EKycStatus, string> = {
@@ -24,36 +20,6 @@ export const OPEN_KYC_STATUSES = [
   EKycStatus.PENDING,
   EKycStatus.MORE_INFO,
 ];
-
-/*Chuyển trạng thái hợp lệ + ai được bấm */
-export const KYC_TRANSITION_ACTORS: Record<
-  EKycStatus,
-  Partial<Record<EKycStatus, ERole[]>>
-> = {
-  [EKycStatus.DRAFT]: {
-    [EKycStatus.PENDING]: [ERole.BRAND, ERole.CREATOR],
-  },
-  [EKycStatus.PENDING]: {
-    [EKycStatus.VERIFIED]: [ERole.ADMIN],
-    [EKycStatus.MORE_INFO]: [ERole.ADMIN],
-    [EKycStatus.REJECTED]: [ERole.ADMIN],
-  },
-  [EKycStatus.MORE_INFO]: {
-    [EKycStatus.PENDING]: [ERole.BRAND, ERole.CREATOR],
-  },
-  [EKycStatus.VERIFIED]: {
-    // Giấy tờ có hạn, và gian lận lộ ra sau khi duyệt.
-    [EKycStatus.EXPIRED]: [ERole.ADMIN],
-  },
-  // REJECTED và EXPIRED là trạng thái cuối của record cũ; người dùng nộp lại sẽ
-  // tạo record DRAFT mới thông qua openSubmission() thay vì chuyển status tại chỗ.
-  [EKycStatus.REJECTED]: {},
-  [EKycStatus.LOCKED]: {},
-  [EKycStatus.EXPIRED]: {},
-};
-
-/* Chuyển nào sinh dòng MỚI, chuyển nào sửa tại chỗ.*/
-export const RESUBMIT_FROM_STATUSES = [EKycStatus.REJECTED, EKycStatus.EXPIRED];
 
 /** Số lượt nộp tối đa. MORE_INFO không tính vào đây. */
 export const MAX_KYC_ATTEMPTS = 3;
@@ -97,3 +63,49 @@ export const KYC_LIST_FIELDS = [
 ] as const;
 
 export type KycListItem = Pick<KycSubmission, (typeof KYC_LIST_FIELDS)[number]>;
+
+export const KYC_SYSTEM_ACTOR = 'system' as const;
+export type KycTransitionActor = ERole | typeof KYC_SYSTEM_ACTOR;
+
+type KycTransitionMap = Record<
+  EKycStatus,
+  Partial<Record<EKycStatus, readonly KycTransitionActor[]>>
+>;
+
+export const ALL_KYC_STATUSES = Object.values(EKycStatus).filter(
+  (value): value is EKycStatus => typeof value === 'number',
+);
+
+export const KYC_TRANSITIONS: KycTransitionMap = {
+  [EKycStatus.DRAFT]: {
+    [EKycStatus.PENDING]: [ERole.BRAND, ERole.CREATOR],
+  },
+  [EKycStatus.PENDING]: {
+    [EKycStatus.VERIFIED]: [ERole.ADMIN],
+    [EKycStatus.MORE_INFO]: [ERole.ADMIN],
+    [EKycStatus.REJECTED]: [ERole.ADMIN],
+  },
+  [EKycStatus.MORE_INFO]: {
+    [EKycStatus.PENDING]: [ERole.BRAND, ERole.CREATOR],
+  },
+  [EKycStatus.VERIFIED]: {
+    [EKycStatus.EXPIRED]: [ERole.ADMIN, KYC_SYSTEM_ACTOR],
+  },
+  [EKycStatus.REJECTED]: {},
+  [EKycStatus.LOCKED]: {},
+  [EKycStatus.EXPIRED]: {},
+};
+
+export interface KycReviewCommand {
+  status: EKycStatus;
+  rejectReason?: EKycRejectReason;
+  reviewNote?: string;
+}
+
+export type KycOpeningPlan =
+  | { kind: 'reuse'; submission: KycSubmission }
+  | {
+      kind: 'create';
+      attemptNo: number;
+      carryOverFromSubmissionId: string | null;
+    };
