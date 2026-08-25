@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { EBusinessCode } from '../../common/enum/business-code.enum';
 import { EKycDocumentType, EKycStatus } from '../../common/enum/kyc.enum';
 import { PaginatedResult, paginate } from '../../common/util/pagination.util';
@@ -84,20 +84,27 @@ export class KycService {
       return plan.submission;
     }
 
-    const created = await this.submissionRepository.save(
-      this.submissionRepository.create({
-        accountId,
-        role,
-        status: EKycStatus.DRAFT,
-        attemptNo: plan.attemptNo,
-      }),
-    );
+    return this.dataSource.transaction(async (manager) => {
+      const submissionRepo = manager.getRepository(KycSubmission);
+      const created = await submissionRepo.save(
+        submissionRepo.create({
+          accountId,
+          role,
+          status: EKycStatus.DRAFT,
+          attemptNo: plan.attemptNo,
+        }),
+      );
 
-    if (plan.carryOverFromSubmissionId) {
-      await this.carryOverDocuments(plan.carryOverFromSubmissionId, created.id);
-    }
+      if (plan.carryOverFromSubmissionId) {
+        await this.carryOverDocuments(
+          plan.carryOverFromSubmissionId,
+          created.id,
+          manager,
+        );
+      }
 
-    return created;
+      return created;
+    });
   }
 
   /** Tải một tài liệu lên hồ sơ đang mở. Nộp đè thì thay file cũ. */
@@ -401,6 +408,7 @@ export class KycService {
   private async carryOverDocuments(
     fromSubmissionId: string,
     toSubmissionId: string,
+    manager?: EntityManager,
   ): Promise<void> {
     const previous = await this.documentRepository.findBy({
       submissionId: fromSubmissionId,
@@ -412,7 +420,7 @@ export class KycService {
         const newKey = this.storage.generateKey(STORAGE_PREFIX_PENDING);
         // Ghi ledger TRƯỚC khi copy: object tồn tại mà không ai biết thì
         // sweep không bao giờ dọn được.
-        await this.ledger.markPending(newKey);
+        await this.ledger.markPending(newKey, manager);
         await this.storage.copy(doc.storageKey, newKey);
         return this.documentRepository.create({
           submissionId: toSubmissionId,
@@ -427,12 +435,18 @@ export class KycService {
     );
 
     if (copiedDocs.length > 0) {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.getRepository(KycDocument).save(copiedDocs);
+      const saveDocs = async (mgr: EntityManager) => {
+        await mgr.getRepository(KycDocument).save(copiedDocs);
         for (const doc of copiedDocs) {
-          await this.ledger.markLinked(doc.storageKey, manager);
+          await this.ledger.markLinked(doc.storageKey, mgr);
         }
-      });
+      };
+
+      if (manager) {
+        await saveDocs(manager);
+      } else {
+        await this.dataSource.transaction(saveDocs);
+      }
     }
   }
 }

@@ -1,5 +1,5 @@
 import { randomInt } from 'node:crypto';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { RedisClientType } from 'redis';
 import {
@@ -12,6 +12,7 @@ import { REDIS_CLIENT } from '../infra/redis.module';
 
 @Injectable()
 export class OtpService {
+  private readonly logger = new Logger(OtpService.name);
   private readonly otpTtl: number;
   private readonly lockTtl: number;
   private readonly maxAttempts: number;
@@ -53,6 +54,8 @@ export class OtpService {
 
     // KHÔNG xoá bộ đếm resend ở đây: gọi lại /login sẽ thành đường vòng để
     // xin thêm lượt gửi mail. Bộ đếm tự hết hạn theo resendWindow.
+
+    this.logger.warn(`OTP for account ${accountId} is: ${otp}`);
 
     return { otp };
   }
@@ -148,6 +151,8 @@ export class OtpService {
       JSON.stringify({ count: prevCount + 1, lastResendAt: now }),
       { EX: this.resendWindow },
     );
+
+    this.logger.warn(`OTP for account ${accountId} is: ${otp}`);
 
     return { otp };
   }

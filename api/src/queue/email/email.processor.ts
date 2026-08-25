@@ -40,7 +40,7 @@ export class EmailProcessor extends WorkerHost {
       case JOB_SEND_KYC_STATUS:
         return this.sendKycStatus(job);
       default:
-        this.logger.warn(`job email không nhận diện được: ${job.name}`);
+        this.logger.warn(`unrecognized email job: ${job.name}`);
     }
   }
 
@@ -50,7 +50,7 @@ export class EmailProcessor extends WorkerHost {
     // Guard rẻ, chặn trước khi chạm Redis/DB. TTL của key mới là chốt thật.
     const ageSeconds = (Date.now() - job.timestamp) / 1000;
     if (ageSeconds > this.otpTtlSeconds) {
-      this.logger.warn(`bỏ OTP quá hạn của account ${data.accountId}`);
+      this.logger.warn(`dropping expired OTP job for account ${data.accountId}`);
       return;
     }
 
@@ -68,7 +68,9 @@ export class EmailProcessor extends WorkerHost {
     // Key hết hạn thì không còn gì đáng gửi: retry không gửi mã chết nữa.
     const otp = await this.otpService.peek(data.accountId);
     if (!otp) {
-      this.logger.warn(`OTP của account ${data.accountId} đã hết hạn, bỏ job`);
+      this.logger.warn(
+        `OTP for account ${data.accountId} has expired, skipping job`,
+      );
       return;
     }
 
@@ -77,7 +79,9 @@ export class EmailProcessor extends WorkerHost {
       select: { email: true, name: true },
     });
     if (!account?.email) {
-      this.logger.warn(`account ${data.accountId} không có email để gửi`);
+      this.logger.warn(
+        `account ${data.accountId} has no email address to send OTP`,
+      );
       return;
     }
 
@@ -96,7 +100,7 @@ export class EmailProcessor extends WorkerHost {
       relations: { account: true },
     });
     if (!submission) {
-      this.logger.warn(`hồ sơ KYC ${submissionId} không còn tồn tại`);
+      this.logger.warn(`KYC submission ${submissionId} no longer exists`);
       return;
     }
 
@@ -107,7 +111,9 @@ export class EmailProcessor extends WorkerHost {
 
     const email = submission.account?.email;
     if (!email) {
-      this.logger.warn(`hồ sơ KYC ${submissionId} không có email để gửi`);
+      this.logger.warn(
+        `KYC submission ${submissionId} has no email address to send`,
+      );
       return;
     }
 

@@ -36,12 +36,12 @@ import { KafkaModule } from 'src/infra/kafka.module';
     RedisModule,
     QueueModule,
     TerminusModule,
+    KafkaModule,
     TypeOrmModule.forFeature([
       KycSubmission,
       KycDocument,
       StorageObject,
       AuthEntity,
-      KafkaModule,
     ]),
   ],
   controllers: [WorkerHealthController],
