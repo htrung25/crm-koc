@@ -1743,7 +1743,7 @@
         ],
         "summary": "List and search audit logs, paginated",
         "tags": [
-          "Admin-AuditLog"
+          "Admin-AuditLogs"
         ]
       }
     },

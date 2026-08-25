@@ -31,6 +31,12 @@ import {
   assertNumericEnum,
 } from '../../common/util/enum-assert.util';
 
+import {
+  EAuditLogCategory,
+  EMutationAction,
+} from '../../common/enum/audit-log.enum';
+import { AuditLogService } from './audit-log.service';
+
 export type AdminListRow = AuthEntity & {
   ipWhitelist: string | null;
   adminRole: EAdminRole;
@@ -49,6 +55,7 @@ export class AdminService {
     private readonly accountCache: AccountCacheService,
     private readonly ipWhitelistService: IpWhitelistService,
     private readonly sessionService: SessionService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async findAll(query: AdminFilterDto): Promise<PaginatedResult<AdminListRow>> {
@@ -118,6 +125,17 @@ export class AdminService {
 
     const saved = await this.authRepository.save(account);
     await this.revokeAccess(id, account.status);
+
+    await this.auditLogService.write({
+      category: EAuditLogCategory.AUDIT,
+      action: EMutationAction.UPDATE,
+      resourceType: 'admin_user',
+      resourceId: id,
+      metadata: {
+        status: account.status,
+        statusReason: account.statusReason,
+      },
+    });
 
     const { password: _password, ...result } = saved;
     return result;
@@ -195,7 +213,17 @@ export class AdminService {
       adminRole = info.adminRole;
     }
 
-    return { ...this.toAdminResponse(account, entries), adminRole };
+    const result = { ...this.toAdminResponse(account, entries), adminRole };
+    await this.auditLogService.write({
+      category: EAuditLogCategory.AUDIT,
+      action: EMutationAction.UPDATE,
+      accountId: caller.accountId,
+      ipAddress: caller.clientIp,
+      resourceType: 'admin_user',
+      resourceId: id,
+      metadata: { ...dto },
+    });
+    return result;
   }
 
   /** Xoá account gốc; FK CASCADE tự xoá dòng tương ứng trong admin_users. */
@@ -207,6 +235,15 @@ export class AdminService {
     const response = await this.findAdminById(id);
     await this.authRepository.delete(id);
     await this.revokeAccess(id);
+
+    await this.auditLogService.write({
+      category: EAuditLogCategory.AUDIT,
+      action: EMutationAction.DELETE,
+      resourceType: 'admin_user',
+      resourceId: id,
+      metadata: { email: response.email, name: response.name },
+    });
+
     return response;
   }
 
