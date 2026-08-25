@@ -3,32 +3,30 @@ name: ${STACK:-staging}-kafka
 x-logging: &default-logging
   driver: json-file
   options:
-    max-size: '10m'
-    max-file: '5'
+    max-size: "10m"
+    max-file: "5"
 
 services:
   kafka:
-    image: docker.redpanda.com/redpandadata/redpanda:v26.2.2
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
     restart: unless-stopped
     command:
       - redpanda
       - start
-      - --kafka-addr=internal://0.0.0.0:9092
-      - --advertise-kafka-addr=internal://kafka:9092
-      - --rpc-addr=kafka:33145
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://kafka:9092
+      - --rpc-addr=0.0.0.0:33145
       - --advertise-rpc-addr=kafka:33145
       - --mode=dev-container
       - --smp=1
       - --memory=512M
+      - --reserve-memory=0M
+      - --overprovisioned
       - --default-log-level=info
     volumes:
       - kafka-data:/var/lib/redpanda/data
     healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'rpk cluster health --exit-when-healthy --brokers=localhost:9092',
-        ]
+      test: ["CMD-SHELL", "rpk cluster health --exit-when-healthy --brokers=127.0.0.1:9092"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -37,12 +35,12 @@ services:
       - internal
 
   kafka-init:
-    image: docker.redpanda.com/redpandadata/redpanda:v26.2.2
-    restart: 'no'
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    restart: "no"
     depends_on:
       kafka:
         condition: service_healthy
-    entrypoint: ['/bin/sh', '-c']
+    entrypoint: ["/bin/sh", "-c"]
     command:
       - >-
         rpk topic create audit-log-events
