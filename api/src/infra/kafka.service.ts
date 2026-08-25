@@ -23,10 +23,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    let brokersRaw =
-      this.configService.get<string>('KAFKA_CLUSTER_IPS') ??
-      this.configService.get<string>('KAFKA_BROKERS') ??
-      this.configService.get<string>('KAFKA_BROKER');
+    let brokersRaw = this.configService.get<string>('KAFKA_BROKERS');
 
     if (brokersRaw) {
       brokersRaw = brokersRaw.split('#')[0].trim();
