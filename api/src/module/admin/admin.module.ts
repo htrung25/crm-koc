@@ -53,6 +53,11 @@ import { AuditLog } from './entities/audit-log.entity';
     AuditLogService,
   ],
   // SystemConfigurationService export ra ngoài cho AdminMaintenanceInterceptor.
-  exports: [AdminService, AdminProfileService, SystemConfigurationService],
+  exports: [
+    AdminService,
+    AdminProfileService,
+    SystemConfigurationService,
+    AuditLogService,
+  ],
 })
 export class AdminModule {}

@@ -16,13 +16,13 @@ import { AuditLogFilterDto, AuditLogListItemDto } from './dto/audit-log.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 import { SuperAdminGuard } from './super-admin.guard';
 
-@ApiTags('Admin-AuditLog')
+@ApiTags('Admin-AuditLogs')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard, IpWhitelistGuard, SuperAdminGuard)
 @Roles(ERole.ADMIN)
 @Controller('admin')
 export class AuditLogController {
-  constructor(private readonly auditLogService: AuditLogService) {}
+  constructor(private readonly auditLogService: AuditLogService) { }
 
   @Get('/audit-logs')
   @ApiOperation({ summary: 'List and search audit logs, paginated' })

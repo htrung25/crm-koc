@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ESortOrder } from '../../common/enum/sort-fields.enum';
@@ -17,24 +17,27 @@ import { AuditLog } from './entities/audit-log.entity';
 import {
   EAuditLogAction,
   EAuditLogCategory,
-} from 'src/common/enum/audit-log.enum';
-import { KafkaService } from 'src/infra/kafka.service';
+} from '../../common/enum/audit-log.enum';
+import { KafkaService } from '../../infra/kafka.service';
 import { ADMIN_LOG_TOPIC } from './constants/audit-log.kafka';
 
 export interface WriteAuditLogDto {
   category: EAuditLogCategory;
   action: EAuditLogAction;
-  account_id?: string;
-  email_attempted?: string;
-  ip_address?: string;
-  user_agent?: string;
-  entity_type?: string;
-  entity_id?: string;
-  metadata?: Record<string, any>;
+  accountId?: string | null;
+  emailAttempted?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  resourceType?: string | null;
+  resourceId?: string | null;
+  businessCode?: number | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 @Injectable()
 export class AuditLogService {
+  private readonly logger = new Logger(AuditLogService.name);
+
   constructor(
     @InjectRepository(AuditLog)
     private readonly auditLog: Repository<AuditLog>,
@@ -42,13 +45,30 @@ export class AuditLogService {
   ) {}
 
   async write(data: WriteAuditLogDto): Promise<void> {
-    if (!this.kafkaService.isEnabled()) {
-      const log = this.auditLog.create(data);
-      await this.auditLog.save(log);
-      return;
-    }
+    try {
+      const payload: WriteAuditLogDto = {
+        category: data.category,
+        action: data.action,
+        accountId: data.accountId ?? null,
+        emailAttempted: data.emailAttempted ?? null,
+        ipAddress: data.ipAddress ?? null,
+        userAgent: data.userAgent ?? null,
+        resourceType: data.resourceType ?? null,
+        resourceId: data.resourceId ?? null,
+        businessCode: data.businessCode ?? null,
+        metadata: data.metadata ?? null,
+      };
 
-    await this.kafkaService.sendMessage(ADMIN_LOG_TOPIC, data);
+      if (!this.kafkaService.isEnabled()) {
+        const log = this.auditLog.create(payload);
+        await this.auditLog.save(log);
+        return;
+      }
+
+      await this.kafkaService.sendMessage(ADMIN_LOG_TOPIC, payload);
+    } catch (error) {
+      this.logger.error('Failed to write audit log', error as Error);
+    }
   }
 
   async search(
