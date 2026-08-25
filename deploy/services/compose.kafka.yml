@@ -26,7 +26,8 @@ services:
     volumes:
       - kafka-data:/var/lib/redpanda/data
     healthcheck:
-      test: ["CMD-SHELL", "rpk cluster health --exit-when-healthy --brokers=127.0.0.1:9092"]
+      test: ["CMD-SHELL", "rpk cluster info -b 127.0.0.1:9092 || rpk cluster health || exit 1"]
+      start_period: 10s
       interval: 10s
       timeout: 5s
       retries: 20
