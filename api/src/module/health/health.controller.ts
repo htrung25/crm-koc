@@ -28,7 +28,7 @@ export class HealthController {
     return { status: 'ok' };
   }
 
-  /** Readiness: deploy.sh và rollback.sh dùng endpoint này làm cổng chặn. */
+  /** Readiness: workflow deploy dùng endpoint này làm cổng chặn và rollback. */
   @Get('ready')
   @ApiOperation({ summary: 'Readiness probe (Postgres + Redis)' })
   @HealthCheck()
