@@ -66,7 +66,85 @@ jobs:
           STORAGE_BUCKET: ${{ secrets.STORAGE_BUCKET }}
         run: |
           umask 077
-          bash infra/render-env.sh > rendered.env
+          required=(
+            DATABASE_USERNAME DATABASE_NAME CORS_ORIGIN
+            SOCIAL_OAUTH_CALLBACK_BASE_URL STORAGE_ENDPOINT
+            DATABASE_PASSWORD JWT_ACCESS_SECRET JWT_REFRESH_SECRET
+            SOCIAL_TOKEN_ENCRYPTION_KEY STORAGE_ACCESS_KEY_ID
+            STORAGE_SECRET_ACCESS_KEY STORAGE_BUCKET
+          )
+          missing=()
+          for name in "${required[@]}"; do
+            [ -n "${!name:-}" ] || missing+=("$name")
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            printf 'Thiếu cấu hình staging: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+
+          cat > rendered.env <<EOF
+          NODE_ENV=production
+          PORT=3000
+          DATABASE_HOST=postgres
+          DATABASE_PORT=5432
+          DATABASE_USERNAME=$DATABASE_USERNAME
+          DATABASE_PASSWORD=$DATABASE_PASSWORD
+          DATABASE_NAME=$DATABASE_NAME
+          DATABASE_SSL_ENABLED=false
+          POSTGRES_USER=$DATABASE_USERNAME
+          POSTGRES_PASSWORD=$DATABASE_PASSWORD
+          POSTGRES_DB=$DATABASE_NAME
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          REDIS_DB=0
+          REDIS_PASSWORD=${REDIS_PASSWORD:-}
+          CORS_ORIGIN=$CORS_ORIGIN
+          CORS_CREDENTIALS=true
+          JWT_ACCESS_SECRET=$JWT_ACCESS_SECRET
+          JWT_REFRESH_SECRET=$JWT_REFRESH_SECRET
+          JWT_ACCESS_TTL=${JWT_ACCESS_TTL:-15m}
+          JWT_REFRESH_TTL=${JWT_REFRESH_TTL:-7d}
+          JWT_ACCESS_TOKEN_EXPIRES_IN=${JWT_ACCESS_TOKEN_EXPIRES_IN:-15m}
+          SESSION_TTL_SECONDS=${SESSION_TTL_SECONDS:-604800}
+          SESSION_ABSOLUTE_TTL_SECONDS=${SESSION_ABSOLUTE_TTL_SECONDS:-604800}
+          SESSION_MAX_PER_USER=${SESSION_MAX_PER_USER:-10}
+          SESSION_MAX_PER_ADMIN=${SESSION_MAX_PER_ADMIN:-3}
+          SESSION_TOUCH_INTERVAL_SECONDS=${SESSION_TOUCH_INTERVAL_SECONDS:-300}
+          OTP_TTL_SECONDS=${OTP_TTL_SECONDS:-300}
+          OTP_LOCK_TTL_SECONDS=${OTP_LOCK_TTL_SECONDS:-900}
+          OTP_MAX_ATTEMPTS=${OTP_MAX_ATTEMPTS:-5}
+          OTP_RESEND_COOLDOWN_SECONDS=${OTP_RESEND_COOLDOWN_SECONDS:-60}
+          OTP_MAX_RESENDS=${OTP_MAX_RESENDS:-5}
+          OTP_RESEND_WINDOW_SECONDS=${OTP_RESEND_WINDOW_SECONDS:-3600}
+          SENDGRID_API_KEY=${SENDGRID_API_KEY:-}
+          SENDGRID_FROM=${SENDGRID_FROM:-CRM-KOC System <no-reply@crm-koc.asia>}
+          SYSTEM_CONFIG_CACHE_TTL_SECONDS=${SYSTEM_CONFIG_CACHE_TTL_SECONDS:-300}
+          SWAGGER_ENABLED=true
+          SOCIAL_TOKEN_ENCRYPTION_KEY=$SOCIAL_TOKEN_ENCRYPTION_KEY
+          SOCIAL_OAUTH_CALLBACK_BASE_URL=$SOCIAL_OAUTH_CALLBACK_BASE_URL
+          TIKTOK_CLIENT_KEY=${TIKTOK_CLIENT_KEY:-}
+          TIKTOK_CLIENT_SECRET=${TIKTOK_CLIENT_SECRET:-}
+          STORAGE_ENDPOINT=$STORAGE_ENDPOINT
+          STORAGE_REGION=${STORAGE_REGION:-auto}
+          STORAGE_ACCESS_KEY_ID=$STORAGE_ACCESS_KEY_ID
+          STORAGE_SECRET_ACCESS_KEY=$STORAGE_SECRET_ACCESS_KEY
+          STORAGE_BUCKET=$STORAGE_BUCKET
+          KYC_MAX_FILE_SIZE_BYTES=${KYC_MAX_FILE_SIZE_BYTES:-10485760}
+          KYC_VALIDITY_DAYS=${KYC_VALIDITY_DAYS:-365}
+          STORAGE_SWEEP_PENDING_GRACE_MINUTES=${STORAGE_SWEEP_PENDING_GRACE_MINUTES:-60}
+          KAFKA_ENABLED=${KAFKA_ENABLED:-false}
+          KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:9092}
+          KAFKA_PORT=${KAFKA_PORT:-9092}
+          KAFKA_CLIENT_ID=${KAFKA_CLIENT_ID:-crm-koc-api}
+          KAFKA_SSL_ENABLED=${KAFKA_SSL_ENABLED:-false}
+          KAFKA_ALLOW_AUTO_TOPIC_CREATION=${KAFKA_ALLOW_AUTO_TOPIC_CREATION:-false}
+          KAFKA_SASL_MECHANISM=${KAFKA_SASL_MECHANISM:-}
+          KAFKA_USERNAME=${KAFKA_USERNAME:-}
+          KAFKA_PASSWORD=${KAFKA_PASSWORD:-}
+          KAFKA_AUDIT_CONSUMER_GROUP=${KAFKA_AUDIT_CONSUMER_GROUP:-crm-koc-admin-log}
+          KAFKA_AUDIT_MAX_ATTEMPTS=${KAFKA_AUDIT_MAX_ATTEMPTS:-3}
+          KAFKA_AUDIT_RETRY_DELAY_MS=${KAFKA_AUDIT_RETRY_DELAY_MS:-250}
+          EOF
           bash scripts/check-env.sh --compare api/.env.example rendered.env
 
       - name: Setup SSH
@@ -84,24 +162,113 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           IMAGE_TAG: ${{ steps.tag.outputs.value }}
+          IMAGE_OWNER: ${{ github.repository_owner }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
         run: |
+          set -euo pipefail
           ssh_opts="-i $HOME/.ssh/id_deploy -o StrictHostKeyChecking=yes"
           ssh $ssh_opts "$SSH_USER@$SSH_HOST" "mkdir -p /srv/crm-koc/{infra,staging,api-staging,web-staging}"
 
-          rsync -az -e "ssh $ssh_opts" infra/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/infra/"
+          rsync -az -e "ssh $ssh_opts" deploy/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/infra/"
           rsync -az -e "ssh $ssh_opts" api/deploy/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/api-staging/"
           rsync -az -e "ssh $ssh_opts" frontend-web/deploy/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/web-staging/"
 
-          scp $ssh_opts rendered.env "$SSH_USER@$SSH_HOST:/srv/crm-koc/staging/.env"
+          printf 'IMAGE_TAG=%s\nAPI_IMAGE=ghcr.io/%s/crm-koc-api:%s\nSTACK=staging\n' \
+            "$IMAGE_TAG" "$IMAGE_OWNER" "$IMAGE_TAG" > api.env.deploy
+          printf 'IMAGE_TAG=%s\nWEB_IMAGE=ghcr.io/%s/crm-koc-web:%s\nSTACK=staging\n' \
+            "$IMAGE_TAG" "$IMAGE_OWNER" "$IMAGE_TAG" > web.env.deploy
 
-          ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
-            "chmod 600 /srv/crm-koc/staging/.env && \
-             chmod +x /srv/crm-koc/infra/*.sh /srv/crm-koc/api-staging/*.sh /srv/crm-koc/web-staging/*.sh && \
-             GHCR_USER='$GHCR_USER' GHCR_TOKEN='$GHCR_TOKEN' /srv/crm-koc/api-staging/deploy.sh staging '$IMAGE_TAG' && \
-             GHCR_USER='$GHCR_USER' GHCR_TOKEN='$GHCR_TOKEN' /srv/crm-koc/web-staging/deploy.sh staging '$IMAGE_TAG'"
+          scp $ssh_opts rendered.env "$SSH_USER@$SSH_HOST:/srv/crm-koc/staging/.env"
+          scp $ssh_opts api.env.deploy "$SSH_USER@$SSH_HOST:/srv/crm-koc/api-staging/.env.deploy"
+          scp $ssh_opts web.env.deploy "$SSH_USER@$SSH_HOST:/srv/crm-koc/web-staging/.env.deploy"
+
+          printf '%s' "$GHCR_TOKEN" | ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
+            "docker login ghcr.io -u '$GHCR_USER' --password-stdin"
+
+          ssh $ssh_opts "$SSH_USER@$SSH_HOST" bash -s -- staging "$IMAGE_TAG" <<'REMOTE'
+          set -euo pipefail
+          stack="$1"
+          image_tag="$2"
+          root=/srv/crm-koc
+          env_dir="$root/$stack"
+          api_dir="$root/api-$stack"
+          web_dir="$root/web-$stack"
+          infra_dir="$root/infra"
+
+          chmod 600 "$env_dir/.env" "$api_dir/.env.deploy" "$web_dir/.env.deploy"
+          APP_ENV_FILE="$env_dir/.env" STACK="$stack" docker compose \
+            --env-file "$env_dir/.env" \
+            -f "$infra_dir/services/compose.db.yml" \
+            -p "crm-koc-${stack}-db" up -d
+          STACK="$stack" docker compose \
+            -f "$infra_dir/services/compose.kafka.yml" \
+            -p "crm-koc-${stack}-kafka" up -d
+
+          api_compose() {
+            APP_ENV_FILE="$env_dir/.env" STACK="$stack" docker compose \
+              --env-file "$env_dir/.env" --env-file "$api_dir/.env.deploy" \
+              -f "$api_dir/compose.api.base.yml" \
+              -f "$api_dir/compose.api.$stack.yml" "$@"
+          }
+          web_compose() {
+            STACK="$stack" docker compose \
+              --env-file "$web_dir/.env.deploy" \
+              -f "$web_dir/compose.web.base.yml" \
+              -f "$web_dir/compose.web.$stack.yml" "$@"
+          }
+          rollback_api() {
+            api_compose logs --tail 100 api api-worker api-migrate >&2 || true
+            if [ -n "${previous_api:-}" ]; then
+              printf 'IMAGE_TAG=%s\nAPI_IMAGE=ghcr.io/%s/crm-koc-api:%s\nSTACK=%s\n' \
+                "$previous_api" '${{ github.repository_owner }}' "$previous_api" "$stack" \
+                > "$api_dir/.env.deploy"
+              api_compose pull
+              api_compose up -d --remove-orphans
+            fi
+            exit 1
+          }
+          rollback_web() {
+            web_compose logs --tail 100 web >&2 || true
+            if [ -n "${previous_web:-}" ]; then
+              printf 'IMAGE_TAG=%s\nWEB_IMAGE=ghcr.io/%s/crm-koc-web:%s\nSTACK=%s\n' \
+                "$previous_web" '${{ github.repository_owner }}' "$previous_web" "$stack" \
+                > "$web_dir/.env.deploy"
+              web_compose pull
+              web_compose up -d --remove-orphans
+            fi
+            exit 1
+          }
+
+          previous_api=$(cat "$api_dir/.last-good" 2>/dev/null || true)
+          api_compose pull
+          api_compose up -d --remove-orphans || rollback_api
+          deadline=$((SECONDS + 90))
+          until api_compose exec -T api node -e \
+              "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" \
+            && api_compose exec -T api-worker node -e \
+              "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; do
+            [ "$SECONDS" -lt "$deadline" ] || rollback_api
+            sleep 3
+          done
+          [ -f "$api_dir/.last-good" ] && cp "$api_dir/.last-good" "$api_dir/.previous-good"
+          printf '%s\n' "$image_tag" > "$api_dir/.last-good"
+
+          previous_web=$(cat "$web_dir/.last-good" 2>/dev/null || true)
+          web_compose pull
+          web_compose up -d --remove-orphans || rollback_web
+          deadline=$((SECONDS + 60))
+          until web_compose exec -T web node -e \
+            "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; do
+            [ "$SECONDS" -lt "$deadline" ] || rollback_web
+            sleep 3
+          done
+          [ -f "$web_dir/.last-good" ] && cp "$web_dir/.last-good" "$web_dir/.previous-good"
+          printf '%s\n' "$image_tag" > "$web_dir/.last-good"
+
+          docker image prune -f > /dev/null
+          REMOTE
 
       - name: Cleanup secrets
         if: always()
-        run: rm -f rendered.env ~/.ssh/id_deploy
+        run: rm -f rendered.env api.env.deploy web.env.deploy ~/.ssh/id_deploy
