@@ -30,7 +30,7 @@ import {
 } from './dto/creator-list.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 
-@ApiTags('Admin')
+@ApiTags('Admin-UserList')
 @ApiBearerAuth('access-token')
 // Thứ tự guard có ý nghĩa: JwtAuthGuard chạy trước để nạp request.user,
 // RolesGuard mới có cái để đọc.

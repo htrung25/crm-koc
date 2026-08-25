@@ -27,7 +27,8 @@ import { StorageProcessor } from '../queue/storage/storage.processor';
 import { QueueModule } from '../queue/queue.module';
 import { QUEUE_EMAIL, QUEUE_KYC, QUEUE_STORAGE } from '../queue/queue-names';
 import { OtpService } from '../security/otp.service';
-
+import { KycStateMachine } from '../module/kyc/kyc-state-machine';
+import { KafkaModule } from 'src/infra/kafka.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -35,6 +36,7 @@ import { OtpService } from '../security/otp.service';
     RedisModule,
     QueueModule,
     TerminusModule,
+    KafkaModule,
     TypeOrmModule.forFeature([
       KycSubmission,
       KycDocument,
@@ -55,6 +57,7 @@ import { OtpService } from '../security/otp.service';
     StorageService,
     StorageLedgerService,
     StorageGcService,
+    KycStateMachine,
     {
       provide: BULL_HEALTH_QUEUES,
       inject: [

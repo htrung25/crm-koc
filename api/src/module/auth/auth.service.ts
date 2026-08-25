@@ -20,6 +20,11 @@ import { AuthEntity } from './entities/auth.entity';
 import { AuthenticatedAccount } from './entities/authenticated.entity';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
+import {
+  EAuditLogCategory,
+  ELoginAction,
+} from '../../common/enum/audit-log.enum';
+import { AuditLogService } from '../admin/audit-log.service';
 
 const PG_UNIQUE_VIOLATION = '23505';
 
@@ -34,6 +39,7 @@ export class AuthService {
     private readonly brandProfileService: BrandProfileService,
     private readonly creatorProfileService: CreatorProfileService,
     private readonly accountCache: AccountCacheService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   /** Chưa chọn vai trò thì chưa có hồ sơ nào để tạo — PATCH /auth/me lo sau. */
@@ -104,7 +110,7 @@ export class AuthService {
       if (
         error instanceof QueryFailedError &&
         (error as QueryFailedError & { code?: string }).code ===
-          PG_UNIQUE_VIOLATION
+        PG_UNIQUE_VIOLATION
       ) {
         throw new ConflictException('email or phone already exists');
       }
@@ -160,7 +166,7 @@ export class AuthService {
       if (
         error instanceof QueryFailedError &&
         (error as QueryFailedError & { code?: string }).code ===
-          PG_UNIQUE_VIOLATION
+        PG_UNIQUE_VIOLATION
       ) {
         throw new ConflictException('phone already exists');
       }
@@ -215,6 +221,12 @@ export class AuthService {
       account.password === null ||
       !(await bcrypt.compare(password, account.password))
     ) {
+      await this.auditLogService.write({
+        category: EAuditLogCategory.LOGIN,
+        action: ELoginAction.FAIL_CREDENTIALS,
+        accountId: account?.id ?? null,
+        emailAttempted: email.trim().toLowerCase(),
+      });
       throw new UnauthorizedException('invalid credentials');
     }
 

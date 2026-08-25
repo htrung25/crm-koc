@@ -18,6 +18,7 @@ services:
       DATABASE_PORT: '5432'
       REDIS_HOST: redis
       REDIS_PORT: '6379'
+      KAFKA_BROKERS: kafka:9092
       RUN_MIGRATIONS: 'false'
     command: ['npm', 'run', 'migration:run']
     logging: *default-logging
@@ -35,6 +36,7 @@ services:
       DATABASE_PORT: '5432'
       REDIS_HOST: redis
       REDIS_PORT: '6379'
+      KAFKA_BROKERS: kafka:9092
       RUN_MIGRATIONS: 'false'
     volumes:
       - uploads:/app/uploads

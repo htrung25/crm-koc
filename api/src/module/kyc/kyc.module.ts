@@ -12,6 +12,7 @@ import { AdminUser } from '../admin/entities/admin-user.entity';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { IpWhitelistModule } from '../admin/ip-whitelist.module';
 import { QueueModule } from '../../queue/queue.module';
+import { KycStateMachine } from './kyc-state-machine';
 
 /**
  * KYC phục vụ cả brand, creator lẫn admin nên đứng cùng cấp với các module vai
@@ -38,7 +39,7 @@ import { QueueModule } from '../../queue/queue.module';
     QueueModule,
   ],
   controllers: [KycController, KycAdminController],
-  providers: [KycService, SuperAdminGuard],
-  exports: [KycService],
+  providers: [KycService, KycStateMachine, SuperAdminGuard],
+  exports: [KycService, KycStateMachine],
 })
 export class KycModule {}
