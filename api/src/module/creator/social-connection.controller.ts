@@ -32,17 +32,7 @@ import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
 import { SocialConnectionsService } from './social-connection.service';
 import { SocialOAuthCallbackDto } from './dto/oauth-callback.dto';
 import { SocialConnectionDto } from './dto/connection.dto';
-
-/**
- * Chỉ creator nối tài khoản mạng xã hội — brand và admin không có
- * creator_profiles nên khoá ngoại sẽ hỏng.
- *
- * Callback là POST và CÓ xác thực, không phải GET công khai: nền tảng chuyển
- * hướng trình duyệt về trang frontend, trang đó đọc cookie phiên rồi mới gọi
- * endpoint này kèm bearer token. Nhờ vậy so được người đang đăng nhập với
- * creatorProfileId đã cất trong state.
- */
-@ApiTags('Creator Social-Connections')
+@ApiTags('Creator-SocialConnections')
 @ApiBearerAuth('access-token')
 @Roles(ERole.CREATOR)
 @UseGuards(JwtAuthGuard, RolesGuard)
