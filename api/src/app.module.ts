@@ -19,6 +19,7 @@ import { AuthModule } from './module/auth/auth.module';
 import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
 import { HealthModule } from './module/health/health.module';
 import { QueueModule } from './queue/queue.module';
+import { KafkaModule } from './infra/kafka.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { QueueModule } from './queue/queue.module';
     RedisModule,
     QueueModule,
     SecurityModule,
+    KafkaModule,
     // forRootAsync để lấy được REDIS_CLIENT (RedisModule là @Global nên
     // không cần khai imports ở đây).
     ThrottlerModule.forRootAsync({

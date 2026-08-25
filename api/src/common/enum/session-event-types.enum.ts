@@ -2,8 +2,6 @@ export enum ESessionEventType {
   /** Đăng nhập thành công, phiên mới được tạo trong Redis. */
   LOGIN = 'login',
 
-  LOGIN_FAILED = 'login_failed',
-
   REFRESH = 'refresh',
 
   LOGOUT = 'logout',
