@@ -3,12 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import type { RedisClientType } from 'redis';
 import sgMail from '@sendgrid/mail';
 
-/**
- * Một socket treo (không lỗi, không trả) mà không có timeout thì chiếm luôn
- * slot concurrency vô thời hạn. sgMail.setTimeout() truyền thẳng xuống axios
- * (@sendgrid/client), nên hết hạn là request thật sự bị abort và promise
- * reject — không phải resolve giả — nên BullMQ retry được kích hoạt.
- */
 const SENDGRID_SEND_TIMEOUT_MS = 10_000;
 
 @Injectable()
@@ -171,14 +165,10 @@ export class EmailService {
       text: `Hello ${displayName},\n\nYou are attempting to log in to the CRM-KOC platform.\n\nYour One-Time Password (OTP) for verification is: ${otp}\n\nNote: This OTP is valid for 5 minutes. If you did not request this code, please secure your account and contact the system administrator immediately.\n\nBest regards,\nCRM-KOC System`,
       html: this.getBaseHtml(content),
     });
+
+    this.logger.warn(`OTP for ${to} is: ${otp}`);
   }
 
-  /**
-   * Trả về false khi toggle tắt (không gửi thật). Caller (EmailProcessor) dựa
-   * vào giá trị này để quyết định có ghi notifiedAt hay không — ghi bừa khi
-   * toggle tắt thì reconcileNotifications() không bao giờ thử lại nữa, và
-   * người dùng vĩnh viễn không biết kết quả KYC của mình.
-   */
   async sendKycStatusNotification(opts: {
     to: string;
     displayName: string;
