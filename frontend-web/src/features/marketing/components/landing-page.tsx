@@ -1,7 +1,7 @@
 import { APP_ROUTES } from "@/constants/routes";
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
 import { UiSimulator } from "@/features/marketing/components/ui-simulator";
 import { BentoFeatures } from "@/features/marketing/components/bento-features";

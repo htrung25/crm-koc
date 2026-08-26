@@ -4,7 +4,7 @@ import { APP_ROUTES } from "@/constants/routes";
 import { useLocale, useTranslations } from "next-intl";
 
 import { useState } from "react";
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
 
 export function PricingSection() {
   const t = useTranslations("marketing");

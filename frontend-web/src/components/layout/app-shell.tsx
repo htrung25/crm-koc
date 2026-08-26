@@ -4,7 +4,8 @@ import { APP_ROUTES } from "@/constants/routes";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { WORKSPACES } from "@/constants/navigation";
 import { requestLogout } from "@/features/auth/session";
 import type { UserRole } from "@/features/auth/types";

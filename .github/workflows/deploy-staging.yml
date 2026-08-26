@@ -64,6 +64,13 @@ jobs:
           STORAGE_ACCESS_KEY_ID: ${{ secrets.STORAGE_ACCESS_KEY_ID }}
           STORAGE_SECRET_ACCESS_KEY: ${{ secrets.STORAGE_SECRET_ACCESS_KEY }}
           STORAGE_BUCKET: ${{ secrets.STORAGE_BUCKET }}
+          KAFKA_ENABLED: ${{ vars.KAFKA_ENABLED }}
+          KAFKA_BROKERS: ${{ vars.KAFKA_BROKERS }}
+          KAFKA_PORT: ${{ vars.KAFKA_PORT }}
+          KAFKA_CLIENT_ID: ${{ vars.KAFKA_CLIENT_ID }}
+          KAFKA_SASL_MECHANISM: ${{ secrets.KAFKA_SASL_MECHANISM }}
+          KAFKA_USERNAME: ${{ secrets.KAFKA_USERNAME }}
+          KAFKA_PASSWORD: ${{ secrets.KAFKA_PASSWORD }}
         run: |
           umask 077
           required=(
@@ -136,16 +143,11 @@ jobs:
           KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:9092}
           KAFKA_PORT=${KAFKA_PORT:-9092}
           KAFKA_CLIENT_ID=${KAFKA_CLIENT_ID:-crm-koc-api}
-          KAFKA_SSL_ENABLED=${KAFKA_SSL_ENABLED:-false}
-          KAFKA_ALLOW_AUTO_TOPIC_CREATION=${KAFKA_ALLOW_AUTO_TOPIC_CREATION:-false}
           KAFKA_SASL_MECHANISM=${KAFKA_SASL_MECHANISM:-}
           KAFKA_USERNAME=${KAFKA_USERNAME:-}
           KAFKA_PASSWORD=${KAFKA_PASSWORD:-}
-          KAFKA_AUDIT_CONSUMER_GROUP=${KAFKA_AUDIT_CONSUMER_GROUP:-crm-koc-admin-log}
-          KAFKA_AUDIT_MAX_ATTEMPTS=${KAFKA_AUDIT_MAX_ATTEMPTS:-3}
-          KAFKA_AUDIT_RETRY_DELAY_MS=${KAFKA_AUDIT_RETRY_DELAY_MS:-250}
           EOF
-          bash scripts/check-env.sh --compare api/.env.example rendered.env
+          node scripts/check-env.js --compare api/.env.example rendered.env
 
       - name: Setup SSH
         env:
@@ -165,6 +167,7 @@ jobs:
           IMAGE_OWNER: ${{ github.repository_owner }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
+          KAFKA_STACK: ${{ vars.KAFKA_STACK_ENABLED || 'false' }}
         run: |
           set -euo pipefail
           ssh_opts="-i $HOME/.ssh/id_deploy -o StrictHostKeyChecking=yes"
@@ -186,10 +189,11 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
             "docker login ghcr.io -u '$GHCR_USER' --password-stdin"
 
-          ssh $ssh_opts "$SSH_USER@$SSH_HOST" bash -s -- staging "$IMAGE_TAG" <<'REMOTE'
+          ssh $ssh_opts "$SSH_USER@$SSH_HOST" bash -s -- staging "$IMAGE_TAG" "$KAFKA_STACK" <<'REMOTE'
           set -euo pipefail
           stack="$1"
           image_tag="$2"
+          kafka_stack="${3:-false}"
           root=/srv/crm-koc
           env_dir="$root/$stack"
           api_dir="$root/api-$stack"
@@ -201,9 +205,16 @@ jobs:
             --env-file "$env_dir/.env" \
             -f "$infra_dir/services/compose.db.yml" \
             -p "crm-koc-${stack}-db" up -d
-          STACK="$stack" docker compose \
-            -f "$infra_dir/services/compose.kafka.yml" \
-            -p "crm-koc-${stack}-kafka" up -d
+          kafka_compose() {
+            STACK="$stack" docker compose \
+              -f "$infra_dir/services/compose.kafka.yml" \
+              -p "crm-koc-${stack}-kafka" "$@"
+          }
+          if [ "$kafka_stack" = "true" ]; then
+            kafka_compose up -d
+          else
+            kafka_compose down || true
+          fi
 
           api_compose() {
             APP_ENV_FILE="$env_dir/.env" STACK="$stack" docker compose \

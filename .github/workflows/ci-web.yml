@@ -95,7 +95,7 @@ jobs:
       - run: npm ci
       - run: npm run test
 
-  # `npm run build` đã gồm assert-proxy.mjs, nên job này cũng kiểm chứng matcher
+  # `npm run build` đã gồm assert-proxy.js, nên job này cũng kiểm chứng matcher
   # của proxy.
   build:
     needs: changes
@@ -120,7 +120,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: bash scripts/check-env.sh --scan web
+      - run: node scripts/check-env.js --scan web
 
   ci-web-gate:
     needs: [lint, typecheck, test, build, env-check]

@@ -50,7 +50,9 @@ export class EmailProcessor extends WorkerHost {
     // Guard rẻ, chặn trước khi chạm Redis/DB. TTL của key mới là chốt thật.
     const ageSeconds = (Date.now() - job.timestamp) / 1000;
     if (ageSeconds > this.otpTtlSeconds) {
-      this.logger.warn(`dropping expired OTP job for account ${data.accountId}`);
+      this.logger.warn(
+        `dropping expired OTP job for account ${data.accountId}`,
+      );
       return;
     }
 

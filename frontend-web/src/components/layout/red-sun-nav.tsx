@@ -4,7 +4,7 @@ import { APP_ROUTES } from "@/constants/routes";
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
 import { LocaleToggle } from "@/components/ui/locale-toggle";
 
 interface RedSunNavProps {

@@ -4,7 +4,8 @@ import { APP_ROUTES } from "@/constants/routes";
 import { useTranslations } from "next-intl";
 import { LocaleToggle } from "@/components/ui/locale-toggle";
 
-import { Link, useRouter } from "@/i18n/navigation";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { requestLogout } from "@/features/auth/session";
 import {
   IconBell,

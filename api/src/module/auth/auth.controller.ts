@@ -61,7 +61,6 @@ import type { Request as ExpressRequest } from 'express';
 import {
   EAuditLogCategory,
   ELoginAction,
-  EMutationAction,
 } from '../../common/enum/audit-log.enum';
 import { AuditLogService } from '../admin/audit-log.service';
 
@@ -140,10 +139,10 @@ export class AuthController {
     const account = await this.requireAccountByEmail(dto.email);
     const result = await this.otpService.verify(account.id, dto.otp);
     const ipAddress = extractClientIp(request);
-    const userAgent = request.headers['user-agent'] as string | undefined;
+    const userAgent = request.headers['user-agent'];
 
     if (result === EOtpResult.LOCKED) {
-      await this.auditLogService.write({
+      await this.auditLogService.writeIfAdmin(account.accountRole, {
         category: EAuditLogCategory.LOGIN,
         action: ELoginAction.FAIL_LOCKED,
         accountId: account.id,
@@ -157,7 +156,7 @@ export class AuthController {
       throw new UnauthorizedException('otp has expired, request a new one');
     }
     if (result === EOtpResult.INVALID) {
-      await this.auditLogService.write({
+      await this.auditLogService.writeIfAdmin(account.accountRole, {
         category: EAuditLogCategory.LOGIN,
         action: ELoginAction.FAIL_OTP,
         accountId: account.id,
@@ -194,10 +193,10 @@ export class AuthController {
     const account = await this.requireAccountByEmail(dto.email);
     const result = await this.otpService.resend(account.id);
     const ipAddress = extractClientIp(request);
-    const userAgent = request.headers['user-agent'] as string | undefined;
+    const userAgent = request.headers['user-agent'];
 
     if (result === EOtpResult.LOCKED) {
-      await this.auditLogService.write({
+      await this.auditLogService.writeIfAdmin(account.accountRole, {
         category: EAuditLogCategory.LOGIN,
         action: ELoginAction.FAIL_LOCKED,
         accountId: account.id,
@@ -215,7 +214,7 @@ export class AuthController {
     }
 
     await this.sendOtp(account.id);
-    await this.auditLogService.write({
+    await this.auditLogService.writeIfAdmin(account.accountRole, {
       category: EAuditLogCategory.LOGIN,
       action: ELoginAction.OTP_SENT,
       accountId: account.id,
@@ -305,7 +304,7 @@ export class AuthController {
     }
 
     await this.sendOtp(account.id);
-    await this.auditLogService.write({
+    await this.auditLogService.writeIfAdmin(account.accountRole, {
       category: EAuditLogCategory.LOGIN,
       action: ELoginAction.OTP_SENT,
       accountId: account.id,
@@ -340,12 +339,12 @@ export class AuthController {
     const created = await this.authService.createAdminAccount(registerDto);
     await this.auditLogService.write({
       category: EAuditLogCategory.AUDIT,
-      action: EMutationAction.CREATE,
+      action: ELoginAction.CREATE,
       accountId: request.user?.id,
       resourceType: 'admin_user',
       resourceId: created.id,
       ipAddress: extractClientIp(request),
-      userAgent: request.headers['user-agent'] as string | undefined,
+      userAgent: request.headers['user-agent'],
       metadata: { email: created.email, name: created.name },
     });
     return created;
@@ -428,11 +427,23 @@ export class AuthController {
       throw new UnauthorizedException('token payload missing');
     }
 
+    const ipAddress = extractClientIp(request);
+    const userAgent = request.headers['user-agent'] ?? null;
+
     // Xoá phiên là đủ: mọi access token của phiên này chết ngay ở lần gọi
     // tiếp theo vì JwtStrategy không tìm thấy phiên nữa.
     await this.jwtAuthService.logout(payload.sub, payload.session_id, {
-      ipAddress: extractClientIp(request),
-      userAgent: request.headers['user-agent'] ?? null,
+      ipAddress,
+      userAgent,
+    });
+
+    await this.auditLogService.writeIfAdmin(payload.role, {
+      category: EAuditLogCategory.LOGIN,
+      action: ELoginAction.LOGOUT,
+      accountId: payload.sub,
+      ipAddress,
+      userAgent,
+      metadata: { sessionId: payload.session_id },
     });
 
     return { revoked: true, sessionId: payload.session_id };

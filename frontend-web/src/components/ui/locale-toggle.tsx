@@ -1,10 +1,11 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
-import { usePathname, useRouter } from "@/i18n/navigation";
-import { routing, type AppLocale } from "@/i18n/routing";
+import { LOCALES, type AppLocale } from "@/i18n/routing";
+import { setLocaleCookie } from "@/i18n/set-locale";
 
 type LocaleToggleProps = {
   /** Nền tối (hero marketing) cần tương phản ngược lại. */
@@ -18,7 +19,6 @@ type LocaleToggleProps = {
 export function LocaleToggle({ dark = false }: LocaleToggleProps) {
   const t = useTranslations("localeSwitcher");
   const locale = useLocale();
-  const pathname = usePathname();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -30,7 +30,7 @@ export function LocaleToggle({ dark = false }: LocaleToggleProps) {
         dark ? "bg-white/10" : "bg-[#2D3B42]/8"
       }`}
     >
-      {routing.locales.map((item) => {
+      {LOCALES.map((item) => {
         const active = item === locale;
 
         return (
@@ -43,9 +43,10 @@ export function LocaleToggle({ dark = false }: LocaleToggleProps) {
             aria-label={t(item)}
             onClick={() => {
               if (active) return;
-              startTransition(() =>
-                router.replace(pathname, { locale: item as AppLocale }),
-              );
+              // URL không đổi nữa: ghi cookie rồi refresh để server render lại
+              // với bộ chuỗi mới.
+              setLocaleCookie(item as AppLocale);
+              startTransition(() => router.refresh());
             }}
             className={`h-9 rounded-xl px-3.5 text-sm font-extrabold uppercase transition-colors disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30 ${
               active

@@ -1,10 +1,11 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useTransition, type ComponentProps } from "react";
 
-import { usePathname, useRouter } from "@/i18n/navigation";
-import { routing, type AppLocale } from "@/i18n/routing";
+import { LOCALES, type AppLocale } from "@/i18n/routing";
+import { setLocaleCookie } from "@/i18n/set-locale";
 
 export type LocaleSwitcherProps = Omit<
   ComponentProps<"select">,
@@ -18,7 +19,6 @@ export function LocaleSwitcher({
 }: LocaleSwitcherProps) {
   const t = useTranslations("localeSwitcher");
   const locale = useLocale();
-  const pathname = usePathname();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -29,12 +29,13 @@ export function LocaleSwitcher({
       disabled={disabled || pending}
       aria-label={props["aria-label"] ?? t("label")}
       onChange={(event) => {
-        const nextLocale = event.target.value as AppLocale;
-        startTransition(() => router.replace(pathname, { locale: nextLocale }));
+        // URL không đổi nữa: ghi cookie rồi refresh để server render lại.
+        setLocaleCookie(event.target.value as AppLocale);
+        startTransition(() => router.refresh());
       }}
       className={className}
     >
-      {routing.locales.map((item) => (
+      {LOCALES.map((item) => (
         <option key={item} value={item}>
           {t(item)}
         </option>

@@ -110,7 +110,7 @@ export class AuthService {
       if (
         error instanceof QueryFailedError &&
         (error as QueryFailedError & { code?: string }).code ===
-        PG_UNIQUE_VIOLATION
+          PG_UNIQUE_VIOLATION
       ) {
         throw new ConflictException('email or phone already exists');
       }
@@ -166,7 +166,7 @@ export class AuthService {
       if (
         error instanceof QueryFailedError &&
         (error as QueryFailedError & { code?: string }).code ===
-        PG_UNIQUE_VIOLATION
+          PG_UNIQUE_VIOLATION
       ) {
         throw new ConflictException('phone already exists');
       }
@@ -221,7 +221,10 @@ export class AuthService {
       account.password === null ||
       !(await bcrypt.compare(password, account.password))
     ) {
-      await this.auditLogService.write({
+      // Email lạ (account null) không ghi: chưa biết vai trò thì không có cơ sở
+      // coi là admin. Đổi lại, dò mật khẩu vào email admin không tồn tại sẽ
+      // không để lại vết ở đây.
+      await this.auditLogService.writeIfAdmin(account?.accountRole, {
         category: EAuditLogCategory.LOGIN,
         action: ELoginAction.FAIL_CREDENTIALS,
         accountId: account?.id ?? null,

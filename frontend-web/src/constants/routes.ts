@@ -1,6 +1,6 @@
 /** Mọi URL dùng trong code gom về đây. */
 
-/** Trang trong ứng dụng. Điều hướng qua Link/redirect của @/i18n/navigation. */
+/** Trang trong ứng dụng. Điều hướng qua Link/router của next/navigation. */
 export const APP_ROUTES = {
   home: "/",
   login: "/login",
