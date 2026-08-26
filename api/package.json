@@ -19,6 +19,7 @@
     "migration:run:dev": "node --env-file-if-exists=.env node_modules/typeorm/cli-ts-node-commonjs.js migration:run -d src/infra/data-source.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "check:routes": "node scripts/check-routes.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
