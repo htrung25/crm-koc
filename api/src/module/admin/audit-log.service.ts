@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ERole } from '../../common/enum/roles.enum';
 import { ESortOrder } from '../../common/enum/sort-fields.enum';
 import { assertEnum } from '../../common/util/enum-assert.util';
 import {
@@ -10,6 +11,7 @@ import {
 } from '../../common/util/pagination.util';
 import {
   AUDIT_LOG_LIST_FIELDS,
+  AUDIT_LOG_SEARCH_EXPRESSION,
   AuditLogListItem,
 } from './constants/audit-log.constants';
 import { AuditLogFilterDto } from './dto/audit-log.dto';
@@ -19,7 +21,7 @@ import {
   EAuditLogCategory,
 } from '../../common/enum/audit-log.enum';
 import { KafkaService } from '../../infra/kafka.service';
-import { ADMIN_LOG_TOPIC, AdminLogEvent } from './constants/audit-log.kafka';
+import { AUDIT_LOG_TOPIC, AuditLogEvent } from './constants/audit-log.kafka';
 
 export interface WriteAuditLogDto {
   category: EAuditLogCategory;
@@ -43,6 +45,19 @@ export class AuditLogService {
     private readonly auditLog: Repository<AuditLog>,
     private readonly kafkaService: KafkaService,
   ) {}
+
+  /**
+   * Cổng cho các luồng dùng chung ba vai trò (login, OTP, logout): audit_logs
+   * chỉ chứa hoạt động của admin. role null/undefined cũng bỏ qua — email lạ
+   * chưa xác định được vai trò thì không có cơ sở để coi là admin.
+   */
+  async writeIfAdmin(
+    role: ERole | null | undefined,
+    data: WriteAuditLogDto,
+  ): Promise<void> {
+    if (role !== ERole.ADMIN) return;
+    await this.write(data);
+  }
 
   async write(data: WriteAuditLogDto): Promise<void> {
     let saved: AuditLog;
@@ -82,7 +97,7 @@ export class AuditLogService {
     if (!this.kafkaService.isEnabled()) return;
 
     try {
-      const event: AdminLogEvent = {
+      const event: AuditLogEvent = {
         ...log,
         createdAt: log.createdAt.toISOString(),
       };
@@ -90,7 +105,7 @@ export class AuditLogService {
       // Key theo account để sự kiện của cùng một người giữ nguyên thứ tự trong
       // một partition; login hỏng chưa rõ account thì để Kafka rải đều.
       void this.kafkaService
-        .sendMessage(ADMIN_LOG_TOPIC, event, log.accountId ?? undefined)
+        .sendMessage(AUDIT_LOG_TOPIC, event, log.accountId ?? undefined)
         .catch((error) => {
           this.logger.error(
             `audit fan-out failed id=${log.id}`,
@@ -102,33 +117,28 @@ export class AuditLogService {
     }
   }
 
+  /** @deprecated findAll() đã tự đọc query.search. Giữ cho call site cũ. */
   async search(
     query: AuditLogFilterDto,
   ): Promise<PaginatedResult<AuditLogListItem>> {
-    return this.findAll(query, query.search?.trim());
+    return this.findAll(query);
   }
 
   async findAll(
     query: AuditLogFilterDto,
-    search?: string,
   ): Promise<PaginatedResult<AuditLogListItem>> {
     const qb = this.auditLog
       .createQueryBuilder('log')
       .select(AUDIT_LOG_LIST_FIELDS.map((f) => `log.${f}`));
 
+    const search = query.search?.trim();
     if (search) {
-      qb.andWhere(
-        `(
-          log.category ILIKE :search
-          OR log.action ILIKE :search
-          OR CAST(log.accountId AS text) ILIKE :search
-          OR log.emailAttempted ILIKE :search
-          OR log.ipAddress ILIKE :search
-          OR log.resourceType ILIKE :search
-          OR log.resourceId ILIKE :search
-        )`,
-        { search: `%${escapeLike(search)}%` },
-      );
+      // Một ILIKE trên đúng biểu thức của IDX_audit_logs_search. KHÔNG tách
+      // thành OR từng cột: planner bỏ BitmapOr khi một nhánh khớp quá nhiều
+      // dòng rồi quét cả bảng.
+      qb.andWhere(`${AUDIT_LOG_SEARCH_EXPRESSION} ILIKE :search`, {
+        search: `%${escapeLike(search)}%`,
+      });
     }
 
     if (query.category !== undefined) {

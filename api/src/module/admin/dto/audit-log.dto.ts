@@ -3,6 +3,7 @@ import {
   IsDateString,
   IsEnum,
   IsIn,
+  MinLength,
   IsOptional,
   IsString,
   IsUUID,
@@ -52,12 +53,16 @@ export class AuditLogListItemDto {
 }
 
 export class AuditLogFilterDto extends PaginationDto {
+  // Dưới 3 ký tự thì GIN pg_trgm không dựng nổi trigram và câu truy vấn rơi về
+  // seq scan toàn bảng. Chặn ở đây rẻ hơn nhiều so với để nó chạy.
   @IsOptional()
   @IsString()
+  @MinLength(3, { message: 'search must be at least 3 characters' })
   @MaxLength(254)
   @ApiPropertyOptional({
+    minLength: 3,
     description:
-      'Search category, action, account ID, attempted email, IP address, resource type or resource ID; case-insensitive',
+      'Search category, action, attempted email, IP address, resource type or resource ID; case-insensitive',
   })
   search?: string;
 

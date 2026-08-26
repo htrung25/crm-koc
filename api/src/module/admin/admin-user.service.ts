@@ -33,7 +33,7 @@ import {
 
 import {
   EAuditLogCategory,
-  EMutationAction,
+  ELoginAction,
 } from '../../common/enum/audit-log.enum';
 import { AuditLogService } from './audit-log.service';
 
@@ -128,7 +128,7 @@ export class AdminService {
 
     await this.auditLogService.write({
       category: EAuditLogCategory.AUDIT,
-      action: EMutationAction.UPDATE,
+      action: ELoginAction.UPDATE,
       resourceType: 'admin_user',
       resourceId: id,
       metadata: {
@@ -216,7 +216,7 @@ export class AdminService {
     const result = { ...this.toAdminResponse(account, entries), adminRole };
     await this.auditLogService.write({
       category: EAuditLogCategory.AUDIT,
-      action: EMutationAction.UPDATE,
+      action: ELoginAction.UPDATE,
       accountId: caller.accountId,
       ipAddress: caller.clientIp,
       resourceType: 'admin_user',
@@ -238,7 +238,7 @@ export class AdminService {
 
     await this.auditLogService.write({
       category: EAuditLogCategory.AUDIT,
-      action: EMutationAction.DELETE,
+      action: ELoginAction.DELETE,
       resourceType: 'admin_user',
       resourceId: id,
       metadata: { email: response.email, name: response.name },
