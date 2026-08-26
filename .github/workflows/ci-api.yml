@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   NODE_VERSION: '24.14.1'
@@ -167,7 +167,10 @@ jobs:
   # job trên bị skip vì PR không đụng api/.
   ci-api-gate:
     needs: [lint, typecheck, build, env-check, route-check, migration-smoke]
-    if: always()
+    # !cancelled() thay cho always(): run bị huỷ thì gate SKIP thay vì đỏ.
+    # always() để 'cancelled' rơi vào nhánh * bên dưới và biến một lần huỷ
+    # hợp lệ thành required check thất bại.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any job failed
