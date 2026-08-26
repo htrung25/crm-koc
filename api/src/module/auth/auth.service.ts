@@ -110,7 +110,7 @@ export class AuthService {
       if (
         error instanceof QueryFailedError &&
         (error as QueryFailedError & { code?: string }).code ===
-        PG_UNIQUE_VIOLATION
+          PG_UNIQUE_VIOLATION
       ) {
         throw new ConflictException('email or phone already exists');
       }
@@ -166,7 +166,7 @@ export class AuthService {
       if (
         error instanceof QueryFailedError &&
         (error as QueryFailedError & { code?: string }).code ===
-        PG_UNIQUE_VIOLATION
+          PG_UNIQUE_VIOLATION
       ) {
         throw new ConflictException('phone already exists');
       }

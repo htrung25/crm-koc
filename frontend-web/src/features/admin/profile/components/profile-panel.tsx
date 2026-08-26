@@ -8,7 +8,7 @@ import { useAdminProfile } from "@/features/admin/profile/hooks/use-admin-profil
 import { PROFILE_LOAD_FAILED } from "@/features/admin/profile/services/profile.service";
 import { ProfileForm } from "@/features/admin/profile/components/profile-form";
 import { ProfileSkeleton } from "@/features/admin/profile/components/profile-skeleton";
-import { useRouter } from "@/i18n/navigation";
+import { useRouter } from "next/navigation";
 import { ApiRequestError } from "@/lib/api/browser-client";
 
 export function AdminProfilePanel() {

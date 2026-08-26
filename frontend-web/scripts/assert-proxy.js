@@ -1,8 +1,4 @@
-/**
- * Khẳng định proxy (middleware) được Next đăng ký đúng.
- * Chạy sau `next build`.
- */
-import { readFileSync } from "node:fs";
+const { readFileSync } = require("node:fs");
 
 const EXPECTED_MATCHER = "/((?!api|_next|_vercel|.*\\..*).*)";
 const MANIFEST = ".next/server/functions-config-manifest.json";

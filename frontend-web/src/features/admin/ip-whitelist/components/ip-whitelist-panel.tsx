@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
+import { useRouter } from "next/navigation";
 import { APP_ROUTES } from "@/constants/routes";
 import { ApiRequestError } from "@/lib/api/browser-client";
 import type {

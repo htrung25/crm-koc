@@ -8,7 +8,7 @@ import { LocaleSwitcher } from "@/components/ui/locale-switcher";
 import { IconCalendar, IconShield, IconUser } from "@/components/ui/icons";
 import { useUpdateAdminProfile } from "@/features/admin/profile/hooks/use-admin-profile";
 import type { AdminProfile } from "@/features/admin/profile/types";
-import { useRouter } from "@/i18n/navigation";
+import { useRouter } from "next/navigation";
 import { ApiRequestError } from "@/lib/api/browser-client";
 
 const fieldClass =

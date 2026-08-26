@@ -2,7 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
-import { Link, usePathname } from "@/i18n/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ADMIN_NAV_ITEMS, ADMIN_SYSTEM_ITEMS } from "@/constants/navigation";
 import { NAV_ICONS, type NavIconName } from "@/components/ui/icons";
 

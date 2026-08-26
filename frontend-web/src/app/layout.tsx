@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { notFound } from "next/navigation";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import "@/app/globals.css";
 import { Providers } from "@/app/providers";
-import { routing } from "@/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("marketing");
@@ -16,21 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
-
-export default async function LocaleLayout({
+export default async function RootLayout({
   children,
-  params,
-}: Readonly<{
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
-}>) {
-  const { locale } = await params;
-  if (!hasLocale(routing.locales, locale)) notFound();
-
-  setRequestLocale(locale);
+}: Readonly<{ children: React.ReactNode }>) {
+  // Ngôn ngữ đến từ cookie (xem i18n/request.ts), không còn từ đoạn URL.
+  const locale = await getLocale();
 
   return (
     <html lang={locale} className="h-full antialiased">

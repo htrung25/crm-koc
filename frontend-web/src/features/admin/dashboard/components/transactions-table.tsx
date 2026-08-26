@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
 
 import type { TransactionsData, TransactionStatus } from "@/features/admin/dashboard/types";
 

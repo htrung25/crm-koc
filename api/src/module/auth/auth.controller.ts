@@ -140,7 +140,7 @@ export class AuthController {
     const account = await this.requireAccountByEmail(dto.email);
     const result = await this.otpService.verify(account.id, dto.otp);
     const ipAddress = extractClientIp(request);
-    const userAgent = request.headers['user-agent'] as string | undefined;
+    const userAgent = request.headers['user-agent'];
 
     if (result === EOtpResult.LOCKED) {
       await this.auditLogService.write({
@@ -194,7 +194,7 @@ export class AuthController {
     const account = await this.requireAccountByEmail(dto.email);
     const result = await this.otpService.resend(account.id);
     const ipAddress = extractClientIp(request);
-    const userAgent = request.headers['user-agent'] as string | undefined;
+    const userAgent = request.headers['user-agent'];
 
     if (result === EOtpResult.LOCKED) {
       await this.auditLogService.write({
@@ -345,7 +345,7 @@ export class AuthController {
       resourceType: 'admin_user',
       resourceId: created.id,
       ipAddress: extractClientIp(request),
-      userAgent: request.headers['user-agent'] as string | undefined,
+      userAgent: request.headers['user-agent'],
       metadata: { email: created.email, name: created.name },
     });
     return created;
