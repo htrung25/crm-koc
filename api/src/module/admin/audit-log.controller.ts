@@ -22,7 +22,7 @@ import { SuperAdminGuard } from './super-admin.guard';
 @Roles(ERole.ADMIN)
 @Controller('admin')
 export class AuditLogController {
-  constructor(private readonly auditLogService: AuditLogService) { }
+  constructor(private readonly auditLogService: AuditLogService) {}
 
   @Get('/audit-logs')
   @ApiOperation({ summary: 'List and search audit logs, paginated' })

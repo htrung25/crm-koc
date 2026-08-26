@@ -4,7 +4,7 @@ import { APP_ROUTES } from "@/constants/routes";
 import { useEffect, useMemo, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 
-import { useRouter } from "@/i18n/navigation";
+import { useRouter } from "next/navigation";
 
 import {
   IconBin,

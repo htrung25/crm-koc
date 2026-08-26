@@ -19,7 +19,7 @@ import {
   EAuditLogCategory,
 } from '../../common/enum/audit-log.enum';
 import { KafkaService } from '../../infra/kafka.service';
-import { ADMIN_LOG_TOPIC } from './constants/audit-log.kafka';
+import { ADMIN_LOG_TOPIC, AdminLogEvent } from './constants/audit-log.kafka';
 
 export interface WriteAuditLogDto {
   category: EAuditLogCategory;
@@ -45,29 +45,60 @@ export class AuditLogService {
   ) {}
 
   async write(data: WriteAuditLogDto): Promise<void> {
+    let saved: AuditLog;
     try {
-      const payload: WriteAuditLogDto = {
-        category: data.category,
-        action: data.action,
-        accountId: data.accountId ?? null,
-        emailAttempted: data.emailAttempted ?? null,
-        ipAddress: data.ipAddress ?? null,
-        userAgent: data.userAgent ?? null,
-        resourceType: data.resourceType ?? null,
-        resourceId: data.resourceId ?? null,
-        businessCode: data.businessCode ?? null,
-        metadata: data.metadata ?? null,
+      saved = await this.auditLog.save(
+        this.auditLog.create({
+          category: data.category,
+          action: data.action,
+          accountId: data.accountId ?? null,
+          emailAttempted: data.emailAttempted ?? null,
+          ipAddress: data.ipAddress ?? null,
+          userAgent: data.userAgent ?? null,
+          resourceType: data.resourceType ?? null,
+          resourceId: data.resourceId ?? null,
+          businessCode: data.businessCode ?? null,
+          metadata: data.metadata ?? null,
+        }),
+      );
+    } catch (error) {
+      // Audit hỏng không được kéo nghiệp vụ hỏng theo. Nhưng log phải đủ field
+      // để dựng lại bản ghi từ stdout khi cần điều tra.
+      this.logger.error(
+        `audit write failed category=${data.category} action=${data.action} ` +
+          `accountId=${data.accountId ?? '-'} ` +
+          `resourceType=${data.resourceType ?? '-'} ` +
+          `resourceId=${data.resourceId ?? '-'}`,
+        error as Error,
+      );
+      return;
+    }
+
+    this.publish(saved);
+  }
+
+  /** Bọc try/catch: publish chạy ngoài khối lưu, ném ở đây là hỏng nghiệp vụ. */
+  private publish(log: AuditLog): void {
+    if (!this.kafkaService.isEnabled()) return;
+
+    try {
+      const event: AdminLogEvent = {
+        ...log,
+        createdAt: log.createdAt.toISOString(),
       };
 
-      if (!this.kafkaService.isEnabled()) {
-        const log = this.auditLog.create(payload);
-        await this.auditLog.save(log);
-        return;
-      }
-
-      await this.kafkaService.sendMessage(ADMIN_LOG_TOPIC, payload);
+      // Key theo account để sự kiện của cùng một người giữ nguyên thứ tự trong
+      // một partition; login hỏng chưa rõ account thì để Kafka rải đều.
+      void this.kafkaService
+        .sendMessage(ADMIN_LOG_TOPIC, event, log.accountId ?? undefined)
+        .catch((error) => {
+          this.logger.error(
+            `audit fan-out failed id=${log.id}`,
+            error as Error,
+          );
+        });
     } catch (error) {
-      this.logger.error('Failed to write audit log', error as Error);
+      this.logger.error(`audit fan-out failed id=${log.id}`, error as Error);
     }
   }
 

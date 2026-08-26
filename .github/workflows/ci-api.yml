@@ -104,7 +104,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: bash scripts/check-env.sh --scan api
+      - run: node scripts/check-env.js --scan api
 
   # API chưa có test nào. Job này là lớp bảo vệ thay thế: migration mới nhất
   # phải chạy lên được và lùi lại được trên một database trống.

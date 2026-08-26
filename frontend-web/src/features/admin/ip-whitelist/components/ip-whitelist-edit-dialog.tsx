@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
+import { useRouter } from "next/navigation";
 import { APP_ROUTES } from "@/constants/routes";
 import { IconPlus } from "@/components/ui/icons";
 import {

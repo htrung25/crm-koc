@@ -3,26 +3,12 @@
 import { API_ROUTES } from "@/constants/routes";
 import { useState } from "react";
 
-import { useRouter } from "@/i18n/navigation";
+import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/api/browser-client";
 import type { LoginResult, UserRole } from "@/features/auth/types";
 
 export type LoginStep = "credentials" | "otp";
 
-/**
- * Luồng đăng nhập chung cho mọi cổng.
- *
- * Backend bắt tài khoản admin qua thêm bước OTP: POST /login/admin chỉ trả
- * `requireOtp`, phải gọi tiếp /verify-otp mới có phiên. Brand/creator xong
- * ngay ở bước đầu.
- *
- * `expectedRole` chỉ có ở cổng admin (trang /admin truyền "ADMIN"): nó chọn
- * endpoint /login/admin và chặn tài khoản brand/creator tạo phiên ở đó.
- *
- * Cổng công khai KHÔNG truyền gì. Brand và creator dùng chung /login vì trước
- * khi xác thực thì chưa biết ai là ai — vai trò do backend trả về, client chỉ
- * dựa vào đó để điều hướng.
- */
 export function useLogin(expectedRole?: UserRole) {
   const router = useRouter();
   const [step, setStep] = useState<LoginStep>("credentials");
