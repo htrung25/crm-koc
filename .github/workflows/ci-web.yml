@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   NODE_VERSION: '24.14.1'
@@ -124,7 +124,8 @@ jobs:
 
   ci-web-gate:
     needs: [lint, typecheck, test, build, env-check]
-    if: always()
+    # !cancelled() thay cho always(): run bị huỷ thì gate SKIP thay vì đỏ.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any job failed
