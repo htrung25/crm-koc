@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 // node:crypto chỉ sinh được UUID v4, không có v7 — phải dùng package uuid.
 import { v7 as uuidv7 } from 'uuid';
 import type { StringValue } from 'ms';
+import { EBusinessCode } from '../common/enum/business-code.enum';
 import { ERole } from '../common/enum/roles.enum';
 import { ESessionEventType } from '../common/enum/session-event-types.enum';
 import { SessionService } from './session.service';
@@ -210,8 +211,21 @@ export class JwtAuthService {
     if (device === EDeviceCheck.BACKFILL && context.deviceId) {
       await this.sessionService.attachDevice(session, context.deviceId);
     }
-    if (device === EDeviceCheck.MISMATCH && this.deviceBindingEnforced) {
-      throw new UnauthorizedException('token is not valid for this device');
+    // Chặn cả MISSING, không chỉ MISMATCH: bỏ header là cách lách rẻ nhất.
+    if (
+      this.deviceBindingEnforced &&
+      (device === EDeviceCheck.MISMATCH || device === EDeviceCheck.MISSING)
+    ) {
+      this.logger.warn(
+        `Refresh bị từ chối vì thiết bị (${device}) account=${session.adminId} session=${payload.session_id}`,
+      );
+      throw new UnauthorizedException({
+        businessCode: EBusinessCode.DEVICE_MISMATCH,
+        message:
+          device === EDeviceCheck.MISSING
+            ? 'device id header is required'
+            : 'token is not valid for this device',
+      });
     }
 
     await this.logRefreshIfSuspicious(session, context);

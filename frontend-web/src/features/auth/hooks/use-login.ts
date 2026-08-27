@@ -15,7 +15,15 @@ export function useLogin(expectedRole?: UserRole) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("error") === "device_mismatch") {
+        return "Phiên đăng nhập đã bị huỷ do phát hiện thay đổi thiết bị bất thường. Vui lòng đăng nhập lại.";
+      }
+    }
+    return "";
+  });
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 

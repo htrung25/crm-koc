@@ -1,11 +1,33 @@
 "use client";
 
+import { BUSINESS_CODE } from "@/constants/business-code";
 import { API_ROUTES } from "@/constants/routes";
+import { getDeviceId } from "@/lib/api/device";
 
 let pendingRefresh: Promise<boolean> | null = null;
 
+function buildRequestHeaders(existingHeaders?: HeadersInit): Headers {
+  const headers = new Headers(existingHeaders);
+  const deviceId = getDeviceId();
+  if (deviceId && !headers.has("X-Device-Id")) {
+    headers.set("X-Device-Id", deviceId);
+  }
+  return headers;
+}
+
+export function isDeviceMismatchError(
+  status: number,
+  businessCode?: string | number,
+): boolean {
+  return status === 401 && businessCode === BUSINESS_CODE.DEVICE_MISMATCH;
+}
+
 async function refreshSession(): Promise<boolean> {
-  pendingRefresh ??= fetch(API_ROUTES.auth.refresh, { method: "POST" })
+  const headers = buildRequestHeaders();
+  pendingRefresh ??= fetch(API_ROUTES.auth.refresh, {
+    method: "POST",
+    headers,
+  })
     .then((response) => response.ok)
     .catch(() => false)
     .finally(() => {
@@ -24,9 +46,39 @@ export async function apiFetch(
   input: string,
   { skipRefresh, ...init }: FetchOptions = {},
 ): Promise<Response> {
-  const response = await fetch(input, init);
+  const headers = buildRequestHeaders(init.headers);
+  const response = await fetch(input, { ...init, headers });
 
-  if (response.status !== 401 || skipRefresh) {
+  if (response.status !== 401) {
+    return response;
+  }
+
+  // clone() để không nuốt mất body của response trả về cho caller.
+  const cloned = response.clone();
+  const body = (await cloned.json().catch(() => null)) as {
+    businessCode?: string | number;
+  } | null;
+
+  if (isDeviceMismatchError(response.status, body?.businessCode)) {
+    // Không thử refresh: /refresh cũng kiểm thiết bị nên sẽ 401 tiếp.
+    if (typeof window !== "undefined") {
+      // await để logout kịp tới server; điều hướng ngay sẽ abort request này.
+      await fetch(API_ROUTES.auth.logout, { method: "POST" }).catch(() => {});
+
+      const pathname = window.location.pathname;
+      const isAlreadyOnAuthPage =
+        pathname === "/login" || pathname === "/admin";
+      if (!isAlreadyOnAuthPage) {
+        const loginUrl = pathname.startsWith("/admin")
+          ? "/admin?error=device_mismatch"
+          : "/login?error=device_mismatch";
+        window.location.href = loginUrl;
+      }
+    }
+    return response;
+  }
+
+  if (skipRefresh) {
     return response;
   }
 
@@ -36,8 +88,8 @@ export async function apiFetch(
   }
 
   // Cookie mới đã được ghi trong response của /refresh, request lại lần này
-  // sẽ mang access token còn hạn.
-  return fetch(input, init);
+  // sẽ mang access token còn hạn và device ID header.
+  return fetch(input, { ...init, headers: buildRequestHeaders(init.headers) });
 }
 
 export class ApiRequestError extends Error {
