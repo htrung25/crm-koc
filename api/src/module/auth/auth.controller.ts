@@ -54,6 +54,7 @@ import { LoginDto, LoginAdminDto } from './dto/login.dto';
 import { LoginResponseDto, RegisterResponseDto } from './dto/auth.dto';
 import { RefreshTokenDto, TokenPairResponseDto } from './dto/refresh-token.dto';
 import { extractClientIp } from '../../common/util/ip.util';
+import { readDeviceId } from '../../common/util/device-binding.util';
 // import type: isolatedModules + emitDecoratorMetadata cấm type thường trong
 // chữ ký đã decorate
 import type { Request as ExpressRequest } from 'express';
@@ -251,6 +252,7 @@ export class AuthController {
         role: account.accountRole,
         ipAddress: extractClientIp(request),
         userAgent: request.headers['user-agent'] ?? null,
+        deviceId: readDeviceId(request.headers),
       },
     );
 
@@ -400,15 +402,34 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Token sai, hết hạn, sai loại, hoặc phiên đã bị thu hồi',
   })
-  refresh(
+  async refresh(
     @Body() dto: RefreshTokenDto,
     @Request() request: ExpressRequest,
   ): Promise<TokenPairResponseDto> {
+    const ipAddress = extractClientIp(request);
+    const userAgent = request.headers['user-agent'] ?? null;
+
     // IP/User-Agent để đối chiếu với lúc đăng nhập: lệch thì ghi session_event
-    return this.jwtAuthService.refresh(dto.refreshToken, {
-      ipAddress: extractClientIp(request),
-      userAgent: request.headers['user-agent'] ?? null,
-    });
+    const { deviceMismatch, accountId, role, ...tokens } =
+      await this.jwtAuthService.refresh(dto.refreshToken, {
+        ipAddress,
+        userAgent,
+        deviceId: readDeviceId(request.headers),
+      });
+
+    if (deviceMismatch) {
+      await this.auditLogService.writeIfAdmin(role, {
+        category: EAuditLogCategory.LOGIN,
+        action: ELoginAction.FAIL_DEVICE,
+        accountId,
+        ipAddress,
+        userAgent,
+        metadata: { path: 'refresh' },
+      });
+    }
+
+    // deviceMismatch là cờ nội bộ, không được lọt ra response.
+    return tokens;
   }
 
   @UseGuards(JwtAuthGuard)

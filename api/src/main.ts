@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { setupSwagger } from './infra/swagger';
 import { JsonLogger } from './common/logger/json.logger';
+import { DEVICE_ID_HEADER } from './common/util/device-binding.util';
 import cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -48,7 +49,7 @@ async function bootstrap() {
       corsOrigin === '*' ? true : corsOrigin.split(',').map((o) => o.trim()),
     credentials: corsCredentials,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', DEVICE_ID_HEADER],
   });
 
   app.use(cookieParser());

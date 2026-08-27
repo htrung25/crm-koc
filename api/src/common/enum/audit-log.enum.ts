@@ -9,6 +9,7 @@ export enum ELoginAction {
   FAIL_IP = 'fail_ip',
   FAIL_OTP = 'fail_otp',
   FAIL_LOCKED = 'fail_locked',
+  FAIL_DEVICE = 'fail_device',
   OTP_SENT = 'otp_sent',
   LOGOUT = 'logout',
   // category=audit
