@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import { EAccountStatus } from '../common/enum/account-statuses.enum';
+import { EBusinessCode } from '../common/enum/business-code.enum';
 import { AuthService } from '../module/auth/auth.service';
 import { AccountCacheService } from '../security/account-cache.service';
 import { SessionService } from '../security/session.service';
@@ -112,26 +113,37 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const deviceId = readDeviceId(request.headers);
     const result = checkDevice(session.deviceId, deviceId);
 
+    if (result === EDeviceCheck.OK) return;
     if (result === EDeviceCheck.BACKFILL && deviceId) {
       await this.sessionService.attachDevice(session, deviceId);
       return;
     }
-    if (result !== EDeviceCheck.MISMATCH) return;
 
-    await this.auditLogService.writeIfAdmin(payload.role, {
-      category: EAuditLogCategory.LOGIN,
-      action: ELoginAction.FAIL_DEVICE,
-      accountId: payload.sub,
-      ipAddress: extractClientIp(request),
-      userAgent: request.headers['user-agent'],
-      metadata: {
-        sessionId: payload.session_id,
-        enforced: this.deviceBindingEnforced,
-      },
-    });
+    const rejected = this.deviceBindingEnforced;
 
-    if (this.deviceBindingEnforced) {
-      throw new UnauthorizedException('token is not valid for this device');
+    if (result === EDeviceCheck.MISMATCH || rejected) {
+      await this.auditLogService.writeIfAdmin(payload.role, {
+        category: EAuditLogCategory.LOGIN,
+        action: ELoginAction.FAIL_DEVICE,
+        accountId: payload.sub,
+        ipAddress: extractClientIp(request),
+        userAgent: request.headers['user-agent'],
+        metadata: {
+          sessionId: payload.session_id,
+          reason: result,
+          enforced: this.deviceBindingEnforced,
+        },
+      });
+    }
+
+    if (rejected) {
+      throw new UnauthorizedException({
+        businessCode: EBusinessCode.DEVICE_MISMATCH,
+        message:
+          result === EDeviceCheck.MISSING
+            ? 'device id header is required'
+            : 'token is not valid for this device',
+      });
     }
   }
 }

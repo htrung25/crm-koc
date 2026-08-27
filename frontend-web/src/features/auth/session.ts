@@ -5,6 +5,7 @@ import { ROLE_HOME, type UserRole } from "@/features/auth/types";
 export const ACCESS_COOKIE = "token";
 export const REFRESH_COOKIE = "refresh_token";
 export const ROLE_COOKIE = "user_role";
+export const DEVICE_ID_COOKIE = "device_id";
 
 /** Khớp JWT_ACCESS_TTL=15m của backend. */
 export const ACCESS_MAX_AGE = 15 * 60;
