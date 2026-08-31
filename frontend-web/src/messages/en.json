@@ -38,9 +38,56 @@
       "creatorAccount": "Creator account",
       "logout": "Log out"
     },
-    "ipWhitelist": "IP whitelist"
+    "ipWhitelist": "IP whitelist",
+    "auditLogs": "Audit Logs"
   },
   "admin": {
+    "auditLogsPage": {
+      "title": "Audit Logs",
+      "greeting": "Monitor system audit logs, authentication security, and approval events."
+    },
+    "auditLogs": {
+      "pageTitle": "Audit Logs",
+      "pageSubtitle": "Track security actions, authentication events, and data changes across the system.",
+      "forbiddenTitle": "Super Admin Permission Required",
+      "forbiddenMessage": "This page is restricted to whitelisted Super Admin accounts only.",
+      "search": "Full-text Search",
+      "searchPlaceholder": "Email, IP, resource type, ID...",
+      "minSearchLength": "Enter at least 3 characters to search",
+      "category": "Category",
+      "allCategories": "All Categories",
+      "action": "Action",
+      "allActions": "All Actions",
+      "from": "From Date",
+      "to": "To Date",
+      "resetFilters": "Reset Filters",
+      "tableTitle": "Audit Log Records",
+      "totalCount": "{count} recorded events",
+      "refresh": "Refresh",
+      "colTime": "Timestamp",
+      "colCategory": "Category",
+      "colAction": "Action",
+      "colActor": "Account / Email",
+      "colIp": "IP Address",
+      "colResource": "Resource",
+      "colActions": "Actions",
+      "loading": "Loading audit logs…",
+      "empty": "No audit log records found.",
+      "viewDetail": "Details",
+      "pagination": "Showing {from}–{to} of {total}",
+      "rowsPerPage": "rows/page",
+      "detailTitle": "Audit Log Record Details",
+      "attemptedEmail": "Actor Email / Account",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copyJson": "Copy JSON",
+      "close": "Close",
+      "categories": {
+        "login": "Login",
+        "audit": "Data",
+        "approval": "Approval"
+      }
+    },
     "dashboard": {
       "title": "Overview",
       "greeting": "Good morning — here is today's system overview."

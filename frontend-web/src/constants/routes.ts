@@ -18,6 +18,7 @@ export const APP_ROUTES = {
     reports: "/admin/reports",
     profile: "/admin/profile",
     ipWhitelist: "/admin/ip-whitelist",
+    auditLogs: "/admin/audit-logs",
     settings: "/admin/settings",
     faqConfig: "/admin/faq-config",
   },
@@ -54,6 +55,7 @@ export const API_ROUTES = {
     account: (id: string) => `/api/admin/accounts/${id}`,
     profile: "/api/admin/profile",
     brands: "/api/admin/brands",
+    auditLogs: "/api/admin/audit-logs",
   },
 } as const;
 
@@ -77,5 +79,6 @@ export const BACKEND_ROUTES = {
     brandDetail: (id: string) => `/admin/brands-list/${id}`,
     creatorList: "/admin/creators-list",
     profileMe: "/admin/profile/me",
+    auditLogs: "/admin/audit-logs",
   },
 } as const;
