@@ -38,9 +38,56 @@
       "creatorAccount": "Tài khoản Creator",
       "logout": "Đăng xuất"
     },
-    "ipWhitelist": "IP Whitelist"
+    "ipWhitelist": "IP Whitelist",
+    "auditLogs": "Nhật ký hệ thống"
   },
   "admin": {
+    "auditLogsPage": {
+      "title": "Nhật ký hệ thống",
+      "greeting": "Theo dõi audit log, an ninh đăng nhập và luồng duyệt dữ liệu."
+    },
+    "auditLogs": {
+      "pageTitle": "Nhật ký hệ thống (Audit Log)",
+      "pageSubtitle": "Theo dõi mọi thao tác bảo mật, đăng nhập và thay đổi dữ liệu của toàn bộ hệ thống.",
+      "forbiddenTitle": "Yêu cầu quyền Super Admin",
+      "forbiddenMessage": "Trang này chỉ dành riêng cho tài khoản Super Admin đã được cấp quyền trong Whitelist.",
+      "search": "Tìm kiếm Full-text",
+      "searchPlaceholder": "Email, IP, loại tài nguyên, ID...",
+      "minSearchLength": "Nhập tối thiểu 3 ký tự để tìm kiếm",
+      "category": "Danh mục",
+      "allCategories": "Tất cả danh mục",
+      "action": "Hành động",
+      "allActions": "Tất cả hành động",
+      "from": "Từ ngày",
+      "to": "Đến ngày",
+      "resetFilters": "Xoá bộ lọc",
+      "tableTitle": "Danh sách bản ghi",
+      "totalCount": "{count} sự kiện được ghi nhận",
+      "refresh": "Làm mới",
+      "colTime": "Thời gian",
+      "colCategory": "Danh mục",
+      "colAction": "Hành động",
+      "colActor": "Tài khoản / Email",
+      "colIp": "Địa chỉ IP",
+      "colResource": "Tài nguyên",
+      "colActions": "Thao tác",
+      "loading": "Đang tải nhật ký…",
+      "empty": "Không có bản ghi nhật ký nào phù hợp.",
+      "viewDetail": "Chi tiết",
+      "pagination": "Hiển thị {from}–{to} trên {total}",
+      "rowsPerPage": "dòng/trang",
+      "detailTitle": "Chi tiết bản ghi Audit Log",
+      "attemptedEmail": "Email / Tài khoản thực hiện",
+      "copy": "Sao chép",
+      "copied": "Đã chép",
+      "copyJson": "Sao chép JSON",
+      "close": "Đóng",
+      "categories": {
+        "login": "Đăng nhập",
+        "audit": "Dữ liệu",
+        "approval": "Phê duyệt"
+      }
+    },
     "dashboard": {
       "title": "Tổng quan",
       "greeting": "Chào buổi sáng — đây là tình hình hệ thống hôm nay."

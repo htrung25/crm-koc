@@ -34,6 +34,11 @@ export const ADMIN_SYSTEM_ITEMS: NavigationItem[] = [
     iconName: "shield",
   },
   {
+    labelKey: "auditLogs",
+    href: APP_ROUTES.admin.auditLogs,
+    iconName: "clipboardList",
+  },
+  {
     labelKey: "settings",
     href: APP_ROUTES.admin.settings,
     iconName: "settings",
