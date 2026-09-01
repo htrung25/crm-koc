@@ -13,6 +13,10 @@ import { KycDocument } from '../module/kyc/entities/kyc-document.entity';
 import { KycDocumentView } from '../module/kyc/entities/kyc-document-view.entity';
 import { StorageObject } from '../common/entities/storage-object.entity';
 import { AuditLog } from '../module/admin/entities/audit-log.entity';
+import { Campaign } from '../module/brand/entities/campaign.entity';
+import { CampaignCategory } from '../module/brand/entities/campaign-category.entity';
+import { CampaignDeliverable } from '../module/brand/entities/campaign-deliverable.entity';
+import { CampaignAsset } from '../module/brand/entities/campaign-asset.entity';
 
 /**
  * DataSource dành riêng cho TypeORM CLI (migration:run / migration:revert).
@@ -34,6 +38,10 @@ const entities = [
   KycDocumentView,
   StorageObject,
   AuditLog,
+  CampaignCategory,
+  Campaign,
+  CampaignDeliverable,
+  CampaignAsset,
 ];
 
 // Chạy qua ts-node thì đọc migration .ts, chạy từ dist thì đọc .js đã build.

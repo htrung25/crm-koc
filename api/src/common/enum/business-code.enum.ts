@@ -6,6 +6,8 @@
  *   3000-3999    collaboration
  *   4000-4999    creator / social
  *   5000-5999    hệ thống / vận hành
+ *   6000-6999    kyc
+ *   7000-7999    campaign
  */
 export enum EBusinessCode {
   SUCCESS = 0,
@@ -26,4 +28,18 @@ export enum EBusinessCode {
   KYC_NOT_VERIFIED = 6002,
   KYC_MISSING_DOCUMENTS = 6003,
   KYC_UNSUPPORTED_FILE = 6004,
+
+  /* CAMPAIGN*/
+  CAMPAIGN_VERSION_CONFLICT = 7000,
+  CAMPAIGN_INVALID_TRANSITION = 7001,
+  CAMPAIGN_BRAND_NOT_VERIFIED = 7002,
+  CAMPAIGN_CATEGORY_PROHIBITED = 7003,
+  CAMPAIGN_CASH_BELOW_FLOOR = 7004,
+  /** cash_budget khác creator_count × cash_unit_price khi pricing FIXED. */
+  CAMPAIGN_BUDGET_MISMATCH = 7005,
+  CAMPAIGN_PRICE_RANGE_INVALID = 7006,
+  CAMPAIGN_CHECKLIST_INCOMPLETE = 7007,
+  CAMPAIGN_REVIEW_FEEDBACK_EMPTY = 7008,
+  /** creator_platforms không bao hết platform của deliverable. */
+  CAMPAIGN_PLATFORM_MISMATCH = 7009,
 }
