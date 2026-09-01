@@ -166,8 +166,13 @@ export class CreateCampaigns1788106493851 implements MigrationInterface {
         "created_at"                  timestamptz NOT NULL DEFAULT now(),
         "updated_at"                  timestamptz NOT NULL DEFAULT now(),
         CONSTRAINT "PK_campaign_deliverables_id" PRIMARY KEY ("id"),
+        -- DEFERRABLE: đổi thứ tự deliverable phải dời nhiều dòng, và Postgres
+        -- kiểm UNIQUE theo từng dòng ngay trong câu UPDATE. Không hoãn được thì
+        -- cả "position + 1" lẫn hoán đổi hai vị trí đều vỡ giữa chừng.
+        -- INITIALLY IMMEDIATE: mặc định vẫn chặn ngay, chỉ luồng sắp xếp mới
+        -- SET CONSTRAINTS ... DEFERRED.
         CONSTRAINT "UQ_campaign_deliverables_position"
-          UNIQUE ("campaign_id", "position"),
+          UNIQUE ("campaign_id", "position") DEFERRABLE INITIALLY IMMEDIATE,
         CONSTRAINT "CHK_campaign_deliverables_content_type"
           CHECK ("content_type" IS NULL OR "content_type" IN
                  ('video', 'image_post', 'livestream', 'story', 'review_article')),
@@ -204,8 +209,10 @@ export class CreateCampaigns1788106493851 implements MigrationInterface {
         "checksum"      char(64)    NOT NULL,
         "created_at"    timestamptz NOT NULL DEFAULT now(),
         CONSTRAINT "PK_campaign_assets_id" PRIMARY KEY ("id"),
+        -- Cùng lý do với campaign_deliverables: sắp xếp lại ảnh phải dời nhiều
+        -- dòng trong một câu UPDATE.
         CONSTRAINT "UQ_campaign_assets_position"
-          UNIQUE ("campaign_id", "kind", "position"),
+          UNIQUE ("campaign_id", "kind", "position") DEFERRABLE INITIALLY IMMEDIATE,
         CONSTRAINT "CHK_campaign_assets_kind"
           CHECK ("kind" IN ('product_image', 'reference_file')),
         CONSTRAINT "CHK_campaign_assets_size" CHECK ("size_bytes" > 0),

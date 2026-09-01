@@ -1606,8 +1606,9 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Search category, action, account ID, attempted email, IP address, resource type or resource ID; case-insensitive",
+            "description": "Search category, action, attempted email, IP address, resource type or resource ID; case-insensitive",
             "schema": {
+              "minLength": 3,
               "type": "string"
             }
           },
@@ -1630,7 +1631,9 @@
                 "fail_ip",
                 "fail_otp",
                 "fail_locked",
+                "fail_device",
                 "otp_sent",
+                "logout",
                 "create",
                 "update",
                 "delete",
@@ -4224,7 +4227,9 @@
               "fail_ip",
               "fail_otp",
               "fail_locked",
+              "fail_device",
               "otp_sent",
+              "logout",
               "create",
               "update",
               "delete",
