@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -8,35 +7,24 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { EBusinessCode } from '../../common/enum/business-code.enum';
-import {
-  EKycDocumentType,
-  EKycRejectReason,
-  EKycStatus,
-} from '../../common/enum/kyc.enum';
-import { ERole } from '../../common/enum/roles.enum';
+import { EKycDocumentType, EKycStatus } from '../../common/enum/kyc.enum';
 import { PaginatedResult, paginate } from '../../common/util/pagination.util';
 import {
   StorageService,
   StorageStreamResult,
 } from '../../common/services/storage.service';
-import { EmailService } from '../../common/services/email.service';
+import { StorageLedgerService } from '../../common/services/storage-ledger.service';
 import { AuthEntity } from '../auth/entities/auth.entity';
+import { EmailQueueService } from '../../queue/email/email-queue.service';
+import { StorageQueueService } from '../../queue/storage/storage-queue.service';
 import {
   ALLOWED_DOCUMENTS_BY_ROLE,
-  ALL_KYC_STATUSES,
-  KYC_STATUS_LABEL,
-  KYC_TRANSITION_ACTORS,
   MAX_KYC_ATTEMPTS,
-  OPEN_KYC_STATUSES,
   REQUIRED_DOCUMENTS,
-  RESUBMIT_FROM_STATUSES,
 } from './constants/kyc.constants';
-import {
-  STORAGE_PREFIX_PENDING,
-  STORAGE_PREFIX_VERIFIED,
-} from './constants/kyc-storage.constants';
+import { STORAGE_PREFIX_PENDING } from './constants/kyc-storage.constants';
 import {
   KYC_LIST_FIELDS,
   KycListItem,
@@ -47,6 +35,7 @@ import { KycDocumentView } from './entities/kyc-document-view.entity';
 import { KycSubmission } from './entities/kyc-submission.entity';
 import { KycFilterDto, ReviewKycDto } from './dto/kyc.dto';
 import { inspectDocument } from './util/kyc-document.util';
+import { KycStateMachine } from './kyc-state-machine';
 
 export interface DocumentStreamPayload {
   document: KycDocument;
@@ -57,6 +46,7 @@ export interface DocumentStreamPayload {
 export class KycService {
   private readonly logger = new Logger(KycService.name);
   private readonly maxFileSize: number;
+  private readonly validityDays: number;
 
   constructor(
     @InjectRepository(KycSubmission)
@@ -69,60 +59,52 @@ export class KycService {
     private readonly authRepository: Repository<AuthEntity>,
     private readonly dataSource: DataSource,
     private readonly storage: StorageService,
-    private readonly emailService: EmailService,
+    private readonly ledger: StorageLedgerService,
+    private readonly emailQueue: EmailQueueService,
+    private readonly storageQueue: StorageQueueService,
+    private readonly stateMachine: KycStateMachine,
     configService: ConfigService,
   ) {
     // .env luôn trả chuỗi nên phải Number()
     this.maxFileSize = Number(
       configService.get('KYC_MAX_FILE_SIZE_BYTES', 10_485_760),
     );
+    this.validityDays = Number(configService.get('KYC_VALIDITY_DAYS', 365));
   }
 
-  // ---------------------------------------------------------------- người dùng
+  // ---------------------------------------------------------------- Customer
 
   async openSubmission(
     accountId: string,
     role: KycRole,
   ): Promise<KycSubmission> {
     const latest = await this.findLatest(accountId, role);
-
-    if (latest && OPEN_KYC_STATUSES.includes(latest.status)) {
-      return latest;
+    const plan = this.stateMachine.planOpening(latest);
+    if (plan.kind === 'reuse') {
+      return plan.submission;
     }
 
-    // LOCKED (6) hoặc REJECTED khi đã hết 3 lượt: chặn trước khi vi phạm DB check constraint
-    if (
-      latest?.status === EKycStatus.LOCKED ||
-      (latest?.status === EKycStatus.REJECTED &&
-        latest.attemptNo >= MAX_KYC_ATTEMPTS)
-    ) {
-      throw new ForbiddenException({
-        businessCode: EBusinessCode.KYC_ATTEMPTS_EXHAUSTED,
-        message: 'kyc attempts exhausted, contact support',
-      });
-    }
+    return this.dataSource.transaction(async (manager) => {
+      const submissionRepo = manager.getRepository(KycSubmission);
+      const created = await submissionRepo.save(
+        submissionRepo.create({
+          accountId,
+          role,
+          status: EKycStatus.DRAFT,
+          attemptNo: plan.attemptNo,
+        }),
+      );
 
-    if (latest?.status === EKycStatus.VERIFIED) {
-      throw new ConflictException('kyc is already verified for this role');
-    }
+      if (plan.carryOverFromSubmissionId) {
+        await this.carryOverDocuments(
+          plan.carryOverFromSubmissionId,
+          created.id,
+          manager,
+        );
+      }
 
-    const attemptNo = this.nextAttemptNo(latest);
-    const created = await this.submissionRepository.save(
-      this.submissionRepository.create({
-        accountId,
-        role,
-        status: EKycStatus.DRAFT,
-        attemptNo,
-      }),
-    );
-
-    // Nộp lại thì kế thừa tài liệu của attempt trước; người dùng chỉ phải tải
-    // lại thứ dính lý do từ chối.
-    if (latest && RESUBMIT_FROM_STATUSES.includes(latest.status)) {
-      await this.carryOverDocuments(latest.id, created.id);
-    }
-
-    return created;
+      return created;
+    });
   }
 
   /** Tải một tài liệu lên hồ sơ đang mở. Nộp đè thì thay file cũ. */
@@ -133,7 +115,9 @@ export class KycService {
     buffer: Buffer,
     originalName: string | null,
   ): Promise<KycDocument> {
-    const submission = await this.requireEditable(accountId, role);
+    const submission = this.stateMachine.requireEditable(
+      await this.findLatest(accountId, role),
+    );
 
     if (!ALLOWED_DOCUMENTS_BY_ROLE[role].includes(docType)) {
       throw new BadRequestException({
@@ -168,6 +152,9 @@ export class KycService {
     }
 
     const storageKey = this.storage.generateKey(STORAGE_PREFIX_PENDING);
+    // Ghi ledger TRƯỚC khi put: object tồn tại mà không ai biết thì sweep
+    // không bao giờ dọn được.
+    await this.ledger.markPending(storageKey);
     await this.storage.put(storageKey, buffer, inspected.mimeType);
 
     // Thay file cũ cùng loại: xoá object cũ sau khi lưu file mới, tránh mồ côi
@@ -176,29 +163,36 @@ export class KycService {
       docType,
     });
 
-    const saved = await this.documentRepository.save(
-      this.documentRepository.create({
-        id: existing?.id, // nếu có existing thì update tại chỗ
-        submissionId: submission.id,
-        docType,
-        storageKey,
-        originalName,
-        mimeType: inspected.mimeType,
-        sizeBytes: inspected.sizeBytes,
-        checksum: inspected.checksum,
-      }),
-    );
+    const saved = await this.dataSource.transaction(async (manager) => {
+      const row = await manager.getRepository(KycDocument).save(
+        this.documentRepository.create({
+          id: existing?.id, // nếu có existing thì update tại chỗ
+          submissionId: submission.id,
+          docType,
+          storageKey,
+          originalName,
+          mimeType: inspected.mimeType,
+          sizeBytes: inspected.sizeBytes,
+          checksum: inspected.checksum,
+        }),
+      );
+      await this.ledger.markLinked(storageKey, manager);
+      if (existing) {
+        await this.ledger.markGarbage(existing.storageKey, manager);
+      }
+      return row;
+    });
 
-    if (existing) {
-      await this.storage.remove(existing.storageKey);
-    }
-
+    // KHÔNG xoá object cũ tại đây: sweep lo, và nó retry được. Xoá đồng bộ ở
+    // đây là lặp lại đúng lỗi cũ — I/O mạng cạnh transaction, hỏng thì mồ côi.
     return saved;
   }
 
   /** Chuyển hồ sơ sang PENDING. Thiếu giấy tờ bắt buộc thì không cho nộp. */
   async submit(accountId: string, role: KycRole): Promise<KycSubmission> {
-    const submission = await this.requireEditable(accountId, role);
+    const submission = this.stateMachine.requireEditable(
+      await this.findLatest(accountId, role),
+    );
 
     const documents = await this.documentRepository.findBy({
       submissionId: submission.id,
@@ -214,11 +208,9 @@ export class KycService {
       });
     }
 
-    this.assertTransition(submission.status, EKycStatus.PENDING, role);
-
-    submission.status = EKycStatus.PENDING;
-    submission.submittedAt = new Date();
-    return this.submissionRepository.save(submission);
+    return this.submissionRepository.save(
+      this.stateMachine.submit(submission, role),
+    );
   }
 
   /** Hồ sơ mới nhất của người gọi, kèm số lượt còn lại. */
@@ -341,7 +333,7 @@ export class KycService {
     dto: ReviewKycDto,
     reviewerId: string,
   ): Promise<KycSubmission> {
-    return this.dataSource.transaction(async (manager) => {
+    const saved = await this.dataSource.transaction(async (manager) => {
       const submissionRepo = manager.getRepository(KycSubmission);
       const submission = await submissionRepo
         .createQueryBuilder('kyc')
@@ -353,44 +345,34 @@ export class KycService {
         throw new NotFoundException('kyc submission not found');
       }
 
-      this.assertTransition(submission.status, dto.status, ERole.ADMIN);
-
-      if (dto.status === EKycStatus.REJECTED) {
-        this.assertRejectPayload(dto);
-      }
-      if (dto.status === EKycStatus.MORE_INFO && !dto.reviewNote?.trim()) {
-        throw new BadRequestException(
-          'reviewNote is required when asking for more info',
-        );
-      }
-
-      const exhausted = submission.attemptNo >= MAX_KYC_ATTEMPTS;
-      const next =
-        dto.status === EKycStatus.REJECTED && exhausted
-          ? EKycStatus.LOCKED
-          : dto.status;
-
-      if (next === EKycStatus.VERIFIED) {
-        await this.moveDocumentsToVerified(submission.id);
-      }
-
-      submission.status = next;
-      submission.reviewedAt = new Date();
-      submission.reviewedBy = reviewerId;
-      submission.rejectReason = dto.rejectReason ?? null;
-      submission.reviewNote = dto.reviewNote ?? null;
-      const saved = await submissionRepo.save(submission);
-
-      // Gửi email thông báo bất đồng bộ (fire-and-forget, không làm fail transaction)
-      this.notifyUserOnReview(submission, next, dto).catch((err) => {
-        this.logger.error(
-          `Failed to notify user for KYC submission ${submission.id}`,
-          err,
-        );
-      });
-
-      return saved;
+      return submissionRepo.save(
+        this.stateMachine.review(
+          submission,
+          dto,
+          reviewerId,
+          this.validityDays,
+        ),
+      );
     });
+
+    try {
+      await this.emailQueue.enqueueKycStatus(saved.id);
+    } catch (error) {
+      this.logger.warn(
+        `review: enqueue send-kyc-status thất bại cho submission ${saved.id}: ${(error as Error).message}`,
+      );
+    }
+    if (saved.status === EKycStatus.VERIFIED) {
+      try {
+        await this.storageQueue.enqueuePromoteDocuments(saved.id);
+      } catch (error) {
+        this.logger.warn(
+          `review: enqueue promote-documents thất bại cho submission ${saved.id}: ${(error as Error).message}`,
+        );
+      }
+    }
+
+    return saved;
   }
 
   /** Ghi audit TRƯỚC khi trả nội dung: request đứt giữa chừng vẫn để lại vết. */
@@ -410,7 +392,7 @@ export class KycService {
     );
   }
 
-  // -------------------------------------------------------------------- riêng tư
+  // -------------------------------------------------------------------- private
 
   private findLatest(
     accountId: string,
@@ -422,39 +404,11 @@ export class KycService {
     });
   }
 
-  /** Hồ sơ phải đang ở trạng thái người dùng sửa được. */
-  private async requireEditable(
-    accountId: string,
-    role: KycRole,
-  ): Promise<KycSubmission> {
-    const latest = await this.findLatest(accountId, role);
-    if (!latest || !OPEN_KYC_STATUSES.includes(latest.status)) {
-      throw new NotFoundException('no open kyc submission');
-    }
-    if (latest.status === EKycStatus.PENDING) {
-      throw new ConflictException('kyc submission is under review');
-    }
-    return latest;
-  }
-
-  private nextAttemptNo(latest: KycSubmission | null): number {
-    if (!latest) {
-      return 1;
-    }
-    // EXPIRED là chu kỳ KYC mới, không phải sửa lỗi lần cũ.
-    if (latest.status === EKycStatus.EXPIRED) {
-      return 1;
-    }
-    if (latest.status === EKycStatus.REJECTED) {
-      return latest.attemptNo + 1;
-    }
-    return latest.attemptNo;
-  }
-
   /** Copy song song các object sang khoá mới cho attempt tiếp theo. */
   private async carryOverDocuments(
     fromSubmissionId: string,
     toSubmissionId: string,
+    manager?: EntityManager,
   ): Promise<void> {
     const previous = await this.documentRepository.findBy({
       submissionId: fromSubmissionId,
@@ -464,6 +418,9 @@ export class KycService {
     const copiedDocs = await Promise.all(
       activeDocs.map(async (doc) => {
         const newKey = this.storage.generateKey(STORAGE_PREFIX_PENDING);
+        // Ghi ledger TRƯỚC khi copy: object tồn tại mà không ai biết thì
+        // sweep không bao giờ dọn được.
+        await this.ledger.markPending(newKey, manager);
         await this.storage.copy(doc.storageKey, newKey);
         return this.documentRepository.create({
           submissionId: toSubmissionId,
@@ -478,99 +435,18 @@ export class KycService {
     );
 
     if (copiedDocs.length > 0) {
-      await this.documentRepository.save(copiedDocs);
-    }
-  }
+      const saveDocs = async (mgr: EntityManager) => {
+        await mgr.getRepository(KycDocument).save(copiedDocs);
+        for (const doc of copiedDocs) {
+          await this.ledger.markLinked(doc.storageKey, mgr);
+        }
+      };
 
-  /** Chuyển song song sang tiền tố `verified/` khi duyệt. */
-  private async moveDocumentsToVerified(submissionId: string): Promise<void> {
-    const documents = await this.documentRepository.findBy({ submissionId });
-    const pendingDocs = documents.filter((doc) =>
-      doc.storageKey.startsWith(STORAGE_PREFIX_PENDING),
-    );
-
-    await Promise.all(
-      pendingDocs.map(async (doc) => {
-        const newKey = doc.storageKey.replace(
-          STORAGE_PREFIX_PENDING,
-          STORAGE_PREFIX_VERIFIED,
-        );
-        await this.storage.copy(doc.storageKey, newKey);
-        await this.storage.remove(doc.storageKey);
-        await this.documentRepository.update(
-          { id: doc.id },
-          { storageKey: newKey },
-        );
-      }),
-    );
-  }
-
-  private async notifyUserOnReview(
-    submission: KycSubmission,
-    status: EKycStatus,
-    dto: ReviewKycDto,
-  ): Promise<void> {
-    const account = await this.authRepository.findOneBy({
-      id: submission.accountId,
-    });
-    if (!account?.email) return;
-
-    const statusLabel = KYC_STATUS_LABEL[status] || 'updated';
-    const rejectReasonText = dto.rejectReason
-      ? EKycRejectReason[dto.rejectReason]
-      : null;
-
-    await this.emailService.sendKycStatusNotification({
-      to: account.email,
-      displayName: account.name || 'Valued User',
-      status: statusLabel,
-      rejectReason: rejectReasonText,
-      reviewNote: dto.reviewNote,
-    });
-  }
-
-  private assertRejectPayload(dto: ReviewKycDto): void {
-    if (dto.rejectReason === undefined) {
-      throw new BadRequestException('rejectReason is required when rejecting');
-    }
-    // DB có CHECK ràng buộc chuyện này, nhưng chặn ở đây để lỗi đọc được thay
-    // vì để 23514 lọt ra ngoài.
-    if (
-      dto.rejectReason === EKycRejectReason.OTHER &&
-      !dto.reviewNote?.trim()
-    ) {
-      throw new BadRequestException(
-        "reviewNote is required when rejectReason is 'other'",
-      );
-    }
-  }
-
-  /** Lỗi dùng tên trạng thái chứ không phải số, để FE hiện thẳng cho người dùng. */
-  private assertTransition(
-    current: EKycStatus,
-    next: EKycStatus,
-    role: ERole,
-  ): void {
-    const transitions = KYC_TRANSITION_ACTORS[current];
-    const actors = transitions[next];
-    const from = KYC_STATUS_LABEL[current];
-    const to = KYC_STATUS_LABEL[next];
-
-    if (!actors) {
-      const allowed = ALL_KYC_STATUSES.filter(
-        (status) => transitions[status],
-      ).map((status) => KYC_STATUS_LABEL[status]);
-      throw new BadRequestException(
-        allowed.length === 0
-          ? `${from} is a final status and cannot be changed`
-          : `cannot change status from ${from} to ${to}; allowed: ${allowed.join(', ')}`,
-      );
-    }
-
-    if (!actors.includes(role)) {
-      throw new ForbiddenException(
-        `only ${actors.join(' or ')} can change status from ${from} to ${to}`,
-      );
+      if (manager) {
+        await saveDocs(manager);
+      } else {
+        await this.dataSource.transaction(saveDocs);
+      }
     }
   }
 }

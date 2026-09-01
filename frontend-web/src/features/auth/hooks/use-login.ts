@@ -3,33 +3,27 @@
 import { API_ROUTES } from "@/constants/routes";
 import { useState } from "react";
 
-import { useRouter } from "@/i18n/navigation";
+import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/api/browser-client";
 import type { LoginResult, UserRole } from "@/features/auth/types";
 
 export type LoginStep = "credentials" | "otp";
 
-/**
- * Luồng đăng nhập chung cho mọi cổng.
- *
- * Backend bắt tài khoản admin qua thêm bước OTP: POST /login/admin chỉ trả
- * `requireOtp`, phải gọi tiếp /verify-otp mới có phiên. Brand/creator xong
- * ngay ở bước đầu.
- *
- * `expectedRole` chỉ có ở cổng admin (trang /admin truyền "ADMIN"): nó chọn
- * endpoint /login/admin và chặn tài khoản brand/creator tạo phiên ở đó.
- *
- * Cổng công khai KHÔNG truyền gì. Brand và creator dùng chung /login vì trước
- * khi xác thực thì chưa biết ai là ai — vai trò do backend trả về, client chỉ
- * dựa vào đó để điều hướng.
- */
 export function useLogin(expectedRole?: UserRole) {
   const router = useRouter();
   const [step, setStep] = useState<LoginStep>("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("error") === "device_mismatch") {
+        return "Phiên đăng nhập đã bị huỷ do phát hiện thay đổi thiết bị bất thường. Vui lòng đăng nhập lại.";
+      }
+    }
+    return "";
+  });
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 

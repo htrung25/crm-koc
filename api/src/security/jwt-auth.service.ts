@@ -4,10 +4,13 @@ import { JwtService } from '@nestjs/jwt';
 // node:crypto chỉ sinh được UUID v4, không có v7 — phải dùng package uuid.
 import { v7 as uuidv7 } from 'uuid';
 import type { StringValue } from 'ms';
+import { EBusinessCode } from '../common/enum/business-code.enum';
 import { ERole } from '../common/enum/roles.enum';
 import { ESessionEventType } from '../common/enum/session-event-types.enum';
 import { SessionService } from './session.service';
+import type { AdminSession } from './session.service';
 import { SessionEventService } from './session-event.service';
+import { EDeviceCheck, checkDevice } from '../common/util/device-binding.util';
 
 /** Chỉ chứa thứ thật sự cần: client đọc được payload nên không nhét gì nhạy cảm. */
 interface BaseJwtPayload {
@@ -33,17 +36,25 @@ export interface TokenPair {
   refreshToken: string;
 }
 
+export interface RefreshResult extends TokenPair {
+  deviceMismatch: boolean;
+  accountId: string;
+  role: ERole | null;
+}
+
 export interface LoginContext {
   email: string;
   displayName: string;
   role: ERole | null;
   ipAddress?: string | null;
   userAgent?: string | null;
+  deviceId?: string | null;
 }
 
 export interface RequestContext {
   ipAddress?: string | null;
   userAgent?: string | null;
+  deviceId?: string | null;
 }
 
 @Injectable()
@@ -54,6 +65,7 @@ export class JwtAuthService {
   private readonly refreshSecret: string;
   private readonly accessTtl: StringValue;
   private readonly refreshTtl: StringValue;
+  private readonly deviceBindingEnforced: boolean;
 
   constructor(
     private readonly jwtService: JwtService,
@@ -82,6 +94,10 @@ export class JwtAuthService {
       'JWT_REFRESH_TTL',
       '7d',
     ) as StringValue;
+
+    this.deviceBindingEnforced =
+      this.configService.get<string>('DEVICE_BINDING_ENFORCED', 'false') ===
+      'true';
   }
 
   /**
@@ -104,6 +120,9 @@ export class JwtAuthService {
       role: context.role,
       csrfToken: uuidv7(),
       currentJti: jti,
+      deviceId: context.deviceId ?? undefined,
+      loginIp: context.ipAddress ?? undefined,
+      loginUserAgent: context.userAgent ?? undefined,
     });
 
     await this.sessionEventService.record({
@@ -141,7 +160,7 @@ export class JwtAuthService {
   async refresh(
     refreshToken: string,
     context: RequestContext = {},
-  ): Promise<TokenPair> {
+  ): Promise<RefreshResult> {
     const payload = this.verify<RefreshTokenPayload>(
       refreshToken,
       this.refreshSecret,
@@ -188,18 +207,40 @@ export class JwtAuthService {
       throw new UnauthorizedException('session is no longer valid');
     }
 
-    await this.logRefreshIfSuspicious(
-      session.adminId,
-      payload.session_id,
-      context,
-    );
+    const device = checkDevice(session.deviceId, context.deviceId ?? null);
+    if (device === EDeviceCheck.BACKFILL && context.deviceId) {
+      await this.sessionService.attachDevice(session, context.deviceId);
+    }
+    // Chặn cả MISSING, không chỉ MISMATCH: bỏ header là cách lách rẻ nhất.
+    if (
+      this.deviceBindingEnforced &&
+      (device === EDeviceCheck.MISMATCH || device === EDeviceCheck.MISSING)
+    ) {
+      this.logger.warn(
+        `Refresh bị từ chối vì thiết bị (${device}) account=${session.adminId} session=${payload.session_id}`,
+      );
+      throw new UnauthorizedException({
+        businessCode: EBusinessCode.DEVICE_MISMATCH,
+        message:
+          device === EDeviceCheck.MISSING
+            ? 'device id header is required'
+            : 'token is not valid for this device',
+      });
+    }
 
-    return this.signPair(
-      session.adminId,
-      payload.session_id,
-      newJti,
-      session.role,
-    );
+    await this.logRefreshIfSuspicious(session, context);
+
+    return {
+      ...this.signPair(
+        session.adminId,
+        payload.session_id,
+        newJti,
+        session.role,
+      ),
+      deviceMismatch: device === EDeviceCheck.MISMATCH,
+      accountId: session.adminId,
+      role: session.role,
+    };
   }
 
   async logout(
@@ -270,29 +311,18 @@ export class JwtAuthService {
     }
   }
 
-  /**
-   * Refresh bình thường KHÔNG ghi log: 15 phút một lần nghĩa là 4 lượt/giờ
-   * mỗi phiên, ghi hết sẽ thành hàng triệu dòng chỉ để nói "phiên vẫn sống" —
-   * điều lastSeenAt trong Redis đã trả lời.
-   *
-   * Chỉ ghi khi IP hoặc User-Agent lệch so với lúc đăng nhập, vì đó là dấu
-   * hiệu token đang được dùng ở máy khác.
-   */
+  //Chỉ ghi log refresh token khi phát hiện IP hoặc User-Agent thay đổi (dấu hiệu bất thường),
+  //bỏ qua refresh định kỳ để tránh tràn log.
   private async logRefreshIfSuspicious(
-    accountId: string,
-    sessionId: string,
+    session: AdminSession,
     context: RequestContext,
   ): Promise<void> {
-    const events = await this.sessionEventService.findBySession(sessionId);
-    const loginEvent = events.find(
-      (e) => e.eventType === ESessionEventType.LOGIN,
-    );
-    if (!loginEvent) return;
+    if (!session.loginIp && !session.loginUserAgent) return;
 
     const ipChanged =
-      !!context.ipAddress && context.ipAddress !== loginEvent.ipAddress;
+      !!context.ipAddress && context.ipAddress !== session.loginIp;
     const uaChanged =
-      !!context.userAgent && context.userAgent !== loginEvent.userAgent;
+      !!context.userAgent && context.userAgent !== session.loginUserAgent;
 
     if (!ipChanged && !uaChanged) return;
 
@@ -305,14 +335,14 @@ export class JwtAuthService {
 
     await this.sessionEventService.record({
       eventType: ESessionEventType.REFRESH,
-      accountId,
-      sessionId,
+      accountId: session.adminId,
+      sessionId: session.sessionId,
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
       metadata: {
         reason,
-        loginIp: loginEvent.ipAddress,
-        loginUserAgent: loginEvent.userAgent,
+        loginIp: session.loginIp,
+        loginUserAgent: session.loginUserAgent,
       },
     });
   }

@@ -4,7 +4,7 @@ import { APP_ROUTES } from "@/constants/routes";
 import { useTranslations } from "next-intl";
 
 import { useState } from "react";
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
 import { RedSunNav } from "@/components/layout/red-sun-nav";
 
 export function EditorialRegister() {

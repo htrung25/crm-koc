@@ -3,14 +3,14 @@ name: ci-api
 on:
   pull_request:
   push:
-    branches: [develop, main]
+    branches: [develop, staging, main]
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   NODE_VERSION: '24.14.1'
@@ -104,7 +104,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: bash scripts/check-env.sh --scan api
+      - run: node scripts/check-env.js --scan api
+
+  # Khóa thứ tự đăng ký route để '/admin/:id' không đè '/admin/kyc'
+  # (do NestJS duyệt module theo chiều sâu khiến AdminModule nạp sớm).
+  # Preview mode: Không dùng Postgres/Redis.
+  route-check:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      - run: npm ci
+      - run: npm run check:routes
 
   # API chưa có test nào. Job này là lớp bảo vệ thay thế: migration mới nhất
   # phải chạy lên được và lùi lại được trên một database trống.
@@ -146,8 +166,11 @@ jobs:
   # Required status check duy nhất của workflow này. Luôn chạy, kể cả khi các
   # job trên bị skip vì PR không đụng api/.
   ci-api-gate:
-    needs: [lint, typecheck, build, env-check, migration-smoke]
-    if: always()
+    needs: [lint, typecheck, build, env-check, route-check, migration-smoke]
+    # !cancelled() thay cho always(): run bị huỷ thì gate SKIP thay vì đỏ.
+    # always() để 'cancelled' rơi vào nhánh * bên dưới và biến một lần huỷ
+    # hợp lệ thành required check thất bại.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any job failed

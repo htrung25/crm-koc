@@ -1,3 +1,5 @@
+import { AuthEntity } from 'src/module/auth/entities/auth.entity';
+
 export const BRAND_LIST_FIELDS = [
   'id',
   'name',
@@ -41,3 +43,22 @@ export const CREATOR_DETAIL_COLUMNS = {
   emailVerifiedAt: true,
   createdAt: true,
 } as const;
+
+/** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
+export type BrandListItem = Pick<
+  AuthEntity,
+  (typeof BRAND_LIST_FIELDS)[number]
+>;
+
+export type BrandDetail = Pick<AuthEntity, keyof typeof BRAND_DETAIL_COLUMNS>;
+
+/** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
+export type CreatorListItem = Pick<
+  AuthEntity,
+  (typeof CREATOR_LIST_FIELDS)[number]
+>;
+
+export type CreatorDetail = Pick<
+  AuthEntity,
+  keyof typeof CREATOR_DETAIL_COLUMNS
+>;

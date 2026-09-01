@@ -57,7 +57,10 @@ export async function POST() {
   } catch (error) {
     if (error instanceof ApiError) {
       return clearSessionCookies(
-        NextResponse.json({ message: error.message }, { status: 401 }),
+        NextResponse.json(
+          { message: error.message, businessCode: error.businessCode },
+          { status: 401 },
+        ),
       );
     }
     throw error;

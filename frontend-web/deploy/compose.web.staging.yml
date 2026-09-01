@@ -2,11 +2,9 @@ name: crm-koc-staging-web
 
 services:
   web:
-    networks:
-      internal:
-      edge:
-        aliases:
-          - web-staging
+    # Xem ghi chú ở compose.api.staging.yml: nginx trên host proxy qua loopback.
+    ports:
+      - '127.0.0.1:3002:3000'
     deploy:
       resources:
         limits:

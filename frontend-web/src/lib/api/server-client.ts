@@ -40,8 +40,12 @@ export class ApiError extends Error {
     return typeof value === "string" ? value : undefined;
   }
 
-  get businessCode(): string | undefined {
-    return this.field("businessCode");
+  get businessCode(): string | number | undefined {
+    if (typeof this.body !== "object" || this.body === null) return undefined;
+    const value = (this.body as Record<string, unknown>).businessCode;
+    return typeof value === "string" || typeof value === "number"
+      ? value
+      : undefined;
   }
 
   /** Có ở 422 IP_WHITELIST_WOULD_LOCK_YOU_OUT, đã chuẩn hoá về IPv4. */
@@ -83,6 +87,10 @@ function buildHeaders({
 
   if (body) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
+
+  if (clientContext?.deviceId) {
+    headers["x-device-id"] = clientContext.deviceId;
+  }
 
   if (clientContext?.forwardedFor) {
     // Giữ nguyên cả chuỗi: phần tử đầu là client, các phần sau là proxy trung

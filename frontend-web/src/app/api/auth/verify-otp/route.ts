@@ -55,7 +55,7 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ApiError) {
       return NextResponse.json(
-        { message: error.message },
+        { message: error.message, businessCode: error.businessCode },
         { status: error.status },
       );
     }

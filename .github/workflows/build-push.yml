@@ -1,8 +1,10 @@
 name: build-push
 
+# Chỉ build ở nơi code thực sự được deploy: nhánh `staging` và tag `v*`.
+# `develop` là nhánh tích hợp, chỉ chạy CI — không đẩy image từ đó.
 on:
   push:
-    branches: [develop]
+    branches: [staging]
     tags: ['v*']
 
 permissions:
@@ -42,7 +44,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # sha-<7> là tag bất biến duy nhất được dùng để deploy. `develop` và
+      # sha-<7> là tag bất biến duy nhất được dùng để deploy. `staging` và
       # `v<semver>` chỉ là nhãn cho người đọc.
       - id: meta
         uses: docker/metadata-action@v5

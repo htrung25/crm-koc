@@ -22,6 +22,9 @@ export interface AdminSession {
   expiresAt: string;
   absoluteExpiresAt: string;
   lastSeenAt?: string;
+  deviceId?: string;
+  loginIp?: string;
+  loginUserAgent?: string;
 }
 
 @Injectable()
@@ -202,6 +205,20 @@ export class SessionService {
     session.lastSeenAt = now.toISOString();
     session.expiresAt = expiresAt.toISOString();
     await this.writeSession(session, this.ttlSeconds);
+  }
+
+  /**
+   * Gắn deviceId cho phiên chưa có (phiên tạo trước khi bật device-binding).
+   * KHÔNG đụng expiresAt: đây là backfill, không phải hoạt động của người dùng
+   * nên không được kéo dài hạn phiên. TTL Redis đặt theo thời gian còn lại.
+   */
+  async attachDevice(session: AdminSession, deviceId: string): Promise<void> {
+    const remainingMs = Date.parse(session.expiresAt) - Date.now();
+    if (remainingMs <= 0) {
+      return;
+    }
+    session.deviceId = deviceId;
+    await this.writeSession(session, Math.ceil(remainingMs / 1000));
   }
 
   async deleteSession(adminId: string, sessionId: string): Promise<void> {

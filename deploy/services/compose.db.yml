@@ -1,0 +1,60 @@
+# Database & Cache stack (Postgres + Redis).
+# Sử dụng cho từng môi trường:
+#   docker compose --env-file /srv/crm-koc/staging/.env -f compose.db.yml -p crm-koc-staging-db up -d
+#   docker compose --env-file /srv/crm-koc/prod/.env -f compose.db.yml -p crm-koc-prod-db up -d
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
+services:
+  postgres:
+    image: postgres:18-bookworm
+    restart: unless-stopped
+    env_file:
+      - ${APP_ENV_FILE:?APP_ENV_FILE chưa được set}
+    volumes:
+      # PostgreSQL 18+ uses /var/lib/postgresql/<major>/docker as PGDATA.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging: *default-logging
+    networks:
+      - internal
+
+  redis:
+    # Ghim 7.4: SessionService dùng HEXPIRE, lệnh chỉ có từ 7.4. Tag `7-alpine`
+    # là tag trôi, một lần pull về 7.2 là session ngừng ghi được.
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    # noeviction đặt tường minh: Redis dùng chung cho session/OTP/BullMQ, và
+    # key nội bộ của BullMQ bị evict là hỏng queue state không phục hồi được.
+    # Mặc định của Redis vốn đã là noeviction — đặt ra đây để nó không đúng
+    # một cách tình cờ. KHÔNG đặt maxmemory: đầy + noeviction là chặn mọi lệnh
+    # ghi, đăng nhập hỏng theo, cần số liệu thật mới quyết được ngưỡng.
+    command:
+      ['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging: *default-logging
+    networks:
+      - internal
+
+networks:
+  internal:
+    external: true
+    name: ${STACK:-staging}_internal
+
+volumes:
+  postgres-data:
+  redis-data:

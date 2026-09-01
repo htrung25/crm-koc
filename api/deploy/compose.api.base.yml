@@ -12,12 +12,13 @@ services:
     image: ${API_IMAGE:?API_IMAGE chưa được set}
     restart: 'no'
     env_file:
-      - .env
+      - ${APP_ENV_FILE:?APP_ENV_FILE chưa được set}
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: '5432'
       REDIS_HOST: redis
       REDIS_PORT: '6379'
+      KAFKA_BROKERS: kafka:9092
       RUN_MIGRATIONS: 'false'
     command: ['npm', 'run', 'migration:run']
     logging: *default-logging
@@ -29,12 +30,13 @@ services:
     restart: unless-stopped
     init: true
     env_file:
-      - .env
+      - ${APP_ENV_FILE:?APP_ENV_FILE chưa được set}
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: '5432'
       REDIS_HOST: redis
       REDIS_PORT: '6379'
+      KAFKA_BROKERS: kafka:9092
       RUN_MIGRATIONS: 'false'
     volumes:
       - uploads:/app/uploads
@@ -44,15 +46,36 @@ services:
     logging: *default-logging
     networks:
       - internal
-      - edge
+
+  api-worker:
+    image: ${API_IMAGE:?API_IMAGE chưa được set}
+    command: ['node', 'dist/src/worker/worker.js']
+    restart: unless-stopped
+    init: true
+    env_file:
+      - ${APP_ENV_FILE:?APP_ENV_FILE chưa được set}
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: '5432'
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      RUN_MIGRATIONS: 'false'
+    # 10s mặc định cắt ngang job đang chạy. BullExplorer.onApplicationShutdown()
+    # gọi worker.close() để chờ job xong — cho nó đủ thời gian.
+    stop_grace_period: 60s
+    depends_on:
+      api-migrate:
+        condition: service_completed_successfully
+    logging: *default-logging
+    # KHÔNG publish port: worker không phục vụ traffic ngoài.
+    # KHÔNG mount volume uploads.
+    networks:
+      - internal
 
 networks:
   internal:
     external: true
     name: ${STACK:-staging}_internal
-  edge:
-    external: true
-    name: edge
 
 volumes:
   uploads:

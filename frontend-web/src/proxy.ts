@@ -1,29 +1,34 @@
-import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { isUserRole, ROLE_HOME } from "@/features/auth/types";
-import { REFRESH_COOKIE, ROLE_COOKIE } from "@/features/auth/session";
-import { routing } from "@/i18n/routing";
-
-const handleI18nRouting = createMiddleware(routing);
-
-function localizedPath(locale: string, pathname: string): string {
-  return `/${locale}${pathname === "/" ? "" : pathname}`;
-}
+import {
+  DEVICE_ID_COOKIE,
+  REFRESH_COOKIE,
+  ROLE_COOKIE,
+} from "@/features/auth/session";
 
 export function proxy(request: NextRequest) {
-  const i18nResponse = handleI18nRouting(request);
   const { pathname } = request.nextUrl;
-  const locale = routing.locales.find(
-    (candidate) =>
-      pathname === `/${candidate}` || pathname.startsWith(`/${candidate}/`),
-  );
 
-  // Không có locale thì next-intl tự redirect sang /vi hoặc /en.
-  if (!locale) return i18nResponse;
+  let deviceId = request.cookies.get(DEVICE_ID_COOKIE)?.value;
+  const needsDeviceId = !deviceId;
+  if (needsDeviceId) {
+    deviceId = crypto.randomUUID();
+  }
 
-  const localizedPathname = pathname.slice(locale.length + 1) || "/";
+  const attachDeviceId = (res: NextResponse) => {
+    if (needsDeviceId && deviceId) {
+      res.cookies.set(DEVICE_ID_COOKIE, deviceId, {
+        path: "/",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: false,
+        maxAge: 400 * 24 * 60 * 60,
+      });
+    }
+    return res;
+  };
 
   const sessionToken = request.cookies.get(REFRESH_COOKIE)?.value;
   const userRole = request.cookies.get(ROLE_COOKIE)?.value;
@@ -33,12 +38,12 @@ export function proxy(request: NextRequest) {
   // TODO: /admin đang mở trong giai đoạn phát triển; khi lên production thì
   // đóng lại sau IP whitelist hoặc VPN.
   const LOGIN_PAGES = ["/login", "/admin"];
-  const isLoginPage = LOGIN_PAGES.includes(localizedPathname);
+  const isLoginPage = LOGIN_PAGES.includes(pathname);
 
   // Đã có phiên mà còn vào trang đăng nhập thì đưa thẳng về workspace.
   if (isLoginPage && hasSession) {
-    return NextResponse.redirect(
-      new URL(localizedPath(locale, ROLE_HOME[userRole]), request.url),
+    return attachDeviceId(
+      NextResponse.redirect(new URL(ROLE_HOME[userRole], request.url)),
     );
   }
 
@@ -50,21 +55,18 @@ export function proxy(request: NextRequest) {
     ];
 
     for (const [prefix, role] of guarded) {
-      if (
-        localizedPathname.startsWith(prefix) &&
-        (!hasSession || userRole !== role)
-      ) {
+      if (pathname.startsWith(prefix) && (!hasSession || userRole !== role)) {
         // Trả người dùng về đúng cổng của khu vực họ đang cố vào, thay vì
         // luôn quăng ra cổng chung.
         const loginPage = prefix === "/admin" ? "/admin" : "/login";
-        return NextResponse.redirect(
-          new URL(localizedPath(locale, loginPage), request.url),
+        return attachDeviceId(
+          NextResponse.redirect(new URL(loginPage, request.url)),
         );
       }
     }
   }
 
-  return i18nResponse;
+  return attachDeviceId(NextResponse.next());
 }
 
 export const config = {

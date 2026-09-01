@@ -8,11 +8,21 @@ import { ConfigService } from '@nestjs/config';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import { EAccountStatus } from '../common/enum/account-statuses.enum';
+import { EBusinessCode } from '../common/enum/business-code.enum';
 import { AuthService } from '../module/auth/auth.service';
 import { AccountCacheService } from '../security/account-cache.service';
 import { SessionService } from '../security/session.service';
 import type { AccessTokenPayload } from '../security/jwt-auth.service';
 import { AuthenticatedAccount } from '../module/auth/entities/authenticated.entity';
+import type { AdminSession } from '../security/session.service';
+import {
+  EDeviceCheck,
+  checkDevice,
+  readDeviceId,
+} from '../common/util/device-binding.util';
+import { EAuditLogCategory, ELoginAction } from '../common/enum/audit-log.enum';
+import { AuditLogService } from '../module/admin/audit-log.service';
+import { extractClientIp } from '../common/util/ip.util';
 
 /** Request đã qua JwtStrategy có thêm payload gốc để controller đọc session_id. */
 export interface RequestWithToken extends Request {
@@ -21,11 +31,14 @@ export interface RequestWithToken extends Request {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly deviceBindingEnforced: boolean;
+
   constructor(
     config: ConfigService,
     private readonly authService: AuthService,
     private readonly accountCache: AccountCacheService,
     private readonly sessionService: SessionService,
+    private readonly auditLogService: AuditLogService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -35,6 +48,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       // cần req để gắn payload lên request cho /logout đọc lại session_id
       passReqToCallback: true,
     });
+
+    this.deviceBindingEnforced =
+      config.get<string>('DEVICE_BINDING_ENFORCED', 'false') === 'true';
   }
 
   async validate(
@@ -46,9 +62,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('invalid token');
     }
 
-    // 2. Phiên phải còn sống. Đây là điểm thay thế cho blacklist theo jti:
-    //    logout xoá phiên nên MỌI access token của phiên đó chết cùng lúc,
-    //    không cần liệt kê từng token.
+    // 2. Phiên phải còn sống.
     const session = await this.sessionService.getSession(
       payload.sub,
       payload.session_id,
@@ -58,6 +72,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     request.tokenPayload = payload;
+
+    // 2b. Ràng buộc thiết bị. Đặt sau kiểm phiên vì cần session.deviceId, và
+    //     trước khi nạp account để không tốn công tra DB cho request sẽ bị chặn.
+    await this.assertDevice(request, payload, session);
 
     // 3. Cache-aside cho account: cache miss mới xuống DB. Ban account sẽ xoá
     //    key này nên đổi trạng thái có hiệu lực ngay, không chờ TTL.
@@ -84,5 +102,48 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     await this.sessionService.refreshSession(session);
 
     return account;
+  }
+
+  /*Ràng token với thiết bị đã đăng nhập.*/
+  private async assertDevice(
+    request: RequestWithToken,
+    payload: AccessTokenPayload,
+    session: AdminSession,
+  ): Promise<void> {
+    const deviceId = readDeviceId(request.headers);
+    const result = checkDevice(session.deviceId, deviceId);
+
+    if (result === EDeviceCheck.OK) return;
+    if (result === EDeviceCheck.BACKFILL && deviceId) {
+      await this.sessionService.attachDevice(session, deviceId);
+      return;
+    }
+
+    const rejected = this.deviceBindingEnforced;
+
+    if (result === EDeviceCheck.MISMATCH || rejected) {
+      await this.auditLogService.writeIfAdmin(payload.role, {
+        category: EAuditLogCategory.LOGIN,
+        action: ELoginAction.FAIL_DEVICE,
+        accountId: payload.sub,
+        ipAddress: extractClientIp(request),
+        userAgent: request.headers['user-agent'],
+        metadata: {
+          sessionId: payload.session_id,
+          reason: result,
+          enforced: this.deviceBindingEnforced,
+        },
+      });
+    }
+
+    if (rejected) {
+      throw new UnauthorizedException({
+        businessCode: EBusinessCode.DEVICE_MISMATCH,
+        message:
+          result === EDeviceCheck.MISSING
+            ? 'device id header is required'
+            : 'token is not valid for this device',
+      });
+    }
   }
 }

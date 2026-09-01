@@ -25,14 +25,7 @@ import { AuthEntity } from '../auth/entities/auth.entity';
 import { AccountCacheService } from '../../security/account-cache.service';
 import { SessionService } from '../../security/session.service';
 import { BrandFilterDto } from './dto/brand-list.dto';
-
-/** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
-export type BrandListItem = Pick<
-  AuthEntity,
-  (typeof BRAND_LIST_FIELDS)[number]
->;
-
-export type BrandDetail = Pick<AuthEntity, keyof typeof BRAND_DETAIL_COLUMNS>;
+import { BrandListItem, BrandDetail } from './constants/user-list.constants';
 
 @Injectable()
 export class BrandListService {

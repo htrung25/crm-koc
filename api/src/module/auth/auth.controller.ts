@@ -5,7 +5,6 @@ import {
   Post,
   Body,
   HttpException,
-  Logger,
   Patch,
   Request,
   HttpCode,
@@ -36,7 +35,7 @@ import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { EOtpResult } from '../../common/enum/otp-result.enum';
 import { OtpService } from '../../security/otp.service';
 import { JwtAuthService } from '../../security/jwt-auth.service';
-import { EmailService } from '../../common/services/email.service';
+import { EmailQueueService } from '../../queue/email/email-queue.service';
 import {
   AuthLoginPendingResponseDto,
   AuthResendOtpDto,
@@ -55,20 +54,26 @@ import { LoginDto, LoginAdminDto } from './dto/login.dto';
 import { LoginResponseDto, RegisterResponseDto } from './dto/auth.dto';
 import { RefreshTokenDto, TokenPairResponseDto } from './dto/refresh-token.dto';
 import { extractClientIp } from '../../common/util/ip.util';
+import { readDeviceId } from '../../common/util/device-binding.util';
 // import type: isolatedModules + emitDecoratorMetadata cấm type thường trong
 // chữ ký đã decorate
 import type { Request as ExpressRequest } from 'express';
 
+import {
+  EAuditLogCategory,
+  ELoginAction,
+} from '../../common/enum/audit-log.enum';
+import { AuditLogService } from '../admin/audit-log.service';
+
 @ApiTags('Auth')
 @Controller()
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
-
   constructor(
     private readonly authService: AuthService,
     private readonly otpService: OtpService,
-    private readonly emailService: EmailService,
+    private readonly emailQueue: EmailQueueService,
     private readonly jwtAuthService: JwtAuthService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   @AuthThrottle()
@@ -134,14 +139,32 @@ export class AuthController {
   ): Promise<LoginResponseDto> {
     const account = await this.requireAccountByEmail(dto.email);
     const result = await this.otpService.verify(account.id, dto.otp);
+    const ipAddress = extractClientIp(request);
+    const userAgent = request.headers['user-agent'];
 
     if (result === EOtpResult.LOCKED) {
+      await this.auditLogService.writeIfAdmin(account.accountRole, {
+        category: EAuditLogCategory.LOGIN,
+        action: ELoginAction.FAIL_LOCKED,
+        accountId: account.id,
+        emailAttempted: dto.email,
+        ipAddress,
+        userAgent,
+      });
       throw new ForbiddenException('too many failed attempts, try again later');
     }
     if (result === EOtpResult.EXPIRED) {
       throw new UnauthorizedException('otp has expired, request a new one');
     }
     if (result === EOtpResult.INVALID) {
+      await this.auditLogService.writeIfAdmin(account.accountRole, {
+        category: EAuditLogCategory.LOGIN,
+        action: ELoginAction.FAIL_OTP,
+        accountId: account.id,
+        emailAttempted: dto.email,
+        ipAddress,
+        userAgent,
+      });
       throw new UnauthorizedException('invalid otp');
     }
 
@@ -166,11 +189,22 @@ export class AuthController {
   @ApiTooManyRequestsResponse({ description: 'Cooldown has not elapsed yet' })
   async resendOtp(
     @Body() dto: AuthResendOtpDto,
+    @Request() request: ExpressRequest,
   ): Promise<AuthLoginPendingResponseDto> {
     const account = await this.requireAccountByEmail(dto.email);
     const result = await this.otpService.resend(account.id);
+    const ipAddress = extractClientIp(request);
+    const userAgent = request.headers['user-agent'];
 
     if (result === EOtpResult.LOCKED) {
+      await this.auditLogService.writeIfAdmin(account.accountRole, {
+        category: EAuditLogCategory.LOGIN,
+        action: ELoginAction.FAIL_LOCKED,
+        accountId: account.id,
+        emailAttempted: dto.email,
+        ipAddress,
+        userAgent,
+      });
       throw new ForbiddenException('too many failed attempts, try again later');
     }
     if (result === EOtpResult.COOLDOWN) {
@@ -180,7 +214,15 @@ export class AuthController {
       );
     }
 
-    await this.sendOtp(account.email, result.otp, account.name);
+    await this.sendOtp(account.id);
+    await this.auditLogService.writeIfAdmin(account.accountRole, {
+      category: EAuditLogCategory.LOGIN,
+      action: ELoginAction.OTP_SENT,
+      accountId: account.id,
+      emailAttempted: dto.email,
+      ipAddress,
+      userAgent,
+    });
 
     return { requireOtp: true, message: 'A new OTP has been sent' };
   }
@@ -210,6 +252,7 @@ export class AuthController {
         role: account.accountRole,
         ipAddress: extractClientIp(request),
         userAgent: request.headers['user-agent'] ?? null,
+        deviceId: readDeviceId(request.headers),
       },
     );
 
@@ -262,24 +305,20 @@ export class AuthController {
       throw new ForbiddenException('too many failed attempts, try again later');
     }
 
-    await this.sendOtp(account.email, result.otp, account.name);
+    await this.sendOtp(account.id);
+    await this.auditLogService.writeIfAdmin(account.accountRole, {
+      category: EAuditLogCategory.LOGIN,
+      action: ELoginAction.OTP_SENT,
+      accountId: account.id,
+      emailAttempted: account.email,
+    });
 
     // KHÔNG trả token ở đây: mật khẩu đúng mới chỉ qua được nửa đầu.
     return { requireOtp: true, message };
   }
 
-  private async sendOtp(
-    email: string,
-    otp: string,
-    name: string,
-  ): Promise<void> {
-    try {
-      await this.emailService.sendOtpEmail(email, otp, name);
-    } catch (error) {
-      this.logger.warn(
-        `Không gửi được mail OTP tới ${email}: ${(error as Error).message}. OTP = ${otp}`,
-      );
-    }
+  private async sendOtp(accountId: string): Promise<void> {
+    await this.emailQueue.enqueueOtp({ accountId });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -295,9 +334,22 @@ export class AuthController {
   })
   @ApiForbiddenResponse({ description: 'Requires admin role' })
   @ApiConflictResponse({ description: 'Email or phone already exists' })
-  registerAdmin(@Body() registerDto: RegisterDto) {
-    // role do createAdminAuth() hardcode, body không tác động được
-    return this.authService.createAdminAccount(registerDto);
+  async registerAdmin(
+    @Body() registerDto: RegisterDto,
+    @Request() request: ExpressRequest & { user: AuthenticatedAccount },
+  ) {
+    const created = await this.authService.createAdminAccount(registerDto);
+    await this.auditLogService.write({
+      category: EAuditLogCategory.AUDIT,
+      action: ELoginAction.CREATE,
+      accountId: request.user?.id,
+      resourceType: 'admin_user',
+      resourceId: created.id,
+      ipAddress: extractClientIp(request),
+      userAgent: request.headers['user-agent'],
+      metadata: { email: created.email, name: created.name },
+    });
+    return created;
   }
 
   @Post('/register/brand')
@@ -350,15 +402,34 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Token sai, hết hạn, sai loại, hoặc phiên đã bị thu hồi',
   })
-  refresh(
+  async refresh(
     @Body() dto: RefreshTokenDto,
     @Request() request: ExpressRequest,
   ): Promise<TokenPairResponseDto> {
+    const ipAddress = extractClientIp(request);
+    const userAgent = request.headers['user-agent'] ?? null;
+
     // IP/User-Agent để đối chiếu với lúc đăng nhập: lệch thì ghi session_event
-    return this.jwtAuthService.refresh(dto.refreshToken, {
-      ipAddress: extractClientIp(request),
-      userAgent: request.headers['user-agent'] ?? null,
-    });
+    const { deviceMismatch, accountId, role, ...tokens } =
+      await this.jwtAuthService.refresh(dto.refreshToken, {
+        ipAddress,
+        userAgent,
+        deviceId: readDeviceId(request.headers),
+      });
+
+    if (deviceMismatch) {
+      await this.auditLogService.writeIfAdmin(role, {
+        category: EAuditLogCategory.LOGIN,
+        action: ELoginAction.FAIL_DEVICE,
+        accountId,
+        ipAddress,
+        userAgent,
+        metadata: { path: 'refresh' },
+      });
+    }
+
+    // deviceMismatch là cờ nội bộ, không được lọt ra response.
+    return tokens;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -377,11 +448,23 @@ export class AuthController {
       throw new UnauthorizedException('token payload missing');
     }
 
+    const ipAddress = extractClientIp(request);
+    const userAgent = request.headers['user-agent'] ?? null;
+
     // Xoá phiên là đủ: mọi access token của phiên này chết ngay ở lần gọi
     // tiếp theo vì JwtStrategy không tìm thấy phiên nữa.
     await this.jwtAuthService.logout(payload.sub, payload.session_id, {
-      ipAddress: extractClientIp(request),
-      userAgent: request.headers['user-agent'] ?? null,
+      ipAddress,
+      userAgent,
+    });
+
+    await this.auditLogService.writeIfAdmin(payload.role, {
+      category: EAuditLogCategory.LOGIN,
+      action: ELoginAction.LOGOUT,
+      accountId: payload.sub,
+      ipAddress,
+      userAgent,
+      metadata: { sessionId: payload.session_id },
     });
 
     return { revoked: true, sessionId: payload.session_id };

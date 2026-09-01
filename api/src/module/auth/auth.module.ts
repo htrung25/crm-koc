@@ -13,8 +13,8 @@ import { IpWhitelistModule } from '../admin/ip-whitelist.module';
 import { SecurityModule } from '../../security/security.module';
 import { OtpService } from '../../security/otp.service';
 import { SessionGuard } from '../../security/session.guard';
-import { EmailService } from '../../common/services/email.service';
 import { RedisCacheService } from '../../common/services/redis.service';
+import { QueueModule } from '../../queue/queue.module';
 
 @Module({
   imports: [
@@ -25,6 +25,7 @@ import { RedisCacheService } from '../../common/services/redis.service';
     PassportModule,
     SecurityModule,
     IpWhitelistModule,
+    QueueModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -32,19 +33,12 @@ import { RedisCacheService } from '../../common/services/redis.service';
     LocalStrategy,
     JwtStrategy,
     OtpService,
-    EmailService,
     RedisCacheService,
     // Đặt ở đây chứ không ở SecurityModule: guard cần AuthService, mà
     // AuthModule đã import SecurityModule — khai ngược lại sẽ thành vòng tròn.
     SessionGuard,
   ],
   // export để module khác dùng lại đúng instance này, không tự khai lại
-  exports: [
-    AuthService,
-    OtpService,
-    EmailService,
-    RedisCacheService,
-    SessionGuard,
-  ],
+  exports: [AuthService, OtpService, RedisCacheService, SessionGuard],
 })
 export class AuthModule {}
