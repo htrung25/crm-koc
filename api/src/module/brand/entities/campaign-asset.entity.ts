@@ -2,18 +2,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ECampaignAssetKind } from '../../../common/enum/campaign.enum';
 
-/**
- * Ảnh sản phẩm và file tham chiếu. Vòng đời object trên R2 do storage_objects
- * lo; ở đây chỉ giữ metadata và khoá.
- */
-@Index('UQ_campaign_assets_position', ['campaignId', 'kind', 'position'], {
-  unique: true,
-})
 @Entity('campaign_assets')
 export class CampaignAsset {
   @PrimaryGeneratedColumn('uuid')

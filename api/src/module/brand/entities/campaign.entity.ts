@@ -2,7 +2,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -21,9 +20,6 @@ import { CampaignProductBenefit } from '../types/campaign.types';
 import { BrandProfile } from './brand-profile.entity';
 import { CampaignCategory } from './campaign-category.entity';
 
-@Index('IDX_campaigns_brand_status', ['brandId', 'status'])
-@Index('IDX_campaigns_status_updated', ['status', 'updatedAt'])
-@Index('UQ_campaigns_code', ['code'], { unique: true })
 @Entity('campaigns')
 export class Campaign {
   @PrimaryGeneratedColumn('uuid')

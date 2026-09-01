@@ -18,7 +18,7 @@ import {
 } from '../../common/util/pagination.util';
 import { AccountCacheService } from '../../security/account-cache.service';
 import { AuthEntity } from '../auth/entities/auth.entity';
-import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../auth/types/authenticated.types';
 import { AdminFilterDto } from './dto/admin-user.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { EAdminRole } from './enum/admin-roles.enum';

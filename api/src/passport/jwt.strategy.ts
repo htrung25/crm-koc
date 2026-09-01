@@ -13,7 +13,7 @@ import { AuthService } from '../module/auth/auth.service';
 import { AccountCacheService } from '../security/account-cache.service';
 import { SessionService } from '../security/session.service';
 import type { AccessTokenPayload } from '../security/jwt-auth.service';
-import { AuthenticatedAccount } from '../module/auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../module/auth/types/authenticated.types';
 import type { AdminSession } from '../security/session.service';
 import {
   EDeviceCheck,

@@ -8,12 +8,6 @@ import {
 } from 'typeorm';
 import { AuthEntity } from '../../auth/entities/auth.entity';
 
-/**
- * Hồ sơ nhãn hàng. Quan hệ 1-1 với accounts: account_id vừa là PK vừa là FK.
- *
- * Cột hướng theo nghiệp vụ pháp nhân — thứ brand cần khai để ký hợp đồng và
- * xuất hoá đơn — nên không có gender như creator.
- */
 @Entity('brand_profiles')
 export class BrandProfile {
   @PrimaryColumn({ type: 'uuid' })

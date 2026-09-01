@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
 import { AuthService } from '../module/auth/auth.service';
-import type { AuthenticatedAccount } from '../module/auth/entities/authenticated.entity';
+import type { AuthenticatedAccount } from '../module/auth/types/authenticated.types';
 import { AccountCacheService } from './account-cache.service';
 import { SessionService } from './session.service';
 import {

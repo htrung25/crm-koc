@@ -28,7 +28,7 @@ import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { IpWhitelistGuard } from '../admin/ip-whitelist.guard';
 import { SuperAdminGuard } from '../admin/super-admin.guard';
-import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../auth/types/authenticated.types';
 import { KycFilterDto, KycSubmissionDto, ReviewKycDto } from './dto/kyc.dto';
 import { KycService } from './kyc.service';
 

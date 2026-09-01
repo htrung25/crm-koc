@@ -1,5 +1,5 @@
 import { ERole } from '../../../common/enum/roles.enum';
-import { AuthEntity } from './auth.entity';
+import { AuthEntity } from '../entities/auth.entity';
 
 /**
  * Account đã xác thực, luôn không chứa password.

@@ -12,7 +12,7 @@ import { Observable } from 'rxjs';
 import { EBusinessCode } from '../enum/business-code.enum';
 import { ERole } from '../enum/roles.enum';
 import { SystemConfigurationService } from '../../module/admin/system-configuration.service';
-import { AuthenticatedAccount } from '../../module/auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../../module/auth/types/authenticated.types';
 
 /** Kiểu thật của request sau khi guard chạy — guard luôn chạy TRƯỚC interceptor. */
 type MaintenanceRequest = Request & { user?: AuthenticatedAccount };
