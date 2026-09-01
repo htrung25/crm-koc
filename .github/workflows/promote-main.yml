@@ -1,0 +1,112 @@
+name: promote-main
+
+# Đưa staging lên main bằng fast-forward thay vì PR merge. Là bản sao của
+# promote-staging.yml cho chặng cuối, vì chặng này vẫn còn dùng PR merge và
+# tái tạo đúng vấn đề mà promote-staging.yml đã giải:
+#
+# PR merge tạo một merge commit CHỈ tồn tại trên main, khiến main vĩnh viễn đi
+# trước develop một commit — đó là nguồn gốc của banner "Compare & pull request"
+# quay lại sau mỗi lần release. Fast-forward không tạo commit nào.
+#
+# PHẢI dùng PAT, không dùng GITHUB_TOKEN: push bằng GITHUB_TOKEN không kích hoạt
+# workflow khác, nên ci-api/ci-web sẽ không chạy trên main. Khác promote-staging
+# ở chỗ đây KHÔNG phải vấn đề deploy — deploy-prod chạy theo tag `v*`, không
+# theo push vào main — nhưng vẫn giữ PAT để main có tín hiệu CI như mọi nhánh.
+# Dùng chung secret PROMOTE_TOKEN với promote-staging.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Gõ 'promote' để xác nhận đẩy staging lên main"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: promote-main
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chan bam nham
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "promote" ]; then
+            echo "::error::Can go dung 'promote' de xac nhan."
+            exit 1
+          fi
+
+      - name: Kiem tra secret PROMOTE_TOKEN
+        env:
+          TOKEN: ${{ secrets.PROMOTE_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::Thieu secret PROMOTE_TOKEN."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PROMOTE_TOKEN }}
+
+      - name: Xac dinh SHA va kiem tra fast-forward
+        id: check
+        run: |
+          git fetch origin staging main --quiet
+          staging_sha=$(git rev-parse origin/staging)
+          main_sha=$(git rev-parse origin/main)
+          echo "staging = $staging_sha"
+          echo "main    = $main_sha"
+
+          if [ "$staging_sha" = "$main_sha" ]; then
+            echo "::notice::main da bang staging, khong co gi de day."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # main phai la to tien cua staging, neu khong thi da co nguoi day
+          # thang vao main va fast-forward se lam mat commit do.
+          if ! git merge-base --is-ancestor "$main_sha" "$staging_sha"; then
+            echo "::error::Khong fast-forward duoc: main co commit ma staging khong co."
+            echo "::error::Xu ly tay roi chay lai. Commit chi co tren main:"
+            git log --oneline "$staging_sha".."$main_sha" >&2
+            exit 1
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "staging_sha=$staging_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Bat buoc staging phai xanh
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.check.outputs.staging_sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          # main la nhanh phat hanh: chi day commit da qua du hai required check
+          # tren staging. Trang thai pending cung bi chan.
+          for gate in ci-api-gate ci-web-gate; do
+            result=$(gh api "repos/$REPO/commits/$SHA/check-runs" \
+              --jq "[.check_runs[] | select(.name==\"$gate\")]
+                    | sort_by(.completed_at) | last | .conclusion // \"missing\"")
+            echo "$gate = $result"
+            if [ "$result" != "success" ]; then
+              echo "::error::$gate tren staging dang la '$result', khong day."
+              exit 1
+            fi
+          done
+
+      - name: Fast-forward main
+        if: steps.check.outputs.skip == 'false'
+        env:
+          SHA: ${{ steps.check.outputs.staging_sha }}
+        run: |
+          # Khong dung --force: push bi tu choi neu vi ly do nao do day khong
+          # con la fast-forward tai thoi diem day.
+          git push origin "$SHA:refs/heads/main"
+          echo "::notice::main da len $SHA. Gan tag v* de deploy prod."
