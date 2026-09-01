@@ -5,13 +5,14 @@ import { BrandProfile } from './entities/brand-profile.entity';
 import { BrandProfileService } from './brand-profile.service';
 import { BrandProfileController } from './brand-profile.controller';
 import { SecurityModule } from '../../security/security.module';
+import { CampaignController } from './campaign.controller';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([BrandProfile, AuthEntity]),
     SecurityModule,
   ],
-  controllers: [BrandProfileController],
+  controllers: [BrandProfileController, CampaignController],
   providers: [BrandProfileService],
   // export để AuthService tạo hồ sơ lúc đăng ký mà không tự khai lại repository
   exports: [BrandProfileService],
