@@ -33,7 +33,7 @@ import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { ERole } from '../../common/enum/roles.enum';
-import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../auth/types/authenticated.types';
 import { CreatorProfileService } from './creator-profile.service';
 import { UpdateCreatorProfileDto } from './dto/update-creator-profile.dto';
 import { CreatorProfileResponseDto } from './dto/creator-profile-response.dto';

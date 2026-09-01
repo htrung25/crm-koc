@@ -2,13 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ECategoryPolicy } from '../../../common/enum/campaign.enum';
 
-@Index('UQ_campaign_categories_name', ['name'], { unique: true })
 @Entity('campaign_categories')
 export class CampaignCategory {
   @PrimaryGeneratedColumn('uuid')

@@ -33,7 +33,7 @@ import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 import { SuperAdminGuard } from './super-admin.guard';
 import { extractClientIp } from '../../common/util/ip.util';
-import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../auth/types/authenticated.types';
 // import type: isolatedModules + emitDecoratorMetadata cấm type thường trong
 // chữ ký đã decorate
 import type { Request as ExpressRequest } from 'express';

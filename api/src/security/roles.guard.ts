@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ERole } from '../common/enum/roles.enum';
-import { AuthenticatedAccount } from '../module/auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../module/auth/types/authenticated.types';
 import { ROLES_KEY } from './roles.decorator';
 
 @Injectable()

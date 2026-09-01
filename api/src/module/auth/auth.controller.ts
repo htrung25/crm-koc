@@ -47,7 +47,7 @@ import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import type { RequestWithToken } from '../../passport/jwt.strategy';
-import { AuthenticatedAccount } from './entities/authenticated.entity';
+import { AuthenticatedAccount } from './types/authenticated.types';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateMeDto, UpdateMeResponseDto } from './dto/update-me.dto';
 import { LoginDto, LoginAdminDto } from './dto/login.dto';

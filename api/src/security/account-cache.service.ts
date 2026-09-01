@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { RedisClientType } from 'redis';
 import { REDIS_CLIENT, redisKeys } from '../infra/redis.module';
-import { AuthenticatedAccount } from '../module/auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../module/auth/types/authenticated.types';
 
 /** TTL ngắn: cache chỉ để giảm tải DB, không phải nguồn dữ liệu chính. */
 const ACCOUNT_TTL_SECONDS = 300;

@@ -28,7 +28,7 @@ import { Roles } from '../../security/roles.decorator';
 import { AuthThrottle } from '../../security/auth-throttle.decorator';
 import { ERole } from '../../common/enum/roles.enum';
 import { ESocialPlatform } from '../../common/enum/social-platform.enum';
-import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../auth/types/authenticated.types';
 import { SocialConnectionsService } from './social-connection.service';
 import { SocialOAuthCallbackDto } from './dto/oauth-callback.dto';
 import { SocialConnectionDto } from './dto/connection.dto';

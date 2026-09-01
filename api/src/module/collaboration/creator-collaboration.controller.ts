@@ -25,7 +25,7 @@ import { ERole } from '../../common/enum/roles.enum';
 import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
-import { AuthenticatedAccount } from '../auth/entities/authenticated.entity';
+import { AuthenticatedAccount } from '../auth/types/authenticated.types';
 import { CollaborationService } from './collaboration.service';
 import {
   CollaborationDto,

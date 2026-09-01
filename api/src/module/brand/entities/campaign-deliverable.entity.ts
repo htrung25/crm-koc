@@ -2,7 +2,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -11,9 +10,6 @@ import { ESocialPlatform } from '../../../common/enum/social-platform.enum';
 import { CampaignDeliverableDuration } from '../types/campaign.types';
 
 /** Yêu cầu nội dung cho MỘT Creator: ai nhận slot phải làm hết các dòng này. */
-@Index('UQ_campaign_deliverables_position', ['campaignId', 'position'], {
-  unique: true,
-})
 @Entity('campaign_deliverables')
 export class CampaignDeliverable {
   @PrimaryGeneratedColumn('uuid')

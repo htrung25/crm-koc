@@ -17,7 +17,7 @@ import { CreatorProfileService } from '../creator/creator-profile.service';
 import { AdminProfileService } from '../admin/admin-profile.service';
 import { AccountCacheService } from '../../security/account-cache.service';
 import { AuthEntity } from './entities/auth.entity';
-import { AuthenticatedAccount } from './entities/authenticated.entity';
+import { AuthenticatedAccount } from './types/authenticated.types';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import {
