@@ -57,9 +57,11 @@ jobs:
       - name: Xac dinh SHA va kiem tra fast-forward
         id: check
         run: |
-          git fetch origin staging main --quiet
+          git fetch origin develop staging main --quiet
+          develop_sha=$(git rev-parse origin/develop)
           staging_sha=$(git rev-parse origin/staging)
           main_sha=$(git rev-parse origin/main)
+          echo "develop = $develop_sha"
           echo "staging = $staging_sha"
           echo "main    = $main_sha"
 
@@ -67,6 +69,17 @@ jobs:
             echo "::notice::main da bang staging, khong co gi de day."
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+
+          # staging phai la to tien cua develop. promote-staging da co chot nay
+          # nhung no chi chay o chang develop -> staging, tuc la SAU khi code da
+          # kip len main. Ai merge thang vao staging thi day la cho duy nhat bat
+          # duoc truoc khi no ra production.
+          if ! git merge-base --is-ancestor "$staging_sha" "$develop_sha"; then
+            echo "::error::staging co commit ma develop khong co, khong day len main."
+            echo "::error::Dua chung ve develop truoc roi chay lai. Commit chi co tren staging:"
+            git log --oneline "$develop_sha".."$staging_sha" >&2
+            exit 1
           fi
 
           # main phai la to tien cua staging, neu khong thi da co nguoi day
