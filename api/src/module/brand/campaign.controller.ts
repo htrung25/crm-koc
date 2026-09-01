@@ -1,9 +1,11 @@
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Roles } from 'src/security/roles.decorator';
-import { ERole } from 'src/common/enum/roles.enum';
 import { Controller, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/security/jwt-auth.guard';
-import { RolesGuard } from 'src/security/roles.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+// Đường dẫn tương đối, KHÔNG dùng 'src/...': nest build có rewrite nên dist vẫn
+// chạy, nhưng check-routes.js nạp thẳng src qua ts-node và sẽ không phân giải được.
+import { ERole } from '../../common/enum/roles.enum';
+import { JwtAuthGuard } from '../../security/jwt-auth.guard';
+import { Roles } from '../../security/roles.decorator';
+import { RolesGuard } from '../../security/roles.guard';
 
 @ApiTags('Brand-Campaign')
 @ApiBearerAuth('access-token')
