@@ -19,6 +19,10 @@ on:
       confirm:
         description: "Gõ 'promote' để xác nhận đẩy staging lên main"
         required: true
+      allow_drift:
+        description: "Chỉ khi hotfix vá thẳng lên staging: gõ 'allow-drift' để bỏ qua chốt staging ⊂ develop"
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -56,6 +60,8 @@ jobs:
 
       - name: Xac dinh SHA va kiem tra fast-forward
         id: check
+        env:
+          ALLOW_DRIFT: ${{ inputs.allow_drift }}
         run: |
           git fetch origin develop staging main --quiet
           develop_sha=$(git rev-parse origin/develop)
@@ -76,10 +82,18 @@ jobs:
           # kip len main. Ai merge thang vao staging thi day la cho duy nhat bat
           # duoc truoc khi no ra production.
           if ! git merge-base --is-ancestor "$staging_sha" "$develop_sha"; then
-            echo "::error::staging co commit ma develop khong co, khong day len main."
-            echo "::error::Dua chung ve develop truoc roi chay lai. Commit chi co tren staging:"
+            # Luon in ra commit lech, du co bo qua hay khong: bo qua ma khong
+            # de lai dau vet thi lan sau khong ai truy duoc da ship cai gi.
+            echo "::warning::staging co commit ma develop khong co:"
             git log --oneline "$develop_sha".."$staging_sha" >&2
-            exit 1
+
+            if [ "$ALLOW_DRIFT" = "allow-drift" ]; then
+              echo "::warning::Bo qua chot drift theo yeu cau. Nho dua nhung commit tren ve develop."
+            else
+              echo "::error::Khong day len main. Dua chung ve develop truoc roi chay lai,"
+              echo "::error::hoac go 'allow-drift' vao o allow_drift neu day la hotfix co chu y."
+              exit 1
+            fi
           fi
 
           # main phai la to tien cua staging, neu khong thi da co nguoi day
