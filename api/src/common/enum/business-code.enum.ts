@@ -42,4 +42,6 @@ export enum EBusinessCode {
   CAMPAIGN_REVIEW_FEEDBACK_EMPTY = 7008,
   /** creator_platforms không bao hết platform của deliverable. */
   CAMPAIGN_PLATFORM_MISMATCH = 7009,
+  /** Brand đã chạm trần số campaign chưa kết thúc. */
+  CAMPAIGN_LIMIT_REACHED = 7010,
 }

@@ -19,6 +19,9 @@ export const redisKeys = {
   blacklist: (jti: string) => `bl:jti:${jti}`,
   /** Cache account cho JwtStrategy. Xoá key này khi account đổi trạng thái. */
   account: (id: string) => `account:${id}`,
+  /** Idempotency-Key của POST tạo campaign -> id đã tạo */
+  campaignIdempotency: (brandId: string, key: string) =>
+    `campaign:idem:${brandId}:${key}`,
 };
 
 @Global()
