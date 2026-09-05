@@ -21,6 +21,7 @@ import { Campaign } from '../module/brand/entities/campaign.entity';
 import { CampaignCategory } from '../module/brand/entities/campaign-category.entity';
 import { CampaignDeliverable } from '../module/brand/entities/campaign-deliverable.entity';
 import { CampaignAsset } from '../module/brand/entities/campaign-asset.entity';
+import { CampaignStatusHistory } from '../module/brand/entities/campaign-status-history.entity';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { CampaignAsset } from '../module/brand/entities/campaign-asset.entity';
               Campaign,
               CampaignDeliverable,
               CampaignAsset,
+              CampaignStatusHistory,
             ],
             migrations: migrationGlobals,
             migrationsRun: false,
@@ -97,6 +99,7 @@ import { CampaignAsset } from '../module/brand/entities/campaign-asset.entity';
             Campaign,
             CampaignDeliverable,
             CampaignAsset,
+            CampaignStatusHistory,
           ],
           migrations: migrationGlobals,
           migrationsRun: false,

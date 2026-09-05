@@ -57,3 +57,9 @@ export enum EUsageRightsKind {
   FIXED = 'fixed',
   PERPETUAL = 'perpetual',
 }
+
+export enum ECampaignActorType {
+  BRAND = 'brand',
+  ADMIN = 'admin',
+  SYSTEM = 'system',
+}

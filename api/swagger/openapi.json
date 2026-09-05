@@ -2246,6 +2246,53 @@
         ]
       }
     },
+    "/brand/campaigns": {
+      "post": {
+        "description": "Không nhận dữ liệu nghiệp vụ: trả về id để wizard autosave ghi vào. Gửi lại cùng Idempotency-Key sẽ nhận đúng campaign lần trước thay vì tạo thêm bản nháp mới.",
+        "operationId": "CampaignController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "required": false,
+            "in": "header",
+            "description": "Chuỗi client tự sinh, nên dùng uuid. Sống 24 giờ.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignCreatedResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token, token sai hoặc hết hạn"
+          },
+          "403": {
+            "description": "Không phải tài khoản brand"
+          },
+          "422": {
+            "description": "Chạm trần số campaign chưa kết thúc"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Tạo campaign rỗng ở trạng thái nháp",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      }
+    },
     "/creator/profile/me": {
       "get": {
         "operationId": "CreatorProfileController_getMe",
@@ -4575,6 +4622,48 @@
             "maxLength": 64
           }
         }
+      },
+      "CampaignCreatedResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CMP-9KN0CYKR",
+            "maxLength": 20
+          },
+          "status": {
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "description": "Luôn là DRAFT (1)"
+          },
+          "version": {
+            "type": "number",
+            "description": "Gửi lại ở mọi lệnh sửa để chống ghi đè"
+          },
+          "wizardStep": {
+            "type": "number",
+            "nullable": true,
+            "description": "Bước wizard gần nhất, null khi vừa tạo"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "version",
+          "wizardStep"
+        ]
       },
       "ECreatorContent": {
         "type": "string",
