@@ -17,6 +17,7 @@ import { Campaign } from '../module/brand/entities/campaign.entity';
 import { CampaignCategory } from '../module/brand/entities/campaign-category.entity';
 import { CampaignDeliverable } from '../module/brand/entities/campaign-deliverable.entity';
 import { CampaignAsset } from '../module/brand/entities/campaign-asset.entity';
+import { CampaignStatusHistory } from '../module/brand/entities/campaign-status-history.entity';
 
 /**
  * DataSource dành riêng cho TypeORM CLI (migration:run / migration:revert).
@@ -42,6 +43,7 @@ const entities = [
   Campaign,
   CampaignDeliverable,
   CampaignAsset,
+  CampaignStatusHistory,
 ];
 
 // Chạy qua ts-node thì đọc migration .ts, chạy từ dist thì đọc .js đã build.
