@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EKycStatus } from '../../common/enum/kyc.enum';
 import { KycSubmission } from '../../module/kyc/entities/kyc-submission.entity';
-import { KycStateMachine } from '../../module/kyc/kyc-state-machine';
+import { assertKycTransition } from '../../module/kyc/kyc-state-machine';
 import { EmailQueueService } from '../email/email-queue.service';
 import { KYC_SYSTEM_ACTOR } from 'src/module/kyc/constants/kyc.constants';
 
@@ -28,7 +28,6 @@ export class KycExpiryService {
     private readonly submissionRepository: Repository<KycSubmission>,
     private readonly emailQueue: EmailQueueService,
     private readonly configService: ConfigService,
-    private readonly stateMachine: KycStateMachine,
   ) {}
 
   /**
@@ -57,7 +56,7 @@ export class KycExpiryService {
 
   /** Bulk compare-and-set ở DB giữ tính nguyên tử; state machine giữ luật actor. */
   async expireVerified(): Promise<number> {
-    this.stateMachine.assertTransition(
+    assertKycTransition(
       EKycStatus.VERIFIED,
       EKycStatus.EXPIRED,
       KYC_SYSTEM_ACTOR,

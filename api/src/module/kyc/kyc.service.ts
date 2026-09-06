@@ -35,7 +35,12 @@ import { KycDocumentView } from './entities/kyc-document-view.entity';
 import { KycSubmission } from './entities/kyc-submission.entity';
 import { KycFilterDto, ReviewKycDto } from './dto/kyc.dto';
 import { inspectDocument } from './util/kyc-document.util';
-import { KycStateMachine } from './kyc-state-machine';
+import {
+  planKycOpening,
+  requireEditableKyc,
+  reviewKyc,
+  submitKyc,
+} from './kyc-state-machine';
 
 export interface DocumentStreamPayload {
   document: KycDocument;
@@ -62,7 +67,6 @@ export class KycService {
     private readonly ledger: StorageLedgerService,
     private readonly emailQueue: EmailQueueService,
     private readonly storageQueue: StorageQueueService,
-    private readonly stateMachine: KycStateMachine,
     configService: ConfigService,
   ) {
     // .env luôn trả chuỗi nên phải Number()
@@ -79,7 +83,7 @@ export class KycService {
     role: KycRole,
   ): Promise<KycSubmission> {
     const latest = await this.findLatest(accountId, role);
-    const plan = this.stateMachine.planOpening(latest);
+    const plan = planKycOpening(latest);
     if (plan.kind === 'reuse') {
       return plan.submission;
     }
@@ -115,7 +119,7 @@ export class KycService {
     buffer: Buffer,
     originalName: string | null,
   ): Promise<KycDocument> {
-    const submission = this.stateMachine.requireEditable(
+    const submission = requireEditableKyc(
       await this.findLatest(accountId, role),
     );
 
@@ -190,7 +194,7 @@ export class KycService {
 
   /** Chuyển hồ sơ sang PENDING. Thiếu giấy tờ bắt buộc thì không cho nộp. */
   async submit(accountId: string, role: KycRole): Promise<KycSubmission> {
-    const submission = this.stateMachine.requireEditable(
+    const submission = requireEditableKyc(
       await this.findLatest(accountId, role),
     );
 
@@ -208,9 +212,7 @@ export class KycService {
       });
     }
 
-    return this.submissionRepository.save(
-      this.stateMachine.submit(submission, role),
-    );
+    return this.submissionRepository.save(submitKyc(submission, role));
   }
 
   /** Hồ sơ mới nhất của người gọi, kèm số lượt còn lại. */
@@ -346,12 +348,7 @@ export class KycService {
       }
 
       return submissionRepo.save(
-        this.stateMachine.review(
-          submission,
-          dto,
-          reviewerId,
-          this.validityDays,
-        ),
+        reviewKyc(submission, dto, reviewerId, this.validityDays),
       );
     });
 
