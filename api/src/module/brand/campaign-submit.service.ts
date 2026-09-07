@@ -69,7 +69,7 @@ export class CampaignSubmitService {
       where: { id, brandId },
     });
     if (!campaign) {
-      throw new NotFoundException('campaign không tồn tại');
+      throw new NotFoundException('campaign does not exist');
     }
 
     this.assertSubmittable(campaign);
@@ -139,7 +139,7 @@ export class CampaignSubmitService {
     if (!EDITABLE_CAMPAIGN_STATUSES.includes(campaign.status)) {
       throw new UnprocessableEntityException({
         businessCode: EBusinessCode.CAMPAIGN_INVALID_TRANSITION,
-        message: `campaign đang ở ${CAMPAIGN_STATUS_LABEL[campaign.status]}, không gửi duyệt được`,
+        message: `campaign is ${CAMPAIGN_STATUS_LABEL[campaign.status]} and cannot be submitted for review`,
         status: campaign.status,
         version: campaign.version,
       });
@@ -164,7 +164,7 @@ export class CampaignSubmitService {
     ) {
       throw new ForbiddenException({
         businessCode: EBusinessCode.CAMPAIGN_BRAND_NOT_VERIFIED,
-        message: `campaign bị từ chối với lý do ${last.reasonCode}, không gửi lại được`,
+        message: `campaign was rejected as ${last.reasonCode} and cannot be resubmitted`,
       });
     }
   }
@@ -175,7 +175,7 @@ export class CampaignSubmitService {
     }
     throw new ForbiddenException({
       businessCode: EBusinessCode.CAMPAIGN_BRAND_NOT_VERIFIED,
-      message: 'brand chưa được duyệt KYC nên chưa gửi duyệt campaign được',
+      message: 'brand KYC is not verified yet, campaigns cannot be submitted',
     });
   }
 
@@ -190,7 +190,7 @@ export class CampaignSubmitService {
       businessCode: business
         ? EBusinessCode[business.code as keyof typeof EBusinessCode]
         : EBusinessCode.UNKNOWN_ERROR,
-      message: 'campaign chưa đủ điều kiện gửi duyệt',
+      message: 'campaign is not ready to be submitted for review',
       errors,
     });
   }

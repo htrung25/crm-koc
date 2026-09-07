@@ -66,7 +66,10 @@ export class SyncDeliverablesDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @ApiProperty({ description: 'Version campaign đang giữ, để chống ghi đè' })
+  @ApiProperty({
+    description:
+      'Campaign version the client holds, to guard against lost updates',
+  })
   expectedVersion!: number;
 
   @IsArray()

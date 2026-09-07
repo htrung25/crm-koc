@@ -65,14 +65,14 @@ export class CampaignTransitionService {
       throw new UnprocessableEntityException({
         businessCode: EBusinessCode.CAMPAIGN_INVALID_TRANSITION,
         message: reachable.length
-          ? `không chuyển được ${fromLabel} sang ${toLabel}; hợp lệ: ${reachable.join(', ')}`
-          : `${fromLabel} là trạng thái cuối, không đổi được nữa`,
+          ? `cannot move from ${fromLabel} to ${toLabel}; allowed: ${reachable.join(', ')}`
+          : `${fromLabel} is a final state and cannot change`,
       });
     }
 
     if (!allowedActors.includes(actor)) {
       throw new ForbiddenException(
-        `chỉ ${allowedActors.join(' hoặc ')} mới chuyển được ${fromLabel} sang ${toLabel}`,
+        `only ${allowedActors.join(' or ')} may move ${fromLabel} to ${toLabel}`,
       );
     }
   }
@@ -130,7 +130,7 @@ export class CampaignTransitionService {
     });
 
     if (!current || (input.brandId && current.brandId !== input.brandId)) {
-      return new NotFoundException('campaign không tồn tại');
+      return new NotFoundException('campaign does not exist');
     }
 
     // Kèm dữ liệu mới nhất của server: client phải tải lại được chứ không phải
@@ -139,8 +139,8 @@ export class CampaignTransitionService {
       businessCode: EBusinessCode.CAMPAIGN_VERSION_CONFLICT,
       message:
         current.status !== input.expectedStatus
-          ? `campaign đang ở ${CAMPAIGN_STATUS_LABEL[current.status]}, không phải ${CAMPAIGN_STATUS_LABEL[input.expectedStatus]}`
-          : 'campaign đã được sửa bởi thao tác khác',
+          ? `campaign is ${CAMPAIGN_STATUS_LABEL[current.status]}, not ${CAMPAIGN_STATUS_LABEL[input.expectedStatus]}`
+          : 'campaign was modified by another operation',
       status: current.status,
       version: current.version,
     });

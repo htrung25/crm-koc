@@ -2248,14 +2248,14 @@
     },
     "/brand/campaigns": {
       "post": {
-        "description": "Không nhận dữ liệu nghiệp vụ: trả về id để wizard autosave ghi vào. Gửi lại cùng Idempotency-Key sẽ nhận đúng campaign lần trước thay vì tạo thêm bản nháp mới.",
+        "description": "Takes no business data: returns the id for the autosave wizard to write into. Replaying the same Idempotency-Key returns the campaign created before instead of a second draft.",
         "operationId": "CampaignController_create",
         "parameters": [
           {
             "name": "Idempotency-Key",
             "required": false,
             "in": "header",
-            "description": "Chuỗi client tự sinh, nên dùng uuid. Sống 24 giờ.",
+            "description": "Client-generated string, uuid recommended. Lives 24 hours.",
             "schema": {
               "type": "string"
             }
@@ -2273,13 +2273,13 @@
             }
           },
           "401": {
-            "description": "Thiếu token, token sai hoặc hết hạn"
+            "description": "Missing, invalid or expired token"
           },
           "403": {
-            "description": "Không phải tài khoản brand"
+            "description": "Not a brand account"
           },
           "422": {
-            "description": "Chạm trần số campaign chưa kết thúc"
+            "description": "Unfinished campaign limit reached"
           }
         },
         "security": [
@@ -2287,7 +2287,7 @@
             "access-token": []
           }
         ],
-        "summary": "Tạo campaign rỗng ở trạng thái nháp",
+        "summary": "Create an empty campaign in draft state",
         "tags": [
           "Brand-Campaign"
         ]
@@ -2295,7 +2295,7 @@
     },
     "/brand/campaigns/{id}": {
       "get": {
-        "description": "Trả về cả wizardStep để client nhảy đúng bước đang dở, và version để gửi kèm ở lệnh sửa kế tiếp.",
+        "description": "Returns wizardStep so the client can jump back to the step in progress, and version to send along with the next write.",
         "operationId": "CampaignController_findOne",
         "parameters": [
           {
@@ -2309,16 +2309,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Campaign và danh sách deliverable"
+            "description": "Campaign and its deliverable list"
           },
           "401": {
-            "description": "Thiếu token, token sai hoặc hết hạn"
+            "description": "Missing, invalid or expired token"
           },
           "403": {
-            "description": "Không phải tài khoản brand"
+            "description": "Not a brand account"
           },
           "404": {
-            "description": "Campaign không tồn tại"
+            "description": "Campaign does not exist"
           }
         },
         "security": [
@@ -2326,13 +2326,13 @@
             "access-token": []
           }
         ],
-        "summary": "Mở lại một campaign kèm deliverables",
+        "summary": "Reopen a campaign with its deliverables",
         "tags": [
           "Brand-Campaign"
         ]
       },
       "patch": {
-        "description": "Trường vắng mặt: không đụng tới. Trường bằng null: xoá giá trị cũ. Chỉ chặn sai kiểu, quá dài, sai enum — thiếu dữ liệu là bình thường với bản nháp. cashBudget do server tính, gửi lên sẽ bị từ chối.",
+        "description": "Absent field: left untouched. Field set to null: clears the previous value. Only wrong type, too long and invalid enum are rejected — missing data is normal for a draft. cashBudget is computed by the server and is rejected if sent.",
         "operationId": "CampaignController_update",
         "parameters": [
           {
@@ -2347,7 +2347,7 @@
             "name": "expectedVersion",
             "required": true,
             "in": "query",
-            "description": "Version client đang giữ, để chống ghi đè",
+            "description": "Version the client holds, to guard against lost updates",
             "schema": {
               "type": "number"
             }
@@ -2375,19 +2375,19 @@
             }
           },
           "401": {
-            "description": "Thiếu token, token sai hoặc hết hạn"
+            "description": "Missing, invalid or expired token"
           },
           "403": {
-            "description": "Không phải tài khoản brand"
+            "description": "Not a brand account"
           },
           "404": {
-            "description": "Campaign không tồn tại"
+            "description": "Campaign does not exist"
           },
           "409": {
-            "description": "Version đã thay đổi"
+            "description": "Version has changed"
           },
           "422": {
-            "description": "Campaign đang ở trạng thái không sửa được"
+            "description": "Campaign is in a state that cannot be edited"
           }
         },
         "security": [
@@ -2395,7 +2395,7 @@
             "access-token": []
           }
         ],
-        "summary": "Autosave bản nháp",
+        "summary": "Autosave a draft",
         "tags": [
           "Brand-Campaign"
         ]
@@ -2403,7 +2403,7 @@
     },
     "/brand/campaigns/{id}/deliverables": {
       "put": {
-        "description": "Gửi lên trạng thái hiện tại của bước 3, không phải chuỗi thao tác. Dòng có id thì sửa, không id thì thêm, vắng mặt khỏi mảng thì XOÁ. position do server gán theo thứ tự phần tử.",
+        "description": "Send the current state of step 3, not a sequence of operations. A row with an id is updated, without an id is inserted, and absent from the array is DELETED. position is assigned by the server from the element order.",
         "operationId": "CampaignController_putDeliverables",
         "parameters": [
           {
@@ -2440,19 +2440,19 @@
             }
           },
           "401": {
-            "description": "Thiếu token, token sai hoặc hết hạn"
+            "description": "Missing, invalid or expired token"
           },
           "403": {
-            "description": "Không phải tài khoản brand"
+            "description": "Not a brand account"
           },
           "404": {
-            "description": "Campaign không tồn tại"
+            "description": "Campaign does not exist"
           },
           "409": {
-            "description": "Version đã thay đổi"
+            "description": "Version has changed"
           },
           "422": {
-            "description": "Campaign đang ở trạng thái không sửa được"
+            "description": "Campaign is in a state that cannot be edited"
           }
         },
         "security": [
@@ -2460,7 +2460,7 @@
             "access-token": []
           }
         ],
-        "summary": "Đồng bộ toàn bộ danh sách deliverable",
+        "summary": "Sync the whole deliverable list",
         "tags": [
           "Brand-Campaign"
         ]
@@ -2468,7 +2468,7 @@
     },
     "/brand/campaigns/{id}/submit": {
       "post": {
-        "description": "Chốt một bản chụp bất biến rồi chuyển sang PENDING_APPROVAL. Thiếu dữ liệu thì trả 422 kèm errors[] và campaign giữ nguyên trạng thái.",
+        "description": "Freezes an immutable snapshot and moves to PENDING_APPROVAL. On missing data it returns 422 with errors[] and the campaign keeps its current state.",
         "operationId": "CampaignController_submit",
         "parameters": [
           {
@@ -2502,19 +2502,19 @@
             }
           },
           "401": {
-            "description": "Thiếu token, token sai hoặc hết hạn"
+            "description": "Missing, invalid or expired token"
           },
           "403": {
-            "description": "Brand chưa VERIFIED, hoặc bị từ chối với lý do cấm gửi lại"
+            "description": "Brand is not VERIFIED, or was rejected with a reason that bars resubmit"
           },
           "404": {
-            "description": "Campaign không tồn tại"
+            "description": "Campaign does not exist"
           },
           "409": {
-            "description": "Version đã thay đổi"
+            "description": "Version has changed"
           },
           "422": {
-            "description": "Dữ liệu chưa đủ điều kiện gửi duyệt, hoặc sai trạng thái"
+            "description": "Data is not ready for review, or wrong state"
           }
         },
         "security": [
@@ -2522,7 +2522,7 @@
             "access-token": []
           }
         ],
-        "summary": "Gửi campaign cho admin duyệt",
+        "summary": "Submit a campaign for admin review",
         "tags": [
           "Brand-Campaign"
         ]
@@ -4880,16 +4880,16 @@
               5,
               6
             ],
-            "description": "Luôn là DRAFT (1)"
+            "description": "Always DRAFT (1)"
           },
           "version": {
             "type": "number",
-            "description": "Gửi lại ở mọi lệnh sửa để chống ghi đè"
+            "description": "Send back on every write to guard against lost updates"
           },
           "wizardStep": {
             "type": "number",
             "nullable": true,
-            "description": "Bước wizard gần nhất, null khi vừa tạo"
+            "description": "Latest wizard step, null right after creation"
           }
         },
         "required": [
@@ -4907,7 +4907,7 @@
             "type": "object",
             "minimum": 1,
             "maximum": 6,
-            "description": "Bước wizard"
+            "description": "Wizard step"
           },
           "title": {
             "type": "object",
@@ -4955,7 +4955,7 @@
             }
           },
           "requiredLinks": {
-            "description": "Bắt buộc HTTPS",
+            "description": "HTTPS required",
             "type": "array",
             "items": {
               "type": "string"
@@ -5025,7 +5025,7 @@
           "creatorMinEngagementRate": {
             "type": "object",
             "minimum": 0,
-            "description": "Đơn vị %"
+            "description": "Unit: percent"
           },
           "creatorCities": {
             "type": "array",
@@ -5055,7 +5055,7 @@
           "cashUnitPrice": {
             "type": "object",
             "minimum": 0,
-            "description": "VND, số nguyên"
+            "description": "VND, integer"
           },
           "minCashUnitPrice": {
             "type": "object",
@@ -5067,7 +5067,7 @@
           },
           "productBenefit": {
             "type": "object",
-            "description": "mô tả, số lượng, giao nhận"
+            "description": "description, quantity, delivery"
           },
           "usageRightsScope": {
             "type": "object",
@@ -5147,7 +5147,7 @@
         "properties": {
           "expectedVersion": {
             "type": "number",
-            "description": "Version campaign đang giữ, để chống ghi đè"
+            "description": "Campaign version the client holds, to guard against lost updates"
           },
           "deliverables": {
             "type": "array",
@@ -5171,7 +5171,7 @@
           "expectedVersion": {
             "type": "number",
             "minimum": 1,
-            "description": "Version client đang giữ"
+            "description": "Version the client holds"
           }
         },
         "required": [
@@ -5187,14 +5187,14 @@
           },
           "status": {
             "type": "number",
-            "description": "Luôn là PENDING_APPROVAL (2)"
+            "description": "Always PENDING_APPROVAL (2)"
           },
           "version": {
             "type": "number"
           },
           "revisionNumber": {
             "type": "number",
-            "description": "Lượt gửi duyệt thứ mấy của campaign này"
+            "description": "Which review round this campaign is on"
           },
           "submittedAt": {
             "type": "string",

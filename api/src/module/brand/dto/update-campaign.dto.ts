@@ -30,7 +30,7 @@ export class UpdateCampaignDto {
   @IsInt()
   @Min(1)
   @Max(6)
-  @ApiPropertyOptional({ minimum: 1, maximum: 6, description: 'Bước wizard' })
+  @ApiPropertyOptional({ minimum: 1, maximum: 6, description: 'Wizard step' })
   wizardStep?: number | null;
 
   @IsOptional()
@@ -87,7 +87,7 @@ export class UpdateCampaignDto {
   @IsArray()
   @IsUrl({ protocols: ['https'], require_protocol: true }, { each: true })
   @ArrayMaxSize(20)
-  @ApiPropertyOptional({ type: [String], description: 'Bắt buộc HTTPS' })
+  @ApiPropertyOptional({ type: [String], description: 'HTTPS required' })
   requiredLinks?: string[] | null;
 
   @IsOptional()
@@ -131,7 +131,7 @@ export class UpdateCampaignDto {
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 4 })
   @Min(0)
-  @ApiPropertyOptional({ minimum: 0, description: 'Đơn vị %' })
+  @ApiPropertyOptional({ minimum: 0, description: 'Unit: percent' })
   creatorMinEngagementRate?: number | null;
 
   @IsOptional()
@@ -163,7 +163,7 @@ export class UpdateCampaignDto {
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  @ApiPropertyOptional({ minimum: 0, description: 'VND, số nguyên' })
+  @ApiPropertyOptional({ minimum: 0, description: 'VND, integer' })
   cashUnitPrice?: number | null;
 
   @IsOptional()
@@ -182,7 +182,7 @@ export class UpdateCampaignDto {
 
   @IsOptional()
   @IsObject()
-  @ApiPropertyOptional({ description: 'mô tả, số lượng, giao nhận' })
+  @ApiPropertyOptional({ description: 'description, quantity, delivery' })
   productBenefit?: Record<string, unknown> | null;
 
   @IsOptional()

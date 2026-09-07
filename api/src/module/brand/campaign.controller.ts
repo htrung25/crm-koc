@@ -65,24 +65,24 @@ export class CampaignController {
 
   @Post()
   @ApiOperation({
-    summary: 'Tạo campaign rỗng ở trạng thái nháp',
+    summary: 'Create an empty campaign in draft state',
     description:
-      'Không nhận dữ liệu nghiệp vụ: trả về id để wizard autosave ghi vào. ' +
-      'Gửi lại cùng Idempotency-Key sẽ nhận đúng campaign lần trước thay vì ' +
-      'tạo thêm bản nháp mới.',
+      'Takes no business data: returns the id for the autosave wizard to ' +
+      'write into. Replaying the same Idempotency-Key returns the campaign ' +
+      'created before instead of a second draft.',
   })
   @ApiHeader({
     name: CAMPAIGN_IDEMPOTENCY_HEADER,
     required: false,
-    description: 'Chuỗi client tự sinh, nên dùng uuid. Sống 24 giờ.',
+    description: 'Client-generated string, uuid recommended. Lives 24 hours.',
   })
   @ApiCreatedResponse({ type: CampaignCreatedResponseDto })
   @ApiUnauthorizedResponse({
-    description: 'Thiếu token, token sai hoặc hết hạn',
+    description: 'Missing, invalid or expired token',
   })
-  @ApiForbiddenResponse({ description: 'Không phải tài khoản brand' })
+  @ApiForbiddenResponse({ description: 'Not a brand account' })
   @ApiUnprocessableEntityResponse({
-    description: 'Chạm trần số campaign chưa kết thúc',
+    description: 'Unfinished campaign limit reached',
   })
   async create(
     @Request() request: { user: AuthenticatedAccount },
@@ -106,17 +106,17 @@ export class CampaignController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Mở lại một campaign kèm deliverables',
+    summary: 'Reopen a campaign with its deliverables',
     description:
-      'Trả về cả wizardStep để client nhảy đúng bước đang dở, và version để ' +
-      'gửi kèm ở lệnh sửa kế tiếp.',
+      'Returns wizardStep so the client can jump back to the step in ' +
+      'progress, and version to send along with the next write.',
   })
-  @ApiOkResponse({ description: 'Campaign và danh sách deliverable' })
+  @ApiOkResponse({ description: 'Campaign and its deliverable list' })
   @ApiUnauthorizedResponse({
-    description: 'Thiếu token, token sai hoặc hết hạn',
+    description: 'Missing, invalid or expired token',
   })
-  @ApiForbiddenResponse({ description: 'Không phải tài khoản brand' })
-  @ApiNotFoundResponse({ description: 'Campaign không tồn tại' })
+  @ApiForbiddenResponse({ description: 'Not a brand account' })
+  @ApiNotFoundResponse({ description: 'Campaign does not exist' })
   async findOne(
     @Request() request: { user: AuthenticatedAccount },
     @Param('id', ParseUUIDPipe) id: string,
@@ -129,26 +129,27 @@ export class CampaignController {
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
   @Patch(':id')
   @ApiOperation({
-    summary: 'Autosave bản nháp',
+    summary: 'Autosave a draft',
     description:
-      'Trường vắng mặt: không đụng tới. Trường bằng null: xoá giá trị cũ. ' +
-      'Chỉ chặn sai kiểu, quá dài, sai enum — thiếu dữ liệu là bình thường ' +
-      'với bản nháp. cashBudget do server tính, gửi lên sẽ bị từ chối.',
+      'Absent field: left untouched. Field set to null: clears the previous ' +
+      'value. Only wrong type, too long and invalid enum are rejected — ' +
+      'missing data is normal for a draft. cashBudget is computed by the ' +
+      'server and is rejected if sent.',
   })
   @ApiQuery({
     name: 'expectedVersion',
     type: Number,
-    description: 'Version client đang giữ, để chống ghi đè',
+    description: 'Version the client holds, to guard against lost updates',
   })
   @ApiOkResponse({ type: Campaign })
   @ApiUnauthorizedResponse({
-    description: 'Thiếu token, token sai hoặc hết hạn',
+    description: 'Missing, invalid or expired token',
   })
-  @ApiForbiddenResponse({ description: 'Không phải tài khoản brand' })
-  @ApiNotFoundResponse({ description: 'Campaign không tồn tại' })
-  @ApiConflictResponse({ description: 'Version đã thay đổi' })
+  @ApiForbiddenResponse({ description: 'Not a brand account' })
+  @ApiNotFoundResponse({ description: 'Campaign does not exist' })
+  @ApiConflictResponse({ description: 'Version has changed' })
   @ApiUnprocessableEntityResponse({
-    description: 'Campaign đang ở trạng thái không sửa được',
+    description: 'Campaign is in a state that cannot be edited',
   })
   async update(
     @Request() request: { user: AuthenticatedAccount },
@@ -166,21 +167,22 @@ export class CampaignController {
 
   @Put(':id/deliverables')
   @ApiOperation({
-    summary: 'Đồng bộ toàn bộ danh sách deliverable',
+    summary: 'Sync the whole deliverable list',
     description:
-      'Gửi lên trạng thái hiện tại của bước 3, không phải chuỗi thao tác. ' +
-      'Dòng có id thì sửa, không id thì thêm, vắng mặt khỏi mảng thì XOÁ. ' +
-      'position do server gán theo thứ tự phần tử.',
+      'Send the current state of step 3, not a sequence of operations. A ' +
+      'row with an id is updated, without an id is inserted, and absent ' +
+      'from the array is DELETED. position is assigned by the server from ' +
+      'the element order.',
   })
   @ApiOkResponse({ type: [CampaignDeliverable] })
   @ApiUnauthorizedResponse({
-    description: 'Thiếu token, token sai hoặc hết hạn',
+    description: 'Missing, invalid or expired token',
   })
-  @ApiForbiddenResponse({ description: 'Không phải tài khoản brand' })
-  @ApiNotFoundResponse({ description: 'Campaign không tồn tại' })
-  @ApiConflictResponse({ description: 'Version đã thay đổi' })
+  @ApiForbiddenResponse({ description: 'Not a brand account' })
+  @ApiNotFoundResponse({ description: 'Campaign does not exist' })
+  @ApiConflictResponse({ description: 'Version has changed' })
   @ApiUnprocessableEntityResponse({
-    description: 'Campaign đang ở trạng thái không sửa được',
+    description: 'Campaign is in a state that cannot be edited',
   })
   async putDeliverables(
     @Request() request: { user: AuthenticatedAccount },
@@ -197,22 +199,24 @@ export class CampaignController {
 
   @Post(':id/submit')
   @ApiOperation({
-    summary: 'Gửi campaign cho admin duyệt',
+    summary: 'Submit a campaign for admin review',
     description:
-      'Chốt một bản chụp bất biến rồi chuyển sang PENDING_APPROVAL. Thiếu ' +
-      'dữ liệu thì trả 422 kèm errors[] và campaign giữ nguyên trạng thái.',
+      'Freezes an immutable snapshot and moves to PENDING_APPROVAL. On ' +
+      'missing data it returns 422 with errors[] and the campaign keeps ' +
+      'its current state.',
   })
   @ApiOkResponse({ type: CampaignSubmittedResponseDto })
   @ApiUnauthorizedResponse({
-    description: 'Thiếu token, token sai hoặc hết hạn',
+    description: 'Missing, invalid or expired token',
   })
   @ApiForbiddenResponse({
-    description: 'Brand chưa VERIFIED, hoặc bị từ chối với lý do cấm gửi lại',
+    description:
+      'Brand is not VERIFIED, or was rejected with a reason that bars resubmit',
   })
-  @ApiNotFoundResponse({ description: 'Campaign không tồn tại' })
-  @ApiConflictResponse({ description: 'Version đã thay đổi' })
+  @ApiNotFoundResponse({ description: 'Campaign does not exist' })
+  @ApiConflictResponse({ description: 'Version has changed' })
   @ApiUnprocessableEntityResponse({
-    description: 'Dữ liệu chưa đủ điều kiện gửi duyệt, hoặc sai trạng thái',
+    description: 'Data is not ready for review, or wrong state',
   })
   async submit(
     @Request() request: { user: AuthenticatedAccount },
@@ -238,7 +242,7 @@ export class CampaignController {
   private parseExpectedVersion(raw: string): number {
     const version = Number(raw);
     if (!Number.isInteger(version) || version < 1) {
-      throw new BadRequestException('expectedVersion phải là số nguyên >= 1');
+      throw new BadRequestException('expectedVersion must be an integer >= 1');
     }
     return version;
   }
@@ -253,7 +257,7 @@ export class CampaignController {
     }
     if (key.length > MAX_IDEMPOTENCY_KEY_LENGTH) {
       throw new BadRequestException(
-        `${CAMPAIGN_IDEMPOTENCY_HEADER} tối đa ${MAX_IDEMPOTENCY_KEY_LENGTH} ký tự`,
+        `${CAMPAIGN_IDEMPOTENCY_HEADER} must be at most ${MAX_IDEMPOTENCY_KEY_LENGTH} characters`,
       );
     }
     return key;

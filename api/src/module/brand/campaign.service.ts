@@ -76,7 +76,7 @@ export class CampaignService {
       where: { id, brandId },
     });
     if (!campaign) {
-      throw new NotFoundException('campaign không tồn tại');
+      throw new NotFoundException('campaign does not exist');
     }
 
     return {
@@ -100,7 +100,7 @@ export class CampaignService {
       where: { id, brandId },
     });
     if (!current) {
-      throw new NotFoundException('campaign không tồn tại');
+      throw new NotFoundException('campaign does not exist');
     }
     await this.assertEditable(current);
 
@@ -142,7 +142,7 @@ export class CampaignService {
       where: { id, brandId },
     });
     if (!current) {
-      throw new NotFoundException('campaign không tồn tại');
+      throw new NotFoundException('campaign does not exist');
     }
     await this.assertEditable(current);
 
@@ -237,7 +237,7 @@ export class CampaignService {
     // Thiếu khoá là lỗi cấu hình, KHÔNG được im lặng bỏ qua sàn: BR-CAM-004 nói
     // không actor nào override được, mà bỏ qua vì thiếu config chính là override.
     throw new ServiceUnavailableException(
-      `thiếu cấu hình giá sàn, đã thử: ${keys.join(', ')}`,
+      `missing cash floor configuration, tried: ${keys.join(', ')}`,
     );
   }
 
@@ -259,7 +259,7 @@ export class CampaignService {
   private toFloorAmount(key: string, raw: unknown): bigint {
     if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 0) {
       throw new ServiceUnavailableException(
-        `cấu hình ${key} phải là số nguyên không âm, đang là ${JSON.stringify(raw)}`,
+        `configuration ${key} must be a non-negative integer, got ${JSON.stringify(raw)}`,
       );
     }
     return BigInt(raw);
@@ -317,7 +317,7 @@ export class CampaignService {
       issues.push({
         code: 'arrayMaxSize',
         fieldPath: 'productImages',
-        message: `tối đa ${maxImages} ảnh sản phẩm, đang có ${images.length}`,
+        message: `at most ${maxImages} product images allowed, got ${images.length}`,
         metadata: { max: maxImages, actual: images.length },
       });
     }
@@ -371,7 +371,7 @@ export class CampaignService {
       issues.push({
         code: 'minDate',
         fieldPath: 'recruitingStartAt',
-        message: 'thời điểm mở tuyển không được nằm trong quá khứ',
+        message: 'recruiting start must not be in the past',
       });
     }
 
@@ -383,7 +383,7 @@ export class CampaignService {
       issues.push({
         code: 'minDate',
         fieldPath: 'applicationDeadline',
-        message: `hạn nhận hồ sơ phải cách hiện tại ít nhất ${MIN_HOURS_BEFORE_APPLICATION_DEADLINE} giờ`,
+        message: `application deadline must be at least ${MIN_HOURS_BEFORE_APPLICATION_DEADLINE} hours from now`,
         metadata: { minHours: MIN_HOURS_BEFORE_APPLICATION_DEADLINE },
       });
     }
@@ -395,7 +395,7 @@ export class CampaignService {
       issues.push({
         code: 'minDate',
         fieldPath: 'applicationDeadline',
-        message: 'hạn nhận hồ sơ phải sau thời điểm mở tuyển',
+        message: 'application deadline must be after recruiting start',
       });
     }
 
@@ -433,7 +433,7 @@ export class CampaignService {
         issues.push({
           code: 'isEnum',
           fieldPath: `${path}.contentType`,
-          message: `${platform} không đăng được ${contentType}`,
+          message: `${platform} cannot publish ${contentType}`,
           metadata: { allowed: PLATFORM_CONTENT_TYPES[platform] },
         });
       }
@@ -449,7 +449,8 @@ export class CampaignService {
         issues.push({
           code: 'minDate',
           fieldPath: `${path}.contentSubmissionDeadline`,
-          message: 'hạn nộp nội dung phải sau hạn nhận hồ sơ',
+          message:
+            'content submission deadline must be after the application deadline',
         });
       }
 
@@ -457,7 +458,8 @@ export class CampaignService {
         issues.push({
           code: 'minDate',
           fieldPath: `${path}.publishDeadline`,
-          message: 'hạn đăng không được sớm hơn hạn nộp nội dung',
+          message:
+            'publish deadline must not be earlier than the content submission deadline',
         });
       }
     });
@@ -486,7 +488,7 @@ export class CampaignService {
       {
         code: EBusinessCode[EBusinessCode.CAMPAIGN_PLATFORM_MISMATCH],
         fieldPath: 'creatorPlatforms',
-        message: `deliverable yêu cầu đăng trên ${uncovered.join(', ')} nhưng creatorPlatforms không có`,
+        message: `deliverables publish on ${uncovered.join(', ')} but creatorPlatforms does not list them`,
         metadata: { uncovered },
       },
     ];
@@ -508,7 +510,7 @@ export class CampaignService {
       issues.push({
         code: EBusinessCode[EBusinessCode.CAMPAIGN_PRICE_RANGE_INVALID],
         fieldPath: 'maxCashUnitPrice',
-        message: 'giá tối đa không được nhỏ hơn giá tối thiểu',
+        message: 'maximum price must not be lower than the minimum price',
       });
     }
 
@@ -524,7 +526,7 @@ export class CampaignService {
         issues.push({
           code: EBusinessCode[EBusinessCode.CAMPAIGN_BUDGET_MISMATCH],
           fieldPath: 'cashBudget',
-          message: `ngân sách phải bằng ${campaign.creatorCount} × ${unit}`,
+          message: `budget must equal ${campaign.creatorCount} × ${unit}`,
           metadata: { expected: expected.toString() },
         });
       }
@@ -542,7 +544,7 @@ export class CampaignService {
         issues.push({
           code: EBusinessCode[EBusinessCode.CAMPAIGN_CASH_BELOW_FLOOR],
           fieldPath: compared.fieldPath,
-          message: `${compared.value} dưới mức sàn ${floor.value}`,
+          message: `${compared.value} is below the floor of ${floor.value}`,
           // sourceKey là thứ khiến thông báo giải thích được: brand thấy ngay
           // con số đó đến từ quy tắc nào.
           metadata: {
@@ -568,7 +570,7 @@ export class CampaignService {
         {
           code: EBusinessCode[EBusinessCode.CAMPAIGN_CATEGORY_PROHIBITED],
           fieldPath: 'categoryId',
-          message: 'ngành hàng không tồn tại hoặc đã ngừng sử dụng',
+          message: 'category does not exist or is no longer active',
         },
       ];
     }
@@ -580,7 +582,7 @@ export class CampaignService {
         {
           code: EBusinessCode[EBusinessCode.CAMPAIGN_CATEGORY_PROHIBITED],
           fieldPath: 'categoryId',
-          message: 'ngành hàng này bị cấm chạy campaign',
+          message: 'this category is prohibited for campaigns',
         },
       ];
     }
@@ -599,7 +601,7 @@ export class CampaignService {
     return {
       code: 'isNotEmpty',
       fieldPath,
-      message: `${fieldPath} là bắt buộc khi gửi duyệt`,
+      message: `${fieldPath} is required to submit for review`,
     };
   }
 
@@ -621,7 +623,7 @@ export class CampaignService {
     }
     throw new UnprocessableEntityException({
       businessCode: EBusinessCode.CAMPAIGN_INVALID_TRANSITION,
-      message: `campaign đang ở ${CAMPAIGN_STATUS_LABEL[campaign.status]}, không sửa được`,
+      message: `campaign is ${CAMPAIGN_STATUS_LABEL[campaign.status]} and cannot be edited`,
       status: campaign.status,
       version: campaign.version,
     });
@@ -630,7 +632,7 @@ export class CampaignService {
   private versionConflict(current: Campaign): ConflictException {
     return new ConflictException({
       businessCode: EBusinessCode.CAMPAIGN_VERSION_CONFLICT,
-      message: 'campaign đã được sửa bởi thao tác khác',
+      message: 'campaign was modified by another operation',
       status: current.status,
       version: current.version,
     });
@@ -747,8 +749,8 @@ export class CampaignService {
       throw new UnprocessableEntityException({
         businessCode: EBusinessCode.CAMPAIGN_LIMIT_REACHED,
         message:
-          `đã có ${unfinished} campaign chưa kết thúc, tối đa ` +
-          `${MAX_UNFINISHED_CAMPAIGNS_PER_BRAND}; hoàn tất hoặc huỷ bớt trước`,
+          `${unfinished} unfinished campaigns already, limit is ` +
+          `${MAX_UNFINISHED_CAMPAIGNS_PER_BRAND}; finish or cancel some first`,
       });
     }
   }
@@ -770,7 +772,7 @@ export class CampaignService {
       }
     }
 
-    throw new ServiceUnavailableException('không sinh được mã campaign');
+    throw new ServiceUnavailableException('could not generate a campaign code');
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
