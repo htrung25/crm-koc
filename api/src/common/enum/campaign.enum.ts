@@ -39,6 +39,12 @@ export enum EReviewDecision {
   REJECT = 'reject',
 }
 
+export enum EReviewSubmissionStatus {
+  OPEN = 'open',
+  DECIDED = 'decided',
+  INVALIDATED = 'invalidated',
+}
+
 export enum ECampaignContentType {
   VIDEO = 'video',
   IMAGE_POST = 'image_post',

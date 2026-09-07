@@ -22,6 +22,7 @@ import { CampaignCategory } from '../module/brand/entities/campaign-category.ent
 import { CampaignDeliverable } from '../module/brand/entities/campaign-deliverable.entity';
 import { CampaignAsset } from '../module/brand/entities/campaign-asset.entity';
 import { CampaignStatusHistory } from '../module/brand/entities/campaign-status-history.entity';
+import { CampaignReviewSubmission } from '../module/brand/entities/campaign-review-submission.entity';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { CampaignStatusHistory } from '../module/brand/entities/campaign-status-
               CampaignDeliverable,
               CampaignAsset,
               CampaignStatusHistory,
+              CampaignReviewSubmission,
             ],
             migrations: migrationGlobals,
             migrationsRun: false,
@@ -100,6 +102,7 @@ import { CampaignStatusHistory } from '../module/brand/entities/campaign-status-
             CampaignDeliverable,
             CampaignAsset,
             CampaignStatusHistory,
+            CampaignReviewSubmission,
           ],
           migrations: migrationGlobals,
           migrationsRun: false,

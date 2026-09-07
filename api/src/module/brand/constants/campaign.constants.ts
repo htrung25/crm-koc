@@ -1,7 +1,15 @@
 import {
   ECampaignActorType,
+  ECampaignContentType,
   ECampaignStatus,
 } from '../../../common/enum/campaign.enum';
+import { ESocialPlatform } from '../../../common/enum/social-platform.enum';
+
+export const EDITABLE_CAMPAIGN_STATUSES = [
+  ECampaignStatus.DRAFT,
+  ECampaignStatus.CHANGES_REQUESTED,
+  ECampaignStatus.REJECTED,
+];
 
 /** Chưa kết thúc: còn chiếm chỗ trong hạn mức của brand. */
 export const UNFINISHED_CAMPAIGN_STATUSES = [
@@ -28,6 +36,80 @@ export const CAMPAIGN_CODE_MAX_ATTEMPTS = 5;
 /** Giữ khoá idempotency đủ lâu để bao trọn một phiên làm việc của brand. */
 export const CAMPAIGN_IDEMPOTENCY_TTL_SECONDS = 24 * 60 * 60;
 
+/** Nhóm trong system_configurations; đọc cả nhóm một lần bằng getByGroup. */
+export const CAMPAIGN_CONFIG_GROUP = 'campaign';
+
+export const CAMPAIGN_CONFIG_KEY = {
+  cashFloorPrefix: 'campaign.cash_floor',
+  cashFloorDefault: 'campaign.cash_floor.default',
+  maxProductImages: 'campaign.max_product_images',
+  assetMaxBytes: 'campaign.asset_max_bytes',
+} as const;
+
+/*Bị từ chối vì lý do trong danh sách này thì KHÔNG gửi lại được */
+export const NON_RESUBMITTABLE_REJECT_REASONS = ['policy_block', 'permanent'];
+
+/** Cột không thuộc nội dung nghiệp vụ nên không vào snapshot. */
+export const CAMPAIGN_SNAPSHOT_EXCLUDED_COLUMNS = [
+  'id',
+  'brandId',
+  'brand',
+  'category',
+  'code',
+  'status',
+  'version',
+  'wizardStep',
+  'submittedAt',
+  'approvedAt',
+  'cancelledAt',
+  'cancelReasonCode',
+  'createdAt',
+  'updatedAt',
+];
+
+/** T06 §2.2: brand phải chừa cho Creator ít nhất chừng này giờ để nộp hồ sơ. */
+export const MIN_HOURS_BEFORE_APPLICATION_DEADLINE = 24;
+
+/** Dùng khi thiếu khoá `campaign.max_product_images`; khớp trần 1–10 ở T06 §2.1. */
+export const MAX_PRODUCT_IMAGES_FALLBACK = 10;
+
+/**
+ * Loại nội dung mỗi nền tảng thực sự đăng được. `story` chỉ có ở nền tảng có
+ * định dạng đó; `review_article` để mở vì cả bốn đều đăng được bài dài.
+ */
+export const PLATFORM_CONTENT_TYPES: Record<
+  ESocialPlatform,
+  ECampaignContentType[]
+> = {
+  [ESocialPlatform.TIKTOK]: [
+    ECampaignContentType.VIDEO,
+    ECampaignContentType.IMAGE_POST,
+    ECampaignContentType.LIVESTREAM,
+    ECampaignContentType.STORY,
+    ECampaignContentType.REVIEW_ARTICLE,
+  ],
+  [ESocialPlatform.INSTAGRAM]: [
+    ECampaignContentType.VIDEO,
+    ECampaignContentType.IMAGE_POST,
+    ECampaignContentType.LIVESTREAM,
+    ECampaignContentType.STORY,
+    ECampaignContentType.REVIEW_ARTICLE,
+  ],
+  [ESocialPlatform.YOUTUBE]: [
+    ECampaignContentType.VIDEO,
+    ECampaignContentType.IMAGE_POST,
+    ECampaignContentType.LIVESTREAM,
+    ECampaignContentType.REVIEW_ARTICLE,
+  ],
+  [ESocialPlatform.FACEBOOK]: [
+    ECampaignContentType.VIDEO,
+    ECampaignContentType.IMAGE_POST,
+    ECampaignContentType.LIVESTREAM,
+    ECampaignContentType.STORY,
+    ECampaignContentType.REVIEW_ARTICLE,
+  ],
+};
+
 export const CAMPAIGN_IDEMPOTENCY_HEADER = 'Idempotency-Key';
 
 /** Header đi thẳng vào key Redis nên phải có trần, không nhận chuỗi tuỳ ý. */
@@ -47,13 +129,7 @@ export const ALL_CAMPAIGN_STATUSES = Object.values(ECampaignStatus).filter(
   (value): value is ECampaignStatus => typeof value === 'number',
 );
 
-/**
- * Chuyển trạng thái hợp lệ và ai được phép.
- *
- * Chưa có dòng nào cho SYSTEM: scheduler chỉ xuất hiện ở nửa tuyển dụng, phần
- * còn đang chờ chốt phạm vi. Giữ actor trong kiểu để không phải sửa chữ ký khi
- * thêm.
- */
+/*Chuyển trạng thái hợp lệ và ai được phép.*/
 export const CAMPAIGN_TRANSITIONS: Record<
   ECampaignStatus,
   Partial<Record<ECampaignStatus, ECampaignActorType[]>>

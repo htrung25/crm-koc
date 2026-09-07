@@ -1,16 +1,24 @@
 import {
   ConflictException,
+  ForbiddenException,
   HttpException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
 import { EBusinessCode } from '../../common/enum/business-code.enum';
-import { ECampaignActorType } from '../../common/enum/campaign.enum';
-import { assertCampaignTransition } from './campaign-state-machine';
-import { CAMPAIGN_STATUS_LABEL } from './constants/campaign.constants';
+import {
+  ECampaignActorType,
+  ECampaignStatus,
+} from '../../common/enum/campaign.enum';
+import {
+  ALL_CAMPAIGN_STATUSES,
+  CAMPAIGN_STATUS_LABEL,
+  CAMPAIGN_TRANSITIONS,
+} from './constants/campaign.constants';
 import { Campaign } from './entities/campaign.entity';
 import { CampaignStatusHistory } from './entities/campaign-status-history.entity';
 import type { CampaignTransitionInput } from './types/campaign.types';
@@ -26,12 +34,8 @@ export class CampaignTransitionService {
 
   @Transactional()
   async apply(input: CampaignTransitionInput): Promise<Campaign> {
-    // Hàm thuần, chặn trước khi chạm DB: sai luật thì không tốn một câu SQL nào.
-    assertCampaignTransition(
-      input.expectedStatus,
-      input.next,
-      input.actor.type,
-    );
+    // Chặn trước khi chạm DB: sai luật thì không tốn một câu SQL nào.
+    this.assertTransition(input.expectedStatus, input.next, input.actor.type);
 
     const affected = await this.conditionalUpdate(input);
     if (!affected) {
@@ -44,6 +48,43 @@ export class CampaignTransitionService {
 
     await this.appendHistory(input, campaign);
     return campaign;
+  }
+
+  /** Đích không hợp lệ thì 422, actor không được phép thì 403. */
+  private assertTransition(
+    from: ECampaignStatus,
+    to: ECampaignStatus,
+    actor: ECampaignActorType,
+  ): void {
+    const allowedActors = CAMPAIGN_TRANSITIONS[from][to];
+    const fromLabel = CAMPAIGN_STATUS_LABEL[from];
+    const toLabel = CAMPAIGN_STATUS_LABEL[to];
+
+    if (!allowedActors) {
+      const reachable = this.listTransitions(from);
+      throw new UnprocessableEntityException({
+        businessCode: EBusinessCode.CAMPAIGN_INVALID_TRANSITION,
+        message: reachable.length
+          ? `không chuyển được ${fromLabel} sang ${toLabel}; hợp lệ: ${reachable.join(', ')}`
+          : `${fromLabel} là trạng thái cuối, không đổi được nữa`,
+      });
+    }
+
+    if (!allowedActors.includes(actor)) {
+      throw new ForbiddenException(
+        `chỉ ${allowedActors.join(' hoặc ')} mới chuyển được ${fromLabel} sang ${toLabel}`,
+      );
+    }
+  }
+
+  private listTransitions(
+    from: ECampaignStatus,
+    actor?: ECampaignActorType,
+  ): string[] {
+    return ALL_CAMPAIGN_STATUSES.filter((to) => {
+      const actors = CAMPAIGN_TRANSITIONS[from][to];
+      return actor ? actors?.includes(actor) : Boolean(actors);
+    }).map((to) => CAMPAIGN_STATUS_LABEL[to]);
   }
 
   private async conditionalUpdate(
