@@ -9,10 +9,9 @@ import { BrandListService } from './brand-list.service';
 import { CreatorListController } from './creator-list.controller';
 import { CreatorListService } from './creator-list.service';
 import { AdminUser } from './entities/admin-user.entity';
-import { SystemConfiguration } from './entities/system-configuration.entity';
-import { SystemConfigurationService } from './system-configuration.service';
-import { SystemConfigurationController } from './system-configuration.controller';
 import { SuperAdminGuard } from './super-admin.guard';
+import { SystemConfigurationController } from './system-configuration.controller';
+import { SystemConfigurationModule } from '../system-configuration/system-configuration.module';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { SecurityModule } from '../../security/security.module';
 import { IpWhitelistModule } from './ip-whitelist.module';
@@ -22,14 +21,10 @@ import { AuditLog } from './entities/audit-log.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      AdminUser,
-      AuthEntity,
-      SystemConfiguration,
-      AuditLog,
-    ]),
+    TypeOrmModule.forFeature([AdminUser, AuthEntity, AuditLog]),
     SecurityModule,
     IpWhitelistModule,
+    SystemConfigurationModule,
   ],
   // THỨ TỰ QUAN TRỌNG: Nest đăng ký route theo đúng thứ tự mảng này, Express
   // khớp cái trúng đầu tiên. AdminController có '/admin/:id' nên sẽ nuốt cả
@@ -49,15 +44,8 @@ import { AuditLog } from './entities/audit-log.entity';
     BrandListService,
     CreatorListService,
     SuperAdminGuard,
-    SystemConfigurationService,
     AuditLogService,
   ],
-  // SystemConfigurationService export ra ngoài cho AdminMaintenanceInterceptor.
-  exports: [
-    AdminService,
-    AdminProfileService,
-    SystemConfigurationService,
-    AuditLogService,
-  ],
+  exports: [AdminService, AdminProfileService, AuditLogService],
 })
 export class AdminModule {}

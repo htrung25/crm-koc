@@ -11,7 +11,7 @@ import type { Request } from 'express';
 import { Observable } from 'rxjs';
 import { EBusinessCode } from '../enum/business-code.enum';
 import { ERole } from '../enum/roles.enum';
-import { SystemConfigurationService } from '../../module/admin/system-configuration.service';
+import { SystemConfigurationService } from '../../module/system-configuration/system-configuration.service';
 import { AuthenticatedAccount } from '../../module/auth/types/authenticated.types';
 
 /** Kiểu thật của request sau khi guard chạy — guard luôn chạy TRƯỚC interceptor. */

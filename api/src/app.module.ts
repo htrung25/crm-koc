@@ -18,6 +18,7 @@ import { AdminModule } from './module/admin/admin.module';
 import { AuthModule } from './module/auth/auth.module';
 import { IpWhitelistModule } from './module/admin/ip-whitelist.module';
 import { HealthModule } from './module/health/health.module';
+import { SystemConfigurationModule } from './module/system-configuration/system-configuration.module';
 import { QueueModule } from './queue/queue.module';
 import { KafkaModule } from './infra/kafka.module';
 
@@ -38,9 +39,11 @@ import { KafkaModule } from './infra/kafka.module';
         storage: new RedisThrottlerStorage(redis),
       }),
     }),
-    // KycModule phải đứng trước AuthModule để tránh /admin/:id
-    // của AdminController nuốt route /admin/kyc và gây lỗi UUID 400.
     KycModule,
+    // Không có controller nên vị trí ở đây không ảnh hưởng thứ tự route. Vẫn
+    // phải khai vì AdminMaintenanceInterceptor là APP_INTERCEPTOR, tiêm
+    // SystemConfigurationService trong phạm vi AppModule.
+    SystemConfigurationModule,
     AuthModule,
     AdminModule,
     BrandModule,

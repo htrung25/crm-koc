@@ -24,10 +24,10 @@ import { AuthenticatedAccount } from '../auth/types/authenticated.types';
 import {
   SystemConfigurationDto,
   UpdateSystemConfigurationsDto,
-} from './dto/system-configuration.dto';
+} from '../system-configuration/dto/system-configuration.dto';
 import { IpWhitelistGuard } from './ip-whitelist.guard';
 import { SuperAdminGuard } from './super-admin.guard';
-import { SystemConfigurationService } from './system-configuration.service';
+import { SystemConfigurationService } from '../system-configuration/system-configuration.service';
 
 @ApiTags('Admin-SystemConfiguration')
 @ApiBearerAuth('access-token')
