@@ -2293,6 +2293,241 @@
         ]
       }
     },
+    "/brand/campaigns/{id}": {
+      "get": {
+        "description": "Trả về cả wizardStep để client nhảy đúng bước đang dở, và version để gửi kèm ở lệnh sửa kế tiếp.",
+        "operationId": "CampaignController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign và danh sách deliverable"
+          },
+          "401": {
+            "description": "Thiếu token, token sai hoặc hết hạn"
+          },
+          "403": {
+            "description": "Không phải tài khoản brand"
+          },
+          "404": {
+            "description": "Campaign không tồn tại"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Mở lại một campaign kèm deliverables",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      },
+      "patch": {
+        "description": "Trường vắng mặt: không đụng tới. Trường bằng null: xoá giá trị cũ. Chỉ chặn sai kiểu, quá dài, sai enum — thiếu dữ liệu là bình thường với bản nháp. cashBudget do server tính, gửi lên sẽ bị từ chối.",
+        "operationId": "CampaignController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expectedVersion",
+            "required": true,
+            "in": "query",
+            "description": "Version client đang giữ, để chống ghi đè",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCampaignDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Campaign"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token, token sai hoặc hết hạn"
+          },
+          "403": {
+            "description": "Không phải tài khoản brand"
+          },
+          "404": {
+            "description": "Campaign không tồn tại"
+          },
+          "409": {
+            "description": "Version đã thay đổi"
+          },
+          "422": {
+            "description": "Campaign đang ở trạng thái không sửa được"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Autosave bản nháp",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      }
+    },
+    "/brand/campaigns/{id}/deliverables": {
+      "put": {
+        "description": "Gửi lên trạng thái hiện tại của bước 3, không phải chuỗi thao tác. Dòng có id thì sửa, không id thì thêm, vắng mặt khỏi mảng thì XOÁ. position do server gán theo thứ tự phần tử.",
+        "operationId": "CampaignController_putDeliverables",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncDeliverablesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CampaignDeliverable"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token, token sai hoặc hết hạn"
+          },
+          "403": {
+            "description": "Không phải tài khoản brand"
+          },
+          "404": {
+            "description": "Campaign không tồn tại"
+          },
+          "409": {
+            "description": "Version đã thay đổi"
+          },
+          "422": {
+            "description": "Campaign đang ở trạng thái không sửa được"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Đồng bộ toàn bộ danh sách deliverable",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      }
+    },
+    "/brand/campaigns/{id}/submit": {
+      "post": {
+        "description": "Chốt một bản chụp bất biến rồi chuyển sang PENDING_APPROVAL. Thiếu dữ liệu thì trả 422 kèm errors[] và campaign giữ nguyên trạng thái.",
+        "operationId": "CampaignController_submit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitCampaignDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignSubmittedResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu token, token sai hoặc hết hạn"
+          },
+          "403": {
+            "description": "Brand chưa VERIFIED, hoặc bị từ chối với lý do cấm gửi lại"
+          },
+          "404": {
+            "description": "Campaign không tồn tại"
+          },
+          "409": {
+            "description": "Version đã thay đổi"
+          },
+          "422": {
+            "description": "Dữ liệu chưa đủ điều kiện gửi duyệt, hoặc sai trạng thái"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Gửi campaign cho admin duyệt",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      }
+    },
     "/creator/profile/me": {
       "get": {
         "operationId": "CreatorProfileController_getMe",
@@ -4663,6 +4898,316 @@
           "status",
           "version",
           "wizardStep"
+        ]
+      },
+      "UpdateCampaignDto": {
+        "type": "object",
+        "properties": {
+          "wizardStep": {
+            "type": "object",
+            "minimum": 1,
+            "maximum": 6,
+            "description": "Bước wizard"
+          },
+          "title": {
+            "type": "object",
+            "maxLength": 150
+          },
+          "objective": {
+            "type": "string",
+            "enum": [
+              "awareness",
+              "engagement",
+              "traffic",
+              "sales"
+            ]
+          },
+          "categoryId": {
+            "type": "object",
+            "format": "uuid"
+          },
+          "keyMessage": {
+            "type": "object",
+            "maxLength": 2000
+          },
+          "sellingPoints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "prohibitedContent": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requiredHashtags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requiredMentions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requiredLinks": {
+            "description": "Bắt buộc HTTPS",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "creatorCount": {
+            "type": "object",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "recruitingStartAt": {
+            "type": "object",
+            "format": "date-time"
+          },
+          "applicationDeadline": {
+            "type": "object",
+            "format": "date-time"
+          },
+          "creatorContentCategories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "beauty",
+                "personal_care",
+                "fashion",
+                "food",
+                "travel",
+                "experience_culture",
+                "mom_baby",
+                "family",
+                "lifestyle_home",
+                "health",
+                "education",
+                "life_skills",
+                "finance",
+                "entertainment",
+                "art",
+                "gaming",
+                "streamer",
+                "business",
+                "b2b",
+                "sales",
+                "fitness",
+                "pet",
+                "automotive",
+                "music"
+              ]
+            }
+          },
+          "creatorPlatforms": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "tiktok",
+                "instagram",
+                "youtube",
+                "facebook"
+              ]
+            }
+          },
+          "creatorMinFollowers": {
+            "type": "object",
+            "minimum": 0
+          },
+          "creatorMinEngagementRate": {
+            "type": "object",
+            "minimum": 0,
+            "description": "Đơn vị %"
+          },
+          "creatorCities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "creatorAudienceNote": {
+            "type": "object",
+            "maxLength": 2000
+          },
+          "compensationType": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "product",
+              "hybrid"
+            ]
+          },
+          "pricingModel": {
+            "type": "string",
+            "enum": [
+              "fixed",
+              "negotiable"
+            ]
+          },
+          "cashUnitPrice": {
+            "type": "object",
+            "minimum": 0,
+            "description": "VND, số nguyên"
+          },
+          "minCashUnitPrice": {
+            "type": "object",
+            "minimum": 0
+          },
+          "maxCashUnitPrice": {
+            "type": "object",
+            "minimum": 0
+          },
+          "productBenefit": {
+            "type": "object",
+            "description": "mô tả, số lượng, giao nhận"
+          },
+          "usageRightsScope": {
+            "type": "object",
+            "maxLength": 2000
+          },
+          "usageRightsKind": {
+            "type": "string",
+            "enum": [
+              "fixed",
+              "perpetual"
+            ]
+          },
+          "usageRightsUntil": {
+            "type": "object",
+            "format": "date-time"
+          },
+          "cancellationPolicy": {
+            "type": "object",
+            "maxLength": 5000
+          }
+        }
+      },
+      "Campaign": {
+        "type": "object",
+        "properties": {}
+      },
+      "DeliverableItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "video",
+              "image_post",
+              "livestream",
+              "story",
+              "review_article"
+            ]
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "tiktok",
+              "instagram",
+              "youtube",
+              "facebook"
+            ]
+          },
+          "quantity": {
+            "type": "object",
+            "minimum": 1
+          },
+          "durationOrLength": {
+            "type": "object",
+            "description": "{ unit, min, max }"
+          },
+          "formatRequirements": {
+            "type": "object",
+            "maxLength": 2000
+          },
+          "contentSubmissionDeadline": {
+            "type": "object",
+            "format": "date-time"
+          },
+          "publishDeadline": {
+            "type": "object",
+            "format": "date-time"
+          }
+        }
+      },
+      "SyncDeliverablesDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "description": "Version campaign đang giữ, để chống ghi đè"
+          },
+          "deliverables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliverableItemDto"
+            }
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "deliverables"
+        ]
+      },
+      "CampaignDeliverable": {
+        "type": "object",
+        "properties": {}
+      },
+      "SubmitCampaignDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Version client đang giữ"
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ]
+      },
+      "CampaignSubmittedResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "number",
+            "description": "Luôn là PENDING_APPROVAL (2)"
+          },
+          "version": {
+            "type": "number"
+          },
+          "revisionNumber": {
+            "type": "number",
+            "description": "Lượt gửi duyệt thứ mấy của campaign này"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "version",
+          "revisionNumber",
+          "submittedAt"
         ]
       },
       "ECreatorContent": {
