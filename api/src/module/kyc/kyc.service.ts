@@ -215,6 +215,11 @@ export class KycService {
     return this.submissionRepository.save(submitKyc(submission, role));
   }
 
+  async isVerified(accountId: string, role: KycRole): Promise<boolean> {
+    const latest = await this.findLatest(accountId, role);
+    return latest?.status === EKycStatus.VERIFIED;
+  }
+
   /** Hồ sơ mới nhất của người gọi, kèm số lượt còn lại. */
   async findMine(
     accountId: string,

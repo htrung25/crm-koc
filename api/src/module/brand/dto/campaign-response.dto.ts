@@ -8,16 +8,18 @@ export class CampaignCreatedResponseDto {
   @ApiProperty({ example: 'CMP-9KN0CYKR', maxLength: 20 })
   code!: string;
 
-  @ApiProperty({ enum: ECampaignStatus, description: 'Luôn là DRAFT (1)' })
+  @ApiProperty({ enum: ECampaignStatus, description: 'Always DRAFT (1)' })
   status!: ECampaignStatus;
 
-  @ApiProperty({ description: 'Gửi lại ở mọi lệnh sửa để chống ghi đè' })
+  @ApiProperty({
+    description: 'Send back on every write to guard against lost updates',
+  })
   version!: number;
 
   @ApiProperty({
     nullable: true,
     type: Number,
-    description: 'Bước wizard gần nhất, null khi vừa tạo',
+    description: 'Latest wizard step, null right after creation',
   })
   wizardStep!: number | null;
 }

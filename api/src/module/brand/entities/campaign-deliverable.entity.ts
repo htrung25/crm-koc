@@ -9,7 +9,6 @@ import { ECampaignContentType } from '../../../common/enum/campaign.enum';
 import { ESocialPlatform } from '../../../common/enum/social-platform.enum';
 import { CampaignDeliverableDuration } from '../types/campaign.types';
 
-/** Yêu cầu nội dung cho MỘT Creator: ai nhận slot phải làm hết các dòng này. */
 @Entity('campaign_deliverables')
 export class CampaignDeliverable {
   @PrimaryGeneratedColumn('uuid')

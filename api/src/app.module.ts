@@ -40,9 +40,6 @@ import { KafkaModule } from './infra/kafka.module';
       }),
     }),
     KycModule,
-    // Không có controller nên vị trí ở đây không ảnh hưởng thứ tự route. Vẫn
-    // phải khai vì AdminMaintenanceInterceptor là APP_INTERCEPTOR, tiêm
-    // SystemConfigurationService trong phạm vi AppModule.
     SystemConfigurationModule,
     AuthModule,
     AdminModule,
