@@ -9,7 +9,8 @@
 /** Khớp @MaxLength(2000) trên UpdateAdminDto. */
 export const MAX_WHITELIST_LENGTH = 2000;
 
-const ENTRY_SHAPE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?:\/(\d{1,2}))?$/;
+const ENTRY_SHAPE =
+  /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?:\/(\d{1,2}))?$/;
 
 /**
  * Quy IP nguồn về IPv4, phản chiếu đúng `normalizeIp` của backend
@@ -23,14 +24,14 @@ const ENTRY_SHAPE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?:\/(\d{1,2}))?
  */
 export function normalizeClientIp(ip: string | null): string | null {
   if (!ip) return null;
-  if (ip === "::1") return "127.0.0.1";
-  if (ip.startsWith("::ffff:")) return ip.slice(7);
+  if (ip === '::1') return '127.0.0.1';
+  if (ip.startsWith('::ffff:')) return ip.slice(7);
   return ip;
 }
 
 export const parseWhitelist = (raw?: string | null): string[] =>
-  (raw ?? "")
-    .split(",")
+  (raw ?? '')
+    .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
 
@@ -39,11 +40,11 @@ export const serializeWhitelist = (list: string[]): string =>
   list
     .map((s) => s.trim())
     .filter(Boolean)
-    .join(",");
+    .join(',');
 
 /** Đổi IPv4 sang số 32-bit không dấu; null nếu không phải IPv4 hợp lệ. */
 function toUint32(ip: string): number | null {
-  const octets = ip.split(".");
+  const octets = ip.split('.');
   if (octets.length !== 4) return null;
 
   let result = 0;
@@ -57,7 +58,7 @@ function toUint32(ip: string): number | null {
 }
 
 function toIpString(value: number): string {
-  return [24, 16, 8, 0].map((shift) => (value >>> shift) & 255).join(".");
+  return [24, 16, 8, 0].map((shift) => (value >>> shift) & 255).join('.');
 }
 
 /** Mặt nạ /bits dạng số không dấu. `>>> 0` vì phép dịch của JS trả số có dấu. */
@@ -71,12 +72,12 @@ function maskOf(bits: number): number {
  * lưu được nhưng không bao giờ khớp — im lặng và khó truy.
  */
 export type EntryError =
-  | "EMPTY"
-  | "IPV6_NOT_SUPPORTED"
-  | "MULTIPLE_SLASHES"
-  | "INVALID_SHAPE"
-  | "OCTET_OUT_OF_RANGE"
-  | "PREFIX_OUT_OF_RANGE";
+  | 'EMPTY'
+  | 'IPV6_NOT_SUPPORTED'
+  | 'MULTIPLE_SLASHES'
+  | 'INVALID_SHAPE'
+  | 'OCTET_OUT_OF_RANGE'
+  | 'PREFIX_OUT_OF_RANGE';
 
 /**
  * Trả MÃ chứ không phải câu chữ: hàm này chạy được ở cả server lẫn client và
@@ -84,27 +85,27 @@ export type EntryError =
  */
 export function validateEntry(raw: string): EntryError | null {
   const value = raw.trim();
-  if (!value) return "EMPTY";
+  if (!value) return 'EMPTY';
 
-  if (value.includes(":")) return "IPV6_NOT_SUPPORTED";
+  if (value.includes(':')) return 'IPV6_NOT_SUPPORTED';
 
-  if (value.split("/").length > 2) return "MULTIPLE_SLASHES";
+  if (value.split('/').length > 2) return 'MULTIPLE_SLASHES';
 
   const match = value.match(ENTRY_SHAPE);
-  if (!match) return "INVALID_SHAPE";
+  if (!match) return 'INVALID_SHAPE';
 
   if (match.slice(1, 5).some((octet) => Number(octet) > 255)) {
-    return "OCTET_OUT_OF_RANGE";
+    return 'OCTET_OUT_OF_RANGE';
   }
 
   if (match[5] !== undefined && Number(match[5]) > 32) {
-    return "PREFIX_OUT_OF_RANGE";
+    return 'PREFIX_OUT_OF_RANGE';
   }
 
   return null;
 }
 
-const isCidr = (entry: string): boolean => entry.includes("/");
+const isCidr = (entry: string): boolean => entry.includes('/');
 
 /**
  * Bỏ host bits, đúng thứ backend thực sự lưu.
@@ -113,7 +114,7 @@ const isCidr = (entry: string): boolean => entry.includes("/");
 export function normalizeCidr(entry: string): string {
   if (!isCidr(entry)) return entry;
 
-  const [ip, prefix] = entry.split("/");
+  const [ip, prefix] = entry.split('/');
   const base = toUint32(ip);
   const bits = Number(prefix);
   if (base === null || !Number.isInteger(bits) || bits < 0 || bits > 32) {
@@ -127,7 +128,7 @@ export function normalizeCidr(entry: string): string {
 export function hostCount(entry: string): number {
   if (!isCidr(entry)) return 1;
 
-  const bits = Number(entry.split("/")[1]);
+  const bits = Number(entry.split('/')[1]);
   if (!Number.isInteger(bits) || bits < 0 || bits > 32) return 1;
 
   return 2 ** (32 - bits);
@@ -141,7 +142,7 @@ export function hostCount(entry: string): number {
  * được cho phép.
  */
 export function entryCovers(entry: string, ip: string): boolean {
-  const [network, prefix] = entry.split("/");
+  const [network, prefix] = entry.split('/');
   const target = toUint32(ip);
   const base = toUint32(network);
   if (target === null || base === null) return false;
@@ -152,5 +153,5 @@ export function entryCovers(entry: string, ip: string): boolean {
   if (!Number.isInteger(bits) || bits < 0 || bits > 32) return false;
 
   const mask = maskOf(bits);
-  return ((target & mask) >>> 0) === ((base & mask) >>> 0);
+  return (target & mask) >>> 0 === (base & mask) >>> 0;
 }

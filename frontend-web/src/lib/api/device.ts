@@ -1,4 +1,4 @@
-import { DEVICE_ID_COOKIE } from "@/features/auth/session";
+import { DEVICE_ID_COOKIE } from '@/features/auth/session';
 
 export { DEVICE_ID_COOKIE };
 
@@ -8,14 +8,14 @@ export { DEVICE_ID_COOKIE };
  * device_id, để cờ Secure/SameSite chỉ do một chỗ quyết định.
  */
 export function getDeviceId(): string {
-  if (typeof document === "undefined") return "";
+  if (typeof document === 'undefined') return '';
 
   const match = document.cookie
-    .split("; ")
+    .split('; ')
     .find((row) => row.startsWith(`${DEVICE_ID_COOKIE}=`));
 
-  if (!match) return "";
+  if (!match) return '';
 
-  const value = match.split("=")[1];
-  return value ? decodeURIComponent(value) : "";
+  const value = match.split('=')[1];
+  return value ? decodeURIComponent(value) : '';
 }

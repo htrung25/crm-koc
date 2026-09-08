@@ -3,12 +3,19 @@ import {
   parseAsString,
   parseAsStringLiteral,
   useQueryStates,
-} from "nuqs";
-import type { AdminQuery, AdminRole } from "@/features/admin/ip-whitelist/types";
+} from 'nuqs';
+import type {
+  AdminQuery,
+  AdminRole,
+} from '@/features/admin/ip-whitelist/types';
 
 export const ipWhitelistSearchParams = {
-  search: parseAsString.withDefault(""),
-  role: parseAsStringLiteral(["all", "admin", "super_admin"] as const).withDefault("all"),
+  search: parseAsString.withDefault(''),
+  role: parseAsStringLiteral([
+    'all',
+    'admin',
+    'super_admin',
+  ] as const).withDefault('all'),
   page: parseAsInteger.withDefault(1),
   rowsPerPage: parseAsInteger.withDefault(8),
 };
@@ -16,14 +23,14 @@ export const ipWhitelistSearchParams = {
 export function useIpWhitelistQueryParams() {
   const [params, setParams] = useQueryStates(ipWhitelistSearchParams, {
     shallow: true,
-    history: "replace",
+    history: 'replace',
   });
 
   const query: AdminQuery = {
     page: params.page,
     limit: params.rowsPerPage,
     search: params.search,
-    role: params.role as "all" | AdminRole,
+    role: params.role as 'all' | AdminRole,
   };
 
   const setSearch = (search: string) => {
@@ -34,7 +41,7 @@ export function useIpWhitelistQueryParams() {
     }));
   };
 
-  const setRole = (role: "all" | AdminRole) => {
+  const setRole = (role: 'all' | AdminRole) => {
     return setParams((prev) => ({
       ...prev,
       role,
@@ -60,7 +67,7 @@ export function useIpWhitelistQueryParams() {
   return {
     query,
     search: params.search,
-    role: params.role as "all" | AdminRole,
+    role: params.role as 'all' | AdminRole,
     page: params.page,
     rowsPerPage: params.rowsPerPage,
     setSearch,

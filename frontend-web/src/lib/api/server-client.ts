@@ -1,4 +1,4 @@
-import { clientIpOf, type ClientContext } from "./client-context";
+import { clientIpOf, type ClientContext } from './client-context';
 
 // Đọc lúc gọi, KHÔNG đọc ở top-level: `next build` chạy với
 // NODE_ENV=production và có thu thập page data, nên throw ở top-level là chết
@@ -9,10 +9,10 @@ function apiBaseUrl(): string {
   if (!url) {
     // Thiếu biến ở production mà vẫn chạy nghĩa là mọi request lặng lẽ đi tới
     // localhost và hỏng theo kiểu khó truy nguyên. Chết sớm dễ sửa hơn.
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("Thiếu biến môi trường API_URL");
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Thiếu biến môi trường API_URL');
     }
-    return "http://localhost:3000";
+    return 'http://localhost:3000';
   }
   return url;
 }
@@ -28,46 +28,46 @@ export class ApiError extends Error {
      * Giữ nguyên bản thô vì chỉ `message` + `status` là không đủ: dialog tự
      * khoá cần `clientIp`, và highlight chip sai cần `businessCode`.
      */
-    public readonly body: unknown = null,
+    public readonly body: unknown = null
   ) {
     super(message);
-    this.name = "ApiError";
+    this.name = 'ApiError';
   }
 
   private field(key: string): string | undefined {
-    if (typeof this.body !== "object" || this.body === null) return undefined;
+    if (typeof this.body !== 'object' || this.body === null) return undefined;
     const value = (this.body as Record<string, unknown>)[key];
-    return typeof value === "string" ? value : undefined;
+    return typeof value === 'string' ? value : undefined;
   }
 
   get businessCode(): string | number | undefined {
-    if (typeof this.body !== "object" || this.body === null) return undefined;
+    if (typeof this.body !== 'object' || this.body === null) return undefined;
     const value = (this.body as Record<string, unknown>).businessCode;
-    return typeof value === "string" || typeof value === "number"
+    return typeof value === 'string' || typeof value === 'number'
       ? value
       : undefined;
   }
 
   /** Có ở 422 IP_WHITELIST_WOULD_LOCK_YOU_OUT, đã chuẩn hoá về IPv4. */
   get clientIp(): string | undefined {
-    return this.field("clientIp");
+    return this.field('clientIp');
   }
 }
 
 /** Nest trả message dạng string hoặc string[] (ValidationPipe). */
 function extractMessage(body: unknown, fallback: string): string {
-  if (typeof body === "object" && body !== null && "message" in body) {
+  if (typeof body === 'object' && body !== null && 'message' in body) {
     const message = (body as { message: unknown }).message;
-    if (typeof message === "string") return message;
-    if (Array.isArray(message) && typeof message[0] === "string") {
-      return message.join(", ");
+    if (typeof message === 'string') return message;
+    if (Array.isArray(message) && typeof message[0] === 'string') {
+      return message.join(', ');
     }
   }
   return fallback;
 }
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   token?: string;
   /**
@@ -85,24 +85,24 @@ function buildHeaders({
 }: RequestOptions): HeadersInit {
   const headers: Record<string, string> = {};
 
-  if (body) headers["Content-Type"] = "application/json";
+  if (body) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;
 
   if (clientContext?.deviceId) {
-    headers["x-device-id"] = clientContext.deviceId;
+    headers['x-device-id'] = clientContext.deviceId;
   }
 
   if (clientContext?.forwardedFor) {
     // Giữ nguyên cả chuỗi: phần tử đầu là client, các phần sau là proxy trung
     // gian — backend cần đủ chuỗi để tự quyết định tin tới đâu.
-    headers["x-forwarded-for"] = clientContext.forwardedFor;
+    headers['x-forwarded-for'] = clientContext.forwardedFor;
 
     const ip = clientIpOf(clientContext);
-    if (ip) headers["x-real-ip"] = ip;
+    if (ip) headers['x-real-ip'] = ip;
   }
 
   if (clientContext?.userAgent) {
-    headers["user-agent"] = clientContext.userAgent;
+    headers['user-agent'] = clientContext.userAgent;
   }
 
   return headers;
@@ -110,9 +110,9 @@ function buildHeaders({
 
 export async function apiRequest<T>(
   endpoint: string,
-  options: RequestOptions = {},
+  options: RequestOptions = {}
 ): Promise<T> {
-  const { method = "GET", body } = options;
+  const { method = 'GET', body } = options;
   let response: Response;
 
   try {
@@ -120,13 +120,17 @@ export async function apiRequest<T>(
       method,
       headers: buildHeaders(options),
       body: body ? JSON.stringify(body) : undefined,
-      cache: "no-store",
+      cache: 'no-store',
     });
   } catch {
     // Backend chưa chạy / sai host: phân biệt rõ với lỗi nghiệp vụ 4xx.
-    throw new ApiError("Không kết nối được tới máy chủ. Vui lòng thử lại.", 503, {
-      businessCode: "NETWORK_UNREACHABLE",
-    });
+    throw new ApiError(
+      'Không kết nối được tới máy chủ. Vui lòng thử lại.',
+      503,
+      {
+        businessCode: 'NETWORK_UNREACHABLE',
+      }
+    );
   }
 
   const raw = await response.text();
@@ -140,12 +144,14 @@ export async function apiRequest<T>(
       // thay vì để SyntaxError lọt ra thành 500 kèm stack.
       throw new ApiError(
         response.ok
-          ? "Máy chủ trả về dữ liệu không hợp lệ."
+          ? 'Máy chủ trả về dữ liệu không hợp lệ.'
           : `Máy chủ gặp sự cố (${response.status}).`,
         response.ok ? 502 : response.status,
         {
-          businessCode: response.ok ? "INVALID_SERVER_RESPONSE" : "SERVER_ERROR",
-        },
+          businessCode: response.ok
+            ? 'INVALID_SERVER_RESPONSE'
+            : 'SERVER_ERROR',
+        }
       );
     }
   }
@@ -156,7 +162,7 @@ export async function apiRequest<T>(
       response.status,
       // Không có body thì gắn mã tổng hợp; có body thì giữ nguyên để
       // businessCode thật của backend không bị che.
-      data ?? { businessCode: "REQUEST_FAILED" },
+      data ?? { businessCode: 'REQUEST_FAILED' }
     );
   }
 

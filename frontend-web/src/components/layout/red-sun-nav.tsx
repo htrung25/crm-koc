@@ -1,45 +1,46 @@
-"use client";
+'use client';
 
-import { APP_ROUTES } from "@/constants/routes";
-import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { APP_ROUTES } from '@/constants/routes';
+import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
-import Link from "next/link";
-import { LocaleToggle } from "@/components/ui/locale-toggle";
+import Link from 'next/link';
+import { LocaleToggle } from '@/components/ui/locale-toggle';
 
 interface RedSunNavProps {
   /**
    * Nền của trang bên dưới nav. "light" = chữ ink (landing hero trắng),
    * "dark" = chữ trắng (các trang login nền #2D3B42).
    */
-  tone?: "light" | "dark";
+  tone?: 'light' | 'dark';
 }
 
-export function RedSunNav({ tone = "light" }: RedSunNavProps) {
-  const t = useTranslations("marketing.navigation");
+export function RedSunNav({ tone = 'light' }: RedSunNavProps) {
+  const t = useTranslations('marketing.navigation');
   const [scrolled, setScrolled] = useState(false);
-  const isDark = tone === "dark";
-  const brandText = isDark ? "text-white" : "text-[#2D3B42]";
+  const isDark = tone === 'dark';
+  const brandText = isDark ? 'text-white' : 'text-[#2D3B42]';
   const linkText = isDark
-    ? "text-white/90 hover:text-[#EF4623]"
-    : "text-[#2D3B42] hover:text-[#EF4623]";
+    ? 'text-white/90 hover:text-[#EF4623]'
+    : 'text-[#2D3B42] hover:text-[#EF4623]';
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${!scrolled
-          ? "py-6 bg-transparent"
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        !scrolled
+          ? 'py-6 bg-transparent'
           : isDark
-            ? "py-3 bg-[#2D3B42]/90 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/20"
-            : "py-3 bg-white/85 backdrop-blur-xl border-b border-[#2D3B42]/10 shadow-lg shadow-black/5"
-        }`}
+            ? 'py-3 bg-[#2D3B42]/90 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/20'
+            : 'py-3 bg-white/85 backdrop-blur-xl border-b border-[#2D3B42]/10 shadow-lg shadow-black/5'
+      }`}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
         {/* Left: Rotating Logo Brand Mark */}
@@ -68,31 +69,31 @@ export function RedSunNav({ tone = "light" }: RedSunNavProps) {
             href="/#hero"
             className={`text-sm font-semibold transition-colors ${linkText}`}
           >
-            {t("overview")}
+            {t('overview')}
           </Link>
           <Link
             href="/#value-prop"
             className={`text-sm font-semibold transition-colors ${linkText}`}
           >
-            {t("simulation")}
+            {t('simulation')}
           </Link>
           <Link
             href="/#features"
             className={`text-sm font-semibold transition-colors ${linkText}`}
           >
-            {t("features")}
+            {t('features')}
           </Link>
           <Link
             href="/#pricing"
             className={`text-sm font-semibold transition-colors ${linkText}`}
           >
-            {t("pricing")}
+            {t('pricing')}
           </Link>
           <Link
             href="/#cta"
             className={`text-sm font-semibold transition-colors ${linkText}`}
           >
-            {t("solution")}
+            {t('solution')}
           </Link>
         </nav>
 
@@ -102,16 +103,18 @@ export function RedSunNav({ tone = "light" }: RedSunNavProps) {
           <Link
             href={APP_ROUTES.login}
             className={`hidden sm:inline-block text-xs font-bold uppercase tracking-wider transition-colors px-3 py-2 ${
-              isDark ? "text-white hover:text-[#EF4623]" : "text-[#2D3B42] hover:text-[#EF4623]"
+              isDark
+                ? 'text-white hover:text-[#EF4623]'
+                : 'text-[#2D3B42] hover:text-[#EF4623]'
             }`}
           >
-            {t("login")}
+            {t('login')}
           </Link>
           <Link
             href={APP_ROUTES.register}
             className="inline-flex items-center justify-center px-6 py-2.5 rounded-[30px] bg-[#EF4623] text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/25 hover:bg-[#D83B19] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
           >
-            {t("getStarted")}
+            {t('getStarted')}
           </Link>
         </div>
       </div>

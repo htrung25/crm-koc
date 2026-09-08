@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { APP_ROUTES } from "@/constants/routes";
-import { useId } from "react";
-import { useTranslations } from "next-intl";
+import { APP_ROUTES } from '@/constants/routes';
+import { useId } from 'react';
+import { useTranslations } from 'next-intl';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ADMIN_NAV_ITEMS, ADMIN_SYSTEM_ITEMS } from "@/constants/navigation";
-import type { NavigationItem } from "@/types/navigation";
-import { NAV_ICONS, type NavIconName } from "@/components/ui/icons";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ADMIN_NAV_ITEMS, ADMIN_SYSTEM_ITEMS } from '@/constants/navigation';
+import type { NavigationItem } from '@/types/navigation';
+import { NAV_ICONS, type NavIconName } from '@/components/ui/icons';
 
 function NavGroup({
   title,
@@ -19,7 +19,7 @@ function NavGroup({
   items: NavigationItem[];
   pathname: string;
 }) {
-  const t = useTranslations("navigation");
+  const t = useTranslations('navigation');
   // useId thay vì ghép từ tiêu đề: "Điều hướng" có dấu cách, mà id chứa khoảng
   // trắng là không hợp lệ và aria-labelledby sẽ không trỏ tới được.
   const headingId = useId();
@@ -48,7 +48,7 @@ function NavGroup({
                 <li key={item.href}>
                   <span
                     aria-disabled="true"
-                    title={t("comingSoon")}
+                    title={t('comingSoon')}
                     className="flex cursor-not-allowed items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-[#B4A091]"
                   >
                     <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -62,11 +62,12 @@ function NavGroup({
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30 ${isActive
-                      ? "bg-gradient-to-br from-[#EF4623] to-[#D8410F] text-white shadow-lg shadow-[#EF4623]/25"
-                      : "text-[#5C5049] hover:bg-white/60 hover:text-[#2D3B42]"
-                    }`}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30 ${
+                    isActive
+                      ? 'bg-gradient-to-br from-[#EF4623] to-[#D8410F] text-white shadow-lg shadow-[#EF4623]/25'
+                      : 'text-[#5C5049] hover:bg-white/60 hover:text-[#2D3B42]'
+                  }`}
                 >
                   <Icon className="h-[18px] w-[18px] shrink-0" />
                   {t(item.labelKey)}
@@ -90,7 +91,7 @@ function NavGroup({
  */
 export function AdminSidebar() {
   const pathname = usePathname();
-  const t = useTranslations("navigation");
+  const t = useTranslations('navigation');
 
   return (
     <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-[248px] shrink-0 flex-col gap-6 overflow-y-auto rounded-[28px] glass p-4 md:flex">
@@ -99,9 +100,18 @@ export function AdminSidebar() {
         className="flex items-center gap-3 rounded-2xl px-1 py-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30"
       >
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#EF4623] to-[#F49E4C] shadow-lg shadow-[#EF4623]/30">
-          <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5 text-white"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="4.6" fill="currentColor" />
-            <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none">
+            <g
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              fill="none"
+            >
               <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2" />
               <path d="M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6" />
             </g>
@@ -117,11 +127,15 @@ export function AdminSidebar() {
         </span>
       </Link>
 
-      <NavGroup title={t("mainGroup")} items={ADMIN_NAV_ITEMS} pathname={pathname} />
+      <NavGroup
+        title={t('mainGroup')}
+        items={ADMIN_NAV_ITEMS}
+        pathname={pathname}
+      />
 
       <div className="border-t border-[#2D3B42]/10 pt-5">
         <NavGroup
-          title={t("systemGroup")}
+          title={t('systemGroup')}
           items={ADMIN_SYSTEM_ITEMS}
           pathname={pathname}
         />

@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import { APP_ROUTES } from "@/constants/routes";
-import { IconChevronDown } from "@/components/ui/icons";
+import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { APP_ROUTES } from '@/constants/routes';
+import { IconChevronDown } from '@/components/ui/icons';
 import {
   MAX_WHITELIST_LENGTH,
   parseWhitelist,
   serializeWhitelist,
   validateEntry,
-} from "@/features/admin/ip-whitelist/whitelist";
-import { SUPER_ADMIN_REQUIRED } from "@/features/admin/ip-whitelist/types";
-import type { AdminResponse } from "@/features/admin/ip-whitelist/types";
-import { ApiRequestError } from "@/lib/api/browser-client";
-import { SelfLockoutDialog } from "@/features/admin/ip-whitelist/components/self-lockout-dialog";
-import { useUpdateAdmin } from "@/features/admin/ip-whitelist/hooks/use-admin-mutations";
+} from '@/features/admin/ip-whitelist/whitelist';
+import { SUPER_ADMIN_REQUIRED } from '@/features/admin/ip-whitelist/types';
+import type { AdminResponse } from '@/features/admin/ip-whitelist/types';
+import { ApiRequestError } from '@/lib/api/browser-client';
+import { SelfLockoutDialog } from '@/features/admin/ip-whitelist/components/self-lockout-dialog';
+import { useUpdateAdmin } from '@/features/admin/ip-whitelist/hooks/use-admin-mutations';
 
 type IpWhitelistAddFormProps = {
   admins: AdminResponse[];
@@ -28,12 +28,12 @@ export function IpWhitelistAddForm({
   onClose,
   onForbidden,
 }: IpWhitelistAddFormProps) {
-  const t = useTranslations("admin.ipWhitelist");
-  const tError = useTranslations("errors");
+  const t = useTranslations('admin.ipWhitelist');
+  const tError = useTranslations('errors');
   const router = useRouter();
 
-  const [selectedAdminId, setSelectedAdminId] = useState("");
-  const [newWhitelistEntry, setNewWhitelistEntry] = useState("");
+  const [selectedAdminId, setSelectedAdminId] = useState('');
+  const [newWhitelistEntry, setNewWhitelistEntry] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [lockoutIp, setLockoutIp] = useState<string | null>(null);
   const [pendingWhitelistValue, setPendingWhitelistValue] = useState<
@@ -51,20 +51,20 @@ export function IpWhitelistAddForm({
     const code = failure.businessCode;
     if (!code || !tError.has(code)) return failure.message;
     return tError(code, {
-      clientIp: failure.clientIp ?? "",
-      entry: failure.message.split(": ").slice(1).join(": "),
+      clientIp: failure.clientIp ?? '',
+      entry: failure.message.split(': ').slice(1).join(': '),
       max: MAX_WHITELIST_LENGTH,
-      status: failure.status ?? "",
+      status: failure.status ?? '',
     });
   };
 
   const handleSave = async (
     payloadOverride?: string | null,
-    acknowledgeSelfLockout = false,
+    acknowledgeSelfLockout = false
   ) => {
     const admin = admins.find((item) => item.id === selectedAdminId);
     if (!admin) {
-      setError(t("pickEmail"));
+      setError(t('pickEmail'));
       return;
     }
 
@@ -85,7 +85,7 @@ export function IpWhitelistAddForm({
           : null;
 
     if ((ipWhitelist?.length ?? 0) > MAX_WHITELIST_LENGTH) {
-      setError(t("tooLong", { max: MAX_WHITELIST_LENGTH }));
+      setError(t('tooLong', { max: MAX_WHITELIST_LENGTH }));
       return;
     }
 
@@ -119,7 +119,7 @@ export function IpWhitelistAddForm({
         requestError.businessCode === SUPER_ADMIN_REQUIRED
       ) {
         onForbidden();
-        setError(t("superAdminList"));
+        setError(t('superAdminList'));
         return;
       }
       setError(requestError.message);
@@ -148,7 +148,7 @@ export function IpWhitelistAddForm({
               required
               className="h-12 w-full appearance-none rounded-2xl bg-white/65 px-4 pr-10 text-sm font-semibold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35"
             >
-              <option value="">{t("chooseEmail")}</option>
+              <option value="">{t('chooseEmail')}</option>
               {admins.map((admin) => (
                 <option key={admin.id} value={admin.id}>
                   {admin.email}
@@ -160,14 +160,14 @@ export function IpWhitelistAddForm({
         </label>
 
         <label className="block text-xs font-extrabold text-[#5C5049]">
-          {t("addWhitelist")}
+          {t('addWhitelist')}
           <input
             value={newWhitelistEntry}
             onChange={(event) => {
               setNewWhitelistEntry(event.target.value);
               setError(null);
             }}
-            placeholder={t("ipPlaceholder")}
+            placeholder={t('ipPlaceholder')}
             aria-describedby="add-ip-whitelist-help"
             className="mt-2 h-12 w-full rounded-2xl bg-white/65 px-4 font-mono text-sm font-semibold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 placeholder:font-sans placeholder:text-[#A89685] focus:ring-2 focus:ring-[#EF4623]/35"
           />
@@ -175,7 +175,7 @@ export function IpWhitelistAddForm({
             id="add-ip-whitelist-help"
             className="mt-2 block text-[11px] font-semibold leading-relaxed text-[#8A7768]"
           >
-            {t("ipHint")}
+            {t('ipHint')}
           </span>
         </label>
 
@@ -186,14 +186,14 @@ export function IpWhitelistAddForm({
             onClick={onClose}
             className="h-12 rounded-2xl px-4 text-sm font-extrabold text-[#5C5049] hover:bg-white/50 disabled:opacity-50"
           >
-            {t("cancel")}
+            {t('cancel')}
           </button>
           <button
             type="submit"
             disabled={updateMutation.isPending || !selectedAdminId}
             className="h-12 rounded-2xl bg-gradient-to-br from-[#EF4623] to-[#D8410F] px-5 text-sm font-extrabold text-white shadow-lg shadow-[#EF4623]/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {updateMutation.isPending ? t("saving") : t("saveWhitelist")}
+            {updateMutation.isPending ? t('saving') : t('saveWhitelist')}
           </button>
         </div>
 

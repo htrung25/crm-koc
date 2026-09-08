@@ -1,17 +1,20 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import type { AuditLogQuery, AuditLogRow } from "@/features/admin/audit-logs/types";
-import { useAuditLogs } from "@/features/admin/audit-logs/hooks/use-audit-logs";
-import { useAuditLogQueryParams } from "@/features/admin/audit-logs/hooks/use-audit-log-query-params";
-import { AuditLogFilters } from "@/features/admin/audit-logs/components/audit-log-filters";
-import { AuditLogTable } from "@/features/admin/audit-logs/components/audit-log-table";
-import { AuditLogDetailDrawer } from "@/features/admin/audit-logs/components/audit-log-detail-drawer";
-import { ApiRequestError } from "@/lib/api/browser-client";
+import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import type {
+  AuditLogQuery,
+  AuditLogRow,
+} from '@/features/admin/audit-logs/types';
+import { useAuditLogs } from '@/features/admin/audit-logs/hooks/use-audit-logs';
+import { useAuditLogQueryParams } from '@/features/admin/audit-logs/hooks/use-audit-log-query-params';
+import { AuditLogFilters } from '@/features/admin/audit-logs/components/audit-log-filters';
+import { AuditLogTable } from '@/features/admin/audit-logs/components/audit-log-table';
+import { AuditLogDetailDrawer } from '@/features/admin/audit-logs/components/audit-log-detail-drawer';
+import { ApiRequestError } from '@/lib/api/browser-client';
 
 export function AuditLogPanel() {
-  const t = useTranslations("admin.auditLogs");
+  const t = useTranslations('admin.auditLogs');
 
   const { query, updateQuery, resetQuery } = useAuditLogQueryParams();
   const [selectedLog, setSelectedLog] = useState<AuditLogRow | null>(null);
@@ -28,17 +31,17 @@ export function AuditLogPanel() {
 
   const isForbidden =
     error instanceof ApiRequestError &&
-    (error.status === 403 || error.businessCode === "SUPER_ADMIN_REQUIRED");
+    (error.status === 403 || error.businessCode === 'SUPER_ADMIN_REQUIRED');
 
   return (
     <section className="space-y-4">
       {/* Header & Mô tả */}
       <div>
         <h1 className="text-2xl font-extrabold text-[#2D3B42]">
-          {t("pageTitle")}
+          {t('pageTitle')}
         </h1>
         <p className="mt-1 text-xs font-semibold text-[#8A7768]">
-          {t("pageSubtitle")}
+          {t('pageSubtitle')}
         </p>
       </div>
 
@@ -46,10 +49,10 @@ export function AuditLogPanel() {
       {isForbidden ? (
         <div className="rounded-[26px] bg-red-500/10 p-6 text-center ring-1 ring-red-500/20 space-y-2">
           <h3 className="text-base font-extrabold text-red-700">
-            {t("forbiddenTitle")}
+            {t('forbiddenTitle')}
           </h3>
           <p className="text-xs font-semibold text-red-600 max-w-md mx-auto">
-            {t("forbiddenMessage")}
+            {t('forbiddenMessage')}
           </p>
         </div>
       ) : (

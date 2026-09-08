@@ -1,4 +1,7 @@
-import type { TrafficData, TrafficSlice } from "@/features/admin/dashboard/types";
+import type {
+  TrafficData,
+  TrafficSlice,
+} from '@/features/admin/dashboard/types';
 
 const RADIUS = 62;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;

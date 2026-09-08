@@ -1,4 +1,4 @@
-export type SocialPlatform = "TikTok" | "Instagram" | "YouTube" | "Facebook";
+export type SocialPlatform = 'TikTok' | 'Instagram' | 'YouTube' | 'Facebook';
 
 export type PlatformFollower = {
   platform: SocialPlatform;
@@ -10,7 +10,7 @@ export type PlatformEngagement = {
   rate: string;
 };
 
-export type KocStatus = "active" | "pending" | "suspended";
+export type KocStatus = 'active' | 'pending' | 'suspended';
 
 export type KocItem = {
   id: string;
@@ -29,6 +29,6 @@ export type KocItem = {
   phone?: string;
 };
 
-export type KocViewMode = "table" | "cards";
+export type KocViewMode = 'table' | 'cards';
 
-export type KocFilterStatus = "all" | KocStatus;
+export type KocFilterStatus = 'all' | KocStatus;

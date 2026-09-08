@@ -1,47 +1,39 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import {
-  IconChevron,
-  IconPlus,
-  IconSearch,
-} from "@/components/ui/icons";
-import { MOCK_KOCS } from "../mock-data";
-import type {
-  KocFilterStatus,
-  KocItem,
-  KocViewMode,
-} from "../types";
-import { KocTableView } from "./koc-table-view";
-import { KocCardsView } from "./koc-cards-view";
-import { KocFormModal } from "./koc-form-modal";
-import { KocDetailModal } from "./koc-detail-modal";
+import { useMemo, useState } from 'react';
+import { IconChevron, IconPlus, IconSearch } from '@/components/ui/icons';
+import { MOCK_KOCS } from '../mock-data';
+import type { KocFilterStatus, KocItem, KocViewMode } from '../types';
+import { KocTableView } from './koc-table-view';
+import { KocCardsView } from './koc-cards-view';
+import { KocFormModal } from './koc-form-modal';
+import { KocDetailModal } from './koc-detail-modal';
 
 const FILTER_TABS: { key: KocFilterStatus; label: string }[] = [
-  { key: "all", label: "Tất cả" },
-  { key: "active", label: "Đang hợp tác" },
-  { key: "pending", label: "Chờ duyệt" },
-  { key: "suspended", label: "Tạm dừng" },
+  { key: 'all', label: 'Tất cả' },
+  { key: 'active', label: 'Đang hợp tác' },
+  { key: 'pending', label: 'Chờ duyệt' },
+  { key: 'suspended', label: 'Tạm dừng' },
 ];
 
 const CATEGORIES = [
-  "Tất cả",
-  "Làm đẹp",
-  "Đời sống",
-  "Thời trang",
-  "Công nghệ",
-  "Game",
-  "Thể hình",
-  "Ẩm thực",
-  "Du lịch",
+  'Tất cả',
+  'Làm đẹp',
+  'Đời sống',
+  'Thời trang',
+  'Công nghệ',
+  'Game',
+  'Thể hình',
+  'Ẩm thực',
+  'Du lịch',
 ];
 
 export function AdminKocList() {
   const [items, setItems] = useState<KocItem[]>(MOCK_KOCS);
-  const [viewMode, setViewMode] = useState<KocViewMode>("table");
-  const [statusFilter, setStatusFilter] = useState<KocFilterStatus>("all");
-  const [selectedCategory, setSelectedCategory] = useState("Tất cả");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<KocViewMode>('table');
+  const [statusFilter, setStatusFilter] = useState<KocFilterStatus>('all');
+  const [selectedCategory, setSelectedCategory] = useState('Tất cả');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Modal states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -51,13 +43,10 @@ export function AdminKocList() {
   // Filter logic
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      if (statusFilter !== "all" && item.status !== statusFilter) {
+      if (statusFilter !== 'all' && item.status !== statusFilter) {
         return false;
       }
-      if (
-        selectedCategory !== "Tất cả" &&
-        item.category !== selectedCategory
-      ) {
+      if (selectedCategory !== 'Tất cả' && item.category !== selectedCategory) {
         return false;
       }
       if (searchTerm.trim()) {
@@ -77,9 +66,9 @@ export function AdminKocList() {
   const tabCounts = useMemo(() => {
     return {
       all: items.length,
-      active: items.filter((k) => k.status === "active").length,
-      pending: items.filter((k) => k.status === "pending").length,
-      suspended: items.filter((k) => k.status === "suspended").length,
+      active: items.filter((k) => k.status === 'active').length,
+      pending: items.filter((k) => k.status === 'pending').length,
+      suspended: items.filter((k) => k.status === 'suspended').length,
     };
   }, [items]);
 
@@ -112,21 +101,21 @@ export function AdminKocList() {
       // Create new
       const newItem: KocItem = {
         id: `koc-${Date.now()}`,
-        name: saved.name || "KOC Mới",
-        handle: saved.handle || "@newkoc",
-        initials: (saved.name || "NK")
-          .split(" ")
+        name: saved.name || 'KOC Mới',
+        handle: saved.handle || '@newkoc',
+        initials: (saved.name || 'NK')
+          .split(' ')
           .map((n) => n[0])
           .slice(0, 2)
-          .join("")
+          .join('')
           .toUpperCase(),
-        avatarGradient: "from-[#EF4623] to-[#F49E4C]",
-        followers: saved.followers || [{ platform: "TikTok", count: "50K" }],
-        engagement: saved.engagement || [{ platform: "TikTok", rate: "4.5%" }],
-        category: saved.category || "Làm đẹp",
+        avatarGradient: 'from-[#EF4623] to-[#F49E4C]',
+        followers: saved.followers || [{ platform: 'TikTok', count: '50K' }],
+        engagement: saved.engagement || [{ platform: 'TikTok', rate: '4.5%' }],
+        category: saved.category || 'Làm đẹp',
         campaigns: 1,
-        revenue: "10M",
-        status: saved.status || "active",
+        revenue: '10M',
+        status: saved.status || 'active',
       };
       setItems((prev) => [newItem, ...prev]);
     }
@@ -150,22 +139,22 @@ export function AdminKocList() {
           <div className="inline-flex rounded-2xl bg-white/70 p-1 ring-1 ring-[#2D3B42]/10 backdrop-blur-xs">
             <button
               type="button"
-              onClick={() => setViewMode("table")}
+              onClick={() => setViewMode('table')}
               className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
-                viewMode === "table"
-                  ? "bg-white text-[#2D3B42] shadow-xs ring-1 ring-[#2D3B42]/5 font-extrabold"
-                  : "text-[#8A7768] hover:text-[#2D3B42]"
+                viewMode === 'table'
+                  ? 'bg-white text-[#2D3B42] shadow-xs ring-1 ring-[#2D3B42]/5 font-extrabold'
+                  : 'text-[#8A7768] hover:text-[#2D3B42]'
               }`}
             >
               Bảng
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("cards")}
+              onClick={() => setViewMode('cards')}
               className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
-                viewMode === "cards"
-                  ? "bg-white text-[#2D3B42] shadow-xs ring-1 ring-[#2D3B42]/5 font-extrabold"
-                  : "text-[#8A7768] hover:text-[#2D3B42]"
+                viewMode === 'cards'
+                  ? 'bg-white text-[#2D3B42] shadow-xs ring-1 ring-[#2D3B42]/5 font-extrabold'
+                  : 'text-[#8A7768] hover:text-[#2D3B42]'
               }`}
             >
               Thẻ
@@ -197,16 +186,16 @@ export function AdminKocList() {
               onClick={() => setStatusFilter(tab.key)}
               className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-extrabold transition-all duration-200 ${
                 isActive
-                  ? "border-2 border-[#EF4623] bg-[#EF4623]/10 text-[#EF4623] shadow-xs"
-                  : "border border-transparent bg-white/70 text-[#5C5049] hover:bg-white hover:text-[#2D3B42] ring-1 ring-[#2D3B42]/8"
+                  ? 'border-2 border-[#EF4623] bg-[#EF4623]/10 text-[#EF4623] shadow-xs'
+                  : 'border border-transparent bg-white/70 text-[#5C5049] hover:bg-white hover:text-[#2D3B42] ring-1 ring-[#2D3B42]/8'
               }`}
             >
               <span>{tab.label}</span>
               <span
                 className={`rounded-full px-1.5 py-0.2 text-[10px] font-mono font-bold ${
                   isActive
-                    ? "bg-[#EF4623] text-white"
-                    : "bg-[#2D3B42]/8 text-[#8A7768]"
+                    ? 'bg-[#EF4623] text-white'
+                    : 'bg-[#2D3B42]/8 text-[#8A7768]'
                 }`}
               >
                 {count}
@@ -265,7 +254,7 @@ export function AdminKocList() {
               Thử bỏ bớt bộ lọc hoặc từ khoá tìm kiếm.
             </p>
           </div>
-        ) : viewMode === "table" ? (
+        ) : viewMode === 'table' ? (
           <KocTableView
             items={filteredItems}
             onView={(koc) => setViewingKoc(koc)}
@@ -284,8 +273,15 @@ export function AdminKocList() {
         {/* Pagination bar consistent with project */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#2D3B42]/10 px-5 py-3.5 text-xs text-[#8A7768] sm:px-6">
           <p className="font-semibold">
-            Hiển thị <span className="font-bold text-[#2D3B42]">1–{filteredItems.length}</span> trên{" "}
-            <span className="font-bold text-[#2D3B42]">{filteredItems.length}</span> KOC
+            Hiển thị{' '}
+            <span className="font-bold text-[#2D3B42]">
+              1–{filteredItems.length}
+            </span>{' '}
+            trên{' '}
+            <span className="font-bold text-[#2D3B42]">
+              {filteredItems.length}
+            </span>{' '}
+            KOC
           </p>
 
           <div className="flex items-center gap-2">

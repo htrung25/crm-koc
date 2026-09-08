@@ -1,4 +1,4 @@
-import type { GoalData } from "@/features/admin/dashboard/types";
+import type { GoalData } from '@/features/admin/dashboard/types';
 
 const RADIUS = 58;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;

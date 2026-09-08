@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   deleteAdmin,
   updateAdmin,
-} from "@/features/admin/ip-whitelist/services/admin-account.service";
-import { ADMIN_ACCOUNTS_QUERY_KEY } from "@/features/admin/ip-whitelist/hooks/use-admins";
+} from '@/features/admin/ip-whitelist/services/admin-account.service';
+import { ADMIN_ACCOUNTS_QUERY_KEY } from '@/features/admin/ip-whitelist/hooks/use-admins';
 
 type UpdateAdminParams = {
   id: string;
@@ -20,10 +20,7 @@ export function useUpdateAdmin() {
       updateAdmin(id, payload),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: [ADMIN_ACCOUNTS_QUERY_KEY] });
-      queryClient.setQueryData(
-        ["admin-account-detail", updated.id],
-        updated,
-      );
+      queryClient.setQueryData(['admin-account-detail', updated.id], updated);
     },
   });
 }

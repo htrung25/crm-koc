@@ -1,34 +1,34 @@
-"use client";
+'use client';
 
-import { API_ROUTES } from "@/constants/routes";
-import { useState } from "react";
+import { API_ROUTES } from '@/constants/routes';
+import { useState } from 'react';
 
-import { useRouter } from "next/navigation";
-import { postJson } from "@/lib/api/browser-client";
-import type { LoginResult, UserRole } from "@/features/auth/types";
+import { useRouter } from 'next/navigation';
+import { postJson } from '@/lib/api/browser-client';
+import type { LoginResult, UserRole } from '@/features/auth/types';
 
-export type LoginStep = "credentials" | "otp";
+export type LoginStep = 'credentials' | 'otp';
 
 export function useLogin(expectedRole?: UserRole) {
   const router = useRouter();
-  const [step, setStep] = useState<LoginStep>("credentials");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState<LoginStep>('credentials');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("error") === "device_mismatch") {
-        return "Phiên đăng nhập đã bị huỷ do phát hiện thay đổi thiết bị bất thường. Vui lòng đăng nhập lại.";
+      if (params.get('error') === 'device_mismatch') {
+        return 'Phiên đăng nhập đã bị huỷ do phát hiện thay đổi thiết bị bất thường. Vui lòng đăng nhập lại.';
       }
     }
-    return "";
+    return '';
   });
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const goHome = (result: LoginResult) => {
-    if (result.status === "authenticated") {
+    if (result.status === 'authenticated') {
       router.replace(result.redirectTo);
       router.refresh();
     }
@@ -36,19 +36,19 @@ export function useLogin(expectedRole?: UserRole) {
 
   const submitCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setNotice("");
+    setError('');
+    setNotice('');
     setIsSubmitting(true);
 
     try {
       const result = await postJson<LoginResult>(
         API_ROUTES.auth.login,
         { email, password, expectedRole },
-        { skipRefresh: true },
+        { skipRefresh: true }
       );
 
-      if (result.status === "otp_required") {
-        setStep("otp");
+      if (result.status === 'otp_required') {
+        setStep('otp');
         setNotice(result.message);
       } else {
         goHome(result);
@@ -62,7 +62,7 @@ export function useLogin(expectedRole?: UserRole) {
 
   const verifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setIsSubmitting(true);
 
     try {
@@ -70,8 +70,8 @@ export function useLogin(expectedRole?: UserRole) {
         await postJson<LoginResult>(
           API_ROUTES.auth.verifyOtp,
           { email, otp, expectedRole },
-          { skipRefresh: true },
-        ),
+          { skipRefresh: true }
+        )
       );
     } catch (err) {
       setError((err as Error).message);
@@ -80,15 +80,15 @@ export function useLogin(expectedRole?: UserRole) {
   };
 
   const resendOtp = async () => {
-    setError("");
-    setNotice("");
+    setError('');
+    setNotice('');
     setIsSubmitting(true);
 
     try {
       const result = await postJson<{ message: string }>(
         API_ROUTES.auth.resendOtp,
         { email },
-        { skipRefresh: true },
+        { skipRefresh: true }
       );
       setNotice(result.message);
     } catch (err) {
@@ -99,10 +99,10 @@ export function useLogin(expectedRole?: UserRole) {
   };
 
   const backToCredentials = () => {
-    setStep("credentials");
-    setOtp("");
-    setError("");
-    setNotice("");
+    setStep('credentials');
+    setOtp('');
+    setError('');
+    setNotice('');
   };
 
   return {

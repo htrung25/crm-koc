@@ -11,7 +11,9 @@
     "verify:proxy": "node scripts/assert-proxy.js",
     "smoke:preview": "node scripts/smoke-preview.js",
     "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
@@ -49,6 +51,7 @@
     "eslint-config-next": "16.2.10",
     "jsdom": "^29.1.1",
     "msw": "^2.15.0",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^5",
     "vitest": "^3.2.7"

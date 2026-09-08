@@ -1,9 +1,9 @@
-import { BACKEND_ROUTES } from "@/constants/routes";
-import { NextResponse } from "next/server";
+import { BACKEND_ROUTES } from '@/constants/routes';
+import { NextResponse } from 'next/server';
 
-import { ApiError, apiRequest } from "@/lib/api/server-client";
-import type { ClientContext } from "@/lib/api/client-context";
-import { applySession } from "./session";
+import { ApiError, apiRequest } from '@/lib/api/server-client';
+import type { ClientContext } from '@/lib/api/client-context';
+import { applySession } from './session';
 import {
   isUserRole,
   toUserRole,
@@ -11,11 +11,11 @@ import {
   type LoginTokenResponse,
   type LoginResult,
   type UserRole,
-} from "./types";
+} from './types';
 
 /** `expectedRole` từ body request — bỏ qua giá trị rác thay vì tin mù. */
 export function parseExpectedRole(value: unknown): UserRole | undefined {
-  return typeof value === "string" && isUserRole(value) ? value : undefined;
+  return typeof value === 'string' && isUserRole(value) ? value : undefined;
 }
 
 /**
@@ -28,7 +28,7 @@ export function parseExpectedRole(value: unknown): UserRole | undefined {
 export async function establishSession(
   result: LoginTokenResponse,
   expectedRole: UserRole | undefined,
-  clientContext: ClientContext,
+  clientContext: ClientContext
 ): Promise<NextResponse> {
   const role = toUserRole(result.account.accountRole);
 
@@ -36,7 +36,7 @@ export async function establishSession(
     await revokeToken(result.accessToken, clientContext);
     return NextResponse.json(
       { message: `Vai trò không được hỗ trợ: ${result.account.accountRole}` },
-      { status: 502 },
+      { status: 502 }
     );
   }
 
@@ -44,30 +44,34 @@ export async function establishSession(
     await revokeToken(result.accessToken, clientContext);
     return NextResponse.json(
       {
-        message: "Tài khoản này không có quyền truy cập cổng đăng nhập này",
-        businessCode: "WRONG_PORTAL",
+        message: 'Tài khoản này không có quyền truy cập cổng đăng nhập này',
+        businessCode: 'WRONG_PORTAL',
       },
-      { status: 403 },
+      { status: 403 }
     );
   }
 
   return applySession(
     NextResponse.json<LoginResult>({
-      status: "authenticated",
+      status: 'authenticated',
       role,
       redirectTo: ROLE_HOME[role],
     }),
     { accessToken: result.accessToken, refreshToken: result.refreshToken },
-    role,
+    role
   );
 }
 
 async function revokeToken(
   token: string,
-  clientContext: ClientContext,
+  clientContext: ClientContext
 ): Promise<void> {
   try {
-    await apiRequest(BACKEND_ROUTES.logout, { method: "POST", token, clientContext });
+    await apiRequest(BACKEND_ROUTES.logout, {
+      method: 'POST',
+      token,
+      clientContext,
+    });
   } catch (error) {
     // Thu hồi hỏng cũng không được phép biến thành đăng nhập thành công.
     if (!(error instanceof ApiError)) throw error;

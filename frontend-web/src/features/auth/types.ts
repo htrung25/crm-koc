@@ -1,6 +1,6 @@
-import { APP_ROUTES } from "@/constants/routes";
+import { APP_ROUTES } from '@/constants/routes';
 
-export const USER_ROLES = ["ADMIN", "BRAND", "CREATOR"] as const;
+export const USER_ROLES = ['ADMIN', 'BRAND', 'CREATOR'] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 
@@ -52,13 +52,13 @@ export type LoginPendingResponse = {
 export type LoginResponse = LoginTokenResponse | LoginPendingResponse;
 
 export function isPendingOtp(res: LoginResponse): res is LoginPendingResponse {
-  return "requireOtp" in res && res.requireOtp === true;
+  return 'requireOtp' in res && res.requireOtp === true;
 }
 
 /* ---------- Contract giữa trình duyệt và Route Handler của Next ---------- */
 
 export type LoginResult =
-  | { status: "otp_required"; message: string }
-  | { status: "authenticated"; role: UserRole; redirectTo: string };
+  | { status: 'otp_required'; message: string }
+  | { status: 'authenticated'; role: UserRole; redirectTo: string };
 
 export type ErrorResult = { message: string };

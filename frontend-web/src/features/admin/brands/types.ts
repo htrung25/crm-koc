@@ -1,9 +1,9 @@
-import type { AccountStatus } from "@/features/admin/types";
+import type { AccountStatus } from '@/features/admin/types';
 
 /** Khớp ESortField; chỉ mở những trường danh sách này thật sự dùng. */
-export const SORT_FIELDS = ["createdAt", "name", "email", "status"] as const;
+export const SORT_FIELDS = ['createdAt', 'name', 'email', 'status'] as const;
 export type SortField = (typeof SORT_FIELDS)[number];
-export type SortOrder = "ASC" | "DESC";
+export type SortOrder = 'ASC' | 'DESC';
 
 /**
  * Một dòng trong GET /admin/brands-list.
@@ -42,7 +42,7 @@ export type BrandQuery = {
   page: number;
   limit: number;
   search: string;
-  status: AccountStatus | "";
+  status: AccountStatus | '';
   sortBy: SortField;
   sortOrder: SortOrder;
 };
@@ -50,8 +50,8 @@ export type BrandQuery = {
 export const DEFAULT_QUERY: BrandQuery = {
   page: 1,
   limit: 10,
-  search: "",
-  status: "",
-  sortBy: "createdAt",
-  sortOrder: "DESC",
+  search: '',
+  status: '',
+  sortBy: 'createdAt',
+  sortOrder: 'DESC',
 };

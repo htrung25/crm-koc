@@ -1,6 +1,6 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations } from 'next-intl/server';
 
-import type { RevenueSeries } from "@/features/admin/dashboard/types";
+import type { RevenueSeries } from '@/features/admin/dashboard/types';
 
 const WIDTH = 720;
 const HEIGHT = 240;
@@ -24,7 +24,7 @@ function toPoints(values: number[], max: number): Point[] {
  * vẫn mượt — quan trọng vì mắt đọc xu hướng theo độ dốc.
  */
 function smoothPath(points: Point[]): string {
-  if (points.length < 2) return "";
+  if (points.length < 2) return '';
 
   let path = `M ${points[0].x} ${points[0].y}`;
 
@@ -46,7 +46,7 @@ function smoothPath(points: Point[]): string {
 }
 
 export async function RevenueChart({ series }: { series: RevenueSeries }) {
-  const t = await getTranslations("admin.revenue");
+  const t = await getTranslations('admin.revenue');
   const { months, thisYear, lastYear, caption } = series;
   const max = Math.max(...thisYear, ...lastYear) * 1.12;
 
@@ -65,7 +65,7 @@ export async function RevenueChart({ series }: { series: RevenueSeries }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-extrabold tracking-tight text-[#2D3B42]">
-            {t("title")}
+            {t('title')}
           </h2>
           <p className="text-xs font-medium text-[#8A7768]">{caption}</p>
         </div>
@@ -73,11 +73,11 @@ export async function RevenueChart({ series }: { series: RevenueSeries }) {
         <div className="flex items-center gap-4 text-[11px] font-bold text-[#5C5049]">
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-[#EF4623]" />
-            {t("thisYear")}
+            {t('thisYear')}
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-4 rounded-full border-t-2 border-dashed border-[#F49E4C]" />
-            {t("lastYear")}
+            {t('lastYear')}
           </span>
         </div>
       </div>
@@ -91,7 +91,7 @@ export async function RevenueChart({ series }: { series: RevenueSeries }) {
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="mt-5 aspect-[3/1] w-full"
         role="img"
-        aria-label={t("ariaLabel", {
+        aria-label={t('ariaLabel', {
           from: thisYear[0],
           to: thisYear[thisYear.length - 1],
         })}

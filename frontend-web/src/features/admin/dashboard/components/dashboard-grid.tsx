@@ -1,9 +1,9 @@
-import { MonthlyGoal } from "./monthly-goal";
-import { RevenueChart } from "./revenue-chart";
-import { StatCard } from "./stat-card";
-import { TrafficDonut } from "./traffic-donut";
-import { TransactionsTable } from "./transactions-table";
-import type { DashboardData } from "@/features/admin/dashboard/types";
+import { MonthlyGoal } from './monthly-goal';
+import { RevenueChart } from './revenue-chart';
+import { StatCard } from './stat-card';
+import { TrafficDonut } from './traffic-donut';
+import { TransactionsTable } from './transactions-table';
+import type { DashboardData } from '@/features/admin/dashboard/types';
 
 /**
  * Bố cục dashboard dùng chung cho mọi workspace.

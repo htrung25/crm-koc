@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { IconBin, IconEye, IconPencil } from "@/components/ui/icons";
-import { KocPlatformBadge } from "./koc-platform-badge";
-import { KocStatusBadge } from "./koc-status-badge";
-import type { KocItem } from "../types";
+import { IconBin, IconEye, IconPencil } from '@/components/ui/icons';
+import { KocPlatformBadge } from './koc-platform-badge';
+import { KocStatusBadge } from './koc-status-badge';
+import type { KocItem } from '../types';
 
 type KocTableViewProps = {
   items: KocItem[];
@@ -51,10 +51,7 @@ export function KocTableView({
         </thead>
         <tbody className="divide-y divide-[#2D3B42]/8 text-sm">
           {items.map((koc) => (
-            <tr
-              key={koc.id}
-              className="transition-colors hover:bg-white/50"
-            >
+            <tr key={koc.id} className="transition-colors hover:bg-white/50">
               {/* KOC Info */}
               <td className="px-5 py-4.5 whitespace-nowrap">
                 <div className="flex items-center gap-3">
@@ -99,7 +96,9 @@ export function KocTableView({
                       key={eng.platform}
                       className="flex items-center gap-1.5 text-xs font-semibold text-[#5C5049]"
                     >
-                      <span className="text-[#8A7768] text-[11px]">{eng.platform}</span>
+                      <span className="text-[#8A7768] text-[11px]">
+                        {eng.platform}
+                      </span>
                       <span className="font-mono font-bold text-emerald-600 tnum">
                         {eng.rate}
                       </span>

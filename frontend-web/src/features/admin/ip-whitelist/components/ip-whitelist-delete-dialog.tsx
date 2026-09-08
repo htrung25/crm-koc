@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { IconTrash } from "@/components/ui/icons";
-import type { AdminResponse } from "@/features/admin/ip-whitelist/types";
-import { useDeleteAdmin } from "@/features/admin/ip-whitelist/hooks/use-admin-mutations";
+import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { IconTrash } from '@/components/ui/icons';
+import type { AdminResponse } from '@/features/admin/ip-whitelist/types';
+import { useDeleteAdmin } from '@/features/admin/ip-whitelist/hooks/use-admin-mutations';
 
 type IpWhitelistDeleteDialogProps = {
   admin: AdminResponse;
@@ -15,7 +15,7 @@ export function IpWhitelistDeleteDialog({
   admin,
   onClose,
 }: IpWhitelistDeleteDialogProps) {
-  const t = useTranslations("admin.ipWhitelist");
+  const t = useTranslations('admin.ipWhitelist');
   const [error, setError] = useState<string | null>(null);
 
   const deleteMutation = useDeleteAdmin();
@@ -41,10 +41,10 @@ export function IpWhitelistDeleteDialog({
           <IconTrash className="h-5 w-5" />
         </span>
         <h2 className="mt-4 text-lg font-extrabold text-[#2D3B42]">
-          {t("deleteTitle")}
+          {t('deleteTitle')}
         </h2>
         <p className="mt-2 text-sm font-semibold leading-relaxed text-[#8A7768]">
-          {t.rich("deleteBody", {
+          {t.rich('deleteBody', {
             email: admin.email,
             strong: (chunks) => (
               <strong className="text-[#2D3B42]">{chunks}</strong>
@@ -64,7 +64,7 @@ export function IpWhitelistDeleteDialog({
             onClick={onClose}
             className="rounded-xl px-4 py-2.5 text-sm font-extrabold text-[#5C5049] hover:bg-white/50"
           >
-            {t("cancel")}
+            {t('cancel')}
           </button>
           <button
             type="button"
@@ -72,7 +72,7 @@ export function IpWhitelistDeleteDialog({
             onClick={() => void handleConfirmDelete()}
             className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-extrabold text-white disabled:opacity-50"
           >
-            {deleteMutation.isPending ? t("deleting") : t("deleteConfirm")}
+            {deleteMutation.isPending ? t('deleting') : t('deleteConfirm')}
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-export type AdminRole = "admin" | "super_admin";
+export type AdminRole = 'admin' | 'super_admin';
 
 /**
  * Phần AdminResponseDto mà FE dùng tới. Backend còn trả phone/status/
@@ -27,14 +27,14 @@ export type AdminQuery = {
   page: number;
   limit: number;
   search: string;
-  role: "all" | AdminRole;
+  role: 'all' | AdminRole;
 };
 
 export const DEFAULT_ADMIN_QUERY: AdminQuery = {
   page: 1,
   limit: 8,
-  search: "",
-  role: "all",
+  search: '',
+  role: 'all',
 };
 
 /** Body lỗi, gộp cả hai hình dạng backend trả về. */
@@ -44,7 +44,7 @@ export type WhitelistErrorBody = {
   clientIp?: string;
 };
 
-export const LOCKOUT_CODE = "IP_WHITELIST_WOULD_LOCK_YOU_OUT";
+export const LOCKOUT_CODE = 'IP_WHITELIST_WOULD_LOCK_YOU_OUT';
 
 /**
  * KHÔNG phải businessCode do backend trả. SuperAdminGuard ném
@@ -53,4 +53,4 @@ export const LOCKOUT_CODE = "IP_WHITELIST_WOULD_LOCK_YOU_OUT";
  * (app/api/admin/accounts/[id]/route.ts, hàm errorResponse) tự gắn vào
  * sau khi chuẩn hoá lỗi 403 đó — để lớp UI chỉ cần biết một hình dạng lỗi.
  */
-export const SUPER_ADMIN_REQUIRED = "REQUIRES_SUPER_ADMIN";
+export const SUPER_ADMIN_REQUIRED = 'REQUIRES_SUPER_ADMIN';

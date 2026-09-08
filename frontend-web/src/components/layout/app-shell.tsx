@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { APP_ROUTES } from "@/constants/routes";
-import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { APP_ROUTES } from '@/constants/routes';
+import { useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { WORKSPACES } from "@/constants/navigation";
-import { requestLogout } from "@/features/auth/session";
-import type { UserRole } from "@/features/auth/types";
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { WORKSPACES } from '@/constants/navigation';
+import { requestLogout } from '@/features/auth/session';
+import type { UserRole } from '@/features/auth/types';
 
 type AppShellProps = {
   children: ReactNode;
@@ -16,7 +16,7 @@ type AppShellProps = {
 };
 
 export function AppShell({ children, role }: AppShellProps) {
-  const t = useTranslations("navigation");
+  const t = useTranslations('navigation');
   const pathname = usePathname();
   const router = useRouter();
 
@@ -42,7 +42,7 @@ export function AppShell({ children, role }: AppShellProps) {
             </Link>
           </div>
 
-          <nav className="space-y-1 px-4" aria-label={t("mainGroup")}>
+          <nav className="space-y-1 px-4" aria-label={t('mainGroup')}>
             {workspace.navigation.map((item) => {
               if (item.disabled) {
                 return (
@@ -63,11 +63,12 @@ export function AppShell({ children, role }: AppShellProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={`block rounded-xl px-4 py-3 text-sm font-medium transition ${isActive
-                      ? "bg-slate-800 text-white"
-                      : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
-                    }`}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`block rounded-xl px-4 py-3 text-sm font-medium transition ${
+                    isActive
+                      ? 'bg-slate-800 text-white'
+                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+                  }`}
                 >
                   {t(item.labelKey)}
                 </Link>
@@ -82,7 +83,7 @@ export function AppShell({ children, role }: AppShellProps) {
             onClick={handleLogout}
             className="w-full rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold transition hover:bg-red-950 hover:text-red-300"
           >
-            {t("workspace.logout")}
+            {t('workspace.logout')}
           </button>
         </div>
       </aside>

@@ -1,28 +1,28 @@
-import type { SocialPlatform } from "../types";
+import type { SocialPlatform } from '../types';
 
 const PLATFORM_STYLES: Record<
   SocialPlatform,
   { bg: string; text: string; label: string }
 > = {
   TikTok: {
-    bg: "bg-[#121212]",
-    text: "text-white",
-    label: "TikTok",
+    bg: 'bg-[#121212]',
+    text: 'text-white',
+    label: 'TikTok',
   },
   Instagram: {
-    bg: "bg-gradient-to-r from-[#D62976] via-[#E1306C] to-[#F77737]",
-    text: "text-white",
-    label: "Instagram",
+    bg: 'bg-gradient-to-r from-[#D62976] via-[#E1306C] to-[#F77737]',
+    text: 'text-white',
+    label: 'Instagram',
   },
   YouTube: {
-    bg: "bg-[#FF0000]",
-    text: "text-white",
-    label: "YouTube",
+    bg: 'bg-[#FF0000]',
+    text: 'text-white',
+    label: 'YouTube',
   },
   Facebook: {
-    bg: "bg-[#1877F2]",
-    text: "text-white",
-    label: "Facebook",
+    bg: 'bg-[#1877F2]',
+    text: 'text-white',
+    label: 'Facebook',
   },
 };
 

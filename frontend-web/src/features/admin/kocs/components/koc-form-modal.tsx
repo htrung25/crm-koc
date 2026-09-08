@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import type { KocItem, KocStatus } from "../types";
+import { useState } from 'react';
+import type { KocItem, KocStatus } from '../types';
 
 type KocFormModalProps = {
   isOpen: boolean;
@@ -14,20 +14,34 @@ function KocFormModalContent({
   onClose,
   onSave,
   initialData,
-}: Omit<KocFormModalProps, "isOpen">) {
-  const initialTikTok = initialData?.followers.find((f) => f.platform === "TikTok");
-  const initialTikTokEr = initialData?.engagement.find((e) => e.platform === "TikTok");
-  const initialInstagram = initialData?.followers.find((f) => f.platform === "Instagram");
-  const initialInstagramEr = initialData?.engagement.find((e) => e.platform === "Instagram");
+}: Omit<KocFormModalProps, 'isOpen'>) {
+  const initialTikTok = initialData?.followers.find(
+    (f) => f.platform === 'TikTok'
+  );
+  const initialTikTokEr = initialData?.engagement.find(
+    (e) => e.platform === 'TikTok'
+  );
+  const initialInstagram = initialData?.followers.find(
+    (f) => f.platform === 'Instagram'
+  );
+  const initialInstagramEr = initialData?.engagement.find(
+    (e) => e.platform === 'Instagram'
+  );
 
-  const [name, setName] = useState(initialData?.name ?? "");
-  const [handle, setHandle] = useState(initialData?.handle ?? "");
-  const [category, setCategory] = useState(initialData?.category ?? "Làm đẹp");
-  const [status, setStatus] = useState<KocStatus>(initialData?.status ?? "active");
-  const [tikTokCount, setTikTokCount] = useState(initialTikTok?.count ?? "");
-  const [tikTokEr, setTikTokEr] = useState(initialTikTokEr?.rate ?? "");
-  const [instagramCount, setInstagramCount] = useState(initialInstagram?.count ?? "");
-  const [instagramEr, setInstagramEr] = useState(initialInstagramEr?.rate ?? "");
+  const [name, setName] = useState(initialData?.name ?? '');
+  const [handle, setHandle] = useState(initialData?.handle ?? '');
+  const [category, setCategory] = useState(initialData?.category ?? 'Làm đẹp');
+  const [status, setStatus] = useState<KocStatus>(
+    initialData?.status ?? 'active'
+  );
+  const [tikTokCount, setTikTokCount] = useState(initialTikTok?.count ?? '');
+  const [tikTokEr, setTikTokEr] = useState(initialTikTokEr?.rate ?? '');
+  const [instagramCount, setInstagramCount] = useState(
+    initialInstagram?.count ?? ''
+  );
+  const [instagramEr, setInstagramEr] = useState(
+    initialInstagramEr?.rate ?? ''
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,28 +49,41 @@ function KocFormModalContent({
 
     const followers = [];
     if (tikTokCount.trim()) {
-      followers.push({ platform: "TikTok" as const, count: tikTokCount.trim() });
+      followers.push({
+        platform: 'TikTok' as const,
+        count: tikTokCount.trim(),
+      });
     }
     if (instagramCount.trim()) {
-      followers.push({ platform: "Instagram" as const, count: instagramCount.trim() });
+      followers.push({
+        platform: 'Instagram' as const,
+        count: instagramCount.trim(),
+      });
     }
 
     const engagement = [];
     if (tikTokEr.trim()) {
-      engagement.push({ platform: "TikTok" as const, rate: tikTokEr.trim() });
+      engagement.push({ platform: 'TikTok' as const, rate: tikTokEr.trim() });
     }
     if (instagramEr.trim()) {
-      engagement.push({ platform: "Instagram" as const, rate: instagramEr.trim() });
+      engagement.push({
+        platform: 'Instagram' as const,
+        rate: instagramEr.trim(),
+      });
     }
 
     onSave({
       id: initialData?.id,
       name: name.trim(),
-      handle: handle.startsWith("@") ? handle.trim() : `@${handle.trim()}`,
+      handle: handle.startsWith('@') ? handle.trim() : `@${handle.trim()}`,
       category,
       status,
-      followers: followers.length ? followers : [{ platform: "TikTok", count: "100K" }],
-      engagement: engagement.length ? engagement : [{ platform: "TikTok", rate: "5.0%" }],
+      followers: followers.length
+        ? followers
+        : [{ platform: 'TikTok', count: '100K' }],
+      engagement: engagement.length
+        ? engagement
+        : [{ platform: 'TikTok', rate: '5.0%' }],
     });
     onClose();
   };
@@ -76,12 +103,12 @@ function KocFormModalContent({
         <div className="flex items-start justify-between gap-4 border-b border-[#2D3B42]/10 pb-4">
           <div>
             <h3 className="text-lg font-extrabold text-[#2D3B42]">
-              {initialData ? "Chỉnh sửa KOC" : "Thêm KOC mới"}
+              {initialData ? 'Chỉnh sửa KOC' : 'Thêm KOC mới'}
             </h3>
             <p className="mt-0.5 text-xs font-semibold text-[#8A7768]">
               {initialData
-                ? "Cập nhật thông tin kênh và chỉ số tương tác KOC."
-                : "Điền thông tin tài khoản KOC để thêm vào hệ thống quản trị."}
+                ? 'Cập nhật thông tin kênh và chỉ số tương tác KOC.'
+                : 'Điền thông tin tài khoản KOC để thêm vào hệ thống quản trị.'}
             </p>
           </div>
           <button
@@ -234,7 +261,7 @@ function KocFormModalContent({
               type="submit"
               className="rounded-xl bg-gradient-to-br from-[#EF4623] to-[#D8410F] px-5 py-2.5 text-xs font-extrabold text-white shadow-md shadow-[#EF4623]/25 transition-all hover:shadow-lg hover:shadow-[#EF4623]/35 active:scale-[0.98]"
             >
-              {initialData ? "Lưu thay đổi" : "Thêm KOC"}
+              {initialData ? 'Lưu thay đổi' : 'Thêm KOC'}
             </button>
           </div>
         </form>
@@ -253,7 +280,7 @@ export function KocFormModal({
 
   return (
     <KocFormModalContent
-      key={initialData?.id ?? "new"}
+      key={initialData?.id ?? 'new'}
       onClose={onClose}
       onSave={onSave}
       initialData={initialData}

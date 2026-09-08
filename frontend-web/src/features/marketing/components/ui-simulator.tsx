@@ -1,12 +1,14 @@
-"use client";
+'use client';
 
-import { useTranslations } from "next-intl";
+import { useTranslations } from 'next-intl';
 
-import { useState } from "react";
+import { useState } from 'react';
 
 export function UiSimulator() {
-  const t = useTranslations("marketing");
-  const [activeTab, setActiveTab] = useState<"campaigns" | "koc_analytics" | "automations">("campaigns");
+  const t = useTranslations('marketing');
+  const [activeTab, setActiveTab] = useState<
+    'campaigns' | 'koc_analytics' | 'automations'
+  >('campaigns');
   const [isSimulating, setIsSimulating] = useState(false);
 
   const triggerSimulation = () => {
@@ -34,7 +36,9 @@ export function UiSimulator() {
 
             {/* Skeleton Address Bar */}
             <div className="flex-1 mx-4 max-w-xs bg-slate-100 rounded-full px-4 py-1 flex items-center justify-between text-[11px] font-mono text-slate-400">
-              <span className="truncate">https://app.redsun-koc.vn/dashboard</span>
+              <span className="truncate">
+                https://app.redsun-koc.vn/dashboard
+              </span>
               <span className="text-emerald-500 font-bold">🔒 LIVE</span>
             </div>
 
@@ -42,41 +46,41 @@ export function UiSimulator() {
               onClick={triggerSimulation}
               className="text-[11px] font-bold px-3 py-1 bg-[#FDF1EE] text-[#EF4623] hover:bg-[#EF4623] hover:text-white rounded-full transition-colors duration-300"
             >
-              {isSimulating ? "Syncing..." : "Run AI Sync"}
+              {isSimulating ? 'Syncing...' : 'Run AI Sync'}
             </button>
           </div>
 
           {/* Tab Selector inside UI Simulator */}
           <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-2xl text-xs font-semibold">
             <button
-              onClick={() => setActiveTab("campaigns")}
+              onClick={() => setActiveTab('campaigns')}
               className={`flex-1 py-1.5 rounded-xl transition-all ${
-                activeTab === "campaigns"
-                  ? "bg-white text-[#2D3B42] shadow-sm font-bold"
-                  : "text-slate-500 hover:text-slate-800"
+                activeTab === 'campaigns'
+                  ? 'bg-white text-[#2D3B42] shadow-sm font-bold'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              {t("simulator.campaign")}
+              {t('simulator.campaign')}
             </button>
             <button
-              onClick={() => setActiveTab("koc_analytics")}
+              onClick={() => setActiveTab('koc_analytics')}
               className={`flex-1 py-1.5 rounded-xl transition-all ${
-                activeTab === "koc_analytics"
-                  ? "bg-[#2D3B42] text-white shadow-sm font-bold"
-                  : "text-slate-500 hover:text-slate-800"
+                activeTab === 'koc_analytics'
+                  ? 'bg-[#2D3B42] text-white shadow-sm font-bold'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               Creator Index
             </button>
             <button
-              onClick={() => setActiveTab("automations")}
+              onClick={() => setActiveTab('automations')}
               className={`flex-1 py-1.5 rounded-xl transition-all ${
-                activeTab === "automations"
-                  ? "bg-white text-[#2D3B42] shadow-sm font-bold"
-                  : "text-slate-500 hover:text-slate-800"
+                activeTab === 'automations'
+                  ? 'bg-white text-[#2D3B42] shadow-sm font-bold'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              {t("simulator.automation")}
+              {t('simulator.automation')}
             </button>
           </div>
 
@@ -87,10 +91,10 @@ export function UiSimulator() {
                 Doanh thu GMV
               </span>
               <span className="text-sm font-extrabold text-[#2D3B42]">
-                {t("simulator.revenue")}
+                {t('simulator.revenue')}
               </span>
               <span className="text-[10px] text-emerald-600 font-semibold block mt-0.5">
-                {t("simulator.revenueDelta")}
+                {t('simulator.revenueDelta')}
               </span>
             </div>
             <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
@@ -106,13 +110,13 @@ export function UiSimulator() {
             </div>
             <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
               <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">
-                {t("simulator.conversion")}
+                {t('simulator.conversion')}
               </span>
               <span className="text-sm font-extrabold text-[#2D3B42]">
                 4.85%
               </span>
               <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">
-                {t("simulator.benchmark")}
+                {t('simulator.benchmark')}
               </span>
             </div>
           </div>
@@ -135,7 +139,7 @@ export function UiSimulator() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-[#2D3B42]">
-                        {t("simulator.sampleKoc")}
+                        {t('simulator.sampleKoc')}
                       </p>
                       <p className="text-[10px] text-slate-400">
                         TikTok 850K Followers
@@ -171,24 +175,36 @@ export function UiSimulator() {
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#2D3B42]">
-                  {t("simulator.approvalTitle")}
+                  {t('simulator.approvalTitle')}
                 </span>
                 <span className="text-[10px] bg-slate-200 px-2 py-0.5 rounded-full font-bold text-slate-600">
-                  {t("simulator.approvalAuto")}
+                  {t('simulator.approvalAuto')}
                 </span>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100">
-                  <span className="text-slate-600 font-medium">{t("simulator.step1")}</span>
-                  <span className="text-emerald-600 font-bold">{t("simulator.step1Status")}</span>
+                  <span className="text-slate-600 font-medium">
+                    {t('simulator.step1')}
+                  </span>
+                  <span className="text-emerald-600 font-bold">
+                    {t('simulator.step1Status')}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100">
-                  <span className="text-slate-600 font-medium">{t("simulator.step2")}</span>
-                  <span className="text-[#EF4623] font-bold">{t("simulator.step2Status")}</span>
+                  <span className="text-slate-600 font-medium">
+                    {t('simulator.step2')}
+                  </span>
+                  <span className="text-[#EF4623] font-bold">
+                    {t('simulator.step2Status')}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100">
-                  <span className="text-slate-600 font-medium">{t("simulator.step3")}</span>
-                  <span className="text-slate-400 font-medium">{t("simulator.step3Status")}</span>
+                  <span className="text-slate-600 font-medium">
+                    {t('simulator.step3')}
+                  </span>
+                  <span className="text-slate-400 font-medium">
+                    {t('simulator.step3Status')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -214,7 +230,9 @@ export function UiSimulator() {
             <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">
               ✓
             </div>
-            <span className="font-semibold text-white">System Status: Code & Match Engine Operational</span>
+            <span className="font-semibold text-white">
+              System Status: Code & Match Engine Operational
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="bg-black/40 text-slate-300 font-mono text-[11px] px-2.5 py-1 rounded-lg border border-white/10">

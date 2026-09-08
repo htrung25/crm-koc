@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { APP_ROUTES } from "@/constants/routes";
-import { useEffect, useMemo, useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { APP_ROUTES } from '@/constants/routes';
+import { useEffect, useMemo, useState } from 'react';
+import { useFormatter, useTranslations } from 'next-intl';
 
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
 
 import {
   IconBin,
@@ -12,29 +12,26 @@ import {
   IconEye,
   IconPencil,
   IconSearch,
-} from "@/components/ui/icons";
-import { useBrands } from "@/features/admin/brands/hooks/use-brands";
-import { useBrandQueryParams } from "@/features/admin/brands/hooks/use-brand-query-params";
-import {
-  type BrandQuery,
-  type BrandRow,
-} from "@/features/admin/brands/types";
-import { STATUS_CODES } from "@/features/admin/types";
-import { ApiRequestError } from "@/lib/api/browser-client";
+} from '@/components/ui/icons';
+import { useBrands } from '@/features/admin/brands/hooks/use-brands';
+import { useBrandQueryParams } from '@/features/admin/brands/hooks/use-brand-query-params';
+import { type BrandQuery, type BrandRow } from '@/features/admin/brands/types';
+import { STATUS_CODES } from '@/features/admin/types';
+import { ApiRequestError } from '@/lib/api/browser-client';
 
 /** Nền huy hiệu theo trạng thái. Khoá là EAccountStatus của backend. */
 const STATUS_STYLE: Record<number, string> = {
-  1: "bg-amber-400/25 text-amber-800",
-  2: "bg-emerald-500/15 text-emerald-700",
-  3: "bg-rose-500/12 text-rose-600",
-  4: "bg-[#2D3B42]/10 text-[#5C5049]",
+  1: 'bg-amber-400/25 text-amber-800',
+  2: 'bg-emerald-500/15 text-emerald-700',
+  3: 'bg-rose-500/12 text-rose-600',
+  4: 'bg-[#2D3B42]/10 text-[#5C5049]',
 };
 
 const SORT_PRESETS = {
-  newest: { sortBy: "createdAt", sortOrder: "DESC" },
-  oldest: { sortBy: "createdAt", sortOrder: "ASC" },
-  name: { sortBy: "name", sortOrder: "ASC" },
-  email: { sortBy: "email", sortOrder: "ASC" },
+  newest: { sortBy: 'createdAt', sortOrder: 'DESC' },
+  oldest: { sortBy: 'createdAt', sortOrder: 'ASC' },
+  name: { sortBy: 'name', sortOrder: 'ASC' },
+  email: { sortBy: 'email', sortOrder: 'ASC' },
 } as const;
 
 type SortPreset = keyof typeof SORT_PRESETS;
@@ -46,17 +43,17 @@ function initials(name: string) {
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0])
-    .join("")
+    .join('')
     .toUpperCase();
 }
 
 const AVATAR_TINTS = [
-  "from-[#EF4623] to-[#F49E4C]",
-  "from-[#7C5CFF] to-[#A78BFA]",
-  "from-[#14B8A6] to-[#5EEAD4]",
-  "from-[#F59E0B] to-[#FCD34D]",
-  "from-[#EC4899] to-[#F9A8D4]",
-  "from-[#3B82F6] to-[#93C5FD]",
+  'from-[#EF4623] to-[#F49E4C]',
+  'from-[#7C5CFF] to-[#A78BFA]',
+  'from-[#14B8A6] to-[#5EEAD4]',
+  'from-[#F59E0B] to-[#FCD34D]',
+  'from-[#EC4899] to-[#F9A8D4]',
+  'from-[#3B82F6] to-[#93C5FD]',
 ];
 
 function tintFor(id: string) {
@@ -66,7 +63,7 @@ function tintFor(id: string) {
 }
 
 export function AdminBrandList() {
-  const t = useTranslations("admin.brands");
+  const t = useTranslations('admin.brands');
   const format = useFormatter();
   const router = useRouter();
 
@@ -86,7 +83,7 @@ export function AdminBrandList() {
     if (searchDraft === query.search) return;
     const timer = setTimeout(
       () => setQuery((q) => ({ ...q, search: searchDraft, page: 1 })),
-      350,
+      350
     );
     return () => clearTimeout(timer);
   }, [searchDraft, query.search, setQuery]);
@@ -115,9 +112,9 @@ export function AdminBrandList() {
     const found = (Object.keys(SORT_PRESETS) as SortPreset[]).find(
       (key) =>
         SORT_PRESETS[key].sortBy === query.sortBy &&
-        SORT_PRESETS[key].sortOrder === query.sortOrder,
+        SORT_PRESETS[key].sortOrder === query.sortOrder
     );
-    return found ?? "newest";
+    return found ?? 'newest';
   }, [query.sortBy, query.sortOrder]);
 
   const from = total ? (query.page - 1) * query.limit + 1 : 0;
@@ -129,7 +126,7 @@ export function AdminBrandList() {
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
           <label className="block">
             <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.14em] text-[#8A7768]">
-              {t("search")}
+              {t('search')}
             </span>
             <span className="flex h-12 items-center gap-3 rounded-2xl bg-white/65 px-4 ring-1 ring-[#2D3B42]/10 focus-within:ring-2 focus-within:ring-[#EF4623]/35">
               <IconSearch className="h-4 w-4 shrink-0 text-[#8A7768]" />
@@ -137,7 +134,7 @@ export function AdminBrandList() {
                 type="search"
                 value={searchDraft}
                 onChange={(event) => setSearchDraft(event.target.value)}
-                placeholder={t("searchPlaceholder")}
+                placeholder={t('searchPlaceholder')}
                 className="h-full w-full bg-transparent text-sm font-semibold text-[#2D3B42] outline-none placeholder:font-medium placeholder:text-[#8A7768]/70"
               />
             </span>
@@ -145,7 +142,7 @@ export function AdminBrandList() {
 
           <label className="block">
             <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.14em] text-[#8A7768]">
-              {t("status")}
+              {t('status')}
             </span>
             <select
               value={query.status}
@@ -153,14 +150,14 @@ export function AdminBrandList() {
                 setQuery((q) => ({
                   ...q,
                   status: event.target.value
-                    ? (Number(event.target.value) as BrandQuery["status"])
-                    : "",
+                    ? (Number(event.target.value) as BrandQuery['status'])
+                    : '',
                   page: 1,
                 }))
               }
               className="h-12 w-full rounded-2xl bg-white/65 px-4 text-sm font-bold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35"
             >
-              <option value="">{t("allStatuses")}</option>
+              <option value="">{t('allStatuses')}</option>
               {STATUS_CODES.map((code) => (
                 <option key={code} value={code}>
                   {t(`statuses.${code}`)}
@@ -171,7 +168,7 @@ export function AdminBrandList() {
 
           <label className="block">
             <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.14em] text-[#8A7768]">
-              {t("sort")}
+              {t('sort')}
             </span>
             <select
               value={activePreset}
@@ -181,10 +178,10 @@ export function AdminBrandList() {
               }}
               className="h-12 w-full rounded-2xl bg-white/65 px-4 text-sm font-bold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35"
             >
-              <option value="newest">{t("sortNewest")}</option>
-              <option value="oldest">{t("sortOldest")}</option>
-              <option value="name">{t("sortName")}</option>
-              <option value="email">{t("sortEmail")}</option>
+              <option value="newest">{t('sortNewest')}</option>
+              <option value="oldest">{t('sortOldest')}</option>
+              <option value="name">{t('sortName')}</option>
+              <option value="email">{t('sortEmail')}</option>
             </select>
           </label>
         </div>
@@ -194,10 +191,10 @@ export function AdminBrandList() {
         <div className="flex items-center justify-between gap-3 border-b border-[#2D3B42]/10 px-5 py-4 sm:px-6">
           <div>
             <h2 className="text-base font-extrabold text-[#2D3B42]">
-              {t("heading")}
+              {t('heading')}
             </h2>
             <p className="mt-0.5 text-xs font-semibold text-[#8A7768]">
-              {t("count", { count: total })}
+              {t('count', { count: total })}
             </p>
           </div>
           <button
@@ -206,7 +203,7 @@ export function AdminBrandList() {
             onClick={() => void brandsQuery.refetch()}
             className="rounded-xl px-3 py-2 text-xs font-extrabold text-[#EF4623] transition-colors hover:bg-[#EF4623]/10 disabled:opacity-50"
           >
-            {t("refresh")}
+            {t('refresh')}
           </button>
         </div>
 
@@ -221,13 +218,15 @@ export function AdminBrandList() {
 
         {loading ? (
           <p className="px-5 py-12 text-center text-sm font-semibold text-[#8A7768] sm:px-6">
-            {t("loading")}
+            {t('loading')}
           </p>
         ) : rows.length === 0 ? (
           <div className="px-5 py-14 text-center sm:px-6">
-            <p className="text-sm font-extrabold text-[#2D3B42]">{t("empty")}</p>
+            <p className="text-sm font-extrabold text-[#2D3B42]">
+              {t('empty')}
+            </p>
             <p className="mt-1 text-xs font-semibold text-[#8A7768]">
-              {t("emptyHint")}
+              {t('emptyHint')}
             </p>
           </div>
         ) : (
@@ -260,14 +259,14 @@ export function AdminBrandList() {
                         {brand.name}
                       </h3>
                       <p className="mt-0.5 truncate text-xs font-semibold text-[#8A7768]">
-                        {brand.industry || t("noIndustry")}
+                        {brand.industry || t('noIndustry')}
                       </p>
                     </div>
 
                     <span
                       className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                         STATUS_STYLE[brand.status] ??
-                        "bg-[#2D3B42]/8 text-[#5C5049]"
+                        'bg-[#2D3B42]/8 text-[#5C5049]'
                       }`}
                     >
                       {t(`statuses.${brand.status}`)}
@@ -277,9 +276,9 @@ export function AdminBrandList() {
                   <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-[#2D3B42]/8 pt-4">
                     {(
                       [
-                        ["statCampaigns", brand.campaignCount],
-                        ["statKocs", brand.kocCount],
-                        ["statBudget", brand.budget],
+                        ['statCampaigns', brand.campaignCount],
+                        ['statKocs', brand.kocCount],
+                        ['statBudget', brand.budget],
                       ] as const
                     ).map(([key, value]) => (
                       <div key={key}>
@@ -287,7 +286,7 @@ export function AdminBrandList() {
                           {t(key)}
                         </dt>
                         <dd className="mt-0.5 text-lg font-extrabold text-[#2D3B42] tnum">
-                          {format.number(value ?? 0, { notation: "compact" })}
+                          {format.number(value ?? 0, { notation: 'compact' })}
                         </dd>
                       </div>
                     ))}
@@ -297,17 +296,17 @@ export function AdminBrandList() {
                     <button
                       type="button"
                       disabled
-                      title={t("comingSoon")}
+                      title={t('comingSoon')}
                       className="flex h-10 flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#EF4623]/10 text-sm font-extrabold text-[#EF4623] opacity-70"
                     >
                       <IconEye />
-                      {t("view")}
+                      {t('view')}
                     </button>
                     <button
                       type="button"
                       disabled
-                      title={t("comingSoon")}
-                      aria-label={t("edit")}
+                      title={t('comingSoon')}
+                      aria-label={t('edit')}
                       className="grid h-10 w-10 cursor-not-allowed place-items-center rounded-xl bg-[#2D3B42]/6 text-[#5C5049] opacity-70"
                     >
                       <IconPencil />
@@ -315,8 +314,8 @@ export function AdminBrandList() {
                     <button
                       type="button"
                       disabled
-                      title={t("comingSoon")}
-                      aria-label={t("delete")}
+                      title={t('comingSoon')}
+                      aria-label={t('delete')}
                       className="grid h-10 w-10 cursor-not-allowed place-items-center rounded-xl bg-red-500/10 text-red-600 opacity-70"
                     >
                       <IconBin />
@@ -330,7 +329,7 @@ export function AdminBrandList() {
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#2D3B42]/10 px-5 py-4">
           <p className="text-xs font-semibold text-[#8A7768]">
-            {t("pagination", { from, to, total })}
+            {t('pagination', { from, to, total })}
           </p>
 
           <div className="flex items-center gap-2">
@@ -373,7 +372,7 @@ export function AdminBrandList() {
                 </option>
               ))}
             </select>
-            {t("rowsPerPage")}
+            {t('rowsPerPage')}
           </label>
         </div>
       </div>
