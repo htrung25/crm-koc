@@ -194,6 +194,7 @@ export class CampaignController {
       id,
       dto.expectedVersion,
       dto.deliverables,
+      dto.confirmClear ?? false,
     );
   }
 
