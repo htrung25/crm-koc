@@ -6,7 +6,7 @@
   },
   "navigation": {
     "overview": "Tổng quan",
-    "kocs": "Danh sách KOC",
+    "kocs": "Danh sách Creator",
     "brands": "Danh sách Brand",
     "campaigns": "Chiến dịch",
     "applications": "Đơn đăng ký",
@@ -282,6 +282,10 @@
       "statKocs": "KOC",
       "statBudget": "Ngân sách",
       "noIndustry": "Chưa phân loại"
+    },
+    "kocs": {
+      "title": "Danh sách KOC",
+      "greeting": "Quản lý toàn bộ KOC/KOL đang hợp tác trên nền tảng."
     }
   },
   "marketing": {
