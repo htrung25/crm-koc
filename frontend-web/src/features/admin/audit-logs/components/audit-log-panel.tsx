@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  DEFAULT_AUDIT_LOG_QUERY,
-  type AuditLogQuery,
-  type AuditLogRow,
-} from "@/features/admin/audit-logs/types";
+import type { AuditLogQuery, AuditLogRow } from "@/features/admin/audit-logs/types";
 import { useAuditLogs } from "@/features/admin/audit-logs/hooks/use-audit-logs";
+import { useAuditLogQueryParams } from "@/features/admin/audit-logs/hooks/use-audit-log-query-params";
 import { AuditLogFilters } from "@/features/admin/audit-logs/components/audit-log-filters";
 import { AuditLogTable } from "@/features/admin/audit-logs/components/audit-log-table";
 import { AuditLogDetailDrawer } from "@/features/admin/audit-logs/components/audit-log-detail-drawer";
@@ -16,17 +13,17 @@ import { ApiRequestError } from "@/lib/api/browser-client";
 export function AuditLogPanel() {
   const t = useTranslations("admin.auditLogs");
 
-  const [query, setQuery] = useState<AuditLogQuery>(DEFAULT_AUDIT_LOG_QUERY);
+  const { query, updateQuery, resetQuery } = useAuditLogQueryParams();
   const [selectedLog, setSelectedLog] = useState<AuditLogRow | null>(null);
 
   const { data, isLoading, error, refetch } = useAuditLogs(query);
 
   const handleQueryChange = (patch: Partial<AuditLogQuery>) => {
-    setQuery((prev) => ({ ...prev, ...patch }));
+    void updateQuery(patch);
   };
 
   const handleResetFilters = () => {
-    setQuery(DEFAULT_AUDIT_LOG_QUERY);
+    void resetQuery();
   };
 
   const isForbidden =

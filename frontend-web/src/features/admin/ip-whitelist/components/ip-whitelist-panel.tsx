@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { APP_ROUTES } from "@/constants/routes";
 import { ApiRequestError } from "@/lib/api/browser-client";
 import type {
   AdminResponse,
-  AdminRole,
 } from "@/features/admin/ip-whitelist/types";
 import { useAdmins } from "@/features/admin/ip-whitelist/hooks/use-admins";
+import { useIpWhitelistQueryParams } from "@/features/admin/ip-whitelist/hooks/use-ip-whitelist-query-params";
 import { IpWhitelistFilters } from "@/features/admin/ip-whitelist/components/ip-whitelist-filters";
 import { IpWhitelistAddForm } from "@/features/admin/ip-whitelist/components/ip-whitelist-add-form";
 import { IpWhitelistTable } from "@/features/admin/ip-whitelist/components/ip-whitelist-table";
@@ -20,21 +20,32 @@ export function AdminIpWhitelist() {
   const t = useTranslations("admin.ipWhitelist");
   const router = useRouter();
 
-  // Data fetching via TanStack React Query
-  const { data, isLoading, error, refetch } = useAdmins();
-  const admins = useMemo(() => data?.data ?? [], [data?.data]);
-
-  // Filtering & Pagination State
-  const [search, setSearch] = useState("");
-  const [role, setRole] = useState<"all" | AdminRole>("all");
-  const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(8);
+  // Filtering & Pagination State synchronized with URL
+  const {
+    query,
+    search,
+    role,
+    page,
+    rowsPerPage,
+    setSearch,
+    setRole,
+    setPage,
+    setRowsPerPage,
+  } = useIpWhitelistQueryParams();
 
   // Dialog & Form UI state
   const [addingWhitelist, setAddingWhitelist] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<AdminResponse | null>(null);
   const [deletingAdmin, setDeletingAdmin] = useState<AdminResponse | null>(null);
   const [forbidden, setForbidden] = useState(false);
+
+  // Data fetching via TanStack React Query với phân trang server-side
+  const { data, isLoading, error, refetch } = useAdmins(query);
+
+  // Danh sách admin đầy đủ cho dropdown form Thêm IP khi mở form
+  const { data: allAdminsData } = useAdmins(
+    addingWhitelist ? { page: 1, limit: 100 } : undefined,
+  );
 
   // 401 redirect if session expired
   useEffect(() => {
@@ -43,23 +54,11 @@ export function AdminIpWhitelist() {
     }
   }, [error, router]);
 
-  // Filtered list
-  const filtered = useMemo(() => {
-    const needle = search.trim().toLocaleLowerCase("vi");
-    return admins.filter((admin) => {
-      const matchesRole = role === "all" || admin.adminRole === role;
-      const haystack = `${admin.name} ${admin.email} ${admin.ipWhitelist ?? ""}`
-        .toLocaleLowerCase("vi");
-      return matchesRole && (!needle || haystack.includes(needle));
-    });
-  }, [admins, role, search]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-  const safePage = Math.min(page, totalPages);
-  const visible = filtered.slice(
-    (safePage - 1) * rowsPerPage,
-    safePage * rowsPerPage,
-  );
+  // Phân trang và dữ liệu trực tiếp từ server
+  const visible = data?.data ?? [];
+  const totalCount = data?.total ?? 0;
+  const totalPages = Math.max(1, data?.totalPages ?? 1);
+  const safePage = data?.page ?? page;
 
   return (
     <section className="space-y-4">
@@ -74,12 +73,10 @@ export function AdminIpWhitelist() {
           search={search}
           onSearchChange={(val) => {
             setSearch(val);
-            setPage(1);
           }}
           role={role}
           onRoleChange={(newRole) => {
             setRole(newRole);
-            setPage(1);
           }}
           addingWhitelist={addingWhitelist}
           onToggleAddWhitelist={() => setAddingWhitelist((prev) => !prev)}
@@ -88,7 +85,7 @@ export function AdminIpWhitelist() {
 
         {addingWhitelist && (
           <IpWhitelistAddForm
-            admins={admins}
+            admins={allAdminsData?.data ?? visible}
             onClose={() => setAddingWhitelist(false)}
             onForbidden={() => setForbidden(true)}
           />
@@ -96,7 +93,7 @@ export function AdminIpWhitelist() {
       </div>
 
       <IpWhitelistTable
-        totalCount={filtered.length}
+        totalCount={totalCount}
         visible={visible}
         loading={isLoading}
         error={error ? (error as Error).message : null}
@@ -106,7 +103,6 @@ export function AdminIpWhitelist() {
         onPageChange={setPage}
         onRowsPerPageChange={(rows) => {
           setRowsPerPage(rows);
-          setPage(1);
         }}
         forbidden={forbidden}
         onEdit={setEditingAdmin}

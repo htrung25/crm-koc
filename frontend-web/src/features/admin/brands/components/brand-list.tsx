@@ -14,8 +14,8 @@ import {
   IconSearch,
 } from "@/components/ui/icons";
 import { useBrands } from "@/features/admin/brands/hooks/use-brands";
+import { useBrandQueryParams } from "@/features/admin/brands/hooks/use-brand-query-params";
 import {
-  DEFAULT_QUERY,
   type BrandQuery,
   type BrandRow,
 } from "@/features/admin/brands/types";
@@ -70,18 +70,26 @@ export function AdminBrandList() {
   const format = useFormatter();
   const router = useRouter();
 
-  const [query, setQuery] = useState<BrandQuery>(DEFAULT_QUERY);
-  const [searchDraft, setSearchDraft] = useState("");
+  const { query, updateQuery: setQuery } = useBrandQueryParams();
+  const [prevSearch, setPrevSearch] = useState(query.search);
+  const [searchDraft, setSearchDraft] = useState(query.search);
+
+  // Sync draft khi query.search từ URL thay đổi (như nút Back/Forward của trình duyệt)
+  if (query.search !== prevSearch) {
+    setPrevSearch(query.search);
+    setSearchDraft(query.search);
+  }
 
   // Gõ tới đâu gọi API tới đó sẽ bắn một request mỗi ký tự; chờ 350ms cho
   // người dùng gõ xong rồi mới hỏi server.
   useEffect(() => {
+    if (searchDraft === query.search) return;
     const timer = setTimeout(
       () => setQuery((q) => ({ ...q, search: searchDraft, page: 1 })),
       350,
     );
     return () => clearTimeout(timer);
-  }, [searchDraft]);
+  }, [searchDraft, query.search, setQuery]);
 
   const brandsQuery = useBrands(query);
 
