@@ -26,17 +26,13 @@ import { AuditLog } from './entities/audit-log.entity';
     IpWhitelistModule,
     SystemConfigurationModule,
   ],
-  // THỨ TỰ QUAN TRỌNG: Nest đăng ký route theo đúng thứ tự mảng này, Express
-  // khớp cái trúng đầu tiên. AdminController có '/admin/:id' nên sẽ nuốt cả
-  // '/admin/brands-list' lẫn '/admin/creators-list' nếu đứng trước — request
-  // rơi vào findOne rồi ParseUUIDPipe ném 400. Giữ AdminController ở CUỐI.
   controllers: [
+    AdminController,
     AdminProfileController,
     BrandListController,
     CreatorListController,
     SystemConfigurationController,
     AuditLogController,
-    AdminController,
   ],
   providers: [
     AdminService,

@@ -55,7 +55,7 @@ export class AdminUserDto {
   adminRole: EAdminRole;
 }
 
-/** Query string của GET /admin/admin-list. page/limit kế thừa từ PaginationDto. */
+/** Query string của GET /admin/admin-user. page/limit kế thừa từ PaginationDto. */
 export class AdminFilterDto extends PaginationDto {
   @IsOptional()
   @IsString()

@@ -48,7 +48,7 @@ import type { Request as ExpressRequest } from 'express';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  @Get('/admin-list')
+  @Get('/admin-user')
   @ApiOperation({ summary: 'List admin accounts, paginated' })
   @ApiFilterResponse(AdminUserDto)
   @ApiUnauthorizedResponse({
@@ -62,7 +62,7 @@ export class AdminController {
   /**
    * Chi tiết một tài khoản admin.
    */
-  @Get('/:id')
+  @Get('/admin-user/:id')
   @ApiOperation({ summary: 'Read one admin account in detail' })
   @ApiOkResponse({ type: AdminUserDto })
   @ApiBadRequestResponse({ description: 'Account exists but is not an admin' })
@@ -75,7 +75,7 @@ export class AdminController {
     return this.adminService.findAdminById(id);
   }
 
-  @Patch('/:id')
+  @Patch('/admin-user/:id')
   @UseGuards(SuperAdminGuard)
   @ApiOperation({
     summary: 'Update one admin account. Super admin only',
@@ -112,7 +112,7 @@ export class AdminController {
     });
   }
 
-  @Delete('/:id')
+  @Delete('/admin-user/:id')
   @UseGuards(SuperAdminGuard)
   @ApiOperation({
     summary: 'Delete one admin account. Super admin only',
@@ -134,9 +134,7 @@ export class AdminController {
     return this.adminService.deleteAdminById(id);
   }
 
-  // Route động phải khai sau mọi route tĩnh, nếu không '/admin-list' sẽ khớp
-  // vào :id và ParseUUIDPipe ném 400.
-  @Patch('/:id/status')
+  @Patch('/admin-user/:id/status')
   @ApiOperation({
     summary: 'Change account status; banning takes effect immediately',
   })
