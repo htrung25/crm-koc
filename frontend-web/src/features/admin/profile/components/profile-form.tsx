@@ -9,7 +9,6 @@ import {
   IconCalendar,
   IconCamera,
   IconShield,
-  IconUpload,
   IconUser,
 } from '@/components/ui/icons';
 import {
@@ -278,20 +277,9 @@ export function ProfileForm({ profile }: { profile: AdminProfile }) {
             </span>
           </div>
 
-          {/* Action button & hint */}
-          <div className="mt-5 border-t border-[#2D3B42]/10 pt-4">
-            <button
-              type="button"
-              disabled={uploadAvatarMutation.isPending}
-              onClick={openFilePicker}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/80 px-3.5 py-2.5 text-xs font-bold text-[#2D3B42] shadow-sm ring-1 ring-[#2D3B42]/10 transition-all hover:bg-white hover:ring-[#EF4623]/30 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <IconUpload className="h-4 w-4 text-[#EF4623]" />
-              {uploadAvatarMutation.isPending
-                ? t('uploadingAvatar')
-                : t('uploadAvatar')}
-            </button>
-            <p className="mt-2.5 text-left text-[10px] font-semibold leading-relaxed text-[#A89685]">
+          {/* Hint */}
+          <div className="mt-5 border-t border-[#2D3B42]/10 pt-3.5">
+            <p className="text-center text-[10px] font-semibold leading-relaxed text-[#A89685]">
               {t('avatarHint')}
             </p>
           </div>
