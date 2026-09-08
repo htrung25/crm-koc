@@ -6,7 +6,7 @@
   },
   "navigation": {
     "overview": "Overview",
-    "kocs": "KOC list",
+    "kocs": "Creator list",
     "brands": "Brand list",
     "campaigns": "Campaigns",
     "applications": "Applications",
@@ -282,6 +282,10 @@
       "statKocs": "KOCs",
       "statBudget": "Budget",
       "noIndustry": "Uncategorised"
+    },
+    "kocs": {
+      "title": "KOC List",
+      "greeting": "Manage all active and partner KOCs/KOLs across the system."
     }
   },
   "marketing": {

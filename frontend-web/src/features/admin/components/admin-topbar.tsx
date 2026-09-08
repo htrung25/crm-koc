@@ -29,7 +29,7 @@ export function AdminTopbar({ title, greeting }: AdminTopbarProps) {
   };
 
   return (
-    <header className="sticky top-4 z-30 flex flex-wrap items-center justify-between gap-4 rounded-[24px] glass px-5 py-3.5">
+    <header className="flex flex-wrap items-center justify-between gap-4 rounded-[24px] glass px-5 py-3.5">
       <div className="min-w-0">
         <h1 className="text-xl font-extrabold tracking-tight text-[#2D3B42]">
           {title}
