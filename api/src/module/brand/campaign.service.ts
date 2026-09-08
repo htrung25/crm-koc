@@ -234,8 +234,7 @@ export class CampaignService {
       return { value: this.toFloorAmount(key, raw), sourceKey: key };
     }
 
-    // Thiếu khoá là lỗi cấu hình, KHÔNG được im lặng bỏ qua sàn: BR-CAM-004 nói
-    // không actor nào override được, mà bỏ qua vì thiếu config chính là override.
+    // Thiếu khoá là lỗi cấu hình
     throw new ServiceUnavailableException(
       `missing cash floor configuration, tried: ${keys.join(', ')}`,
     );
@@ -707,14 +706,14 @@ export class CampaignService {
     brandId: string,
     idempotencyKey?: string,
   ): Promise<Campaign> {
-    const replayed = await this.findByIdempotencyKey(brandId, idempotencyKey);
-    if (replayed) {
-      return replayed;
+    const cached = await this.findByIdempotencyKey(brandId, idempotencyKey);
+    if (cached) {
+      return cached;
     }
 
     await this.assertUnderLimit(brandId);
 
-    const campaign = await this.insertWithUniqueCode(brandId);
+    const campaign = await this.insertWithUniqueCode(brandId, idempotencyKey);
     await this.rememberIdempotencyKey(brandId, idempotencyKey, campaign.id);
 
     return campaign;
@@ -740,6 +739,7 @@ export class CampaignService {
     }
   }
 
+  // Hàng rào mềm: tạo đồng thời có thể vượt trần vài đơn vị rồi khoá cứng.
   private async assertUnderLimit(brandId: string): Promise<void> {
     const unfinished = await this.campaignRepository.count({
       where: { brandId, status: In(UNFINISHED_CAMPAIGN_STATUSES) },
@@ -755,15 +755,40 @@ export class CampaignService {
     }
   }
 
-  private async insertWithUniqueCode(brandId: string): Promise<Campaign> {
+  private async insertWithUniqueCode(
+    brandId: string,
+    idempotencyKey?: string,
+  ): Promise<Campaign> {
     for (let attempt = 1; attempt <= CAMPAIGN_CODE_MAX_ATTEMPTS; attempt++) {
       try {
-        return await this.campaignRepository.save(
-          this.campaignRepository.create({
+        // Khai rõ conflict target
+        const inserted = await this.campaignRepository
+          .createQueryBuilder()
+          .insert()
+          .into(Campaign)
+          .values({
             brandId,
             code: await this.generateCode(),
-          }),
-        );
+            idempotencyKey: idempotencyKey ?? null,
+          })
+          .orIgnore('("brand_id", "idempotency_key")')
+          .returning('id')
+          .execute();
+
+        const id = (inserted.raw as { id?: string }[])[0]?.id;
+        if (id) {
+          return this.campaignRepository.findOneByOrFail({ id });
+        }
+
+        // 0 dòng = request song song vừa chiếm mất key, trả về bản của họ.
+        // Key rỗng thì NULL không bao giờ đụng nhau, nhánh này không tới được.
+        if (!idempotencyKey) {
+          throw new ServiceUnavailableException('insert returned no row');
+        }
+        return this.campaignRepository.findOneByOrFail({
+          brandId,
+          idempotencyKey,
+        });
       } catch (error) {
         if (uniqueViolationOf(error) !== 'UQ_campaigns_code') {
           throw error;

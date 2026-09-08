@@ -1,15 +1,6 @@
-/**
- * Giữ .env.example trung thực với code, và giữ .env trên server đủ khoá.
- *
- *   node scripts/check-env.mjs --scan api|web
- *   node scripts/check-env.mjs --compare <example> <env>
- *
- * Dòng bị comment trong .env.example (`# FOO=`) vẫn tính là đã khai — dùng cho
- * biến tuỳ chọn mà mặc định là không set.
- */
 const { readFileSync, readdirSync, statSync } = require("node:fs");
 
-/** Biến hạ tầng đọc bởi container chứ không phải code (postgres, redis…). */
+//Biến hạ tầng đọc bởi container chứ không phải code
 const INFRA_ONLY = new Set([]);
 
 const SKIP_BY_TARGET = {
@@ -71,10 +62,8 @@ function setKeysOf(file) {
   );
 }
 
-/**
- * Tên biến code thực sự đọc. Nối cả file thành một dòng để bắt được lời gọi
- * `.get(` xuống dòng.
- */
+//Tên biến code thực sự đọc. Nối cả file thành một dòng để bắt được lời gọi `.get(` xuống dòng.
+
 function usedKeys({ roots, onlyTs }) {
   const used = new Set();
   for (const root of roots) {
@@ -106,7 +95,7 @@ function scan(name) {
 
   const missing = [...used].filter((k) => !skip.has(k) && !declared.has(k));
   // Chiều ngược lại: khai mà không ai đọc. Bỏ qua thì biến chết nằm lại trong
-  // .env.example và cả deploy workflow hàng tháng trời không ai biết.
+  // .env.example và cả deploy workflow không ai biết.
   const orphan = [...declared].filter(
     (k) => !used.has(k) && !INFRA_ONLY.has(k),
   );

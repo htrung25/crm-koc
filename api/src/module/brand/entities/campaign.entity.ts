@@ -32,22 +32,18 @@ export class Campaign {
   @JoinColumn({ name: 'brand_id' })
   brand?: BrandProfile;
 
-  /** Mã người đọc được, dùng để tìm kiếm. Sinh ngẫu nhiên, không theo sequence. */
   @Column({ type: 'varchar', length: 20 })
   code: string;
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  idempotencyKey: string | null;
 
   @Column({ type: 'smallint', default: ECampaignStatus.DRAFT })
   status: ECampaignStatus;
 
-  /**
-   * KHÔNG dùng @VersionColumn: nó chỉ tăng khi save() thấy có cột đổi, nên một
-   * transition chỉ đổi status sẽ không tăng version và mất luôn lớp chống ghi
-   * đè. Cột này do câu UPDATE có điều kiện tự tăng.
-   */
   @Column({ type: 'integer', default: 1 })
   version: number;
 
-  /** Bước wizard gần nhất, để mở lại đúng chỗ đang dở. */
   @Column({ type: 'smallint', nullable: true })
   wizardStep: number | null;
 
@@ -67,7 +63,6 @@ export class Campaign {
   @JoinColumn({ name: 'category_id' })
   category?: CampaignCategory;
 
-  /** Rich text đã sanitize. Độ dài đo trên nội dung SAU sanitize. */
   @Column({ type: 'text', nullable: true })
   productDescription: string | null;
 
@@ -102,15 +97,10 @@ export class Campaign {
   @Column({ type: 'text', array: true, default: '{}' })
   creatorContentCategories: ECreatorContent[];
 
-  /**
-   * Nền tảng Creator phải CÓ TÀI KHOẢN, khác với nơi công việc phải đăng
-   * (deliverable.platform) và bao hàm tập đó. Ràng buộc cross-table nên kiểm ở
-   * tầng validation, không phải CHECK.
-   */
   @Column({ type: 'text', array: true, default: '{}' })
   creatorPlatforms: ESocialPlatform[];
 
-  /** bigint => driver trả về string, không phải number. Khai string là đúng. */
+  /** bigint => driver trả về string, không phải number. */
   @Column({ type: 'bigint', nullable: true })
   creatorMinFollowers: string | null;
 
@@ -121,7 +111,6 @@ export class Campaign {
   @Column({ type: 'text', array: true, default: '{}' })
   creatorCities: string[];
 
-  /** Không có đối trọng dữ liệu nào phía Creator nên chỉ là mô tả. */
   @Column({ type: 'text', nullable: true })
   creatorAudienceNote: string | null;
 
