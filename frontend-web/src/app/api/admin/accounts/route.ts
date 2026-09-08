@@ -1,10 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { BACKEND_ROUTES } from "@/constants/routes";
-import { apiRequest } from "@/lib/api/server-client";
-import { errorResponse, requireSession } from "@/lib/api/route-session";
+import { BACKEND_ROUTES } from '@/constants/routes';
+import { apiRequest } from '@/lib/api/server-client';
+import { errorResponse, requireSession } from '@/lib/api/route-session';
 
-const ALLOWED_PARAMS = ["page", "limit", "search", "role", "adminRole"] as const;
+const ALLOWED_PARAMS = [
+  'page',
+  'limit',
+  'search',
+  'role',
+  'adminRole',
+] as const;
 
 export async function GET(request: Request) {
   const session = await requireSession();
@@ -23,7 +29,7 @@ export async function GET(request: Request) {
       await apiRequest(`${BACKEND_ROUTES.admin.adminUser}?${query}`, {
         token: session.token,
         clientContext: session.clientContext,
-      }),
+      })
     );
   } catch (error) {
     return errorResponse(error);

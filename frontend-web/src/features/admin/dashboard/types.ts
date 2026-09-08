@@ -15,7 +15,7 @@ export type StatMetric = {
   value: string;
   /** Phần trăm biến động; âm là giảm. */
   delta: number;
-  icon: "wallet" | "users" | "trend" | "target";
+  icon: 'wallet' | 'users' | 'trend' | 'target';
   accent: string;
   spark: number[];
 };
@@ -40,7 +40,7 @@ export type TrafficData = {
   slices: TrafficSlice[];
 };
 
-export type TransactionStatus = "completed" | "processing" | "pending";
+export type TransactionStatus = 'completed' | 'processing' | 'pending';
 
 export type Transaction = {
   id: string;

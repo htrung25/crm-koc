@@ -1,13 +1,10 @@
-import { BACKEND_ROUTES } from "@/constants/routes";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { BACKEND_ROUTES } from '@/constants/routes';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
-import { ApiError, apiRequest } from "@/lib/api/server-client";
-import { getClientContext } from "@/lib/api/client-context";
-import {
-  clearSessionCookies,
-  ACCESS_COOKIE,
-} from "@/features/auth/session";
+import { ApiError, apiRequest } from '@/lib/api/server-client';
+import { getClientContext } from '@/lib/api/client-context';
+import { clearSessionCookies, ACCESS_COOKIE } from '@/features/auth/session';
 
 /**
  * Thu hồi token ở backend (đưa jti vào blacklist) rồi xoá cookie phiên.
@@ -19,7 +16,7 @@ export async function POST() {
   if (token) {
     try {
       await apiRequest(BACKEND_ROUTES.logout, {
-        method: "POST",
+        method: 'POST',
         token,
         clientContext: await getClientContext(),
       });

@@ -1,26 +1,32 @@
-import { APP_ROUTES } from "@/constants/routes";
-import { useTranslations } from "next-intl";
+import { APP_ROUTES } from '@/constants/routes';
+import { useTranslations } from 'next-intl';
 
-import Link from "next/link";
-import { RedSunNav } from "@/components/layout/red-sun-nav";
-import { UiSimulator } from "@/features/marketing/components/ui-simulator";
-import { BentoFeatures } from "@/features/marketing/components/bento-features";
-import { MarqueeCards } from "@/features/marketing/components/marquee-cards";
-import { PricingSection } from "@/features/marketing/components/pricing-section";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import Link from 'next/link';
+import { RedSunNav } from '@/components/layout/red-sun-nav';
+import { UiSimulator } from '@/features/marketing/components/ui-simulator';
+import { BentoFeatures } from '@/features/marketing/components/bento-features';
+import { MarqueeCards } from '@/features/marketing/components/marquee-cards';
+import { PricingSection } from '@/features/marketing/components/pricing-section';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
 
 export function LandingPage() {
-  const t = useTranslations("marketing");
+  const t = useTranslations('marketing');
   return (
     <div className="min-h-screen bg-[#2D3B42] text-white font-sans selection:bg-[#EF4623] selection:text-white">
       {/* Top Glassmorphism Navigation */}
       <RedSunNav />
 
       {/* Hero Section */}
-      <section id="hero" className="relative pt-36 pb-24 md:pt-44 md:pb-32 overflow-hidden bg-white text-[#2D3B42]">
+      <section
+        id="hero"
+        className="relative pt-36 pb-24 md:pt-44 md:pb-32 overflow-hidden bg-white text-[#2D3B42]"
+      >
         {/* Large Ambient Blur Circles */}
         <div className="absolute top-10 right-10 w-[450px] h-[450px] bg-[#EF4623]/10 rounded-full blur-[120px] pointer-events-none animate-ambient-blur" />
-        <div className="absolute bottom-10 left-10 w-[450px] h-[450px] bg-[#EF4623]/10 rounded-full blur-[120px] pointer-events-none animate-ambient-blur" style={{ animationDelay: "4s" }} />
+        <div
+          className="absolute bottom-10 left-10 w-[450px] h-[450px] bg-[#EF4623]/10 rounded-full blur-[120px] pointer-events-none animate-ambient-blur"
+          style={{ animationDelay: '4s' }}
+        />
 
         <div className="max-w-7xl mx-auto px-6 md:px-12 text-center relative z-10 space-y-8 animate-fade-up">
           {/* Top Pill Badge */}
@@ -36,13 +42,15 @@ export function LandingPage() {
             className="text-5xl sm:text-7xl md:text-[9rem] leading-[0.9] font-normal tracking-tight text-[#2D3B42]"
             style={{ fontFamily: "'Instrument Serif', serif" }}
           >
-            {t("hero.title")} <br />
-            <span className="italic text-[#EF4623] block mt-1">{t("hero.titleAccent")}</span>
+            {t('hero.title')} <br />
+            <span className="italic text-[#EF4623] block mt-1">
+              {t('hero.titleAccent')}
+            </span>
           </h1>
 
           {/* Subtext */}
           <p className="max-w-2xl mx-auto text-base sm:text-xl text-[#2D3B42]/70 font-sans font-medium leading-relaxed">
-            {t("hero.subtitle")}
+            {t('hero.subtitle')}
           </p>
 
           {/* Action CTAs */}
@@ -52,7 +60,7 @@ export function LandingPage() {
               href={APP_ROUTES.login}
               className="inline-flex items-center justify-center px-9 py-4 rounded-[30px] bg-[#EF4623] text-white font-bold text-sm uppercase tracking-wider shadow-2xl shadow-[#EF4623]/35 hover:bg-[#D83B19] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
             >
-              {t("hero.cta")}
+              {t('hero.cta')}
             </Link>
 
             {/* Secondary Ghost Button */}
@@ -73,7 +81,9 @@ export function LandingPage() {
               >
                 15,000+
               </span>
-              <span className="text-xs font-semibold text-slate-500">{t("hero.stat1")}</span>
+              <span className="text-xs font-semibold text-slate-500">
+                {t('hero.stat1')}
+              </span>
             </div>
             <div>
               <span
@@ -82,7 +92,9 @@ export function LandingPage() {
               >
                 1,200+
               </span>
-              <span className="text-xs font-semibold text-slate-500">{t("hero.stat2")}</span>
+              <span className="text-xs font-semibold text-slate-500">
+                {t('hero.stat2')}
+              </span>
             </div>
             <div>
               <span
@@ -91,7 +103,9 @@ export function LandingPage() {
               >
                 $45M+
               </span>
-              <span className="text-xs font-semibold text-slate-500">{t("hero.stat3")}</span>
+              <span className="text-xs font-semibold text-slate-500">
+                {t('hero.stat3')}
+              </span>
             </div>
             <div>
               <span
@@ -100,18 +114,27 @@ export function LandingPage() {
               >
                 99.8%
               </span>
-              <span className="text-xs font-semibold text-slate-500">{t("hero.stat4")}</span>
+              <span className="text-xs font-semibold text-slate-500">
+                {t('hero.stat4')}
+              </span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Value Proposition (Bento Section with UI Simulator) */}
-      <section id="value-prop" className="py-24 bg-[#FDF1EE] text-[#2D3B42] relative overflow-hidden">
+      <section
+        id="value-prop"
+        className="py-24 bg-[#FDF1EE] text-[#2D3B42] relative overflow-hidden"
+      >
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Left: Text-heavy with large Serif H2 and vertical feature list */}
-            <ScrollReveal direction="left" delay={100} className="lg:col-span-6 space-y-8">
+            <ScrollReveal
+              direction="left"
+              delay={100}
+              className="lg:col-span-6 space-y-8"
+            >
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white text-[#EF4623] text-xs font-bold uppercase tracking-wider shadow-xs">
                 <span>🔥 Red Sun Innovation</span>
               </div>
@@ -120,12 +143,14 @@ export function LandingPage() {
                 className="text-4xl sm:text-6xl font-normal tracking-tight text-[#2D3B42] leading-[1.05]"
                 style={{ fontFamily: "'Instrument Serif', serif" }}
               >
-                {t("experience.title")} <br />
-                <span className="italic text-[#EF4623]">{t("experience.titleAccent")}</span>
+                {t('experience.title')} <br />
+                <span className="italic text-[#EF4623]">
+                  {t('experience.titleAccent')}
+                </span>
               </h2>
 
               <p className="text-base sm:text-lg text-slate-700 font-sans leading-relaxed">
-                {t("experience.subtitle")}
+                {t('experience.subtitle')}
               </p>
 
               {/* Vertical Feature List using 56px rounded-2xl icon containers */}
@@ -136,10 +161,10 @@ export function LandingPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-[#2D3B42]">
-                      {t("experience.item1Title")}
+                      {t('experience.item1Title')}
                     </h3>
                     <p className="text-sm text-slate-600 leading-relaxed mt-1">
-                      {t("experience.item1Body")}
+                      {t('experience.item1Body')}
                     </p>
                   </div>
                 </div>
@@ -150,10 +175,10 @@ export function LandingPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-[#2D3B42]">
-                      {t("experience.item2Title")}
+                      {t('experience.item2Title')}
                     </h3>
                     <p className="text-sm text-slate-600 leading-relaxed mt-1">
-                      {t("experience.item2Body")}
+                      {t('experience.item2Body')}
                     </p>
                   </div>
                 </div>
@@ -164,10 +189,10 @@ export function LandingPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-[#2D3B42]">
-                      {t("experience.item3Title")}
+                      {t('experience.item3Title')}
                     </h3>
                     <p className="text-sm text-slate-600 leading-relaxed mt-1">
-                      {t("experience.item3Body")}
+                      {t('experience.item3Body')}
                     </p>
                   </div>
                 </div>
@@ -175,7 +200,11 @@ export function LandingPage() {
             </ScrollReveal>
 
             {/* Right: UI Simulator Component */}
-            <ScrollReveal direction="right" delay={250} className="lg:col-span-6">
+            <ScrollReveal
+              direction="right"
+              delay={250}
+              className="lg:col-span-6"
+            >
               <UiSimulator />
             </ScrollReveal>
           </div>
@@ -195,49 +224,49 @@ export function LandingPage() {
       <section id="cta" className="py-20 px-4 sm:px-8 bg-[#2D3B42]">
         <ScrollReveal direction="rotate" delay={100}>
           <div className="max-w-7xl mx-auto bg-[#EF4623] rounded-[4rem] p-10 sm:p-16 md:p-24 relative overflow-hidden text-white shadow-2xl bg-dot-grid">
-          {/* Ambient Glow */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+            {/* Ambient Glow */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8">
-            <div className="inline-block px-5 py-2 bg-white/15 backdrop-blur-md rounded-full text-white text-xs font-extrabold uppercase tracking-widest border border-white/20">
-              {t("cta.eyebrow")}
-            </div>
+            <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8">
+              <div className="inline-block px-5 py-2 bg-white/15 backdrop-blur-md rounded-full text-white text-xs font-extrabold uppercase tracking-widest border border-white/20">
+                {t('cta.eyebrow')}
+              </div>
 
-            <h2
-              className="text-5xl sm:text-7xl md:text-8xl font-normal leading-none tracking-tight text-white"
-              style={{ fontFamily: "'Instrument Serif', serif" }}
-            >
-              {t("cta.title")} <br />
-              <span className="italic underline underline-offset-8 decoration-white/40">
-                {t("cta.titleAccent")}
-              </span>
-            </h2>
-
-            <p className="text-base sm:text-xl text-white/90 font-sans max-w-2xl mx-auto leading-relaxed">
-              {t("cta.subtitle")}
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-5 pt-4">
-              <Link
-                href={APP_ROUTES.login}
-                className="inline-flex items-center justify-center px-10 py-4 rounded-[30px] bg-white text-[#EF4623] font-extrabold text-sm uppercase tracking-wider shadow-2xl hover:bg-[#FDF1EE] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+              <h2
+                className="text-5xl sm:text-7xl md:text-8xl font-normal leading-none tracking-tight text-white"
+                style={{ fontFamily: "'Instrument Serif', serif" }}
               >
-                {t("cta.primary")}
-              </Link>
-              <Link
-                href={APP_ROUTES.login}
-                className="inline-flex items-center justify-center px-8 py-4 rounded-[30px] border-2 border-white/40 text-white font-extrabold text-sm uppercase tracking-wider hover:bg-white hover:text-[#EF4623] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
-              >
-                {t("cta.secondary")}
-              </Link>
-            </div>
+                {t('cta.title')} <br />
+                <span className="italic underline underline-offset-8 decoration-white/40">
+                  {t('cta.titleAccent')}
+                </span>
+              </h2>
 
-            {/* Trust-bar Footer */}
-            <div className="pt-12 border-t border-white/20 text-xs uppercase tracking-widest font-bold text-white/80">
-              {t("cta.trusted")}
+              <p className="text-base sm:text-xl text-white/90 font-sans max-w-2xl mx-auto leading-relaxed">
+                {t('cta.subtitle')}
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center gap-5 pt-4">
+                <Link
+                  href={APP_ROUTES.login}
+                  className="inline-flex items-center justify-center px-10 py-4 rounded-[30px] bg-white text-[#EF4623] font-extrabold text-sm uppercase tracking-wider shadow-2xl hover:bg-[#FDF1EE] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                >
+                  {t('cta.primary')}
+                </Link>
+                <Link
+                  href={APP_ROUTES.login}
+                  className="inline-flex items-center justify-center px-8 py-4 rounded-[30px] border-2 border-white/40 text-white font-extrabold text-sm uppercase tracking-wider hover:bg-white hover:text-[#EF4623] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                >
+                  {t('cta.secondary')}
+                </Link>
+              </div>
+
+              {/* Trust-bar Footer */}
+              <div className="pt-12 border-t border-white/20 text-xs uppercase tracking-widest font-bold text-white/80">
+                {t('cta.trusted')}
+              </div>
             </div>
           </div>
-        </div>
         </ScrollReveal>
       </section>
 
@@ -264,11 +293,11 @@ export function LandingPage() {
             </div>
 
             <p className="text-sm text-slate-400 font-sans max-w-sm leading-relaxed">
-              {t("footer.about")}
+              {t('footer.about')}
             </p>
 
             <div className="flex items-center gap-3">
-              {["FB", "TT", "YT", "LI"].map((social) => (
+              {['FB', 'TT', 'YT', 'LI'].map((social) => (
                 <a
                   key={social}
                   href="#"
@@ -286,27 +315,39 @@ export function LandingPage() {
               className="text-xl font-normal text-white"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
-              {t("footer.product")}
+              {t('footer.product')}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <a href="#value-prop" className="hover:text-white transition-colors">
+                <a
+                  href="#value-prop"
+                  className="hover:text-white transition-colors"
+                >
                   AI Matching Engine
                 </a>
               </li>
               <li>
-                <a href="#features" className="hover:text-white transition-colors">
-                  {t("footer.samples")}
+                <a
+                  href="#features"
+                  className="hover:text-white transition-colors"
+                >
+                  {t('footer.samples')}
                 </a>
               </li>
               <li>
-                <a href="#features" className="hover:text-white transition-colors">
-                  {t("footer.commission")}
+                <a
+                  href="#features"
+                  className="hover:text-white transition-colors"
+                >
+                  {t('footer.commission')}
                 </a>
               </li>
               <li>
-                <a href="#value-prop" className="hover:text-white transition-colors">
-                  {t("footer.contracts")}
+                <a
+                  href="#value-prop"
+                  className="hover:text-white transition-colors"
+                >
+                  {t('footer.contracts')}
                 </a>
               </li>
             </ul>
@@ -318,27 +359,39 @@ export function LandingPage() {
               className="text-xl font-normal text-white"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
-              {t("footer.portals")}
+              {t('footer.portals')}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <Link href={APP_ROUTES.login} className="hover:text-[#EF4623] transition-colors">
-                  {t("footer.adminPortal")}
+                <Link
+                  href={APP_ROUTES.login}
+                  className="hover:text-[#EF4623] transition-colors"
+                >
+                  {t('footer.adminPortal')}
                 </Link>
               </li>
               <li>
-                <Link href={APP_ROUTES.login} className="hover:text-[#EF4623] transition-colors">
-                  {t("footer.brandPortal")}
+                <Link
+                  href={APP_ROUTES.login}
+                  className="hover:text-[#EF4623] transition-colors"
+                >
+                  {t('footer.brandPortal')}
                 </Link>
               </li>
               <li>
-                <Link href={APP_ROUTES.login} className="hover:text-[#EF4623] transition-colors">
-                  {t("footer.creatorPortal")}
+                <Link
+                  href={APP_ROUTES.login}
+                  className="hover:text-[#EF4623] transition-colors"
+                >
+                  {t('footer.creatorPortal')}
                 </Link>
               </li>
               <li>
-                <Link href={APP_ROUTES.login} className="hover:text-[#EF4623] transition-colors">
-                  {t("footer.allPortals")}
+                <Link
+                  href={APP_ROUTES.login}
+                  className="hover:text-[#EF4623] transition-colors"
+                >
+                  {t('footer.allPortals')}
                 </Link>
               </li>
             </ul>
@@ -350,12 +403,12 @@ export function LandingPage() {
               className="text-xl font-normal text-white"
               style={{ fontFamily: "'Instrument Serif', serif" }}
             >
-              {t("footer.contact")}
+              {t('footer.contact')}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>Hotline: 1900 6868</li>
               <li>Email: contact@redsun-koc.vn</li>
-              <li>{t("footer.address")}</li>
+              <li>{t('footer.address')}</li>
             </ul>
           </div>
         </div>
@@ -365,13 +418,13 @@ export function LandingPage() {
           <p>© 2026 Red Sun CRM-KOC System. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <a href="#" className="hover:text-white transition-colors">
-              {t("footer.terms")}
+              {t('footer.terms')}
             </a>
             <a href="#" className="hover:text-white transition-colors">
-              {t("footer.privacy")}
+              {t('footer.privacy')}
             </a>
             <a href="#" className="hover:text-white transition-colors">
-              {t("footer.sitemap")}
+              {t('footer.sitemap')}
             </a>
           </div>
         </div>

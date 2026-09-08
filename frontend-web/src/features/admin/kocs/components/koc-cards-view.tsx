@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { IconBin, IconEye, IconPencil } from "@/components/ui/icons";
-import { KocPlatformBadge } from "./koc-platform-badge";
-import { KocStatusBadge } from "./koc-status-badge";
-import type { KocItem } from "../types";
+import { IconBin, IconEye, IconPencil } from '@/components/ui/icons';
+import { KocPlatformBadge } from './koc-platform-badge';
+import { KocStatusBadge } from './koc-status-badge';
+import type { KocItem } from '../types';
 
 type KocCardsViewProps = {
   items: KocItem[];
@@ -86,7 +86,7 @@ export function KocCardsView({
                     key={eng.platform}
                     className="rounded-lg bg-white/80 px-2 py-0.5 text-xs font-semibold text-[#5C5049] ring-1 ring-[#2D3B42]/8"
                   >
-                    {eng.platform}:{" "}
+                    {eng.platform}:{' '}
                     <strong className="font-mono text-emerald-600">
                       {eng.rate}
                     </strong>

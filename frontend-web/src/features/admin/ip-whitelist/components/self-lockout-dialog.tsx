@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useId, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useEffect, useId, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type SelfLockoutDialogProps = {
   /** IP backend thấy, ĐÃ chuẩn hoá (127.0.0.1 chứ không phải ::ffff:127.0.0.1). */
@@ -38,7 +38,7 @@ export function SelfLockoutDialog({
   pending,
   error,
 }: SelfLockoutDialogProps) {
-  const t = useTranslations("admin.selfLockout");
+  const t = useTranslations('admin.selfLockout');
   const [acknowledged, setAcknowledged] = useState(false);
   const titleId = useId();
   const checkboxId = useId();
@@ -53,20 +53,20 @@ export function SelfLockoutDialog({
     dialogRef.current?.focus();
 
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         onDismiss();
         return;
       }
 
-      if (e.key !== "Tab" || !dialogRef.current) return;
+      if (e.key !== 'Tab' || !dialogRef.current) return;
 
       // Tính lại danh sách focusable mỗi lần Tab: nút "Vẫn lưu" đổi trạng
       // thái disabled theo checkbox nên danh sách không được cache.
       const focusable = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+        dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
       );
       if (focusable.length === 0) return;
 
@@ -87,9 +87,9 @@ export function SelfLockoutDialog({
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
     };
   }, [onDismiss]);
@@ -106,14 +106,19 @@ export function SelfLockoutDialog({
         className="w-full max-w-lg rounded-[26px] bg-white p-6 shadow-2xl outline-none"
       >
         <h2 id={titleId} className="text-lg font-extrabold text-[#2D3B42]">
-          {t("title")}
+          {t('title')}
         </h2>
 
-        <p id={descriptionId} className="mt-3 text-sm leading-relaxed text-[#5C5049]">
-          {t.rich("body", {
+        <p
+          id={descriptionId}
+          className="mt-3 text-sm leading-relaxed text-[#5C5049]"
+        >
+          {t.rich('body', {
             clientIp,
             code: (chunks) => (
-              <code className="font-mono font-bold text-[#2D3B42]">{chunks}</code>
+              <code className="font-mono font-bold text-[#2D3B42]">
+                {chunks}
+              </code>
             ),
           })}
         </p>
@@ -122,7 +127,7 @@ export function SelfLockoutDialog({
           id={consequenceId}
           className="mt-3 rounded-2xl bg-amber-500/12 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-800"
         >
-          {t("noEscape")}
+          {t('noEscape')}
         </p>
 
         <button
@@ -131,14 +136,11 @@ export function SelfLockoutDialog({
           onClick={onAddCurrentIp}
           className="mt-5 w-full rounded-2xl bg-[#EF4623] px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-[#EF4623]/30 transition-colors hover:bg-[#D83B19] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30"
         >
-          {pending ? t("saving") : t("addAndSave", { clientIp })}
+          {pending ? t('saving') : t('addAndSave', { clientIp })}
         </button>
 
         {error && (
-          <p
-            role="alert"
-            className="mt-3 text-xs font-semibold text-[#EF4623]"
-          >
+          <p role="alert" className="mt-3 text-xs font-semibold text-[#EF4623]">
             {error}
           </p>
         )}
@@ -155,7 +157,7 @@ export function SelfLockoutDialog({
               onChange={(e) => setAcknowledged(e.target.checked)}
               className="mt-0.5 h-4 w-4 shrink-0 accent-[#EF4623]"
             />
-            {t("acknowledge")}
+            {t('acknowledge')}
           </label>
 
           <div className="mt-3 flex flex-wrap gap-2">
@@ -165,7 +167,7 @@ export function SelfLockoutDialog({
               onClick={onForce}
               className="rounded-full border border-[#EF4623]/40 px-4 py-2 text-xs font-bold text-[#EF4623] transition-colors hover:bg-[#EF4623]/10 disabled:cursor-not-allowed disabled:border-[#2D3B42]/15 disabled:text-[#8A7768] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#EF4623]/30"
             >
-              {t("force")}
+              {t('force')}
             </button>
 
             <button
@@ -174,7 +176,7 @@ export function SelfLockoutDialog({
               onClick={onDismiss}
               className="rounded-full px-4 py-2 text-xs font-bold text-[#5C5049] transition-colors hover:bg-[#2D3B42]/8 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2D3B42]/20"
             >
-              {t("cancel")}
+              {t('cancel')}
             </button>
           </div>
         </div>

@@ -9,7 +9,7 @@ type IconProps = {
   className?: string;
 };
 
-const base = "h-[18px] w-[18px]";
+const base = 'h-[18px] w-[18px]';
 
 function Svg({
   className = base,
@@ -238,7 +238,7 @@ export function IconLogout(props: IconProps) {
 /** Mũi tên nhỏ trong pill biến động — hướng phụ thuộc dấu của delta. */
 export function IconDelta({
   up,
-  className = "h-3 w-3",
+  className = 'h-3 w-3',
 }: IconProps & { up: boolean }) {
   return (
     <svg
@@ -269,8 +269,8 @@ export function IconDelta({
 /** Mũi tên phân trang. Dùng chung cho mọi bảng có nút trước/sau. */
 export function IconChevron({
   direction,
-  className = "h-4 w-4",
-}: IconProps & { direction: "left" | "right" }) {
+  className = 'h-4 w-4',
+}: IconProps & { direction: 'left' | 'right' }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -280,12 +280,12 @@ export function IconChevron({
       className={className}
       aria-hidden="true"
     >
-      <path d={direction === "left" ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"} />
+      <path d={direction === 'left' ? 'm15 18-6-6 6-6' : 'm9 18 6-6-6-6'} />
     </svg>
   );
 }
 
-export function IconEye({ className = "h-4 w-4" }: IconProps) {
+export function IconEye({ className = 'h-4 w-4' }: IconProps) {
   return (
     <Svg className={className}>
       <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
@@ -294,7 +294,7 @@ export function IconEye({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
-export function IconPencil({ className = "h-4 w-4" }: IconProps) {
+export function IconPencil({ className = 'h-4 w-4' }: IconProps) {
   return (
     <Svg className={className}>
       <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z" />
@@ -302,10 +302,29 @@ export function IconPencil({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
-export function IconBin({ className = "h-4 w-4" }: IconProps) {
+export function IconBin({ className = 'h-4 w-4' }: IconProps) {
   return (
     <Svg className={className}>
       <path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" />
+    </Svg>
+  );
+}
+
+export function IconCamera({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+      <circle cx="12" cy="13" r="3" />
+    </Svg>
+  );
+}
+
+export function IconUpload({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
     </Svg>
   );
 }

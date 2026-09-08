@@ -1,13 +1,9 @@
-"use client";
+'use client';
 
-import { useTranslations } from "next-intl";
-import {
-  IconChevron,
-  IconPencil,
-  IconTrash,
-} from "@/components/ui/icons";
-import { parseWhitelist } from "@/features/admin/ip-whitelist/whitelist";
-import type { AdminResponse } from "@/features/admin/ip-whitelist/types";
+import { useTranslations } from 'next-intl';
+import { IconChevron, IconPencil, IconTrash } from '@/components/ui/icons';
+import { parseWhitelist } from '@/features/admin/ip-whitelist/whitelist';
+import type { AdminResponse } from '@/features/admin/ip-whitelist/types';
 
 type IpWhitelistTableProps = {
   totalCount: number;
@@ -40,7 +36,7 @@ export function IpWhitelistTable({
   onDelete,
   onRefresh,
 }: IpWhitelistTableProps) {
-  const t = useTranslations("admin.ipWhitelist");
+  const t = useTranslations('admin.ipWhitelist');
 
   return (
     <div className="glass overflow-hidden rounded-[26px]">
@@ -50,7 +46,7 @@ export function IpWhitelistTable({
             IP Whitelist
           </h2>
           <p className="mt-0.5 text-xs font-semibold text-[#8A7768]">
-            {t("accountCount", { count: totalCount })}
+            {t('accountCount', { count: totalCount })}
           </p>
         </div>
         <button
@@ -58,7 +54,7 @@ export function IpWhitelistTable({
           onClick={onRefresh}
           className="rounded-xl px-3 py-2 text-xs font-extrabold text-[#EF4623] transition-colors hover:bg-[#EF4623]/10"
         >
-          {t("refresh")}
+          {t('refresh')}
         </button>
       </div>
 
@@ -74,10 +70,10 @@ export function IpWhitelistTable({
             <tr className="bg-white/35 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#8A7768]">
               <th className="w-16 px-5 py-4 text-center">STT</th>
               <th className="px-4 py-4">Email</th>
-              <th className="px-4 py-4">{t("colName")}</th>
-              <th className="px-4 py-4">{t("colRole")}</th>
-              <th className="px-4 py-4">{t("colIp")}</th>
-              <th className="px-5 py-4 text-right">{t("colActions")}</th>
+              <th className="px-4 py-4">{t('colName')}</th>
+              <th className="px-4 py-4">{t('colRole')}</th>
+              <th className="px-4 py-4">{t('colIp')}</th>
+              <th className="px-5 py-4 text-right">{t('colActions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -87,7 +83,7 @@ export function IpWhitelistTable({
                   colSpan={6}
                   className="px-5 py-16 text-center text-sm font-semibold text-[#8A7768]"
                 >
-                  {t("loading")}
+                  {t('loading')}
                 </td>
               </tr>
             ) : visible.length === 0 ? (
@@ -96,7 +92,7 @@ export function IpWhitelistTable({
                   colSpan={6}
                   className="px-5 py-16 text-center text-sm font-semibold text-[#8A7768]"
                 >
-                  {t("empty")}
+                  {t('empty')}
                 </td>
               </tr>
             ) : (
@@ -115,14 +111,14 @@ export function IpWhitelistTable({
                     <td className="px-4 py-4">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ${
-                          admin.adminRole === "super_admin"
-                            ? "bg-[#EF4623]/12 text-[#D83B19]"
-                            : "bg-[#2D3B42]/8 text-[#5C5049]"
+                          admin.adminRole === 'super_admin'
+                            ? 'bg-[#EF4623]/12 text-[#D83B19]'
+                            : 'bg-[#2D3B42]/8 text-[#5C5049]'
                         }`}
                       >
-                        {admin.adminRole === "super_admin"
-                          ? "Super admin"
-                          : "Admin"}
+                        {admin.adminRole === 'super_admin'
+                          ? 'Super admin'
+                          : 'Admin'}
                       </span>
                     </td>
                     <td className="max-w-[340px] px-4 py-4">
@@ -138,7 +134,7 @@ export function IpWhitelistTable({
                           ))
                         ) : (
                           <span className="text-xs font-semibold text-amber-700">
-                            {t("unrestricted")}
+                            {t('unrestricted')}
                           </span>
                         )}
                       </div>
@@ -147,7 +143,7 @@ export function IpWhitelistTable({
                       <div className="flex justify-end gap-1.5">
                         {forbidden ? (
                           <span className="px-3 py-2 text-xs font-semibold text-[#8A7768]">
-                            {t("viewOnly")}
+                            {t('viewOnly')}
                           </span>
                         ) : (
                           <>
@@ -157,7 +153,7 @@ export function IpWhitelistTable({
                               className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold text-[#5C5049] hover:bg-white/60 hover:text-[#2D3B42]"
                             >
                               <IconPencil />
-                              {t("edit")}
+                              {t('edit')}
                             </button>
                             <button
                               type="button"
@@ -165,7 +161,7 @@ export function IpWhitelistTable({
                               className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold text-red-600 hover:bg-red-500/10"
                             >
                               <IconTrash className="h-4 w-4" />
-                              {t("delete")}
+                              {t('delete')}
                             </button>
                           </>
                         )}
@@ -181,7 +177,7 @@ export function IpWhitelistTable({
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#2D3B42]/10 px-5 py-4">
         <p className="text-xs font-semibold text-[#8A7768]">
-          {t("pagination", {
+          {t('pagination', {
             from: totalCount ? (safePage - 1) * rowsPerPage + 1 : 0,
             to: Math.min(safePage * rowsPerPage, totalCount),
             total: totalCount,
@@ -221,7 +217,7 @@ export function IpWhitelistTable({
             <option value={10}>10</option>
             <option value={20}>20</option>
           </select>
-          {t("rowsPerPage")}
+          {t('rowsPerPage')}
         </label>
       </div>
     </div>

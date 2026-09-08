@@ -1,25 +1,25 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { BACKEND_ROUTES } from "@/constants/routes";
-import { apiRequest } from "@/lib/api/server-client";
-import { errorResponse, requireSession } from "@/lib/api/route-session";
+import { BACKEND_ROUTES } from '@/constants/routes';
+import { apiRequest } from '@/lib/api/server-client';
+import { errorResponse, requireSession } from '@/lib/api/route-session';
 
 /**
  * Danh sách Audit Logs của hệ thống, phân trang và lọc ở phía server.
  */
 const ALLOWED_PARAMS = [
-  "page",
-  "limit",
-  "search",
-  "category",
-  "action",
-  "accountId",
-  "emailAttempted",
-  "resourceType",
-  "resourceId",
-  "createdFrom",
-  "createdTo",
-  "sortOrder",
+  'page',
+  'limit',
+  'search',
+  'category',
+  'action',
+  'accountId',
+  'emailAttempted',
+  'resourceType',
+  'resourceId',
+  'createdFrom',
+  'createdTo',
+  'sortOrder',
 ] as const;
 
 export async function GET(request: Request) {
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       await apiRequest(`${BACKEND_ROUTES.admin.auditLogs}?${query}`, {
         token: session.token,
         clientContext: session.clientContext,
-      }),
+      })
     );
   } catch (error) {
     return errorResponse(error);

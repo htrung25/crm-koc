@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
-import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getTranslations } from "next-intl/server";
+import type { Metadata } from 'next';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getTranslations } from 'next-intl/server';
 
-import "@/app/globals.css";
-import { Providers } from "@/app/providers";
+import '@/app/globals.css';
+import { Providers } from '@/app/providers';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("marketing");
+  const t = await getTranslations('marketing');
 
   return {
-    title: { default: "CRM-KOC", template: "%s | CRM-KOC" },
-    description: t("siteDescription"),
+    title: { default: 'CRM-KOC', template: '%s | CRM-KOC' },
+    description: t('siteDescription'),
   };
 }
 

@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { APP_ROUTES } from "@/constants/routes";
-import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { APP_ROUTES } from '@/constants/routes';
+import { useTranslations } from 'next-intl';
+import { useEffect } from 'react';
 
-import { useAdminProfile } from "@/features/admin/profile/hooks/use-admin-profile";
-import { PROFILE_LOAD_FAILED } from "@/features/admin/profile/services/profile.service";
-import { ProfileForm } from "@/features/admin/profile/components/profile-form";
-import { ProfileSkeleton } from "@/features/admin/profile/components/profile-skeleton";
-import { useRouter } from "next/navigation";
-import { ApiRequestError } from "@/lib/api/browser-client";
+import { useAdminProfile } from '@/features/admin/profile/hooks/use-admin-profile';
+import { PROFILE_LOAD_FAILED } from '@/features/admin/profile/services/profile.service';
+import { ProfileForm } from '@/features/admin/profile/components/profile-form';
+import { ProfileSkeleton } from '@/features/admin/profile/components/profile-skeleton';
+import { useRouter } from 'next/navigation';
+import { ApiRequestError } from '@/lib/api/browser-client';
 
 export function AdminProfilePanel() {
-  const t = useTranslations("admin.profile");
+  const t = useTranslations('admin.profile');
   const router = useRouter();
   const profileQuery = useAdminProfile();
 
@@ -32,11 +32,11 @@ export function AdminProfilePanel() {
     return (
       <div className="glass rounded-[26px] p-8 text-center">
         <h2 className="text-lg font-extrabold text-[#2D3B42]">
-          {t("loadError")}
+          {t('loadError')}
         </h2>
         <p className="mt-2 text-sm font-semibold text-[#8A7768]">
           {profileQuery.error.message === PROFILE_LOAD_FAILED
-            ? t("loadFailed")
+            ? t('loadFailed')
             : profileQuery.error.message}
         </p>
         <button
@@ -44,7 +44,7 @@ export function AdminProfilePanel() {
           onClick={() => void profileQuery.refetch()}
           className="mt-5 rounded-xl bg-[#2D3B42] px-4 py-2.5 text-sm font-extrabold text-white"
         >
-          {t("retry")}
+          {t('retry')}
         </button>
       </div>
     );

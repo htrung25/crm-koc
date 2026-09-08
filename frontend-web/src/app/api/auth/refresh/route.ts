@@ -1,16 +1,16 @@
-import { BACKEND_ROUTES } from "@/constants/routes";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { BACKEND_ROUTES } from '@/constants/routes';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
-import { ApiError, apiRequest } from "@/lib/api/server-client";
-import { getClientContext } from "@/lib/api/client-context";
+import { ApiError, apiRequest } from '@/lib/api/server-client';
+import { getClientContext } from '@/lib/api/client-context';
 import {
   applySession,
   clearSessionCookies,
   REFRESH_COOKIE,
   ROLE_COOKIE,
-} from "@/features/auth/session";
-import { isUserRole } from "@/features/auth/types";
+} from '@/features/auth/session';
+import { isUserRole } from '@/features/auth/types';
 
 type TokenPair = {
   accessToken: string;
@@ -36,31 +36,31 @@ export async function POST() {
   if (!refreshToken || !isUserRole(role)) {
     return clearSessionCookies(
       NextResponse.json(
-        { message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" },
-        { status: 401 },
-      ),
+        { message: 'Phiên đã kết thúc', businessCode: 'SESSION_EXPIRED' },
+        { status: 401 }
+      )
     );
   }
 
   try {
     const tokens = await apiRequest<TokenPair>(BACKEND_ROUTES.refresh, {
-      method: "POST",
+      method: 'POST',
       body: { refreshToken },
       clientContext: await getClientContext(),
     });
 
     return applySession(
-      NextResponse.json({ status: "refreshed" }),
+      NextResponse.json({ status: 'refreshed' }),
       tokens,
-      role,
+      role
     );
   } catch (error) {
     if (error instanceof ApiError) {
       return clearSessionCookies(
         NextResponse.json(
           { message: error.message, businessCode: error.businessCode },
-          { status: 401 },
-        ),
+          { status: 401 }
+        )
       );
     }
     throw error;

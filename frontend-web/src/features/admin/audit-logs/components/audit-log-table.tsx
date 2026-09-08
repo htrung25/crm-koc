@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useTranslations } from "next-intl";
-import { IconChevron } from "@/components/ui/icons";
-import type { AuditLogRow } from "@/features/admin/audit-logs/types";
+import { useTranslations } from 'next-intl';
+import { IconChevron } from '@/components/ui/icons';
+import type { AuditLogRow } from '@/features/admin/audit-logs/types';
 
 type AuditLogTableProps = {
   logs: AuditLogRow[];
@@ -29,20 +29,20 @@ export function AuditLogTable({
   onSelectLog,
   onRefresh,
 }: AuditLogTableProps) {
-  const t = useTranslations("admin.auditLogs");
+  const t = useTranslations('admin.auditLogs');
 
   const formatDate = (isoString: string) => {
     const d = new Date(isoString);
     return {
-      date: d.toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
+      date: d.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
       }),
-      time: d.toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
+      time: d.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
       }),
     };
   };
@@ -53,10 +53,10 @@ export function AuditLogTable({
       <div className="flex items-center justify-between gap-3 border-b border-[#2D3B42]/10 px-5 py-4 sm:px-6">
         <div>
           <h2 className="text-base font-extrabold text-[#2D3B42]">
-            {t("tableTitle")}
+            {t('tableTitle')}
           </h2>
           <p className="mt-0.5 text-xs font-semibold text-[#8A7768]">
-            {t("totalCount", { count: total })}
+            {t('totalCount', { count: total })}
           </p>
         </div>
         <button
@@ -65,7 +65,7 @@ export function AuditLogTable({
           onClick={onRefresh}
           className="rounded-xl px-3 py-2 text-xs font-extrabold text-[#EF4623] transition-colors hover:bg-[#EF4623]/10 disabled:opacity-50"
         >
-          {t("refresh")}
+          {t('refresh')}
         </button>
       </div>
 
@@ -75,13 +75,13 @@ export function AuditLogTable({
           <thead>
             <tr className="bg-white/35 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#8A7768]">
               <th className="w-14 px-4 py-4 text-center">STT</th>
-              <th className="w-36 px-4 py-4">{t("colTime")}</th>
-              <th className="w-28 px-4 py-4">{t("colCategory")}</th>
-              <th className="w-36 px-4 py-4">{t("colAction")}</th>
-              <th className="px-4 py-4">{t("colActor")}</th>
-              <th className="w-32 px-4 py-4">{t("colIp")}</th>
-              <th className="px-4 py-4">{t("colResource")}</th>
-              <th className="w-24 px-5 py-4 text-right">{t("colActions")}</th>
+              <th className="w-36 px-4 py-4">{t('colTime')}</th>
+              <th className="w-28 px-4 py-4">{t('colCategory')}</th>
+              <th className="w-36 px-4 py-4">{t('colAction')}</th>
+              <th className="px-4 py-4">{t('colActor')}</th>
+              <th className="w-32 px-4 py-4">{t('colIp')}</th>
+              <th className="px-4 py-4">{t('colResource')}</th>
+              <th className="w-24 px-5 py-4 text-right">{t('colActions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -91,7 +91,7 @@ export function AuditLogTable({
                   colSpan={8}
                   className="px-5 py-16 text-center text-sm font-semibold text-[#8A7768]"
                 >
-                  {t("loading")}
+                  {t('loading')}
                 </td>
               </tr>
             ) : logs.length === 0 ? (
@@ -100,18 +100,18 @@ export function AuditLogTable({
                   colSpan={8}
                   className="px-5 py-16 text-center text-sm font-semibold text-[#8A7768]"
                 >
-                  {t("empty")}
+                  {t('empty')}
                 </td>
               </tr>
             ) : (
               logs.map((log, index) => {
                 const { date, time } = formatDate(log.createdAt);
                 const isDanger =
-                  log.action.startsWith("fail_") || log.action === "reject";
+                  log.action.startsWith('fail_') || log.action === 'reject';
                 const isSuccess =
-                  log.action === "approve" ||
-                  log.action === "otp_sent" ||
-                  log.action === "logout";
+                  log.action === 'approve' ||
+                  log.action === 'otp_sent' ||
+                  log.action === 'logout';
 
                 return (
                   <tr
@@ -135,11 +135,11 @@ export function AuditLogTable({
                     <td className="px-4 py-3.5">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
-                          log.category === "login"
-                            ? "bg-purple-500/12 text-purple-700"
-                            : log.category === "audit"
-                              ? "bg-sky-500/12 text-sky-700"
-                              : "bg-emerald-500/12 text-emerald-700"
+                          log.category === 'login'
+                            ? 'bg-purple-500/12 text-purple-700'
+                            : log.category === 'audit'
+                              ? 'bg-sky-500/12 text-sky-700'
+                              : 'bg-emerald-500/12 text-emerald-700'
                         }`}
                       >
                         {t(`categories.${log.category}`)}
@@ -151,10 +151,10 @@ export function AuditLogTable({
                       <span
                         className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                           isDanger
-                            ? "bg-red-500/12 text-red-700 ring-1 ring-red-500/20"
+                            ? 'bg-red-500/12 text-red-700 ring-1 ring-red-500/20'
                             : isSuccess
-                              ? "bg-emerald-500/12 text-emerald-700 ring-1 ring-emerald-500/20"
-                              : "bg-[#2D3B42]/8 text-[#2D3B42] ring-1 ring-[#2D3B42]/10"
+                              ? 'bg-emerald-500/12 text-emerald-700 ring-1 ring-emerald-500/20'
+                              : 'bg-[#2D3B42]/8 text-[#2D3B42] ring-1 ring-[#2D3B42]/10'
                         }`}
                       >
                         {log.action}
@@ -163,7 +163,7 @@ export function AuditLogTable({
 
                     {/* Actor (Email / Account ID) */}
                     <td className="px-4 py-3.5 text-xs font-semibold text-[#2D3B42] max-w-[200px] truncate">
-                      {log.emailAttempted || log.accountId || "—"}
+                      {log.emailAttempted || log.accountId || '—'}
                     </td>
 
                     {/* IP Address */}
@@ -173,7 +173,7 @@ export function AuditLogTable({
                           {log.ipAddress}
                         </code>
                       ) : (
-                        "—"
+                        '—'
                       )}
                     </td>
 
@@ -202,7 +202,7 @@ export function AuditLogTable({
                         onClick={() => onSelectLog(log)}
                         className="rounded-xl px-2.5 py-1.5 text-xs font-extrabold text-[#5C5049] hover:bg-white/60 hover:text-[#2D3B42]"
                       >
-                        {t("viewDetail")}
+                        {t('viewDetail')}
                       </button>
                     </td>
                   </tr>
@@ -216,7 +216,7 @@ export function AuditLogTable({
       {/* Phân trang */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#2D3B42]/10 px-5 py-4">
         <p className="text-xs font-semibold text-[#8A7768]">
-          {t("pagination", {
+          {t('pagination', {
             from: total ? (page - 1) * limit + 1 : 0,
             to: Math.min(page * limit, total),
             total,
@@ -254,7 +254,7 @@ export function AuditLogTable({
             <option value={50}>50</option>
             <option value={100}>100</option>
           </select>
-          {t("rowsPerPage")}
+          {t('rowsPerPage')}
         </label>
       </div>
     </div>

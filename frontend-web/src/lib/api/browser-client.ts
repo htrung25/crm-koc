@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { BUSINESS_CODE } from "@/constants/business-code";
-import { API_ROUTES } from "@/constants/routes";
-import { getDeviceId } from "@/lib/api/device";
+import { BUSINESS_CODE } from '@/constants/business-code';
+import { API_ROUTES } from '@/constants/routes';
+import { getDeviceId } from '@/lib/api/device';
 
 let pendingRefresh: Promise<boolean> | null = null;
 
 function buildRequestHeaders(existingHeaders?: HeadersInit): Headers {
   const headers = new Headers(existingHeaders);
   const deviceId = getDeviceId();
-  if (deviceId && !headers.has("X-Device-Id")) {
-    headers.set("X-Device-Id", deviceId);
+  if (deviceId && !headers.has('X-Device-Id')) {
+    headers.set('X-Device-Id', deviceId);
   }
   return headers;
 }
 
 export function isDeviceMismatchError(
   status: number,
-  businessCode?: string | number,
+  businessCode?: string | number
 ): boolean {
   return status === 401 && businessCode === BUSINESS_CODE.DEVICE_MISMATCH;
 }
@@ -25,7 +25,7 @@ export function isDeviceMismatchError(
 async function refreshSession(): Promise<boolean> {
   const headers = buildRequestHeaders();
   pendingRefresh ??= fetch(API_ROUTES.auth.refresh, {
-    method: "POST",
+    method: 'POST',
     headers,
   })
     .then((response) => response.ok)
@@ -44,7 +44,7 @@ export type FetchOptions = RequestInit & {
 
 export async function apiFetch(
   input: string,
-  { skipRefresh, ...init }: FetchOptions = {},
+  { skipRefresh, ...init }: FetchOptions = {}
 ): Promise<Response> {
   const headers = buildRequestHeaders(init.headers);
   const response = await fetch(input, { ...init, headers });
@@ -61,17 +61,17 @@ export async function apiFetch(
 
   if (isDeviceMismatchError(response.status, body?.businessCode)) {
     // Không thử refresh: /refresh cũng kiểm thiết bị nên sẽ 401 tiếp.
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       // await để logout kịp tới server; điều hướng ngay sẽ abort request này.
-      await fetch(API_ROUTES.auth.logout, { method: "POST" }).catch(() => {});
+      await fetch(API_ROUTES.auth.logout, { method: 'POST' }).catch(() => {});
 
       const pathname = window.location.pathname;
       const isAlreadyOnAuthPage =
-        pathname === "/login" || pathname === "/admin";
+        pathname === '/login' || pathname === '/admin';
       if (!isAlreadyOnAuthPage) {
-        const loginUrl = pathname.startsWith("/admin")
-          ? "/admin?error=device_mismatch"
-          : "/login?error=device_mismatch";
+        const loginUrl = pathname.startsWith('/admin')
+          ? '/admin?error=device_mismatch'
+          : '/login?error=device_mismatch';
         window.location.href = loginUrl;
       }
     }
@@ -101,24 +101,26 @@ export class ApiRequestError extends Error {
      * Chỉ có ở 422 IP_WHITELIST_WOULD_LOCK_YOU_OUT: IP thật của người đang
      * thao tác, để dialog tự khoá mời họ thêm chính IP đó vào danh sách.
      */
-    public readonly clientIp?: string,
+    public readonly clientIp?: string
   ) {
     super(message);
-    this.name = "ApiRequestError";
+    this.name = 'ApiRequestError';
   }
 }
 
 /** Nest trả message dạng string hoặc string[] (ValidationPipe). */
 function messageOf(body: unknown, fallback: string): string {
   const raw =
-    typeof body === "object" && body !== null && "message" in body
+    typeof body === 'object' && body !== null && 'message' in body
       ? (body as { message: unknown }).message
       : null;
 
-  if (typeof raw === "string") return raw;
+  if (typeof raw === 'string') return raw;
   if (Array.isArray(raw)) {
-    const parts = raw.filter((item): item is string => typeof item === "string");
-    if (parts.length) return parts.join(", ");
+    const parts = raw.filter(
+      (item): item is string => typeof item === 'string'
+    );
+    if (parts.length) return parts.join(', ');
   }
   return fallback;
 }
@@ -132,7 +134,7 @@ function messageOf(body: unknown, fallback: string): string {
  */
 export async function readJson<T>(
   response: Response,
-  fallbackMessage = "Yêu cầu thất bại",
+  fallbackMessage = 'Yêu cầu thất bại'
 ): Promise<T> {
   const body: unknown = await response.json().catch(() => null);
 
@@ -145,7 +147,7 @@ export async function readJson<T>(
       messageOf(body, fallbackMessage),
       response.status,
       failure.businessCode,
-      failure.clientIp,
+      failure.clientIp
     );
   }
 
@@ -156,14 +158,14 @@ export async function readJson<T>(
 export async function postJson<T>(
   url: string,
   body: unknown,
-  options: FetchOptions = {},
+  options: FetchOptions = {}
 ): Promise<T> {
   return readJson<T>(
     await apiFetch(url, {
       ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options.headers },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options.headers },
       body: JSON.stringify(body),
-    }),
+    })
   );
 }

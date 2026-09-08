@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { BACKEND_ROUTES } from "@/constants/routes";
+import { BACKEND_ROUTES } from '@/constants/routes';
 import {
   SUPER_ADMIN_REQUIRED,
   type WhitelistErrorBody,
-} from "@/features/admin/ip-whitelist/types";
-import { ApiError, apiRequest } from "@/lib/api/server-client";
-import { errorResponse, requireSession } from "@/lib/api/route-session";
+} from '@/features/admin/ip-whitelist/types';
+import { ApiError, apiRequest } from '@/lib/api/server-client';
+import { errorResponse, requireSession } from '@/lib/api/route-session';
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -18,7 +18,7 @@ function adminErrorResponse(error: unknown) {
   if (
     error instanceof ApiError &&
     error.status === 403 &&
-    error.message === "REQUIRES_SUPER_ADMIN"
+    error.message === 'REQUIRES_SUPER_ADMIN'
   ) {
     const body: WhitelistErrorBody = {
       message: error.message,
@@ -40,7 +40,7 @@ export async function GET(_: Request, context: Context) {
       await apiRequest(BACKEND_ROUTES.admin.adminUserDetail(id), {
         token: session.token,
         clientContext: session.clientContext,
-      }),
+      })
     );
   } catch (error) {
     return adminErrorResponse(error);
@@ -56,11 +56,11 @@ export async function PATCH(request: Request, context: Context) {
     const { id } = await context.params;
     return NextResponse.json(
       await apiRequest(BACKEND_ROUTES.admin.adminUserDetail(id), {
-        method: "PATCH",
+        method: 'PATCH',
         body,
         token: session.token,
         clientContext: session.clientContext,
-      }),
+      })
     );
   } catch (error) {
     return adminErrorResponse(error);
@@ -75,10 +75,10 @@ export async function DELETE(_: Request, context: Context) {
     const { id } = await context.params;
     return NextResponse.json(
       await apiRequest(BACKEND_ROUTES.admin.adminUserDetail(id), {
-        method: "DELETE",
+        method: 'DELETE',
         token: session.token,
         clientContext: session.clientContext,
-      }),
+      })
     );
   } catch (error) {
     return adminErrorResponse(error);

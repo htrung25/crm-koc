@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-import { fetchAuditLogs } from "@/features/admin/audit-logs/services/audit-log.service";
-import type { AuditLogQuery } from "@/features/admin/audit-logs/types";
+import { useQuery } from '@tanstack/react-query';
+import { fetchAuditLogs } from '@/features/admin/audit-logs/services/audit-log.service';
+import type { AuditLogQuery } from '@/features/admin/audit-logs/types';
 
-export const AUDIT_LOGS_QUERY_KEY = "admin-audit-logs";
+export const AUDIT_LOGS_QUERY_KEY = 'admin-audit-logs';
 
 export function useAuditLogs(query: AuditLogQuery) {
   return useQuery({

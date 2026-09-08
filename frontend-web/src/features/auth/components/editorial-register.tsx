@@ -1,20 +1,22 @@
-"use client";
+'use client';
 
-import { APP_ROUTES } from "@/constants/routes";
-import { useTranslations } from "next-intl";
+import { APP_ROUTES } from '@/constants/routes';
+import { useTranslations } from 'next-intl';
 
-import { useState } from "react";
-import Link from "next/link";
-import { RedSunNav } from "@/components/layout/red-sun-nav";
+import { useState } from 'react';
+import Link from 'next/link';
+import { RedSunNav } from '@/components/layout/red-sun-nav';
 
 export function EditorialRegister() {
-  const t = useTranslations("auth.register");
-  const [accountType, setAccountType] = useState<"CREATOR" | "BRAND">("CREATOR");
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const t = useTranslations('auth.register');
+  const [accountType, setAccountType] = useState<'CREATOR' | 'BRAND'>(
+    'CREATOR'
+  );
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedTerms, setAgreedTerms] = useState(false);
@@ -28,17 +30,17 @@ export function EditorialRegister() {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError(t("passwordMismatch"));
+      setError(t('passwordMismatch'));
       return;
     }
 
     if (password.length < 6) {
-      setError(t("passwordTooShort"));
+      setError(t('passwordTooShort'));
       return;
     }
 
     if (!agreedTerms) {
-      setError(t("mustAgree"));
+      setError(t('mustAgree'));
       return;
     }
 
@@ -62,11 +64,10 @@ export function EditorialRegister() {
         <div className="absolute top-10 right-10 w-[450px] h-[450px] bg-[#EF4623]/10 rounded-full blur-[120px] pointer-events-none animate-ambient-blur" />
         <div
           className="absolute bottom-10 left-10 w-[450px] h-[450px] bg-[#EF4623]/10 rounded-full blur-[120px] pointer-events-none animate-ambient-blur"
-          style={{ animationDelay: "4s" }}
+          style={{ animationDelay: '4s' }}
         />
 
         <div className="relative z-10 w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 rounded-[28px] lg:rounded-[36px] overflow-hidden border border-[#2D3B42]/10 shadow-2xl shadow-[#2D3B42]/15 bg-white">
-
           {/* Left Editorial Greeting Panel (mobile: order-2, desktop: order-1) */}
           <div className="order-2 lg:order-1 relative bg-[#FDF1EE] text-[#2D3B42] p-8 sm:p-10 lg:p-12 flex flex-col justify-between gap-8 lg:gap-10 border-t lg:border-t-0 lg:border-r border-[#EF4623]/20">
             {/* Soft Coral Radial Glow Background */}
@@ -89,11 +90,12 @@ export function EditorialRegister() {
                 </span>
 
                 <h1 className="font-serif font-normal tracking-tight leading-[0.95] text-[clamp(2.75rem,6vw,4rem)] text-[#2D3B42]">
-                  Start your <span className="block italic text-[#EF4623]">journey.</span>
+                  Start your{' '}
+                  <span className="block italic text-[#EF4623]">journey.</span>
                 </h1>
 
                 <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-[42ch]">
-                  {t("heroSubtitle")}
+                  {t('heroSubtitle')}
                 </p>
               </div>
 
@@ -104,8 +106,12 @@ export function EditorialRegister() {
                     ✨
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[#2D3B42]">{t("feature1Title")}</h4>
-                    <p className="text-[11px] text-slate-600 mt-0.5">{t("feature1Body")}</p>
+                    <h4 className="text-xs font-bold text-[#2D3B42]">
+                      {t('feature1Title')}
+                    </h4>
+                    <p className="text-[11px] text-slate-600 mt-0.5">
+                      {t('feature1Body')}
+                    </p>
                   </div>
                 </div>
 
@@ -114,8 +120,12 @@ export function EditorialRegister() {
                     ⚡
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[#2D3B42]">{t("feature2Title")}</h4>
-                    <p className="text-[11px] text-slate-600 mt-0.5">{t("feature2Body")}</p>
+                    <h4 className="text-xs font-bold text-[#2D3B42]">
+                      {t('feature2Title')}
+                    </h4>
+                    <p className="text-[11px] text-slate-600 mt-0.5">
+                      {t('feature2Body')}
+                    </p>
                   </div>
                 </div>
 
@@ -124,8 +134,12 @@ export function EditorialRegister() {
                     🛡️
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[#2D3B42]">{t("feature3Title")}</h4>
-                    <p className="text-[11px] text-slate-600 mt-0.5">{t("feature3Body")}</p>
+                    <h4 className="text-xs font-bold text-[#2D3B42]">
+                      {t('feature3Title')}
+                    </h4>
+                    <p className="text-[11px] text-slate-600 mt-0.5">
+                      {t('feature3Body')}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -137,7 +151,7 @@ export function EditorialRegister() {
                 <span className="absolute left-0 top-0 text-2xl text-[#EF4623] leading-none select-none">
                   “
                 </span>
-                {t("heroQuote")}
+                {t('heroQuote')}
               </blockquote>
 
               <figcaption className="flex items-center gap-3">
@@ -166,10 +180,10 @@ export function EditorialRegister() {
               <div className="flex items-start justify-between gap-4 border-b border-[#2D3B42]/10 pb-4">
                 <div>
                   <span className="block mb-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#EF4623]">
-                    {t("eyebrow")}
+                    {t('eyebrow')}
                   </span>
                   <h2 className="font-serif text-3xl font-normal text-[#2D3B42]">
-                    {t("title")}
+                    {t('title')}
                   </h2>
                 </div>
 
@@ -182,25 +196,25 @@ export function EditorialRegister() {
               <div className="p-1.5 rounded-2xl bg-[#FDF1EE] border border-[#EF4623]/20 grid grid-cols-2 gap-1">
                 <button
                   type="button"
-                  onClick={() => setAccountType("CREATOR")}
+                  onClick={() => setAccountType('CREATOR')}
                   className={`py-2 px-3 rounded-xl text-xs font-extrabold transition-all duration-300 flex items-center justify-center gap-1.5 ${
-                    accountType === "CREATOR"
-                      ? "bg-white text-[#EF4623] shadow-md shadow-[#EF4623]/10"
-                      : "text-slate-600 hover:text-[#2D3B42]"
+                    accountType === 'CREATOR'
+                      ? 'bg-white text-[#EF4623] shadow-md shadow-[#EF4623]/10'
+                      : 'text-slate-600 hover:text-[#2D3B42]'
                   }`}
                 >
                   <span>✨</span> KOC / Creator
                 </button>
                 <button
                   type="button"
-                  onClick={() => setAccountType("BRAND")}
+                  onClick={() => setAccountType('BRAND')}
                   className={`py-2 px-3 rounded-xl text-xs font-extrabold transition-all duration-300 flex items-center justify-center gap-1.5 ${
-                    accountType === "BRAND"
-                      ? "bg-white text-[#EF4623] shadow-md shadow-[#EF4623]/10"
-                      : "text-slate-600 hover:text-[#2D3B42]"
+                    accountType === 'BRAND'
+                      ? 'bg-white text-[#EF4623] shadow-md shadow-[#EF4623]/10'
+                      : 'text-slate-600 hover:text-[#2D3B42]'
                   }`}
                 >
-                  <span>🏢</span> {t("brand")}
+                  <span>🏢</span> {t('brand')}
                 </button>
               </div>
 
@@ -211,12 +225,16 @@ export function EditorialRegister() {
                     ✓
                   </div>
                   <div className="space-y-1">
-                    <h3 className="font-serif text-2xl font-normal text-[#2D3B42]">{t("successTitle")}</h3>
+                    <h3 className="font-serif text-2xl font-normal text-[#2D3B42]">
+                      {t('successTitle')}
+                    </h3>
                     <p className="text-xs text-slate-600">
-                      {t.rich("successBody", {
+                      {t.rich('successBody', {
                         email,
                         strong: (chunks) => (
-                          <span className="font-bold text-[#EF4623]">{chunks}</span>
+                          <span className="font-bold text-[#EF4623]">
+                            {chunks}
+                          </span>
                         ),
                       })}
                     </p>
@@ -225,7 +243,7 @@ export function EditorialRegister() {
                     href={APP_ROUTES.login}
                     className="inline-block w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 transition-all duration-300"
                   >
-                    {t("signInNow")}
+                    {t('signInNow')}
                   </Link>
                 </div>
               ) : (
@@ -237,7 +255,11 @@ export function EditorialRegister() {
                       type="button"
                       className="w-full py-3 px-4 rounded-full bg-white hover:bg-[#FDF1EE] border border-[#2D3B42]/15 text-[#2D3B42] font-bold text-xs flex items-center justify-center gap-3 transition-all duration-300 shadow-md hover:scale-[1.01] active:scale-[0.98]"
                     >
-                      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                      <svg
+                        className="w-4 h-4 shrink-0"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
                         <path
                           fill="#4285F4"
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -255,19 +277,23 @@ export function EditorialRegister() {
                           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                         />
                       </svg>
-                      {t("google")}
+                      {t('google')}
                     </button>
 
                     {/* TikTok SSO Button (Chỉ hiển thị khi chọn role KOC / Creator) */}
-                    {accountType === "CREATOR" && (
+                    {accountType === 'CREATOR' && (
                       <button
                         type="button"
                         className="group relative w-full py-3 px-4 rounded-full bg-[#111111] hover:bg-[#FE2C55] text-white font-bold text-xs flex items-center justify-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-md hover:shadow-lg hover:shadow-[#FE2C55]/30 hover:scale-[1.02] active:scale-95"
                       >
-                        <svg className="w-4 h-4 shrink-0 fill-current group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .58.04.85.12V9.33a6.33 6.33 0 0 0-1-.08 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.05a8.3 8.3 0 0 0 4.94 1.6V7.21a4.84 4.84 0 0 1-1.01-.52z"/>
+                        <svg
+                          className="w-4 h-4 shrink-0 fill-current group-hover:scale-110 transition-transform duration-300"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .58.04.85.12V9.33a6.33 6.33 0 0 0-1-.08 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.05a8.3 8.3 0 0 0 4.94 1.6V7.21a4.84 4.84 0 0 1-1.01-.52z" />
                         </svg>
-                        {t("tiktok")}
+                        {t('tiktok')}
                       </button>
                     )}
                   </div>
@@ -276,7 +302,7 @@ export function EditorialRegister() {
                   <div className="flex items-center gap-3">
                     <div className="h-px bg-[#2D3B42]/10 flex-1" />
                     <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-bold">
-                      {t("orFillIn")}
+                      {t('orFillIn')}
                     </span>
                     <div className="h-px bg-[#2D3B42]/10 flex-1" />
                   </div>
@@ -298,7 +324,7 @@ export function EditorialRegister() {
                         htmlFor="register-fullname"
                         className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                       >
-                        {t("fullName")}
+                        {t('fullName')}
                       </label>
                       <input
                         id="register-fullname"
@@ -307,7 +333,7 @@ export function EditorialRegister() {
                         required
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        placeholder={t("fullNamePlaceholder")}
+                        placeholder={t('fullNamePlaceholder')}
                         className="w-full px-4 py-2.5 rounded-2xl bg-[#FDF1EE]/50 focus:bg-white border border-[#2D3B42]/15 text-[#2D3B42] text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#EF4623] focus:ring-4 focus:ring-[#EF4623]/20 transition-all duration-300"
                       />
                     </div>
@@ -338,7 +364,7 @@ export function EditorialRegister() {
                           htmlFor="register-phone"
                           className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                         >
-                          {t("phone")}
+                          {t('phone')}
                         </label>
                         <input
                           id="register-phone"
@@ -361,13 +387,13 @@ export function EditorialRegister() {
                           htmlFor="register-password"
                           className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                         >
-                          {t("password")}
+                          {t('password')}
                         </label>
                         <div className="relative">
                           <input
                             id="register-password"
                             name="password"
-                            type={showPassword ? "text" : "password"}
+                            type={showPassword ? 'text' : 'password'}
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -379,7 +405,7 @@ export function EditorialRegister() {
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#2D3B42] text-xs font-semibold px-1 py-0.5"
                           >
-                            {showPassword ? t("hide") : t("show")}
+                            {showPassword ? t('hide') : t('show')}
                           </button>
                         </div>
                       </div>
@@ -390,13 +416,13 @@ export function EditorialRegister() {
                           htmlFor="register-confirm-password"
                           className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                         >
-                          {t("confirmPassword")}
+                          {t('confirmPassword')}
                         </label>
                         <div className="relative">
                           <input
                             id="register-confirm-password"
                             name="confirmPassword"
-                            type={showConfirmPassword ? "text" : "password"}
+                            type={showConfirmPassword ? 'text' : 'password'}
                             required
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -405,10 +431,12 @@ export function EditorialRegister() {
                           />
                           <button
                             type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
                             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#2D3B42] text-xs font-semibold px-1 py-0.5"
                           >
-                            {showConfirmPassword ? t("hide") : t("show")}
+                            {showConfirmPassword ? t('hide') : t('show')}
                           </button>
                         </div>
                       </div>
@@ -430,14 +458,14 @@ export function EditorialRegister() {
                         aria-hidden="true"
                         className={`w-[18px] h-[18px] shrink-0 mt-0.5 rounded-[6px] border flex items-center justify-center transition-colors peer-focus-visible:ring-4 peer-focus-visible:ring-[#EF4623]/30 ${
                           agreedTerms
-                            ? "bg-[#EF4623] border-[#EF4623]"
-                            : "bg-white border-[#2D3B42]/25"
+                            ? 'bg-[#EF4623] border-[#EF4623]'
+                            : 'bg-white border-[#2D3B42]/25'
                         }`}
                       >
                         <svg
                           viewBox="0 0 16 16"
                           className={`w-3 h-3 text-white transition-opacity ${
-                            agreedTerms ? "opacity-100" : "opacity-0"
+                            agreedTerms ? 'opacity-100' : 'opacity-0'
                           }`}
                           fill="none"
                           stroke="currentColor"
@@ -449,13 +477,19 @@ export function EditorialRegister() {
                         </svg>
                       </span>
                       <span className="text-xs text-slate-600 leading-snug">
-                        {t("agreePrefix")}{" "}
-                        <a href="#" className="text-[#EF4623] font-bold hover:underline">
-                          {t("terms")}
-                        </a>{" "}
-                        {t("agreeMiddle")}{" "}
-                        <a href="#" className="text-[#EF4623] font-bold hover:underline">
-                          {t("privacy")}
+                        {t('agreePrefix')}{' '}
+                        <a
+                          href="#"
+                          className="text-[#EF4623] font-bold hover:underline"
+                        >
+                          {t('terms')}
+                        </a>{' '}
+                        {t('agreeMiddle')}{' '}
+                        <a
+                          href="#"
+                          className="text-[#EF4623] font-bold hover:underline"
+                        >
+                          {t('privacy')}
                         </a>
                       </span>
                     </label>
@@ -466,7 +500,7 @@ export function EditorialRegister() {
                       disabled={isSubmitting}
                       className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed mt-1"
                     >
-                      {isSubmitting ? t("creating") : t("createAccount")}
+                      {isSubmitting ? t('creating') : t('createAccount')}
                     </button>
                   </form>
                 </>
@@ -475,15 +509,17 @@ export function EditorialRegister() {
               {/* Login link */}
               <div className="pt-3 border-t border-[#2D3B42]/10 text-center">
                 <p className="text-xs text-slate-500">
-                  {t("haveAccount")}{" "}
-                  <Link href={APP_ROUTES.login} className="text-[#EF4623] font-bold hover:underline">
-                    {t("signIn")}
+                  {t('haveAccount')}{' '}
+                  <Link
+                    href={APP_ROUTES.login}
+                    className="text-[#EF4623] font-bold hover:underline"
+                  >
+                    {t('signIn')}
                   </Link>
                 </p>
               </div>
             </div>
           </div>
-
         </div>
       </main>
     </div>

@@ -1,23 +1,23 @@
-import type { KocStatus } from "../types";
+import type { KocStatus } from '../types';
 
 const STATUS_CONFIG: Record<
   KocStatus,
   { label: string; className: string; dot: string }
 > = {
   active: {
-    label: "Đang hợp tác",
-    className: "bg-emerald-500/15 text-emerald-700",
-    dot: "bg-emerald-600",
+    label: 'Đang hợp tác',
+    className: 'bg-emerald-500/15 text-emerald-700',
+    dot: 'bg-emerald-600',
   },
   pending: {
-    label: "Chờ duyệt",
-    className: "bg-amber-400/25 text-amber-800",
-    dot: "bg-amber-600",
+    label: 'Chờ duyệt',
+    className: 'bg-amber-400/25 text-amber-800',
+    dot: 'bg-amber-600',
   },
   suspended: {
-    label: "Tạm dừng",
-    className: "bg-rose-500/15 text-rose-600",
-    dot: "bg-rose-600",
+    label: 'Tạm dừng',
+    className: 'bg-rose-500/15 text-rose-600',
+    dot: 'bg-rose-600',
   },
 };
 

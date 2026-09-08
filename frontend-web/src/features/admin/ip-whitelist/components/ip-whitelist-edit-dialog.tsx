@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import { APP_ROUTES } from "@/constants/routes";
-import { IconPlus } from "@/components/ui/icons";
+import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { APP_ROUTES } from '@/constants/routes';
+import { IconPlus } from '@/components/ui/icons';
 import {
   MAX_WHITELIST_LENGTH,
   parseWhitelist,
   serializeWhitelist,
   validateEntry,
-} from "@/features/admin/ip-whitelist/whitelist";
-import { SUPER_ADMIN_REQUIRED } from "@/features/admin/ip-whitelist/types";
-import type { AdminResponse } from "@/features/admin/ip-whitelist/types";
-import { STATUS_CODES } from "@/features/admin/types";
-import { ApiRequestError } from "@/lib/api/browser-client";
-import { SelfLockoutDialog } from "@/features/admin/ip-whitelist/components/self-lockout-dialog";
-import { useUpdateAdmin } from "@/features/admin/ip-whitelist/hooks/use-admin-mutations";
+} from '@/features/admin/ip-whitelist/whitelist';
+import { SUPER_ADMIN_REQUIRED } from '@/features/admin/ip-whitelist/types';
+import type { AdminResponse } from '@/features/admin/ip-whitelist/types';
+import { STATUS_CODES } from '@/features/admin/types';
+import { ApiRequestError } from '@/lib/api/browser-client';
+import { SelfLockoutDialog } from '@/features/admin/ip-whitelist/components/self-lockout-dialog';
+import { useUpdateAdmin } from '@/features/admin/ip-whitelist/hooks/use-admin-mutations';
 
 type IpWhitelistEditDialogProps = {
   admin: AdminResponse;
@@ -29,18 +29,18 @@ export function IpWhitelistEditDialog({
   onClose,
   onForbidden,
 }: IpWhitelistEditDialogProps) {
-  const t = useTranslations("admin.ipWhitelist");
-  const tError = useTranslations("errors");
+  const t = useTranslations('admin.ipWhitelist');
+  const tError = useTranslations('errors');
   const router = useRouter();
 
   const [name, setName] = useState(admin.name);
   const [email, setEmail] = useState(admin.email);
-  const [phone, setPhone] = useState(admin.phone ?? "");
+  const [phone, setPhone] = useState(admin.phone ?? '');
   const [status, setStatus] = useState(admin.status ?? 2);
   const [entries, setEntries] = useState<string[]>(() =>
-    parseWhitelist(admin.ipWhitelist),
+    parseWhitelist(admin.ipWhitelist)
   );
-  const [draftIp, setDraftIp] = useState("");
+  const [draftIp, setDraftIp] = useState('');
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [lockoutIp, setLockoutIp] = useState<string | null>(null);
 
@@ -55,10 +55,10 @@ export function IpWhitelistEditDialog({
     const code = failure.businessCode;
     if (!code || !tError.has(code)) return failure.message;
     return tError(code, {
-      clientIp: failure.clientIp ?? "",
-      entry: failure.message.split(": ").slice(1).join(": "),
+      clientIp: failure.clientIp ?? '',
+      entry: failure.message.split(': ').slice(1).join(': '),
       max: MAX_WHITELIST_LENGTH,
-      status: failure.status ?? "",
+      status: failure.status ?? '',
     });
   };
 
@@ -71,11 +71,11 @@ export function IpWhitelistEditDialog({
     }
     const next = [...entries, value];
     if (serializeWhitelist(next).length > MAX_WHITELIST_LENGTH) {
-      setDialogError(t("tooLong", { max: MAX_WHITELIST_LENGTH }));
+      setDialogError(t('tooLong', { max: MAX_WHITELIST_LENGTH }));
       return;
     }
     setEntries(next);
-    setDraftIp("");
+    setDraftIp('');
     setDialogError(null);
   };
 
@@ -85,7 +85,7 @@ export function IpWhitelistEditDialog({
 
   const handleSave = async (
     acknowledgeSelfLockout = false,
-    entriesOverride?: string[],
+    entriesOverride?: string[]
   ) => {
     setDialogError(null);
     setLockoutIp(null);
@@ -123,7 +123,7 @@ export function IpWhitelistEditDialog({
         requestError.businessCode === SUPER_ADMIN_REQUIRED
       ) {
         onForbidden();
-        setDialogError(t("superAdminData"));
+        setDialogError(t('superAdminData'));
         return;
       }
       setDialogError(describeError(requestError));
@@ -142,13 +142,13 @@ export function IpWhitelistEditDialog({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#EF4623]">
-                {t("editEyebrow")}
+                {t('editEyebrow')}
               </p>
               <h2
                 id="edit-admin-title"
                 className="mt-1 text-xl font-extrabold text-[#2D3B42]"
               >
-                {t("editTitle")}
+                {t('editTitle')}
               </h2>
             </div>
             <button
@@ -162,7 +162,7 @@ export function IpWhitelistEditDialog({
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <label className="text-xs font-extrabold text-[#5C5049]">
-              {t("fieldName")}
+              {t('fieldName')}
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
@@ -179,7 +179,7 @@ export function IpWhitelistEditDialog({
               />
             </label>
             <label className="text-xs font-extrabold text-[#5C5049]">
-              {t("fieldPhone")}
+              {t('fieldPhone')}
               <input
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
@@ -187,7 +187,7 @@ export function IpWhitelistEditDialog({
               />
             </label>
             <label className="text-xs font-extrabold text-[#5C5049]">
-              {t("fieldStatus")}
+              {t('fieldStatus')}
               <select
                 value={status}
                 onChange={(event) => setStatus(Number(event.target.value))}
@@ -209,11 +209,11 @@ export function IpWhitelistEditDialog({
                   IP Whitelist
                 </h3>
                 <p className="text-[11px] font-semibold text-[#8A7768]">
-                  {t("emptyMeansAll")}
+                  {t('emptyMeansAll')}
                 </p>
               </div>
               <span className="rounded-full bg-[#2D3B42]/8 px-2.5 py-1 font-mono text-[10px] font-bold text-[#5C5049]">
-                {t("entryCount", { count: entries.length })}
+                {t('entryCount', { count: entries.length })}
               </span>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -238,12 +238,12 @@ export function IpWhitelistEditDialog({
                 value={draftIp}
                 onChange={(event) => setDraftIp(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") {
+                  if (event.key === 'Enter') {
                     event.preventDefault();
                     addIp();
                   }
                 }}
-                placeholder={t("entryPlaceholder")}
+                placeholder={t('entryPlaceholder')}
                 className="h-11 min-w-0 flex-1 rounded-xl bg-white/75 px-3 font-mono text-xs font-semibold outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35"
               />
               <button
@@ -268,7 +268,7 @@ export function IpWhitelistEditDialog({
               onClick={onClose}
               className="rounded-xl px-4 py-2.5 text-sm font-extrabold text-[#5C5049] hover:bg-white/50"
             >
-              {t("cancel")}
+              {t('cancel')}
             </button>
             <button
               type="button"
@@ -278,7 +278,7 @@ export function IpWhitelistEditDialog({
               onClick={() => void handleSave()}
               className="rounded-xl bg-gradient-to-br from-[#EF4623] to-[#D8410F] px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-[#EF4623]/20 disabled:opacity-50"
             >
-              {updateMutation.isPending ? t("saving") : t("saveChanges")}
+              {updateMutation.isPending ? t('saving') : t('saveChanges')}
             </button>
           </div>
         </div>

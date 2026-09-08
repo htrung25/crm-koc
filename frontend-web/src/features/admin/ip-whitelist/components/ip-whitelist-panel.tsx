@@ -1,23 +1,21 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import { APP_ROUTES } from "@/constants/routes";
-import { ApiRequestError } from "@/lib/api/browser-client";
-import type {
-  AdminResponse,
-} from "@/features/admin/ip-whitelist/types";
-import { useAdmins } from "@/features/admin/ip-whitelist/hooks/use-admins";
-import { useIpWhitelistQueryParams } from "@/features/admin/ip-whitelist/hooks/use-ip-whitelist-query-params";
-import { IpWhitelistFilters } from "@/features/admin/ip-whitelist/components/ip-whitelist-filters";
-import { IpWhitelistAddForm } from "@/features/admin/ip-whitelist/components/ip-whitelist-add-form";
-import { IpWhitelistTable } from "@/features/admin/ip-whitelist/components/ip-whitelist-table";
-import { IpWhitelistEditDialog } from "@/features/admin/ip-whitelist/components/ip-whitelist-edit-dialog";
-import { IpWhitelistDeleteDialog } from "@/features/admin/ip-whitelist/components/ip-whitelist-delete-dialog";
+import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { APP_ROUTES } from '@/constants/routes';
+import { ApiRequestError } from '@/lib/api/browser-client';
+import type { AdminResponse } from '@/features/admin/ip-whitelist/types';
+import { useAdmins } from '@/features/admin/ip-whitelist/hooks/use-admins';
+import { useIpWhitelistQueryParams } from '@/features/admin/ip-whitelist/hooks/use-ip-whitelist-query-params';
+import { IpWhitelistFilters } from '@/features/admin/ip-whitelist/components/ip-whitelist-filters';
+import { IpWhitelistAddForm } from '@/features/admin/ip-whitelist/components/ip-whitelist-add-form';
+import { IpWhitelistTable } from '@/features/admin/ip-whitelist/components/ip-whitelist-table';
+import { IpWhitelistEditDialog } from '@/features/admin/ip-whitelist/components/ip-whitelist-edit-dialog';
+import { IpWhitelistDeleteDialog } from '@/features/admin/ip-whitelist/components/ip-whitelist-delete-dialog';
 
 export function AdminIpWhitelist() {
-  const t = useTranslations("admin.ipWhitelist");
+  const t = useTranslations('admin.ipWhitelist');
   const router = useRouter();
 
   // Filtering & Pagination State synchronized with URL
@@ -36,7 +34,9 @@ export function AdminIpWhitelist() {
   // Dialog & Form UI state
   const [addingWhitelist, setAddingWhitelist] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<AdminResponse | null>(null);
-  const [deletingAdmin, setDeletingAdmin] = useState<AdminResponse | null>(null);
+  const [deletingAdmin, setDeletingAdmin] = useState<AdminResponse | null>(
+    null
+  );
   const [forbidden, setForbidden] = useState(false);
 
   // Data fetching via TanStack React Query với phân trang server-side
@@ -44,7 +44,7 @@ export function AdminIpWhitelist() {
 
   // Danh sách admin đầy đủ cho dropdown form Thêm IP khi mở form
   const { data: allAdminsData } = useAdmins(
-    addingWhitelist ? { page: 1, limit: 100 } : undefined,
+    addingWhitelist ? { page: 1, limit: 100 } : undefined
   );
 
   // 401 redirect if session expired
@@ -64,7 +64,7 @@ export function AdminIpWhitelist() {
     <section className="space-y-4">
       {forbidden && (
         <p className="rounded-2xl bg-[#2D3B42]/8 px-4 py-3 text-xs font-semibold text-[#5C5049]">
-          {t("readOnlyBanner")}
+          {t('readOnlyBanner')}
         </p>
       )}
 

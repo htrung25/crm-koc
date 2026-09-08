@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState, type ReactNode } from 'react';
 
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(
@@ -12,7 +12,7 @@ export function Providers({ children }: { children: ReactNode }) {
           queries: { staleTime: 60_000, retry: 1 },
           mutations: { retry: false },
         },
-      }),
+      })
   );
 
   return (

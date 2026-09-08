@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { KocPlatformBadge } from "./koc-platform-badge";
-import { KocStatusBadge } from "./koc-status-badge";
-import type { KocItem } from "../types";
+import { KocPlatformBadge } from './koc-platform-badge';
+import { KocStatusBadge } from './koc-status-badge';
+import type { KocItem } from '../types';
 
 type KocDetailModalProps = {
   koc: KocItem | null;
@@ -10,11 +10,7 @@ type KocDetailModalProps = {
   onEdit: (koc: KocItem) => void;
 };
 
-export function KocDetailModal({
-  koc,
-  onClose,
-  onEdit,
-}: KocDetailModalProps) {
+export function KocDetailModal({ koc, onClose, onEdit }: KocDetailModalProps) {
   if (!koc) return null;
 
   return (
@@ -96,7 +92,9 @@ export function KocDetailModal({
             </span>
             <div className="space-y-2">
               {koc.followers.map((f) => {
-                const eng = koc.engagement.find((e) => e.platform === f.platform);
+                const eng = koc.engagement.find(
+                  (e) => e.platform === f.platform
+                );
                 return (
                   <div
                     key={f.platform}
@@ -104,9 +102,9 @@ export function KocDetailModal({
                   >
                     <KocPlatformBadge platform={f.platform} count={f.count} />
                     <span className="text-xs font-semibold text-[#5C5049]">
-                      ER:{" "}
+                      ER:{' '}
                       <strong className="font-mono text-emerald-600">
-                        {eng?.rate ?? "N/A"}
+                        {eng?.rate ?? 'N/A'}
                       </strong>
                     </span>
                   </div>
@@ -128,7 +126,8 @@ export function KocDetailModal({
               )}
               {koc.phone && (
                 <p className="text-xs font-semibold text-[#5C5049]">
-                  Điện thoại: <span className="font-mono font-medium">{koc.phone}</span>
+                  Điện thoại:{' '}
+                  <span className="font-mono font-medium">{koc.phone}</span>
                 </p>
               )}
             </div>

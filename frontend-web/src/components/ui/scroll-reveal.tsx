@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState, ReactNode } from "react";
+import { useEffect, useRef, useState, ReactNode } from 'react';
 
 interface ScrollRevealProps {
   children: ReactNode;
   className?: string;
   delay?: number;
-  direction?: "up" | "down" | "left" | "right" | "rotate";
+  direction?: 'up' | 'down' | 'left' | 'right' | 'rotate';
 }
 
 export function ScrollReveal({
   children,
-  className = "",
+  className = '',
   delay = 0,
-  direction = "rotate",
+  direction = 'rotate',
 }: ScrollRevealProps) {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -29,7 +29,7 @@ export function ScrollReveal({
       },
       {
         threshold: 0.12,
-        rootMargin: "0px 0px -50px 0px",
+        rootMargin: '0px 0px -50px 0px',
       }
     );
 
@@ -42,18 +42,18 @@ export function ScrollReveal({
 
   const getInitialTransform = () => {
     switch (direction) {
-      case "rotate":
-        return "translate-y-12 rotate-2 opacity-0 scale-95";
-      case "up":
-        return "translate-y-12 opacity-0";
-      case "down":
-        return "-translate-y-12 opacity-0";
-      case "left":
-        return "-translate-x-12 opacity-0";
-      case "right":
-        return "translate-x-12 opacity-0";
+      case 'rotate':
+        return 'translate-y-12 rotate-2 opacity-0 scale-95';
+      case 'up':
+        return 'translate-y-12 opacity-0';
+      case 'down':
+        return '-translate-y-12 opacity-0';
+      case 'left':
+        return '-translate-x-12 opacity-0';
+      case 'right':
+        return 'translate-x-12 opacity-0';
       default:
-        return "translate-y-12 rotate-2 opacity-0";
+        return 'translate-y-12 rotate-2 opacity-0';
     }
   };
 
@@ -62,11 +62,11 @@ export function ScrollReveal({
       ref={ref}
       style={{
         transitionDelay: `${delay}ms`,
-        transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+        transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
       }}
       className={`transition-all duration-1000 ${
         isVisible
-          ? "opacity-100 translate-y-0 translate-x-0 rotate-0 scale-100"
+          ? 'opacity-100 translate-y-0 translate-x-0 rotate-0 scale-100'
           : getInitialTransform()
       } ${className}`}
     >

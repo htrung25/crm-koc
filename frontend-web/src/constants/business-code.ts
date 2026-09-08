@@ -3,8 +3,8 @@
  * Backend trả về SỐ, không phải chuỗi. Thêm mã mới ở đây thì kiểm lại bên đó.
  *
  * Dải: 1000-1999 auth ·
- * 2000-2999 admin · 
- * 5000-5999 hệ thống · 
+ * 2000-2999 admin ·
+ * 5000-5999 hệ thống ·
  * 6000+ kyc
  */
 export const BUSINESS_CODE = {

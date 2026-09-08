@@ -1,11 +1,11 @@
-import type { StatMetric } from "@/features/admin/dashboard/types";
+import type { StatMetric } from '@/features/admin/dashboard/types';
 import {
   IconDelta,
   IconTarget,
   IconTrendUp,
   IconUsers,
   IconWallet,
-} from "@/components/ui/icons";
+} from '@/components/ui/icons';
 
 const ICONS = {
   wallet: IconWallet,
@@ -26,7 +26,7 @@ function sparkPoints(values: number[]): string {
       const y = 30 - ((value - min) / span) * 26;
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     })
-    .join(" ");
+    .join(' ');
 }
 
 export function StatCard({ metric }: { metric: StatMetric }) {
@@ -50,12 +50,12 @@ export function StatCard({ metric }: { metric: StatMetric }) {
         <span
           className={`flex items-center gap-1 rounded-full px-2.5 py-1 font-mono text-[11px] font-bold tnum ${
             isUp
-              ? "bg-emerald-500/12 text-emerald-700"
-              : "bg-rose-500/12 text-rose-600"
+              ? 'bg-emerald-500/12 text-emerald-700'
+              : 'bg-rose-500/12 text-rose-600'
           }`}
         >
           <IconDelta up={isUp} />
-          {isUp ? "+" : ""}
+          {isUp ? '+' : ''}
           {metric.delta.toFixed(1)}%
         </span>
       </div>

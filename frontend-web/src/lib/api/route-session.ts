@@ -1,9 +1,9 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
-import { ACCESS_COOKIE } from "@/features/auth/session";
-import { ApiError } from "@/lib/api/server-client";
-import { getClientContext, type ClientContext } from "@/lib/api/client-context";
+import { ACCESS_COOKIE } from '@/features/auth/session';
+import { ApiError } from '@/lib/api/server-client';
+import { getClientContext, type ClientContext } from '@/lib/api/client-context';
 
 /**
  * Phần chung của mọi Route Handler gọi backend thay người dùng: lấy access
@@ -22,8 +22,8 @@ export async function requireSession(): Promise<
     return {
       ok: false,
       response: NextResponse.json(
-        { message: "Phiên đã kết thúc", businessCode: "SESSION_EXPIRED" },
-        { status: 401 },
+        { message: 'Phiên đã kết thúc', businessCode: 'SESSION_EXPIRED' },
+        { status: 401 }
       ),
     };
   }
@@ -38,8 +38,8 @@ export async function requireSession(): Promise<
 export function errorResponse(error: unknown): NextResponse {
   if (error instanceof SyntaxError) {
     return NextResponse.json(
-      { message: "Body không hợp lệ", businessCode: "INVALID_BODY" },
-      { status: 400 },
+      { message: 'Body không hợp lệ', businessCode: 'INVALID_BODY' },
+      { status: 400 }
     );
   }
 
@@ -51,6 +51,6 @@ export function errorResponse(error: unknown): NextResponse {
       businessCode: error.businessCode,
       clientIp: error.clientIp,
     },
-    { status: error.status },
+    { status: error.status }
   );
 }

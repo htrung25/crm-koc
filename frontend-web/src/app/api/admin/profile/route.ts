@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { BACKEND_ROUTES } from "@/constants/routes";
-import { parseProfileUpdate } from "@/features/admin/profile/profile.schema";
-import { apiRequest } from "@/lib/api/server-client";
-import { errorResponse, requireSession } from "@/lib/api/route-session";
+import { BACKEND_ROUTES } from '@/constants/routes';
+import { parseProfileUpdate } from '@/features/admin/profile/profile.schema';
+import { apiRequest } from '@/lib/api/server-client';
+import { errorResponse, requireSession } from '@/lib/api/route-session';
 
 export async function GET() {
   const session = await requireSession();
@@ -14,7 +14,7 @@ export async function GET() {
       await apiRequest(BACKEND_ROUTES.admin.profileMe, {
         token: session.token,
         clientContext: session.clientContext,
-      }),
+      })
     );
   } catch (error) {
     return errorResponse(error);
@@ -33,11 +33,11 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json(
       await apiRequest(BACKEND_ROUTES.admin.profileMe, {
-        method: "PATCH",
+        method: 'PATCH',
         body: parsed.payload,
         token: session.token,
         clientContext: session.clientContext,
-      }),
+      })
     );
   } catch (error) {
     return errorResponse(error);

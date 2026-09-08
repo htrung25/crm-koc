@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useLogin } from "@/features/auth/hooks/use-login";
+import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useLogin } from '@/features/auth/hooks/use-login';
 
 export function AdminLogin() {
-  const t = useTranslations("admin.login");
-  const highlights = [t("highlight1"), t("highlight2"), t("highlight3")];
+  const t = useTranslations('admin.login');
+  const highlights = [t('highlight1'), t('highlight2'), t('highlight3')];
   const [showPassword, setShowPassword] = useState(false);
   const {
     step,
@@ -23,7 +23,7 @@ export function AdminLogin() {
     verifyOtp,
     resendOtp,
     backToCredentials,
-  } = useLogin("ADMIN");
+  } = useLogin('ADMIN');
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#2D3B42] font-sans selection:bg-[#EF4623] selection:text-white">
@@ -32,11 +32,10 @@ export function AdminLogin() {
         <div className="absolute top-10 right-10 w-[450px] h-[450px] bg-[#EF4623]/10 rounded-full blur-[120px] pointer-events-none animate-ambient-blur" />
         <div
           className="absolute bottom-10 left-10 w-[450px] h-[450px] bg-[#EF4623]/10 rounded-full blur-[120px] pointer-events-none animate-ambient-blur"
-          style={{ animationDelay: "4s" }}
+          style={{ animationDelay: '4s' }}
         />
 
         <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] rounded-[28px] lg:rounded-[36px] overflow-hidden border border-[#2D3B42]/10 shadow-2xl shadow-[#2D3B42]/15 bg-white">
-
           {/* Panel giới thiệu nội bộ */}
           <div className="order-2 lg:order-1 relative bg-[#2D3B42] text-white p-8 sm:p-10 lg:p-12 flex flex-col justify-center gap-8">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(239,70,35,0.28),transparent_65%)] pointer-events-none" />
@@ -44,23 +43,28 @@ export function AdminLogin() {
             <div className="relative z-10 flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#EF4623]" />
               <span className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#EF4623]">
-                {t("eyebrow")}
+                {t('eyebrow')}
               </span>
             </div>
 
             <div className="relative z-10 space-y-4">
               <h1 className="font-serif font-normal tracking-tight leading-[1.05] text-[clamp(2.25rem,4.5vw,3.25rem)]">
-                {t("heading")}
-                <span className="block italic text-[#EF4623]">{t("headingAccent")}</span>
+                {t('heading')}
+                <span className="block italic text-[#EF4623]">
+                  {t('headingAccent')}
+                </span>
               </h1>
               <p className="text-sm text-white/70 leading-relaxed max-w-[40ch]">
-                {t("description")}
+                {t('description')}
               </p>
             </div>
 
             <ul className="relative z-10 space-y-3.5">
               {highlights.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm text-white/85">
+                <li
+                  key={item}
+                  className="flex items-start gap-3 text-sm text-white/85"
+                >
                   <span className="mt-0.5 w-5 h-5 shrink-0 rounded-full bg-[#EF4623]/20 text-[#EF4623] flex items-center justify-center text-[11px] font-bold">
                     ✓
                   </span>
@@ -76,16 +80,14 @@ export function AdminLogin() {
               <div className="flex items-start justify-between gap-4 border-b border-[#2D3B42]/10 pb-5">
                 <div>
                   <span className="block mb-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#EF4623]">
-                    {step === "credentials"
-                      ? t("portal")
-                      : t("twoFactor")}
+                    {step === 'credentials' ? t('portal') : t('twoFactor')}
                   </span>
                   <h2 className="font-serif text-3xl font-normal text-[#2D3B42]">
-                    {step === "credentials" ? t("signIn") : t("enterOtp")}
+                    {step === 'credentials' ? t('signIn') : t('enterOtp')}
                   </h2>
                 </div>
                 <span className="font-serif text-4xl leading-none text-[#EF4623]/30 select-none tabular-nums">
-                  {step === "credentials" ? "01" : "02"}
+                  {step === 'credentials' ? '01' : '02'}
                 </span>
               </div>
 
@@ -104,14 +106,14 @@ export function AdminLogin() {
                 </p>
               )}
 
-              {step === "credentials" ? (
+              {step === 'credentials' ? (
                 <form onSubmit={submitCredentials} className="space-y-5">
                   <div className="space-y-1.5">
                     <label
                       htmlFor="admin-email"
                       className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                     >
-                      {t("email")}
+                      {t('email')}
                     </label>
                     <input
                       id="admin-email"
@@ -131,13 +133,13 @@ export function AdminLogin() {
                       htmlFor="admin-password"
                       className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                     >
-                      {t("password")}
+                      {t('password')}
                     </label>
                     <div className="relative">
                       <input
                         id="admin-password"
                         name="password"
-                        type={showPassword ? "text" : "password"}
+                        type={showPassword ? 'text' : 'password'}
                         required
                         autoComplete="current-password"
                         value={password}
@@ -148,10 +150,12 @@ export function AdminLogin() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                        aria-label={
+                          showPassword ? t('hidePassword') : t('showPassword')
+                        }
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#2D3B42] text-xs font-semibold px-1.5 py-1 rounded-md transition-colors"
                       >
-                        {showPassword ? t("hide") : t("show")}
+                        {showPassword ? t('hide') : t('show')}
                       </button>
                     </div>
                   </div>
@@ -161,15 +165,19 @@ export function AdminLogin() {
                     disabled={isSubmitting}
                     className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? t("checking") : t("continue")}
+                    {isSubmitting ? t('checking') : t('continue')}
                   </button>
                 </form>
               ) : (
                 <form onSubmit={verifyOtp} className="space-y-5">
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    {t.rich("otpSent", {
+                    {t.rich('otpSent', {
                       email,
-                      strong: (chunks) => <span className="font-bold text-[#2D3B42]">{chunks}</span>,
+                      strong: (chunks) => (
+                        <span className="font-bold text-[#2D3B42]">
+                          {chunks}
+                        </span>
+                      ),
                     })}
                   </p>
 
@@ -178,7 +186,7 @@ export function AdminLogin() {
                       htmlFor="admin-otp"
                       className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
                     >
-                      {t("verificationCode")}
+                      {t('verificationCode')}
                     </label>
                     <input
                       id="admin-otp"
@@ -192,7 +200,7 @@ export function AdminLogin() {
                       autoFocus
                       value={otp}
                       onChange={(e) =>
-                        setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                        setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
                       }
                       placeholder="000000"
                       className="w-full px-4 py-3 rounded-2xl bg-[#FDF1EE]/50 focus:bg-white border border-[#2D3B42]/15 text-[#2D3B42] text-center text-2xl font-bold tracking-[0.5em] tabular-nums placeholder:text-slate-300 placeholder:tracking-[0.5em] focus:outline-none focus:border-[#EF4623] focus:ring-4 focus:ring-[#EF4623]/20 transition-all duration-300"
@@ -204,7 +212,7 @@ export function AdminLogin() {
                     disabled={isSubmitting || otp.length !== 6}
                     className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? t("verifying") : t("openDashboard")}
+                    {isSubmitting ? t('verifying') : t('openDashboard')}
                   </button>
 
                   <div className="flex items-center justify-between gap-3 text-xs font-semibold">
@@ -213,7 +221,7 @@ export function AdminLogin() {
                       onClick={backToCredentials}
                       className="text-slate-500 hover:text-[#2D3B42] transition-colors"
                     >
-                      {t("changeAccount")}
+                      {t('changeAccount')}
                     </button>
                     <button
                       type="button"
@@ -221,18 +229,17 @@ export function AdminLogin() {
                       disabled={isSubmitting}
                       className="text-[#EF4623] hover:underline disabled:opacity-50 disabled:no-underline"
                     >
-                      {t("resend")}
+                      {t('resend')}
                     </button>
                   </div>
                 </form>
               )}
 
               <p className="pt-5 border-t border-[#2D3B42]/10 text-center text-xs text-slate-500">
-                {t("support")}
+                {t('support')}
               </p>
             </div>
           </div>
-
         </div>
       </main>
     </div>

@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { BACKEND_ROUTES } from "@/constants/routes";
-import { apiRequest } from "@/lib/api/server-client";
-import { errorResponse, requireSession } from "@/lib/api/route-session";
+import { BACKEND_ROUTES } from '@/constants/routes';
+import { apiRequest } from '@/lib/api/server-client';
+import { errorResponse, requireSession } from '@/lib/api/route-session';
 
 /**
  * Danh sách brand, phân trang và lọc Ở PHÍA SERVER.
@@ -11,16 +11,16 @@ import { errorResponse, requireSession } from "@/lib/api/route-session";
  * gửi thừa sẽ bị ValidationPipe (forbidNonWhitelisted) từ chối cả request.
  */
 const ALLOWED = [
-  "page",
-  "limit",
-  "search",
-  "status",
-  "sortBy",
-  "sortOrder",
-  "emailVerified",
-  "createdFrom",
-  "createdTo",
-  "address",
+  'page',
+  'limit',
+  'search',
+  'status',
+  'sortBy',
+  'sortOrder',
+  'emailVerified',
+  'createdFrom',
+  'createdTo',
+  'address',
 ] as const;
 
 export async function GET(request: Request) {
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       await apiRequest(`${BACKEND_ROUTES.admin.brandList}?${query}`, {
         token: session.token,
         clientContext: session.clientContext,
-      }),
+      })
     );
   } catch (error) {
     return errorResponse(error);

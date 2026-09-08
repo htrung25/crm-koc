@@ -1,6 +1,6 @@
-import { API_ROUTES } from "@/constants/routes";
-import { apiFetch, readJson } from "@/lib/api/browser-client";
-import type { BrandPage, BrandQuery } from "@/features/admin/brands/types";
+import { API_ROUTES } from '@/constants/routes';
+import { apiFetch, readJson } from '@/lib/api/browser-client';
+import type { BrandPage, BrandQuery } from '@/features/admin/brands/types';
 
 /**
  * Danh sách brand. Lọc/sắp xếp/phân trang đều do backend làm, nên bộ lọc đi
@@ -8,7 +8,7 @@ import type { BrandPage, BrandQuery } from "@/features/admin/brands/types";
  */
 export async function fetchBrands(
   query: BrandQuery,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<BrandPage> {
   const params = new URLSearchParams({
     page: String(query.page),
@@ -16,10 +16,10 @@ export async function fetchBrands(
     sortBy: query.sortBy,
     sortOrder: query.sortOrder,
   });
-  if (query.search) params.set("search", query.search);
-  if (query.status) params.set("status", String(query.status));
+  if (query.search) params.set('search', query.search);
+  if (query.status) params.set('status', String(query.status));
 
   return readJson<BrandPage>(
-    await apiFetch(`${API_ROUTES.admin.brands}?${params}`, { signal }),
+    await apiFetch(`${API_ROUTES.admin.brands}?${params}`, { signal })
   );
 }

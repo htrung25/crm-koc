@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useTranslations } from "next-intl";
+import { useTranslations } from 'next-intl';
 
 interface CardData {
   id: string;
@@ -8,96 +8,104 @@ interface CardData {
   tag: string;
   platform: string;
   avatarColor: string;
-  theme: "dark" | "peach" | "white" | "coral";
+  theme: 'dark' | 'peach' | 'white' | 'coral';
 }
 
 const marqueeCardsRow1: CardData[] = [
   {
-    id: "1",
-    name: "An Nhiên Beauty",
-    tag: "🔥 Hot Creator",
-    platform: "TikTok Shop",
-    avatarColor: "bg-[#EF4623]",
-    theme: "coral"
+    id: '1',
+    name: 'An Nhiên Beauty',
+    tag: '🔥 Hot Creator',
+    platform: 'TikTok Shop',
+    avatarColor: 'bg-[#EF4623]',
+    theme: 'coral',
   },
   {
-    id: "2",
-    name: "Coolmate Official",
-    tag: "🏢 Brand Partner",
-    platform: "Shopee Live",
-    avatarColor: "bg-[#2D3B42]",
-    theme: "peach"
+    id: '2',
+    name: 'Coolmate Official',
+    tag: '🏢 Brand Partner',
+    platform: 'Shopee Live',
+    avatarColor: 'bg-[#2D3B42]',
+    theme: 'peach',
   },
   {
-    id: "3",
-    name: "Minh Tech Review",
-    tag: "⚡ Tech Creator",
-    platform: "YouTube Shorts",
-    avatarColor: "bg-amber-500",
-    theme: "dark"
+    id: '3',
+    name: 'Minh Tech Review',
+    tag: '⚡ Tech Creator',
+    platform: 'YouTube Shorts',
+    avatarColor: 'bg-amber-500',
+    theme: 'dark',
   },
   {
-    id: "4",
-    name: "Lemonade Cosmetics",
-    tag: "✨ Premium Brand",
-    platform: "Multi-Platform",
-    avatarColor: "bg-[#EF4623]",
-    theme: "white"
-  }
+    id: '4',
+    name: 'Lemonade Cosmetics',
+    tag: '✨ Premium Brand',
+    platform: 'Multi-Platform',
+    avatarColor: 'bg-[#EF4623]',
+    theme: 'white',
+  },
 ];
 
 const marqueeCardsRow2: CardData[] = [
   {
-    id: "5",
-    name: "Hà Linh Skincare",
-    tag: "👑 Top Star",
-    platform: "TikTok Live",
-    avatarColor: "bg-[#2D3B42]",
-    theme: "dark"
+    id: '5',
+    name: 'Hà Linh Skincare',
+    tag: '👑 Top Star',
+    platform: 'TikTok Live',
+    avatarColor: 'bg-[#2D3B42]',
+    theme: 'dark',
   },
   {
-    id: "6",
-    name: "Sunhouse Appliances",
-    tag: "🏆 Enterprise Brand",
-    platform: "Omnichannel",
-    avatarColor: "bg-[#EF4623]",
-    theme: "peach"
+    id: '6',
+    name: 'Sunhouse Appliances',
+    tag: '🏆 Enterprise Brand',
+    platform: 'Omnichannel',
+    avatarColor: 'bg-[#EF4623]',
+    theme: 'peach',
   },
   {
-    id: "7",
-    name: "Quỳnh Anh Lifestyle",
-    tag: "💖 Verified KOC",
-    platform: "Facebook Reels",
-    avatarColor: "bg-emerald-500",
-    theme: "white"
+    id: '7',
+    name: 'Quỳnh Anh Lifestyle',
+    tag: '💖 Verified KOC',
+    platform: 'Facebook Reels',
+    avatarColor: 'bg-emerald-500',
+    theme: 'white',
   },
   {
-    id: "8",
-    name: "Baseus Vietnam",
-    tag: "🚀 Tech Partner",
-    platform: "Shopee & TikTok",
-    avatarColor: "bg-[#2D3B42]",
-    theme: "coral"
-  }
+    id: '8',
+    name: 'Baseus Vietnam',
+    tag: '🚀 Tech Partner',
+    platform: 'Shopee & TikTok',
+    avatarColor: 'bg-[#2D3B42]',
+    theme: 'coral',
+  },
 ];
 
 export function MarqueeCards() {
-  const t = useTranslations("marketing");
+  const t = useTranslations('marketing');
   // Duplicate arrays to create continuous infinite marquee loop
-  const row1Duplicated = [...marqueeCardsRow1, ...marqueeCardsRow1, ...marqueeCardsRow1];
-  const row2Duplicated = [...marqueeCardsRow2, ...marqueeCardsRow2, ...marqueeCardsRow2];
+  const row1Duplicated = [
+    ...marqueeCardsRow1,
+    ...marqueeCardsRow1,
+    ...marqueeCardsRow1,
+  ];
+  const row2Duplicated = [
+    ...marqueeCardsRow2,
+    ...marqueeCardsRow2,
+    ...marqueeCardsRow2,
+  ];
 
-  const getThemeClasses = (theme: CardData["theme"]) => {
+  const getThemeClasses = (theme: CardData['theme']) => {
     switch (theme) {
-      case "coral":
-        return "bg-[#EF4623] text-white border-white/20 shadow-2xl shadow-[#EF4623]/30";
-      case "dark":
-        return "bg-[#2D3B42] text-white border-white/10 shadow-2xl shadow-black/30";
-      case "peach":
-        return "bg-[#FDF1EE] text-[#2D3B42] border-[#EF4623]/20 shadow-xl";
-      case "white":
+      case 'coral':
+        return 'bg-[#EF4623] text-white border-white/20 shadow-2xl shadow-[#EF4623]/30';
+      case 'dark':
+        return 'bg-[#2D3B42] text-white border-white/10 shadow-2xl shadow-black/30';
+      case 'peach':
+        return 'bg-[#FDF1EE] text-[#2D3B42] border-[#EF4623]/20 shadow-xl';
+      case 'white':
       default:
-        return "bg-white text-[#2D3B42] border-slate-100 shadow-xl";
+        return 'bg-white text-[#2D3B42] border-slate-100 shadow-xl';
     }
   };
 
@@ -112,11 +120,13 @@ export function MarqueeCards() {
           className="text-4xl md:text-6xl font-normal text-white tracking-tight"
           style={{ fontFamily: "'Instrument Serif', serif" }}
         >
-          {t("social.title")} <br />
-          <span className="italic text-[#EF4623]">{t("social.titleAccent")}</span>
+          {t('social.title')} <br />
+          <span className="italic text-[#EF4623]">
+            {t('social.titleAccent')}
+          </span>
         </h2>
         <p className="text-sm md:text-base text-slate-300 max-w-xl mx-auto font-sans">
-          {t("social.subtitle")}
+          {t('social.subtitle')}
         </p>
       </div>
 
@@ -152,8 +162,12 @@ export function MarqueeCards() {
                     {card.name.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold leading-tight">{card.name}</h4>
-                    <p className="text-[11px] opacity-75">{t(`testimonials.${card.id}.role`)}</p>
+                    <h4 className="text-sm font-bold leading-tight">
+                      {card.name}
+                    </h4>
+                    <p className="text-[11px] opacity-75">
+                      {t(`testimonials.${card.id}.role`)}
+                    </p>
                   </div>
                 </div>
 
@@ -203,8 +217,12 @@ export function MarqueeCards() {
                     {card.name.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold leading-tight">{card.name}</h4>
-                    <p className="text-[11px] opacity-75">{t(`testimonials.${card.id}.role`)}</p>
+                    <h4 className="text-sm font-bold leading-tight">
+                      {card.name}
+                    </h4>
+                    <p className="text-[11px] opacity-75">
+                      {t(`testimonials.${card.id}.role`)}
+                    </p>
                   </div>
                 </div>
 

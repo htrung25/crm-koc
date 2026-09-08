@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import type { AuditLogRow } from "@/features/admin/audit-logs/types";
+import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import type { AuditLogRow } from '@/features/admin/audit-logs/types';
 
 type AuditLogDetailDrawerProps = {
   log: AuditLogRow | null;
@@ -13,7 +13,7 @@ export function AuditLogDetailDrawer({
   log,
   onClose,
 }: AuditLogDetailDrawerProps) {
-  const t = useTranslations("admin.auditLogs");
+  const t = useTranslations('admin.auditLogs');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   if (!log) return null;
@@ -24,21 +24,21 @@ export function AuditLogDetailDrawer({
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const formattedDate = new Date(log.createdAt).toLocaleString("vi-VN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
+  const formattedDate = new Date(log.createdAt).toLocaleString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   });
 
   const isDangerAction =
-    log.action.startsWith("fail_") || log.action === "reject";
+    log.action.startsWith('fail_') || log.action === 'reject';
   const isSuccessAction =
-    log.action === "approve" ||
-    log.action === "otp_sent" ||
-    log.action === "logout";
+    log.action === 'approve' ||
+    log.action === 'otp_sent' ||
+    log.action === 'logout';
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#1E282D]/45 p-4 backdrop-blur-sm">
@@ -54,11 +54,11 @@ export function AuditLogDetailDrawer({
             <div className="flex items-center gap-2">
               <span
                 className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
-                  log.category === "login"
-                    ? "bg-purple-500/15 text-purple-700"
-                    : log.category === "audit"
-                      ? "bg-sky-500/15 text-sky-700"
-                      : "bg-emerald-500/15 text-emerald-700"
+                  log.category === 'login'
+                    ? 'bg-purple-500/15 text-purple-700'
+                    : log.category === 'audit'
+                      ? 'bg-sky-500/15 text-sky-700'
+                      : 'bg-emerald-500/15 text-emerald-700'
                 }`}
               >
                 {t(`categories.${log.category}`)}
@@ -66,10 +66,10 @@ export function AuditLogDetailDrawer({
               <span
                 className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase font-mono tracking-wide ${
                   isDangerAction
-                    ? "bg-red-500/15 text-red-700 ring-1 ring-red-500/20"
+                    ? 'bg-red-500/15 text-red-700 ring-1 ring-red-500/20'
                     : isSuccessAction
-                      ? "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/20"
-                      : "bg-[#2D3B42]/8 text-[#2D3B42] ring-1 ring-[#2D3B42]/15"
+                      ? 'bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/20'
+                      : 'bg-[#2D3B42]/8 text-[#2D3B42] ring-1 ring-[#2D3B42]/15'
                 }`}
               >
                 {log.action}
@@ -79,7 +79,7 @@ export function AuditLogDetailDrawer({
               id="audit-log-detail-title"
               className="mt-2 text-lg font-extrabold text-[#2D3B42]"
             >
-              {t("detailTitle")}
+              {t('detailTitle')}
             </h2>
             <p className="font-mono text-xs text-[#8A7768]">{formattedDate}</p>
           </div>
@@ -97,11 +97,11 @@ export function AuditLogDetailDrawer({
           {/* Email / Tài khoản */}
           <div className="rounded-2xl bg-white/50 p-3.5 ring-1 ring-[#2D3B42]/10">
             <span className="block text-[10px] font-extrabold uppercase tracking-wider text-[#8A7768]">
-              {t("attemptedEmail")}
+              {t('attemptedEmail')}
             </span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="font-semibold text-sm text-[#2D3B42] truncate">
-                {log.emailAttempted || log.accountId || "—"}
+                {log.emailAttempted || log.accountId || '—'}
               </span>
               {(log.emailAttempted || log.accountId) && (
                 <button
@@ -109,12 +109,12 @@ export function AuditLogDetailDrawer({
                   onClick={() =>
                     copyToClipboard(
                       (log.emailAttempted || log.accountId)!,
-                      "email",
+                      'email'
                     )
                   }
                   className="rounded-lg px-2 py-1 text-[11px] font-bold text-[#EF4623] hover:bg-[#EF4623]/10"
                 >
-                  {copiedKey === "email" ? t("copied") : t("copy")}
+                  {copiedKey === 'email' ? t('copied') : t('copy')}
                 </button>
               )}
             </div>
@@ -127,15 +127,15 @@ export function AuditLogDetailDrawer({
             </span>
             <div className="mt-1 flex items-center justify-between gap-2">
               <code className="font-mono font-bold text-sm text-[#2D3B42]">
-                {log.ipAddress || "—"}
+                {log.ipAddress || '—'}
               </code>
               {log.ipAddress && (
                 <button
                   type="button"
-                  onClick={() => copyToClipboard(log.ipAddress!, "ip")}
+                  onClick={() => copyToClipboard(log.ipAddress!, 'ip')}
                   className="rounded-lg px-2 py-1 text-[11px] font-bold text-[#EF4623] hover:bg-[#EF4623]/10"
                 >
-                  {copiedKey === "ip" ? t("copied") : t("copy")}
+                  {copiedKey === 'ip' ? t('copied') : t('copy')}
                 </button>
               )}
             </div>
@@ -149,7 +149,7 @@ export function AuditLogDetailDrawer({
                   Resource Type
                 </span>
                 <span className="mt-1 block font-mono text-xs font-bold text-[#2D3B42]">
-                  {log.resourceType || "—"}
+                  {log.resourceType || '—'}
                 </span>
               </div>
               <div>
@@ -157,7 +157,7 @@ export function AuditLogDetailDrawer({
                   Resource ID
                 </span>
                 <span className="mt-1 block font-mono text-xs font-bold text-[#2D3B42] truncate">
-                  {log.resourceId || "—"}
+                  {log.resourceId || '—'}
                 </span>
               </div>
             </div>
@@ -172,15 +172,15 @@ export function AuditLogDetailDrawer({
               {log.userAgent && (
                 <button
                   type="button"
-                  onClick={() => copyToClipboard(log.userAgent!, "ua")}
+                  onClick={() => copyToClipboard(log.userAgent!, 'ua')}
                   className="rounded-lg px-2 py-1 text-[11px] font-bold text-[#EF4623] hover:bg-[#EF4623]/10"
                 >
-                  {copiedKey === "ua" ? t("copied") : t("copy")}
+                  {copiedKey === 'ua' ? t('copied') : t('copy')}
                 </button>
               )}
             </div>
             <p className="mt-1.5 break-all font-mono text-xs text-[#5C5049] bg-white/60 p-2.5 rounded-xl ring-1 ring-[#2D3B42]/5">
-              {log.userAgent || "—"}
+              {log.userAgent || '—'}
             </p>
           </div>
         </div>
@@ -194,11 +194,11 @@ export function AuditLogDetailDrawer({
             <button
               type="button"
               onClick={() =>
-                copyToClipboard(JSON.stringify(log, null, 2), "json")
+                copyToClipboard(JSON.stringify(log, null, 2), 'json')
               }
               className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-white hover:bg-white/20 transition-colors"
             >
-              {copiedKey === "json" ? t("copied") : t("copyJson")}
+              {copiedKey === 'json' ? t('copied') : t('copyJson')}
             </button>
           </div>
           <pre className="max-h-48 overflow-y-auto font-mono text-[11px] text-white/90 leading-relaxed bg-black/25 p-3 rounded-xl">
@@ -212,7 +212,7 @@ export function AuditLogDetailDrawer({
             onClick={onClose}
             className="rounded-xl bg-white/60 px-5 py-2.5 text-sm font-extrabold text-[#5C5049] hover:bg-white hover:text-[#2D3B42] ring-1 ring-[#2D3B42]/10"
           >
-            {t("close")}
+            {t('close')}
           </button>
         </div>
       </div>
