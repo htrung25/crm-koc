@@ -1,9 +1,3 @@
-# Uptime Kuma — giám sát uptime + hạn cert. Deploy một lần, không thuộc stack
-# staging/prod nào:
-#
-#   docker compose -f compose.monitoring.yml up -d
-#
-# Publish ra loopback, nginx trên host reverse proxy (xem deploy/nginx/status.conf).
 name: crm-koc-monitoring
 
 services:
