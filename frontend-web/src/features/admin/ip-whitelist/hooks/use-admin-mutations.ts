@@ -19,7 +19,7 @@ export function useUpdateAdmin() {
     mutationFn: ({ id, payload }: UpdateAdminParams) =>
       updateAdmin(id, payload),
     onSuccess: (updated) => {
-      queryClient.invalidateQueries({ queryKey: ADMIN_ACCOUNTS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: [ADMIN_ACCOUNTS_QUERY_KEY] });
       queryClient.setQueryData(
         ["admin-account-detail", updated.id],
         updated,
@@ -34,7 +34,7 @@ export function useDeleteAdmin() {
   return useMutation({
     mutationFn: (id: string) => deleteAdmin(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ADMIN_ACCOUNTS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: [ADMIN_ACCOUNTS_QUERY_KEY] });
     },
   });
 }

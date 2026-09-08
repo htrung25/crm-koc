@@ -37,7 +37,7 @@ export async function GET(_: Request, context: Context) {
   try {
     const { id } = await context.params;
     return NextResponse.json(
-      await apiRequest(BACKEND_ROUTES.admin.detail(id), {
+      await apiRequest(BACKEND_ROUTES.admin.adminUserDetail(id), {
         token: session.token,
         clientContext: session.clientContext,
       }),
@@ -55,7 +55,7 @@ export async function PATCH(request: Request, context: Context) {
     const body = await request.json();
     const { id } = await context.params;
     return NextResponse.json(
-      await apiRequest(BACKEND_ROUTES.admin.detail(id), {
+      await apiRequest(BACKEND_ROUTES.admin.adminUserDetail(id), {
         method: "PATCH",
         body,
         token: session.token,
@@ -74,7 +74,7 @@ export async function DELETE(_: Request, context: Context) {
   try {
     const { id } = await context.params;
     return NextResponse.json(
-      await apiRequest(BACKEND_ROUTES.admin.detail(id), {
+      await apiRequest(BACKEND_ROUTES.admin.adminUserDetail(id), {
         method: "DELETE",
         token: session.token,
         clientContext: session.clientContext,

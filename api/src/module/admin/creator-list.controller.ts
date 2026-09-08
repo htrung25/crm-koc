@@ -64,7 +64,6 @@ export class CreatorListController {
     return this.creatorListService.findCreatorById(id);
   }
 
-  // Đường dẫn có 3 đoạn nên không tranh chấp với DELETE /admin/:id (xoá tài khoản admin).
   @Delete('/creators-list/:id')
   @ApiOperation({ summary: 'Delete a creator profile' })
   @ApiOkResponse({ schema: { properties: { message: { type: 'string' } } } })

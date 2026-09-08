@@ -6,14 +6,17 @@ import {
   fetchAdmins,
 } from "@/features/admin/ip-whitelist/services/admin-account.service";
 
-export const ADMIN_ACCOUNTS_QUERY_KEY = ["admin-accounts"] as const;
+import type { AdminQuery } from "@/features/admin/ip-whitelist/types";
+
+export const ADMIN_ACCOUNTS_QUERY_KEY = "admin-accounts";
 export const adminDetailQueryKey = (id: string) =>
   ["admin-account-detail", id] as const;
 
-export function useAdmins() {
+export function useAdmins(query?: Partial<AdminQuery>) {
   return useQuery({
-    queryKey: ADMIN_ACCOUNTS_QUERY_KEY,
-    queryFn: fetchAdmins,
+    queryKey: [ADMIN_ACCOUNTS_QUERY_KEY, query],
+    queryFn: ({ signal }) => fetchAdmins(query, signal),
+    placeholderData: (previous) => previous,
   });
 }
 

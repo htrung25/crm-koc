@@ -61,7 +61,6 @@ export class BrandListController {
     return this.brandListService.findBrandById(id);
   }
 
-  // Đường dẫn có 3 đoạn nên không tranh chấp với DELETE /admin/:id (xoá tài khoản admin).
   @Delete('/brands-list/:id')
   @ApiOperation({ summary: 'Delete a brand profile' })
   @ApiOkResponse({ schema: { properties: { message: { type: 'string' } } } })

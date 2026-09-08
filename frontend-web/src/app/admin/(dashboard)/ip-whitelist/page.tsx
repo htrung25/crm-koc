@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
 import { AdminPageShell } from "@/features/admin/components/admin-page-shell";
 import { AdminIpWhitelist } from "@/features/admin/ip-whitelist/components/ip-whitelist-panel";
+import { IpWhitelistSkeleton } from "@/features/admin/ip-whitelist/components/ip-whitelist-skeleton";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("admin.ipWhitelistPage");
@@ -14,7 +16,9 @@ export default async function AdminSecurityPage() {
 
   return (
     <AdminPageShell title={t("title")} greeting={t("greeting")}>
-      <AdminIpWhitelist />
+      <Suspense fallback={<IpWhitelistSkeleton />}>
+        <AdminIpWhitelist />
+      </Suspense>
     </AdminPageShell>
   );
 }

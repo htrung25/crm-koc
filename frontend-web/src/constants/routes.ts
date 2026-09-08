@@ -73,8 +73,10 @@ export const BACKEND_ROUTES = {
   loginBrandCreator: "/login/brand-creator",
 
   admin: {
-    detail: (id: string) => `/admin/${id}`,
-    adminList: "/admin/admin-list",
+    detail: (id: string) => `/admin/admin-user/${id}`,
+    adminUser: "/admin/admin-user",
+    adminUserDetail: (id: string) => `/admin/admin-user/${id}`,
+    adminList: "/admin/admin-user",
     brandList: "/admin/brands-list",
     brandDetail: (id: string) => `/admin/brands-list/${id}`,
     creatorList: "/admin/creators-list",

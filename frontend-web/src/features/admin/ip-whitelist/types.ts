@@ -23,6 +23,20 @@ export type AdminPage = {
   totalPages: number;
 };
 
+export type AdminQuery = {
+  page: number;
+  limit: number;
+  search: string;
+  role: "all" | AdminRole;
+};
+
+export const DEFAULT_ADMIN_QUERY: AdminQuery = {
+  page: 1,
+  limit: 8,
+  search: "",
+  role: "all",
+};
+
 /** Body lỗi, gộp cả hai hình dạng backend trả về. */
 export type WhitelistErrorBody = {
   message: string;
