@@ -29,7 +29,7 @@ export function TrafficDonut({ data }: { data: TrafficData }) {
     <section className="flex flex-col rounded-[26px] glass p-5 sm:p-6">
       <div>
         <h2 className="text-base font-extrabold tracking-tight text-[#2D3B42]">
-          Nguồn traffic
+          Phân bổ nền tảng KOC
         </h2>
         <p className="text-xs font-medium text-[#8A7768]">{data.caption}</p>
       </div>
@@ -68,7 +68,7 @@ export function TrafficDonut({ data }: { data: TrafficData }) {
               {data.total}
             </p>
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8A7768]">
-              Lượt truy cập
+              Lượt tiếp cận
             </p>
           </div>
         </div>

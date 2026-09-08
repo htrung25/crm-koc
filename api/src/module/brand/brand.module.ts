@@ -36,13 +36,14 @@ import { SystemConfigurationModule } from '../system-configuration/system-config
     SystemConfigurationModule,
   ],
   controllers: [BrandProfileController, CampaignController],
+
   providers: [
     BrandProfileService,
     CampaignService,
     CampaignTransitionService,
     CampaignSubmitService,
   ],
-  // export để AuthService tạo hồ sơ lúc đăng ký mà không tự khai lại repository
-  exports: [BrandProfileService],
+
+  exports: [BrandProfileService, CampaignService],
 })
 export class BrandModule {}

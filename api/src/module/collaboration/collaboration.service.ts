@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
@@ -27,6 +28,19 @@ import {
 } from './constants/collaboration.constants';
 import { BrandProfileService } from '../brand/brand-profile.service';
 import { CreatorProfileService } from '../creator/creator-profile.service';
+import { CampaignService } from '../brand/campaign.service';
+import { Campaign } from '../brand/entities/campaign.entity';
+import { SocialAccount } from '../creator/entities/social-account.entity';
+import { SystemConfigurationService } from '../system-configuration/system-configuration.service';
+import { CAMPAIGN_CONFIG_GROUP } from '../brand/constants/campaign.constants';
+import { CAMPAIGN_STATUS_LABEL } from '../brand/constants/campaign.constants';
+import { EBusinessCode } from '../../common/enum/business-code.enum';
+import {
+  ECampaignStatus,
+  ECompensationType,
+  EPricingModel,
+} from '../../common/enum/campaign.enum';
+import type { CampaignIssue } from '../brand/types/campaign.types';
 import {
   CollaborationFilterDto,
   CreateCollaborationDto,
@@ -45,6 +59,12 @@ export class CollaborationService {
     private readonly collaborationRepository: Repository<Collaboration>,
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
+    @InjectRepository(Campaign)
+    private readonly campaignRepository: Repository<Campaign>,
+    @InjectRepository(SocialAccount)
+    private readonly socialAccountRepository: Repository<SocialAccount>,
+    private readonly campaignService: CampaignService,
+    private readonly configService: SystemConfigurationService,
     private readonly brandProfileService: BrandProfileService,
     private readonly creatorProfileService: CreatorProfileService,
   ) {}
@@ -52,7 +72,7 @@ export class CollaborationService {
   async create(
     brandId: string,
     dto: CreateCollaborationDto,
-  ): Promise<Collaboration> {
+  ): Promise<Collaboration & { warnings: CampaignIssue[] }> {
     // 1. Brand phải có hồ sơ: FK trỏ brand_profiles chứ không phải accounts.
     const brand = await this.brandProfileService.findByAccountId(brandId);
     if (!brand) {
@@ -86,8 +106,23 @@ export class CollaborationService {
       throw new BadRequestException('creator account is not active');
     }
 
-    // 5. Chặn trùng khi hợp tác trước còn dở. Đã completed/cancelled thì hợp
-    // tác lại được — DB cố tình không có unique trên bộ ba này.
+    // 4b. Campaign phải thuộc chính brand đang gọi, đã được duyệt, và giá phải
+    // khớp cam kết của nó. Một truy vấn cho cả ba việc.
+    let warnings: CampaignIssue[] = [];
+    if (dto.campaignId) {
+      const campaign = await this.campaignRepository.findOne({
+        where: { id: dto.campaignId, brandId },
+      });
+      if (!campaign) {
+        throw new NotFoundException('campaign does not exist');
+      }
+
+      this.assertCampaignApproved(campaign);
+      await this.assertPriceMatchesCampaign(campaign, dto.agreedPrice);
+      warnings = await this.creatorCriteriaWarnings(campaign, dto.creatorId);
+    }
+
+    // 5. Chặn trùng khi hợp tác trước còn dở. Đã completed/cancelled thì hợp tác lại được
     const open = await this.collaborationRepository.findOne({
       where: {
         brandId,
@@ -114,7 +149,147 @@ export class CollaborationService {
     });
 
     // 8. Entity trùng khít CollaborationDto nên trả thẳng, không map lại.
-    return this.collaborationRepository.save(collaboration);
+    const saved = await this.collaborationRepository.save(collaboration);
+    return { ...saved, warnings };
+  }
+
+  /*Chỉ campaign ĐÃ DUYỆT mới gắn hợp tác được*/
+  private assertCampaignApproved(campaign: Campaign): void {
+    if (campaign.status === ECampaignStatus.APPROVED) {
+      return;
+    }
+    throw new UnprocessableEntityException({
+      businessCode: EBusinessCode.CAMPAIGN_INVALID_TRANSITION,
+      message: `campaign is ${CAMPAIGN_STATUS_LABEL[campaign.status]}, only approved campaigns accept collaborations`,
+      status: campaign.status,
+    });
+  }
+
+  private async assertPriceMatchesCampaign(
+    campaign: Campaign,
+    agreedPrice?: number,
+  ): Promise<void> {
+    if (campaign.compensationType === ECompensationType.PRODUCT) {
+      if (agreedPrice) {
+        throw new UnprocessableEntityException({
+          businessCode: EBusinessCode.CAMPAIGN_BUDGET_MISMATCH,
+          message: 'campaign pays in product only, agreedPrice must be empty',
+        });
+      }
+      return;
+    }
+
+    if (agreedPrice === undefined) {
+      throw new UnprocessableEntityException({
+        businessCode: EBusinessCode.CAMPAIGN_BUDGET_MISMATCH,
+        message: 'agreedPrice is required for a campaign that pays cash',
+      });
+    }
+
+    const price = BigInt(agreedPrice);
+
+    if (campaign.pricingModel === EPricingModel.FIXED) {
+      const unit = campaign.cashUnitPrice;
+      if (unit !== null && price !== BigInt(unit)) {
+        throw new UnprocessableEntityException({
+          businessCode: EBusinessCode.CAMPAIGN_BUDGET_MISMATCH,
+          message: `campaign pricing is fixed at ${unit}, agreedPrice must match`,
+        });
+      }
+      return;
+    }
+
+    const min = campaign.minCashUnitPrice;
+    const max = campaign.maxCashUnitPrice;
+    if (
+      (min !== null && price < BigInt(min)) ||
+      (max !== null && price > BigInt(max))
+    ) {
+      throw new UnprocessableEntityException({
+        businessCode: EBusinessCode.CAMPAIGN_PRICE_RANGE_INVALID,
+        message: `agreedPrice must be within [${min ?? '-'}, ${max ?? '-'}]`,
+      });
+    }
+
+    // Sàn đọc theo cấu hình HIỆN HÀNH, không phải applied_policy lúc gửi duyệt:
+    // sàn tăng sau khi campaign được duyệt thì hợp tác mới vẫn phải theo sàn mới.
+    const config = await this.configService.getByGroup(CAMPAIGN_CONFIG_GROUP);
+    const floor = await this.campaignService.resolveCashFloor(config, {
+      compensationType: campaign.compensationType!,
+    });
+    if (floor.value !== null && price < floor.value) {
+      throw new UnprocessableEntityException({
+        businessCode: EBusinessCode.CAMPAIGN_CASH_BELOW_FLOOR,
+        message: `${price} is below the floor of ${floor.value}`,
+        metadata: { floor: floor.value.toString(), sourceKey: floor.sourceKey },
+      });
+    }
+  }
+
+  private async creatorCriteriaWarnings(
+    campaign: Campaign,
+    creatorId: string,
+  ): Promise<CampaignIssue[]> {
+    const wanted = campaign.creatorPlatforms ?? [];
+    const minFollowers = campaign.creatorMinFollowers;
+    const minEngagement = campaign.creatorMinEngagementRate;
+    if (!wanted.length && minFollowers === null && minEngagement === null) {
+      return [];
+    }
+
+    const accounts = await this.socialAccountRepository.find({
+      where: { creatorProfileId: creatorId, isActive: true },
+      select: {
+        platform: true,
+        followerCount: true,
+        engagementRate: true,
+      },
+    });
+
+    const warnings: CampaignIssue[] = [];
+    const owned = new Set(accounts.map((a) => a.platform));
+    const missing = wanted.filter((p) => !owned.has(p));
+    if (missing.length) {
+      warnings.push({
+        code: EBusinessCode[EBusinessCode.CAMPAIGN_PLATFORM_MISMATCH],
+        fieldPath: 'creatorId',
+        message: `creator has no active account on ${missing.join(', ')}`,
+        metadata: { missing },
+      });
+    }
+
+    // So trên nền tảng TỐT NHẤT của creator, không phải tổng: campaign yêu cầu
+    // một kênh đạt ngưỡng, không phải cộng dồn mọi kênh.
+    if (minFollowers !== null) {
+      const best = accounts.reduce(
+        (max, a) =>
+          BigInt(a.followerCount) > max ? BigInt(a.followerCount) : max,
+        0n,
+      );
+      if (best < BigInt(minFollowers)) {
+        warnings.push({
+          code: 'minFollowers',
+          fieldPath: 'creatorId',
+          message: `creator's best channel has ${best} followers, campaign asks for ${minFollowers}`,
+        });
+      }
+    }
+
+    if (minEngagement !== null) {
+      const best = accounts.reduce(
+        (max, a) => Math.max(max, Number(a.engagementRate ?? 0)),
+        0,
+      );
+      if (best < Number(minEngagement)) {
+        warnings.push({
+          code: 'minEngagementRate',
+          fieldPath: 'creatorId',
+          message: `creator's best engagement rate is ${best}, campaign asks for ${minEngagement}`,
+        });
+      }
+    }
+
+    return warnings;
   }
 
   async findAll(

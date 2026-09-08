@@ -36,14 +36,13 @@ export class Collaboration {
   @JoinColumn({ name: 'creator_id' })
   creator?: CreatorProfile;
 
-  /** Chưa có bảng campaigns nên chưa có quan hệ, chỉ giữ id trần. */
   @Column({ type: 'uuid', nullable: true })
   campaignId: string | null;
 
   @Column({ type: 'smallint', default: ECollaborationStatus.PENDING })
   status: ECollaborationStatus;
 
-  @Column({ type: 'numeric', precision: 14, scale: 2, nullable: true })
+  @Column({ type: 'bigint', nullable: true })
   agreedPrice: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
