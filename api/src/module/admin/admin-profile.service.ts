@@ -23,15 +23,10 @@ import {
 } from '../../common/services/storage.service';
 import { fileTypeFromBuffer } from 'file-type';
 import * as bcrypt from 'bcrypt';
-
-const ALLOWED_AVATAR_MIMES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-] as const;
-
-const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+import {
+  ALLOWED_AVATAR_MIMES,
+  MAX_AVATAR_SIZE_BYTES,
+} from './constants/admin-profile.constants';
 
 @Injectable()
 export class AdminProfileService {
@@ -47,10 +42,6 @@ export class AdminProfileService {
     private readonly storageService: StorageService,
   ) {}
 
-  /**
-   * Dòng admin_users có thể đã tồn tại (superadmin dựng bằng SQL, hoặc
-   * migration đã nạp sẵn), nên ghi đè phần hồ sơ thay vì insert mù.
-   */
   async create(
     accountId: string,
     name: string | null,
@@ -131,8 +122,6 @@ export class AdminProfileService {
   async uploadAvatar(
     accountId: string,
     buffer: Buffer,
-    _clientMime?: string,
-    _originalName?: string,
   ): Promise<AdminProfileResponseDto> {
     if (!buffer || buffer.length === 0) {
       throw new BadRequestException('file is empty');

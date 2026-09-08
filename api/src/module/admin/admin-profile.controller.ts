@@ -125,12 +125,7 @@ export class AdminProfileController {
     if (!file) {
       throw new BadRequestException('file is required');
     }
-    return this.profileService.uploadAvatar(
-      request.user.id,
-      file.buffer,
-      file.mimetype,
-      file.originalname,
-    );
+    return this.profileService.uploadAvatar(request.user.id, file.buffer);
   }
 
   @Get('/avatar')
