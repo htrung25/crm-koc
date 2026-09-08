@@ -17,7 +17,16 @@ import { ChangePasswordDto } from '../../common/dto/change-password.dto';
 import { BCRYPT_ROUNDS } from '../../common/util/account.util';
 import { SessionService } from '../../security/session.service';
 import { AccountCacheService } from '../../security/account-cache.service';
+import {
+  StorageService,
+  StorageStreamResult,
+} from '../../common/services/storage.service';
+import { fileTypeFromBuffer } from 'file-type';
 import * as bcrypt from 'bcrypt';
+import {
+  ALLOWED_AVATAR_MIMES,
+  MAX_AVATAR_SIZE_BYTES,
+} from './constants/admin-profile.constants';
 
 @Injectable()
 export class AdminProfileService {
@@ -30,12 +39,9 @@ export class AdminProfileService {
     private readonly authRepository: Repository<AuthEntity>,
     private readonly sessionService: SessionService,
     private readonly accountCache: AccountCacheService,
+    private readonly storageService: StorageService,
   ) {}
 
-  /**
-   * Dòng admin_users có thể đã tồn tại (superadmin dựng bằng SQL, hoặc
-   * migration đã nạp sẵn), nên ghi đè phần hồ sơ thay vì insert mù.
-   */
   async create(
     accountId: string,
     name: string | null,
@@ -111,6 +117,69 @@ export class AdminProfileService {
       where: { accountId },
       select: AdminProfileService.PROFILE_COLUMNS,
     });
+  }
+
+  async uploadAvatar(
+    accountId: string,
+    buffer: Buffer,
+  ): Promise<AdminProfileResponseDto> {
+    if (!buffer || buffer.length === 0) {
+      throw new BadRequestException('file is empty');
+    }
+    if (buffer.length > MAX_AVATAR_SIZE_BYTES) {
+      throw new BadRequestException(
+        `file exceeds 5MB (got ${buffer.length} bytes)`,
+      );
+    }
+
+    const detected = await fileTypeFromBuffer(buffer);
+    if (
+      !detected ||
+      !ALLOWED_AVATAR_MIMES.includes(
+        detected.mime as (typeof ALLOWED_AVATAR_MIMES)[number],
+      )
+    ) {
+      throw new BadRequestException(
+        `unsupported file type; allowed: ${ALLOWED_AVATAR_MIMES.join(', ')}`,
+      );
+    }
+
+    const ext = detected.ext || 'png';
+    const key = `${this.storageService.generateKey('avatars/admin/')}.${ext}`;
+
+    await this.storageService.put(key, buffer, detected.mime);
+
+    const profile = await this.adminRepository.findOneBy({ accountId });
+    if (!profile) {
+      throw new NotFoundException('profile not found');
+    }
+
+    // Dọn dẹp avatar cũ trên R2 nếu là ảnh trước đó tải lên
+    if (profile.avatarUrl) {
+      const match = profile.avatarUrl.match(/key=([^&]+)/);
+      if (match && match[1]) {
+        const oldKey = decodeURIComponent(match[1]);
+        if (oldKey.startsWith('avatars/admin/')) {
+          await this.storageService.remove(oldKey).catch(() => null);
+        }
+      }
+    }
+
+    const avatarUrl = `/api/admin/profile/avatar?key=${encodeURIComponent(key)}`;
+    profile.avatarUrl = avatarUrl;
+    await this.adminRepository.save(profile);
+
+    return this.adminRepository.findOneOrFail({
+      where: { accountId },
+      select: AdminProfileService.PROFILE_COLUMNS,
+    });
+  }
+
+  async getAvatarStream(key: string): Promise<StorageStreamResult> {
+    if (!key || !key.startsWith('avatars/admin/') || key.includes('..')) {
+      throw new BadRequestException('invalid avatar key');
+    }
+    return this.storageService.getStream(key);
   }
 
   async changePassword(

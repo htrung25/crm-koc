@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -6,13 +7,20 @@ import {
   HttpStatus,
   NotFoundException,
   Patch,
+  Post,
+  Query,
   Request,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
   ApiConflictResponse,
+  ApiConsumes,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -21,6 +29,8 @@ import {
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import {
   AUTH_THROTTLE_BLOCK_MS,
@@ -85,6 +95,58 @@ export class AdminProfileController {
     @Body() dto: UpdateAdminProfileDto,
   ): Promise<AdminProfileResponseDto> {
     return this.profileService.update(request.user.id, dto);
+  }
+
+  @Post('/me/avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload your own admin avatar to R2' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @ApiOkResponse({ type: AdminProfileResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Invalid file type or exceeds size limit',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiForbiddenResponse({ description: 'Not an admin, or IP not whitelisted' })
+  async uploadAvatar(
+    @Request() request: { user: AuthenticatedAccount },
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ): Promise<AdminProfileResponseDto> {
+    if (!file) {
+      throw new BadRequestException('file is required');
+    }
+    return this.profileService.uploadAvatar(request.user.id, file.buffer);
+  }
+
+  @Get('/avatar')
+  @ApiOperation({ summary: 'Stream avatar image from R2' })
+  @ApiOkResponse({ description: 'Avatar image binary' })
+  @ApiBadRequestResponse({ description: 'Invalid or missing key' })
+  @ApiNotFoundResponse({ description: 'Avatar not found' })
+  async getAvatar(@Query('key') key: string, @Res() res: Response) {
+    if (!key) {
+      throw new BadRequestException('key is required');
+    }
+    const { stream, contentType, contentLength } =
+      await this.profileService.getAvatarStream(key);
+
+    res.set({
+      'Content-Type': contentType || 'image/jpeg',
+      'Cache-Control': 'public, max-age=86400',
+      ...(contentLength ? { 'Content-Length': contentLength.toString() } : {}),
+    });
+
+    stream.pipe(res);
   }
 
   @Patch('/me/change-password')

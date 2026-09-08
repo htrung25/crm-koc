@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsInt,
@@ -78,4 +79,10 @@ export class SyncDeliverablesDto {
   @Type(() => DeliverableItemDto)
   @ApiProperty({ type: [DeliverableItemDto] })
   deliverables!: DeliverableItemDto[];
+
+  /** Bắt buộc khi gửi mảng rỗng mà campaign đang có deliverable. */
+  @IsOptional()
+  @IsBoolean()
+  @ApiPropertyOptional({ default: false })
+  confirmClear?: boolean;
 }

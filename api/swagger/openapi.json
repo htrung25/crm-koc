@@ -817,6 +817,96 @@
         ]
       }
     },
+    "/admin/profile/me/avatar": {
+      "post": {
+        "operationId": "AdminProfileController_uploadAvatar",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProfileResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid file type or exceeds size limit"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Not an admin, or IP not whitelisted"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Upload your own admin avatar to R2",
+        "tags": [
+          "Admin-Profile"
+        ]
+      }
+    },
+    "/admin/profile/avatar": {
+      "get": {
+        "operationId": "AdminProfileController_getAvatar",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Avatar image binary"
+          },
+          "400": {
+            "description": "Invalid or missing key"
+          },
+          "404": {
+            "description": "Avatar not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Stream avatar image from R2",
+        "tags": [
+          "Admin-Profile"
+        ]
+      }
+    },
     "/admin/profile/me/change-password": {
       "patch": {
         "operationId": "AdminProfileController_changePassword",
@@ -4963,6 +5053,10 @@
             "items": {
               "$ref": "#/components/schemas/DeliverableItemDto"
             }
+          },
+          "confirmClear": {
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [

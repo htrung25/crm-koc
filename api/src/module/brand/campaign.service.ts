@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { Transactional } from 'typeorm-transactional';
 import { v7 as uuidv7 } from 'uuid';
 import type { RedisClientType } from 'redis';
 import { EBusinessCode } from '../../common/enum/business-code.enum';
@@ -132,11 +133,13 @@ export class CampaignService {
     return this.campaignRepository.findOneByOrFail({ id });
   }
 
+  @Transactional()
   async syncDeliverables(
     brandId: string,
     id: string,
     expectedVersion: number,
     items: DeliverableItemDto[],
+    confirmClear = false,
   ): Promise<CampaignDeliverable[]> {
     const current = await this.campaignRepository.findOne({
       where: { id, brandId },
@@ -145,6 +148,7 @@ export class CampaignService {
       throw new NotFoundException('campaign does not exist');
     }
     await this.assertEditable(current);
+    await this.assertDeliverablePayload(id, items, confirmClear);
 
     const bumped = await this.campaignRepository
       .createQueryBuilder()
@@ -176,12 +180,16 @@ export class CampaignService {
 
     // Xoá trước: DELETE chỉ bỏ bớt nên không thể tạo ra trùng position.
     const keptIds = rows.map((row) => row.id);
-    await this.deliverableRepository
+    const remove = this.deliverableRepository
       .createQueryBuilder()
       .delete()
-      .where('campaign_id = :id', { id })
-      .andWhere('id NOT IN (:...keptIds)', { keptIds })
-      .execute();
+      .where('campaign_id = :id', { id });
+    // Mảng rỗng thì bỏ hẳn mệnh đề: `NOT IN ()` không phải SQL hợp lệ.
+    if (keptIds.length) {
+      remove.andWhere('id NOT IN (:...keptIds)', { keptIds });
+    }
+    await remove.execute();
+
     if (rows.length) {
       await this.deliverableRepository.upsert(rows, { conflictPaths: ['id'] });
     }
@@ -190,6 +198,81 @@ export class CampaignService {
       where: { campaignId: id },
       order: { position: 'ASC' },
     });
+  }
+
+  // Cần xác thực id thuộc đúng chiến dịch và gom toàn bộ lỗi validation để trả về 422 thay vì lỗi DB 500
+  private async assertDeliverablePayload(
+    campaignId: string,
+    items: DeliverableItemDto[],
+    confirmClear: boolean,
+  ): Promise<void> {
+    const owned = await this.deliverableRepository.find({
+      where: { campaignId },
+      select: { id: true },
+    });
+
+    if (items.length === 0) {
+      if (owned.length && !confirmClear) {
+        throw new UnprocessableEntityException({
+          businessCode: EBusinessCode.UNKNOWN_ERROR,
+          message: `clearing ${owned.length} deliverables needs confirmClear`,
+          errors: [
+            {
+              code: 'confirmClearRequired',
+              fieldPath: 'deliverables',
+              message: 'send confirmClear=true to remove every deliverable',
+              metadata: { existing: owned.length },
+            },
+          ],
+        });
+      }
+      return;
+    }
+
+    const ownedIds = new Set(owned.map((row) => row.id));
+    const seen = new Set<string>();
+    const errors: CampaignIssue[] = [];
+
+    items.forEach((item, index) => {
+      // Cùng luật, cùng code với deliverableIssues() để hai đường validate
+      // không nói khác nhau. Không kiểm ở đây thì CHECK dưới DB ném 500.
+      const submitBy = item.contentSubmissionDeadline;
+      const publishBy = item.publishDeadline;
+      if (submitBy && publishBy && new Date(publishBy) < new Date(submitBy)) {
+        errors.push({
+          code: 'minDate',
+          fieldPath: `deliverables[${index}].publishDeadline`,
+          message:
+            'publish deadline must not be earlier than the content submission deadline',
+        });
+      }
+
+      if (!item.id) return;
+      if (seen.has(item.id)) {
+        errors.push({
+          code: 'duplicateId',
+          fieldPath: `deliverables[${index}].id`,
+          message: `id ${item.id} appears more than once`,
+        });
+        return;
+      }
+      seen.add(item.id);
+      if (!ownedIds.has(item.id)) {
+        errors.push({
+          code: 'unknownId',
+          fieldPath: `deliverables[${index}].id`,
+          message: `id ${item.id} does not belong to this campaign`,
+        });
+      }
+    });
+
+    if (errors.length) {
+      throw new UnprocessableEntityException({
+        businessCode: EBusinessCode.UNKNOWN_ERROR,
+        message: 'deliverable list is not valid for this campaign',
+        errors,
+      });
+    }
   }
 
   // ------------------------------------------------------------- validation
