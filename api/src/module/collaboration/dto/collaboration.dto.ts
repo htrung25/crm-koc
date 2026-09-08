@@ -4,6 +4,7 @@ import {
   IsDateString,
   IsEnum,
   IsIn,
+  IsInt,
   IsNumber,
   IsOptional,
   IsUUID,
@@ -30,10 +31,9 @@ export class CreateCollaborationDto {
   })
   campaignId?: string;
 
-  // numeric(14,2) ở DB. Nhận number rồi để driver tự ép; đọc ra vẫn là chuỗi.
   @IsOptional()
   @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsInt()
   @Min(0)
   @ApiPropertyOptional({ minimum: 0, example: 1500000 })
   agreedPrice?: number;
