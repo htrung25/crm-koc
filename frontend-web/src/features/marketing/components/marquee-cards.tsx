@@ -24,7 +24,7 @@ const marqueeCardsRow1: CardData[] = [
     id: "2",
     name: "Coolmate Official",
     tag: "🏢 Brand Partner",
-    platform: "Shopee Affiliate",
+    platform: "Shopee Live",
     avatarColor: "bg-[#2D3B42]",
     theme: "peach"
   },

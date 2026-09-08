@@ -110,7 +110,7 @@
       "headingAccent": "RedSun Admin.",
       "description": "The operations portal for internal teams. Admin sign-in includes an additional email OTP verification step.",
       "highlight1": "Track KOC performance and revenue in real time",
-      "highlight2": "Review brand contracts, commissions, and campaigns",
+      "highlight2": "Review brand contracts, creator compensation, and campaigns",
       "highlight3": "Monitor system-wide operations from one dashboard",
       "portal": "Internal admin portal",
       "twoFactor": "Two-factor authentication",
@@ -195,10 +195,10 @@
       "cancel": "Cancel"
     },
     "revenue": {
-      "title": "Revenue over time",
+      "title": "Campaign GMV Growth",
       "thisYear": "This year",
       "lastYear": "Last year",
-      "ariaLabel": "Revenue grew from {from} to {to} billion VND over 12 months"
+      "ariaLabel": "Campaign GMV grew from {from} to {to} billion VND over 12 months"
     },
     "transactions": {
       "viewAll": "View all →",
@@ -297,7 +297,7 @@
     "hero": {
       "title": "KOC management",
       "titleAccent": "at the peak of creativity",
-      "subtitle": "A purpose-built CRM that helps brands and creators run campaigns, reconcile automatically, and grow affiliate revenue — with an experience that stays out of the way.",
+      "subtitle": "A purpose-built CRM that helps brands and creators run campaigns, reconcile automatically, and scale KOC collaboration — with an experience that stays out of the way.",
       "cta": "Try the sign-in portal →",
       "stat1": "Verified KOCs",
       "stat2": "Partner brands",
@@ -312,8 +312,8 @@
       "item1Body": "Approve delivery addresses, release stock, and sync shipping status in real time — automatically.",
       "item2Title": "Live-stream revenue tracking",
       "item2Body": "Watch successful orders land second by second throughout a KOC's live session.",
-      "item3Title": "Automated contracts & commission",
-      "item3Body": "Sign electronically on the spot and calculate commission automatically by KOC tier."
+      "item3Title": "Automated contracts & compensation",
+      "item3Body": "Sign electronically on the spot and calculate compensation automatically by KOC tier."
     },
     "cta": {
       "eyebrow": "Ready to grow your KOC GMV?",
@@ -325,10 +325,10 @@
       "trusted": "⚡ Trusted by Vinamilk • Sunhouse • Coolmate • Lemonade • Anker • Baseus"
     },
     "footer": {
-      "about": "A KOC and brand partnership management system built on the Red Sun Editorial Design System. Automated campaigns, transparent data, and better affiliate performance.",
+      "about": "A KOC and brand partnership management system built on the Red Sun Editorial Design System. Automated campaigns, transparent data, and optimized campaign performance.",
       "product": "Product",
       "samples": "Sample management",
-      "commission": "Commission reconciliation",
+      "commission": "Compensation reconciliation",
       "contracts": "Electronic contracts",
       "portals": "Sign-in portals",
       "adminPortal": "Admin portal",
@@ -344,7 +344,7 @@
     "features": {
       "title": "Building breakthrough power for",
       "titleAccent": "creator & brand campaigns",
-      "subtitle": "A complete Red Sun CRM that connects partners, manages collaboration, and grows affiliate revenue across every social commerce platform.",
+      "subtitle": "A complete Red Sun CRM that connects partners, manages collaboration, and scales campaign results across every social commerce platform.",
       "aiTitle": "Automatically find and match",
       "aiTitleAccent": "the KOCs that convert best",
       "aiBody": "A proprietary algorithm reads follower data, real-time engagement rate, and product sales history to surface the KOCs that best fit a brand's campaign budget.",
@@ -358,7 +358,7 @@
       "sampleFoot": "Tracking numbers update automatically",
       "revenueEyebrow": "Reconciliation & earnings",
       "revenueTitle": "Revenue reporting",
-      "revenueBody": "Full transparency across TikTok Shop and Shopee Affiliate revenue and KOC commission. Automatic payouts, always on schedule.",
+      "revenueBody": "Full transparency across multi-channel campaign performance on TikTok, YouTube, Shopee and KOC compensation. Automated payouts, always on schedule.",
       "revenueFoot": "100% of invoices automated",
       "revenueCta": "Details →",
       "securityEyebrow": "Security & compliance",
@@ -383,7 +383,7 @@
       "step1Status": "✓ Approved",
       "step2": "Approve clip script",
       "step2Status": "⚡ Pending",
-      "step3": "Reconcile commission",
+      "step3": "Reconcile compensation",
       "step3Status": "Automatic"
     },
     "viewDetail": "View details",
@@ -403,8 +403,8 @@
       },
       "3": {
         "role": "Tech review KOL",
-        "statsLabel": "Affiliate revenue",
-        "quote": "Commission and click-through reporting are fully transparent, in real time.",
+        "statsLabel": "Campaign revenue",
+        "quote": "Compensation and campaign performance reporting are fully transparent, in real time.",
         "stats": "210M VND"
       },
       "4": {
@@ -427,8 +427,8 @@
       },
       "7": {
         "role": "Mother & baby / home care creator",
-        "statsLabel": "Commission earnings",
-        "quote": "Commission payouts arrive fairly and automatically on the 15th of every month.",
+        "statsLabel": "Contract compensation",
+        "quote": "Contract compensation payouts arrive fairly and on schedule for every campaign.",
         "stats": "185M VND"
       },
       "8": {
@@ -452,15 +452,15 @@
       "starterBody": "Free forever. Everything you need to build a profile and receive product deals.",
       "starterPrice": "Free forever",
       "starterF1": "Up to 5 campaigns per month",
-      "starterF2": "Automatic TikTok & Shopee affiliate links",
+      "starterF2": "Multi-channel sync for TikTok, YouTube & Instagram",
       "starterF3": "Request 10 free samples per month",
-      "starterF4": "Monthly commission and revenue reports",
+      "starterF4": "Monthly compensation and revenue reports",
       "starterCta": "Sign up free →",
       "growthBadge": "🔥 Recommended for brands",
       "growthName": "Business & agency",
       "growthBody": "Grow brand revenue with KOC AI matching and automated sample seeding.",
       "perMonth": "VND/month",
-      "growthNote": "First 1M affiliate clicks free",
+      "growthNote": "First 10 collaborative campaigns free",
       "growthF1": "AI matching for 50 high-quality KOCs per month",
       "growthF2": "Automated address approval & 1-click sample sending",
       "growthF3": "Built-in digitally signed electronic contracts",
@@ -496,7 +496,7 @@
   },
   "auth": {
     "login": {
-      "heroSubtitle": "A workspace for creative campaign management — automating sample seeding and optimising affiliate revenue for brands and KOCs.",
+      "heroSubtitle": "A workspace for creative campaign management — automating sample seeding and optimizing collaboration performance for brands and KOCs.",
       "heroQuote": "Running CRM-KOC is smooth and intuitive, helping brands grow 3.5x ROI on every campaign.",
       "eyebrowCredentials": "System sign-in portal",
       "eyebrowOtp": "Two-factor authentication",
@@ -531,7 +531,7 @@
       "feature1Title": "Sample & seeding management",
       "feature1Body": "Request samples from brands with a single click.",
       "feature2Title": "Automated revenue reconciliation",
-      "feature2Body": "Track affiliate GMV in real time and receive transparent commissions.",
+      "feature2Body": "Track real-time campaign progress and GMV with transparent compensation.",
       "feature3Title": "Security & 24/7 support",
       "feature3Body": "Enterprise-grade protection for your channel and brand data.",
       "heroQuote": "Create an account and connect your first campaign in under 2 minutes. The best platform for Creators in 2026.",

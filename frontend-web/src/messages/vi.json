@@ -110,7 +110,7 @@
       "headingAccent": "RedSun Admin.",
       "description": "Cổng vận hành dành riêng cho đội ngũ nội bộ. Đăng nhập quản trị có thêm bước xác thực OTP gửi qua email.",
       "highlight1": "Theo dõi hiệu suất & doanh thu KOC theo thời gian thực",
-      "highlight2": "Duyệt hợp đồng, hoa hồng và chiến dịch của Thương hiệu",
+      "highlight2": "Duyệt hợp đồng, thù lao và chiến dịch của Thương hiệu",
       "highlight3": "Báo cáo vận hành toàn hệ thống trong một bảng điều khiển",
       "portal": "Cổng quản trị nội bộ",
       "twoFactor": "Xác thực hai lớp",
@@ -195,10 +195,10 @@
       "cancel": "Huỷ"
     },
     "revenue": {
-      "title": "Doanh thu theo thời gian",
+      "title": "Tăng trưởng GMV chiến dịch",
       "thisYear": "Năm nay",
       "lastYear": "Năm ngoái",
-      "ariaLabel": "Doanh thu tăng từ {from} lên {to} tỉ đồng trong 12 tháng"
+      "ariaLabel": "GMV chiến dịch tăng từ {from} lên {to} tỉ đồng trong 12 tháng"
     },
     "transactions": {
       "viewAll": "Xem tất cả →",
@@ -297,7 +297,7 @@
     "hero": {
       "title": "Quản trị KOC",
       "titleAccent": "Đỉnh cao Sáng tạo",
-      "subtitle": "Giải pháp CRM chuyên sâu hỗ trợ Thương hiệu & Creator quản lý chiến dịch, đối soát tự động và bứt phá doanh số Affiliate với trải nghiệm mượt mà vượt trội.",
+      "subtitle": "Giải pháp CRM chuyên sâu hỗ trợ Thương hiệu & Creator quản lý chiến dịch, đối soát tự động và bứt phá hiệu quả hợp tác KOC với trải nghiệm mượt mà vượt trội.",
       "cta": "Trải nghiệm Cổng Đăng nhập →",
       "stat1": "KOC đã xác thực",
       "stat2": "Nhãn hàng đồng hành",
@@ -312,8 +312,8 @@
       "item1Body": "Tự động duyệt địa chỉ nhận mẫu thử, xuất kho và đồng bộ trạng thái giao vận real-time.",
       "item2Title": "Theo dõi Doanh số Live Stream",
       "item2Body": "Cập nhật từng giây đơn hàng thành công trong suốt phiên chốt đơn của KOC.",
-      "item3Title": "Tự động hóa Hợp đồng & Hoa hồng",
-      "item3Body": "Ký điện tử tức thì và tính toán chi hoa hồng tự động theo từng cấp bậc KOC."
+      "item3Title": "Hợp đồng & thù lao tự động",
+      "item3Body": "Ký điện tử tức thì và đối soát thù lao tự động theo từng cấp bậc KOC."
     },
     "cta": {
       "eyebrow": "Sẵn sàng tăng trưởng GMV KOC?",
@@ -325,11 +325,11 @@
       "trusted": "⚡ Được tin dùng bởi Vinamilk • Sunhouse • Coolmate • Lemonade • Anker • Baseus"
     },
     "footer": {
-      "about": "Hệ thống quản trị hợp tác KOC & Thương hiệu chuẩn Red Sun Editorial Design System. Tự động hóa chiến dịch, minh bạch dữ liệu và tối ưu hiệu suất Affiliate.",
+      "about": "Hệ thống quản trị hợp tác KOC & Thương hiệu chuẩn Red Sun Editorial Design System. Tự động hóa chiến dịch, minh bạch dữ liệu và tối ưu hiệu suất truyền thông KOC.",
       "product": "Sản phẩm",
-      "samples": "Quản lý Mẫu thử",
-      "commission": "Đối soát Hoa hồng",
-      "contracts": "Hợp đồng Điện tử",
+      "samples": "Quản lý mẫu thử",
+      "commission": "Đối soát thù lao hợp tác",
+      "contracts": "Hợp đồng điện tử",
       "portals": "Cổng Đăng Nhập",
       "adminPortal": "Cổng Quản trị Admin",
       "brandPortal": "Cổng Doanh Nghiệp",
@@ -344,7 +344,7 @@
     "features": {
       "title": "Kiến tạo sức mạnh bứt phá cho",
       "titleAccent": "Chiến dịch Creator & Brand",
-      "subtitle": "Hệ thống CRM toàn diện chuẩn Red Sun giúp kết nối, quản trị hợp tác và tối ưu hóa doanh thu Affiliate trên mọi nền tảng Social Commerce.",
+      "subtitle": "Hệ thống CRM toàn diện chuẩn Red Sun giúp kết nối, quản trị hợp tác và tối ưu hóa hiệu quả chiến dịch trên mọi nền tảng Social Commerce.",
       "aiTitle": "Tự động tìm kiếm & ghép cặp",
       "aiTitleAccent": "KOC có tỷ lệ chuyển đổi cao nhất",
       "aiBody": "Thuật toán độc quyền phân tích dữ liệu tệp người theo dõi, engagement rate real-time và lịch sử bán lẻ sản phẩm để đề xuất những KOC phù hợp nhất với ngân sách chiến dịch của nhãn hàng.",
@@ -358,7 +358,7 @@
       "sampleFoot": "Tự động cập nhật mã vận đơn",
       "revenueEyebrow": "Đối soát & Thu nhập",
       "revenueTitle": "Báo cáo Doanh thu",
-      "revenueBody": "Minh bạch 100% doanh số TikTok Shop, Shopee Affiliate và hoa hồng dành cho KOC. Thanh toán tự động định kỳ đúng thời hạn.",
+      "revenueBody": "Minh bạch 100% dữ liệu chiến dịch đa kênh TikTok, YouTube, Shopee và thù lao dành cho KOC. Quyết toán tự động định kỳ đúng thời hạn.",
       "revenueFoot": "Tự động hóa 100% hóa đơn",
       "revenueCta": "Chi tiết →",
       "securityEyebrow": "Bảo mật & Tuân thủ",
@@ -383,7 +383,7 @@
       "step1Status": "✓ Đã duyệt",
       "step2": "Duyệt kịch bản Clip",
       "step2Status": "⚡ Đang chờ",
-      "step3": "Đối soát hoa hồng",
+      "step3": "Đối soát thù lao hợp tác",
       "step3Status": "Tự động"
     },
     "viewDetail": "Xem chi tiết",
@@ -403,8 +403,8 @@
       },
       "3": {
         "role": "KOL Đánh giá Công nghệ",
-        "statsLabel": "Doanh số Affiliate",
-        "quote": "Hoa hồng và báo cáo click-through rate minh bạch 100% theo thời gian thực.",
+        "statsLabel": "Doanh số Chiến dịch",
+        "quote": "Thù lao và báo cáo tương tác chiến dịch minh bạch 100% theo thời gian thực.",
         "stats": "210 Tr VNĐ"
       },
       "4": {
@@ -427,8 +427,8 @@
       },
       "7": {
         "role": "Creator Mẹ & Bé / Home Care",
-        "statsLabel": "Thu nhập Hoa hồng",
-        "quote": "Nhận tiền thanh toán hoa hồng cực kỳ sòng phẳng và tự động vào ngày 15 hàng tháng.",
+        "statsLabel": "Thù lao Hợp đồng",
+        "quote": "Nhận thanh toán thù lao hợp đồng cực kỳ sòng phẳng và đúng hạn mỗi chiến dịch.",
         "stats": "185 Tr VNĐ"
       },
       "8": {
@@ -452,15 +452,15 @@
       "starterBody": "Miễn phí vĩnh viễn. Đầy đủ tính năng tạo hồ sơ cá nhân và nhận deal sản phẩm.",
       "starterPrice": "Miễn phí vĩnh viễn",
       "starterF1": "Quản lý tối đa 5 chiến dịch/tháng",
-      "starterF2": "Tự động tạo link Affiliate TikTok & Shopee",
+      "starterF2": "Đồng bộ đa kênh TikTok, YouTube & Instagram",
       "starterF3": "Đăng ký nhận 10 mẫu thử free/tháng",
-      "starterF4": "Báo cáo doanh thu rút hoa hồng hàng tháng",
+      "starterF4": "Báo cáo doanh thu và giải ngân thù lao hàng tháng",
       "starterCta": "Đăng Ký Miễn Phí →",
       "growthBadge": "🔥 Khuyên Dùng Cho Brand",
       "growthName": "Doanh Nghiệp & Agency",
       "growthBody": "Bứt phá doanh số cho thương hiệu với AI Matching KOC & tự động hóa Seeding sample.",
       "perMonth": "VNĐ/tháng",
-      "growthNote": "Miễn phí 1M lượt click Affiliate đầu tiên",
+      "growthNote": "Miễn phí 10 chiến dịch hợp tác đầu tiên",
       "growthF1": "AI Matching tự động 50 KOC chất lượng cao/tháng",
       "growthF2": "Tự động hóa duyệt địa chỉ & gửi Sample 1-Click",
       "growthF3": "Hợp đồng điện tử ký số tích hợp sẵn",
@@ -496,7 +496,7 @@
   },
   "auth": {
     "login": {
-      "heroSubtitle": "Không gian quản trị chiến dịch sáng tạo, tự động hóa seeding mẫu thử và tối ưu doanh số Affiliate cho Thương hiệu & KOC.",
+      "heroSubtitle": "Không gian quản trị chiến dịch sáng tạo, tự động hóa seeding mẫu thử và tối ưu hiệu quả hợp tác cho Thương hiệu & KOC.",
       "heroQuote": "Trải nghiệm điều hành trên CRM-KOC mượt mà và trực quan, giúp thương hiệu tăng trưởng 3.5x ROI trong từng chiến dịch.",
       "eyebrowCredentials": "Cổng đăng nhập hệ thống",
       "eyebrowOtp": "Xác thực hai lớp",
@@ -531,7 +531,7 @@
       "feature1Title": "Quản lý mẫu thử & Seeding",
       "feature1Body": "Đăng ký nhận sample từ các nhãn hàng chỉ với 1 click.",
       "feature2Title": "Đối soát doanh số tự động",
-      "feature2Body": "Theo dõi Affiliate GMV realtime và nhận hoa hồng minh bạch.",
+      "feature2Body": "Theo dõi tiến độ & GMV chiến dịch realtime, quyết toán thù lao minh bạch.",
       "feature3Title": "Bảo mật & Hỗ trợ 24/7",
       "feature3Body": "Cam kết bảo mật dữ liệu kênh & thương hiệu tiêu chuẩn Enterprise.",
       "heroQuote": "Tạo tài khoản và kết nối chiến dịch đầu tiên chỉ trong 2 phút. Nền tảng tuyệt vời nhất cho Creators 2026.",

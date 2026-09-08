@@ -11,7 +11,7 @@ import type { DashboardData } from "@/features/admin/dashboard/types";
 const stats: DashboardData["stats"] = [
   {
     id: "gmv",
-    label: "Doanh số campaign",
+    label: "Tổng GMV chiến dịch",
     value: "2,14 tỷ",
     delta: 12.4,
     icon: "wallet",
@@ -20,7 +20,7 @@ const stats: DashboardData["stats"] = [
   },
   {
     id: "kocs",
-    label: "KOC đang hoạt động",
+    label: "KOC đang hợp tác",
     value: "1.284",
     delta: 8.2,
     icon: "users",
@@ -28,22 +28,22 @@ const stats: DashboardData["stats"] = [
     spark: [30, 28, 33, 31, 36, 34, 39, 41, 38, 44, 47, 49],
   },
   {
-    id: "conversion",
-    label: "ROI",
-    value: "3,94%",
-    delta: -0.6,
-    icon: "trend",
+    id: "campaigns",
+    label: "Chiến dịch đang chạy",
+    value: "86",
+    delta: 14.5,
+    icon: "target",
     accent: "#E97680",
-    spark: [42, 44, 41, 45, 43, 40, 42, 39, 41, 38, 37, 36],
+    spark: [24, 26, 25, 29, 28, 31, 30, 33, 35, 34, 38, 40],
   },
   {
-    id: "aov",
-    label: "Giá trị campaign trung bình",
-    value: "428K",
-    delta: 4.1,
-    icon: "target",
+    id: "engagement",
+    label: "Tỷ lệ tương tác TB (ER)",
+    value: "4,85%",
+    delta: 0.6,
+    icon: "trend",
     accent: "#2D3B42",
-    spark: [24, 26, 25, 29, 28, 31, 30, 33, 35, 34, 38, 40],
+    spark: [32, 34, 35, 38, 39, 41, 40, 43, 42, 45, 47, 48],
   },
 ];
 
@@ -65,14 +65,14 @@ const revenue: DashboardData["revenue"] = {
   ],
   thisYear: [82, 94, 88, 112, 126, 118, 141, 156, 148, 172, 189, 214],
   lastYear: [64, 71, 69, 78, 86, 92, 88, 101, 108, 112, 124, 131],
-  caption: "Tổng GMV toàn hệ thống, 12 tháng gần nhất",
+  caption: "Tổng GMV chiến dịch KOC toàn hệ thống, 12 tháng gần nhất",
 };
 
 const trafficSlices: DashboardData["traffic"]["slices"] = [
-  { label: "TikTok Shop", percent: 48, color: "#EF4623" },
+  { label: "TikTok", percent: 48, color: "#EF4623" },
   { label: "Facebook", percent: 27, color: "#F49E4C" },
   { label: "Instagram", percent: 15, color: "#E97680" },
-  { label: "Website", percent: 10, color: "#C8A98F" },
+  { label: "YouTube", percent: 10, color: "#C8A98F" },
 ];
 
 const transactionItems: DashboardData["transactions"]["items"] = [
@@ -143,9 +143,9 @@ const goal: DashboardData["goal"] = {
   current: "2,14 tỷ",
   target: "2,75 tỷ",
   breakdown: [
-    { label: "KOC tuyển mới", percent: 85 },
-    { label: "Doanh thu mở rộng", percent: 62 },
-    { label: "Tỉ lệ giữ chân", percent: 94 },
+    { label: "KOC onboard mới", percent: 85 },
+    { label: "GMV mục tiêu tháng", percent: 78 },
+    { label: "Tỉ lệ hoàn thành campaign", percent: 94 },
   ],
 };
 
@@ -153,16 +153,16 @@ export const ADMIN_DASHBOARD: DashboardData = {
   stats,
   revenue,
   traffic: {
-    total: "48,2K",
-    caption: "Lượt truy cập qua link Affiliate",
+    total: "148,2K",
+    caption: "Phân bổ lượt tiếp cận KOC theo nền tảng",
     slices: trafficSlices,
   },
   transactions: {
-    title: "Hoạt động gần đây",
-    caption: "6 giao dịch mới nhất trong hệ thống",
+    title: "Hợp tác & Giải ngân gần đây",
+    caption: "6 hợp đồng thù lao KOC mới nhất trong hệ thống",
     subjectLabel: "KOC",
-    amountLabel: "Thu nhập",
-    viewAllHref: "/admin/reports",
+    amountLabel: "Thù lao hợp đồng",
+    viewAllHref: "/admin/campaigns",
     items: transactionItems,
   },
   goal,
