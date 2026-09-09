@@ -1,4 +1,4 @@
-import { AuthEntity } from 'src/module/auth/entities/auth.entity';
+import { AuthEntity } from '../../auth/entities/auth.entity';
 
 export const BRAND_LIST_FIELDS = [
   'id',

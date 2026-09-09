@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { Job } from 'bullmq';
 import { Repository } from 'typeorm';
 import { EmailService } from '../../common/services/email.service';
-import { EKycRejectReason } from '../../common/enum/kyc.enum';
+import { EKycRejectReason, EKycStatus } from '../../common/enum/kyc.enum';
 import { AuthEntity } from '../../module/auth/entities/auth.entity';
 import { KYC_STATUS_LABEL } from '../../module/kyc/constants/kyc.constants';
 import { KycSubmission } from '../../module/kyc/entities/kyc-submission.entity';
@@ -95,7 +95,20 @@ export class EmailProcessor extends WorkerHost {
   }
 
   private async sendKycStatus(job: Job): Promise<void> {
-    const { submissionId } = job.data as SendKycStatusJob;
+    const { submissionId, status } = job.data as SendKycStatusJob;
+
+    // Giành quyền bằng một câu ghi trước khi gửi; ràng `status` để job của lần
+    // đổi cũ tự nhận ra mình lỗi thời và bỏ qua.
+    const claimed = await this.submissionRepository
+      .createQueryBuilder()
+      .update(KycSubmission)
+      .set({ notifiedAt: new Date() })
+      .where(
+        'id = :submissionId AND status = :status AND notified_at IS NULL',
+        { submissionId, status },
+      )
+      .execute();
+    if (!claimed.affected) return;
 
     const submission = await this.submissionRepository.findOne({
       where: { id: submissionId },
@@ -106,11 +119,6 @@ export class EmailProcessor extends WorkerHost {
       return;
     }
 
-    // Chốt chống gửi trùng đặt ở DB, không phải jobId: removeOnComplete trả
-    // jobId về trạng thái tự do ngay khi job xong nên job thứ hai cùng id vẫn
-    // chạy được.
-    if (submission.notifiedAt) return;
-
     const email = submission.account?.email;
     if (!email) {
       this.logger.warn(
@@ -119,19 +127,43 @@ export class EmailProcessor extends WorkerHost {
       return;
     }
 
-    const sent = await this.emailService.sendKycStatusNotification({
-      to: email,
-      displayName: submission.account.name || 'Valued User',
-      status: KYC_STATUS_LABEL[submission.status],
-      rejectReason: submission.rejectReason
-        ? EKycRejectReason[submission.rejectReason]
-        : null,
-      reviewNote: submission.reviewNote,
-    });
-    if (!sent) return;
-    await this.submissionRepository.update(
-      { id: submissionId },
-      { notifiedAt: new Date() },
-    );
+    // Đã đánh dấu trước khi gửi, nên hỏng thì phải trả lại để BullMQ retry còn
+    // tác dụng — không trả lại là thông báo mất luôn.
+    let sent = false;
+    try {
+      sent = await this.emailService.sendKycStatusNotification({
+        to: email,
+        displayName: submission.account.name || 'Valued User',
+        status: KYC_STATUS_LABEL[status],
+        rejectReason: submission.rejectReason
+          ? EKycRejectReason[submission.rejectReason]
+          : null,
+        reviewNote: submission.reviewNote,
+      });
+    } catch (error) {
+      await this.releaseClaim(submissionId, status);
+      throw error;
+    }
+
+    // sent=false nghĩa là toggle email đang tắt — tình trạng tạm thời, nhả ra
+    // để reconcile gửi lại khi bật.
+    if (!sent) {
+      await this.releaseClaim(submissionId, status);
+    }
+  }
+
+  private async releaseClaim(
+    submissionId: string,
+    status: EKycStatus,
+  ): Promise<void> {
+    await this.submissionRepository
+      .createQueryBuilder()
+      .update(KycSubmission)
+      .set({ notifiedAt: null })
+      .where('id = :submissionId AND status = :status', {
+        submissionId,
+        status,
+      })
+      .execute();
   }
 }

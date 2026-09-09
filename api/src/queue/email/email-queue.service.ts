@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { emailJobOptions } from '../job-options';
 import { JOB_SEND_KYC_STATUS, JOB_SEND_OTP, QUEUE_EMAIL } from '../queue-names';
+import type { EKycStatus } from '../../common/enum/kyc.enum';
 import type { SendKycStatusJob, SendOtpJob } from './email-job.types';
 
 @Injectable()
@@ -13,8 +14,11 @@ export class EmailQueueService {
     await this.queue.add(JOB_SEND_OTP, payload, emailJobOptions(JOB_SEND_OTP));
   }
 
-  async enqueueKycStatus(submissionId: string): Promise<void> {
-    const payload: SendKycStatusJob = { submissionId };
+  async enqueueKycStatus(
+    submissionId: string,
+    status: EKycStatus,
+  ): Promise<void> {
+    const payload: SendKycStatusJob = { submissionId, status };
     await this.queue.add(
       JOB_SEND_KYC_STATUS,
       payload,
