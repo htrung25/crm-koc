@@ -358,7 +358,7 @@ export class KycService {
     });
 
     try {
-      await this.emailQueue.enqueueKycStatus(saved.id);
+      await this.emailQueue.enqueueKycStatus(saved.id, saved.status);
     } catch (error) {
       this.logger.warn(
         `review: enqueue send-kyc-status thất bại cho submission ${saved.id}: ${(error as Error).message}`,

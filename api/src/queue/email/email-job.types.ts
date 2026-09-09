@@ -1,3 +1,5 @@
+import type { EKycStatus } from '../../common/enum/kyc.enum';
+
 /** Chỉ mang id: OTP đọc từ otp:pending (có TTL), email/tên tra DB. */
 export interface SendOtpJob {
   accountId: string;
@@ -6,7 +8,8 @@ export interface SendOtpJob {
   otp?: string;
 }
 
-/** Chỉ mang id: processor tự tra DB nên payload không giữ PII trong Redis. */
+// Không giữ PII; `status` là danh tính lần đổi sinh ra job, không phải trạng thái hiện tại. */
 export interface SendKycStatusJob {
   submissionId: string;
+  status: EKycStatus;
 }

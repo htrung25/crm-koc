@@ -1,8 +1,5 @@
 name: deploy-prod
 
-# Tag v* => chờ approval của environment `production` => SSH => deploy.
-# Không build lại: tag phải trỏ vào commit đã có image trên GHCR (tức là commit
-# đã từng đi qua develop).
 on:
   push:
     tags: ['v*']
@@ -14,7 +11,7 @@ on:
 
 permissions:
   contents: read
-  packages: read
+  packages: write
 
 concurrency:
   group: deploy-prod
@@ -31,14 +28,70 @@ jobs:
         env:
           INPUT_TAG: ${{ inputs.image_tag }}
           HEAD_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           if [ -n "$INPUT_TAG" ]; then
             tag="$INPUT_TAG"
+            short="${tag#sha-}"
+            commit=$(gh api "repos/$REPO/commits/$short" --jq '.sha')
           else
             tag="sha-${HEAD_SHA:0:7}"
+            commit="$HEAD_SHA"
           fi
           echo "value=$tag" >> "$GITHUB_OUTPUT"
-          echo "deploy tag: $tag"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "deploy tag: $tag (commit $commit)"
+
+      - name: Commit phải nằm trên main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          COMMIT: ${{ steps.tag.outputs.commit }}
+        run: |
+          status=$(gh api "repos/$REPO/compare/main...$COMMIT" --jq '.status')
+          echo "so với main: $status"
+          case "$status" in
+            behind|identical) ;;
+            *) echo "::error::$COMMIT không nằm trên main ($status). Promote trước khi tag."
+               exit 1 ;;
+          esac
+
+      # Cùng cổng mà promote-staging và promote-main đang dùng. 
+      - name: CI phải xanh trên commit này
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          COMMIT: ${{ steps.tag.outputs.commit }}
+        run: |
+          for gate in ci-api-gate ci-web-gate; do
+            result=$(gh api "repos/$REPO/commits/$COMMIT/check-runs" \
+              --jq "[.check_runs[] | select(.name==\"$gate\")]
+                    | sort_by(.completed_at) | last | .conclusion // \"missing\"")
+            echo "$gate = $result"
+            if [ "$result" != "success" ]; then
+              echo "::error::$gate trên $COMMIT đang là '$result', không deploy."
+              exit 1
+            fi
+          done
+
+      # Phụ thuộc tường minh vào artifact: build-push phải đã chạy XONG và
+      # thành công cho commit này. Manifest tồn tại chưa đủ — nó không nói
+      # build của lần chạy nào.
+      - name: build-push phải thành công trên commit này
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          COMMIT: ${{ steps.tag.outputs.commit }}
+        run: |
+          result=$(gh api "repos/$REPO/actions/workflows/build-push.yml/runs?head_sha=$COMMIT" \
+            --jq '[.workflow_runs[] | select(.status=="completed")]
+                  | sort_by(.updated_at) | last | .conclusion // "missing"')
+          echo "build-push = $result"
+          if [ "$result" != "success" ]; then
+            echo "::error::build-push trên $COMMIT đang là '$result', không deploy."
+            exit 1
+          fi
 
       - uses: docker/login-action@v3
         with:
@@ -46,16 +99,35 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Nếu image chưa tồn tại thì dừng ở đây, trước khi chạm server.
-      - name: Verify images exist
+      # Chốt sang digest: tag ở GHCR ghi đè được, digest thì không. Từ đây trở
+      # đi server kéo theo digest, không theo tên tag.
+      - id: digest
+        name: Phân giải tag sang digest
         env:
           IMAGE_TAG: ${{ steps.tag.outputs.value }}
           OWNER: ${{ github.repository_owner }}
         run: |
           for name in api web; do
             image="ghcr.io/$OWNER/crm-koc-$name:$IMAGE_TAG"
-            echo "kiểm tra $image"
-            docker manifest inspect "$image" > /dev/null
+            digest=$(docker buildx imagetools inspect "$image" \
+              --format '{{.Manifest.Digest}}')
+            echo "$image -> $digest"
+            echo "$name=$digest" >> "$GITHUB_OUTPUT"
+          done
+
+      # Gắn nhãn phát hành lên CHÍNH image đó — sao chép manifest, không build
+      # lại, nên digest không đổi.
+      - name: Gắn tag semver
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          RELEASE: ${{ github.ref_name }}
+          IMAGE_TAG: ${{ steps.tag.outputs.value }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          for name in api web; do
+            repo="ghcr.io/$OWNER/crm-koc-$name"
+            docker buildx imagetools create -t "$repo:$RELEASE" "$repo:$IMAGE_TAG"
+            echo "$repo:$RELEASE -> cùng digest với $IMAGE_TAG"
           done
 
       - name: Render .env
@@ -183,6 +255,8 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           IMAGE_TAG: ${{ steps.tag.outputs.value }}
           IMAGE_OWNER: ${{ github.repository_owner }}
+          API_DIGEST: ${{ steps.digest.outputs.api }}
+          WEB_DIGEST: ${{ steps.digest.outputs.web }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
           KAFKA_STACK: ${{ vars.KAFKA_STACK_ENABLED || 'false' }}
@@ -195,10 +269,12 @@ jobs:
           rsync -az -e "ssh $ssh_opts" api/deploy/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/api-prod/"
           rsync -az -e "ssh $ssh_opts" frontend-web/deploy/ "$SSH_USER@$SSH_HOST:/srv/crm-koc/web-prod/"
 
-          printf 'IMAGE_TAG=%s\nAPI_IMAGE=ghcr.io/%s/crm-koc-api:%s\nSTACK=prod\n' \
-            "$IMAGE_TAG" "$IMAGE_OWNER" "$IMAGE_TAG" > api.env.deploy
-          printf 'IMAGE_TAG=%s\nWEB_IMAGE=ghcr.io/%s/crm-koc-web:%s\nSTACK=prod\n' \
-            "$IMAGE_TAG" "$IMAGE_OWNER" "$IMAGE_TAG" > web.env.deploy
+          # Tham chiếu bằng @digest, không phải :tag. IMAGE_TAG giữ lại chỉ để
+          # người đọc log biết bản nào.
+          printf 'IMAGE_TAG=%s\nAPI_IMAGE=ghcr.io/%s/crm-koc-api@%s\nSTACK=prod\n' \
+            "$IMAGE_TAG" "$IMAGE_OWNER" "$API_DIGEST" > api.env.deploy
+          printf 'IMAGE_TAG=%s\nWEB_IMAGE=ghcr.io/%s/crm-koc-web@%s\nSTACK=prod\n' \
+            "$IMAGE_TAG" "$IMAGE_OWNER" "$WEB_DIGEST" > web.env.deploy
 
           scp $ssh_opts rendered.env "$SSH_USER@$SSH_HOST:/srv/crm-koc/prod/.env"
           scp $ssh_opts api.env.deploy "$SSH_USER@$SSH_HOST:/srv/crm-koc/api-prod/.env.deploy"
@@ -207,11 +283,14 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
             "docker login ghcr.io -u '$GHCR_USER' --password-stdin"
 
-          ssh $ssh_opts "$SSH_USER@$SSH_HOST" bash -s -- prod "$IMAGE_TAG" "$KAFKA_STACK" <<'REMOTE'
+          ssh $ssh_opts "$SSH_USER@$SSH_HOST" bash -s -- \
+            prod "$IMAGE_TAG" "$KAFKA_STACK" "$API_DIGEST" "$WEB_DIGEST" <<'REMOTE'
           set -euo pipefail
           stack="$1"
           image_tag="$2"
           kafka_stack="${3:-false}"
+          api_digest="${4:-}"
+          web_digest="${5:-}"
           root=/srv/crm-koc
           env_dir="$root/$stack"
           api_dir="$root/api-$stack"
@@ -247,12 +326,19 @@ jobs:
               -f "$web_dir/compose.web.base.yml" \
               -f "$web_dir/compose.web.$stack.yml" "$@"
           }
+          # Ưu tiên digest; deploy trước khi đổi chỉ để lại .last-good dạng tag
+          # nên vẫn phải quay về được bằng tag.
+          image_ref() {
+            if [ -n "$2" ]; then printf '%s@%s' "$1" "$2"; else printf '%s:%s' "$1" "$3"; fi
+          }
           rollback_api() {
             api_compose logs --tail 100 api api-worker api-migrate >&2 || true
             if [ -n "${previous_api:-}" ]; then
-              printf 'IMAGE_TAG=%s\nAPI_IMAGE=ghcr.io/%s/crm-koc-api:%s\nSTACK=%s\n' \
-                "$previous_api" '${{ github.repository_owner }}' "$previous_api" "$stack" \
-                > "$api_dir/.env.deploy"
+              repo="ghcr.io/${{ github.repository_owner }}/crm-koc-api"
+              printf 'IMAGE_TAG=%s\nAPI_IMAGE=%s\nSTACK=%s\n' \
+                "$previous_api" \
+                "$(image_ref "$repo" "${previous_api_digest:-}" "$previous_api")" \
+                "$stack" > "$api_dir/.env.deploy"
               api_compose pull
               api_compose up -d --remove-orphans
             fi
@@ -261,9 +347,11 @@ jobs:
           rollback_web() {
             web_compose logs --tail 100 web >&2 || true
             if [ -n "${previous_web:-}" ]; then
-              printf 'IMAGE_TAG=%s\nWEB_IMAGE=ghcr.io/%s/crm-koc-web:%s\nSTACK=%s\n' \
-                "$previous_web" '${{ github.repository_owner }}' "$previous_web" "$stack" \
-                > "$web_dir/.env.deploy"
+              repo="ghcr.io/${{ github.repository_owner }}/crm-koc-web"
+              printf 'IMAGE_TAG=%s\nWEB_IMAGE=%s\nSTACK=%s\n' \
+                "$previous_web" \
+                "$(image_ref "$repo" "${previous_web_digest:-}" "$previous_web")" \
+                "$stack" > "$web_dir/.env.deploy"
               web_compose pull
               web_compose up -d --remove-orphans
             fi
@@ -271,6 +359,7 @@ jobs:
           }
 
           previous_api=$(cat "$api_dir/.last-good" 2>/dev/null || true)
+          previous_api_digest=$(cat "$api_dir/.last-good-digest" 2>/dev/null || true)
           api_compose pull
           api_compose up -d --remove-orphans || rollback_api
           deadline=$((SECONDS + 90))
@@ -283,8 +372,10 @@ jobs:
           done
           [ -f "$api_dir/.last-good" ] && cp "$api_dir/.last-good" "$api_dir/.previous-good"
           printf '%s\n' "$image_tag" > "$api_dir/.last-good"
+          printf '%s\n' "$api_digest" > "$api_dir/.last-good-digest"
 
           previous_web=$(cat "$web_dir/.last-good" 2>/dev/null || true)
+          previous_web_digest=$(cat "$web_dir/.last-good-digest" 2>/dev/null || true)
           web_compose pull
           web_compose up -d --remove-orphans || rollback_web
           deadline=$((SECONDS + 60))
@@ -295,6 +386,7 @@ jobs:
           done
           [ -f "$web_dir/.last-good" ] && cp "$web_dir/.last-good" "$web_dir/.previous-good"
           printf '%s\n' "$image_tag" > "$web_dir/.last-good"
+          printf '%s\n' "$web_digest" > "$web_dir/.last-good-digest"
 
           docker image prune -f > /dev/null
           REMOTE

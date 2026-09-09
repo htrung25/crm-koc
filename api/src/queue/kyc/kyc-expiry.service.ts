@@ -5,8 +5,8 @@ import { Repository } from 'typeorm';
 import { EKycStatus } from '../../common/enum/kyc.enum';
 import { KycSubmission } from '../../module/kyc/entities/kyc-submission.entity';
 import { assertKycTransition } from '../../module/kyc/kyc-state-machine';
+import { KYC_SYSTEM_ACTOR } from '../../module/kyc/constants/kyc.constants';
 import { EmailQueueService } from '../email/email-queue.service';
-import { KYC_SYSTEM_ACTOR } from 'src/module/kyc/constants/kyc.constants';
 
 /** Trạng thái đáng báo cho người dùng. DRAFT/PENDING thì chưa có gì để báo. */
 export const NOTIFIABLE = [
@@ -30,22 +30,18 @@ export class KycExpiryService {
     private readonly configService: ConfigService,
   ) {}
 
-  /**
-   * Bịt cửa sổ "commit xong rồi process chết trước khi enqueue". Tự chữa lành,
-   * không cần bảng outbox riêng.
-   */
   async reconcileNotifications(): Promise<number> {
     const rows = await this.submissionRepository
       .createQueryBuilder('kyc')
-      .select('kyc.id', 'id')
+      .select(['kyc.id AS id', 'kyc.status AS status'])
       .where('kyc.notifiedAt IS NULL')
       .andWhere('kyc.status IN (:...statuses)', { statuses: NOTIFIABLE })
       .andWhere("kyc.updatedAt > now() - interval '7 days'")
       .limit(RECONCILE_BATCH)
-      .getRawMany<{ id: string }>();
+      .getRawMany<{ id: string; status: EKycStatus }>();
 
     for (const row of rows) {
-      await this.emailQueue.enqueueKycStatus(row.id);
+      await this.emailQueue.enqueueKycStatus(row.id, row.status);
     }
 
     if (rows.length) {
@@ -75,7 +71,7 @@ export class KycExpiryService {
 
     const rows = (result.raw ?? []) as { id: string }[];
     for (const row of rows) {
-      await this.emailQueue.enqueueKycStatus(row.id);
+      await this.emailQueue.enqueueKycStatus(row.id, EKycStatus.EXPIRED);
     }
 
     if (rows.length) {
