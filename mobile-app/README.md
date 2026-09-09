@@ -1,56 +1,95 @@
-# Welcome to your Expo app 👋
+# CRM KOC — Mobile app
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Expo (SDK 57) + expo-router + TypeScript. Nói chuyện với API NestJS ở `../api`.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Chạy dự án
 
 ```bash
-npm run reset-project
+cp .env.example .env      # sửa EXPO_PUBLIC_API_URL cho đúng máy của bạn
+npm install
+npm run ios               # hoặc: npm run android
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Dùng **dev build**, không phải Expo Go (`expo-secure-store` cần native module).
+Lần đầu chạy `npm run ios` / `npm run android` sẽ tự prebuild và cài lên máy.
 
-### Other setup steps
+Máy Android thật hoặc emulator không thấy `localhost` của máy dev — đặt
+`EXPO_PUBLIC_API_URL` thành IP LAN, ví dụ `http://192.168.1.10:3000`.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Kiểm tra trước khi push
 
-## Learn more
+```bash
+npm run check    # typecheck + lint + format:check
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Cấu trúc
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+src/
+  app/            route của expo-router — file mỏng, chỉ compose từ features/
+    (auth)/       login, verify-otp — chỉ vào được khi CHƯA đăng nhập
+    (app)/        màn hình sau đăng nhập — chỉ vào được khi ĐÃ đăng nhập
+  features/       mỗi feature tự chứa: api/ components/ hooks/ model/
+  shared/         hạ tầng dùng chung: api, i18n, storage, theme, ui
+  config/         đọc và validate biến môi trường
+```
 
-## Join the community
+### Quy ước
 
-Join our community of developers creating universal apps.
+- **Không đặt logic trong `src/app`.** Route chỉ lắp ráp; màn hình thật nằm ở
+  `features/<name>/components`.
+- **Import chéo feature phải qua public API**: `@/features/auth`, không phải
+  `@/features/auth/model/session-store`. ESLint chặn việc này.
+- `shared/` không được import từ `features/`. Cần gọi ngược thì dùng cầu nối
+  như `shared/api/session-bridge.ts`.
+- Đặt tên file kebab-case.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Thêm một feature mới
+
+1. `src/features/<name>/` với `api/` (gọi HTTP + query keys), `model/`
+   (type, zod schema, store), `hooks/` (React Query), `components/`.
+2. Export những gì bên ngoài được dùng trong `src/features/<name>/index.ts`.
+3. Thêm route mỏng trong `src/app/(app)/`.
+4. Thêm key i18n vào cả `shared/i18n/locales/vi.json` và `en.json`.
+
+## Auth
+
+API bắt buộc qua OTP: `POST /login/brand-creator` → `POST /verify-otp` mới trả
+token. Access token sống 15 phút, refresh token **xoay vòng mỗi lần dùng** và
+dùng lại token cũ sẽ bị huỷ toàn bộ phiên — vì vậy `shared/api/client.ts` gom
+mọi request 401 về đúng một lần gọi `/refresh` (single-flight) rồi replay.
+
+Token nằm trong `expo-secure-store`. Mỗi máy có một `X-Device-Id` bền vững,
+server đối chiếu khi refresh.
+
+## Giao diện RedSun (dữ liệu mẫu)
+
+Khi mở app, chờ khôi phục session: khách được chuyển tới `/welcome`, người đã đăng
+nhập tới `/dashboard`. Mỗi lần app từ background trở lại foreground, nếu chưa đăng
+nhập sẽ quay về `/welcome` và đóng các form khách đang mở. Không lưu cờ “đã xem
+onboarding”. Mở hộp thoại hệ thống/Notification Center (chỉ `inactive`) không reset
+màn hình. Nút “Bỏ qua” vẫn cho phép xem Discover tại `/` trong lần sử dụng hiện tại.
+
+Các route công khai:
+
+- `/`: tìm kiếm và lọc chiến dịch/KOC, banner thống kê, thanh điều hướng khách.
+- `/welcome`: 3 slide onboarding, tự chuyển mỗi 4,2 giây; có điều khiển thủ công,
+  dừng khi màn hình mất focus và tôn trọng Reduce Motion.
+- `/register`: chọn KOC/Thương hiệu, kiểm tra thông tin và điều khoản bằng Zod.
+- `/sign-in`: form đăng nhập mô phỏng, hiện/ẩn mật khẩu, lựa chọn ghi nhớ.
+- `/complete`: hoàn tất xem thử; không gửi email, tạo session hoặc lưu mật khẩu.
+
+Các tab khách và thẻ nội dung dẫn đến form theo bản phác thảo. Google/TikTok,
+khôi phục mật khẩu và nội dung pháp lý hiện có thông báo về trạng thái chưa kết nối.
+Ảnh sọc là placeholder có chủ đích từ HTML. Dùng font hệ thống native; chưa kèm
+font Be Vietnam Pro hoặc ảnh sản phẩm chính thức.
+
+`features/discover` sở hữu fixtures và bộ lọc; `features/onboarding` sở hữu carousel;
+`features/entry` sở hữu form mô phỏng, tách biệt `features/auth` đang dùng REST API.
+Các màn dùng token `shared/theme/brand.ts` và thành phần dùng chung ở `shared/ui`.
+Toàn bộ chuỗi giao diện có bản dịch `vi` và `en`. Giao diện công khai giữ bảng màu
+sáng như thiết kế, không phụ thuộc chế độ tối của thiết bị.
+
+Luồng API cũ vẫn ở `/login` → `/verify-otp` → `/dashboard` (có session guard).
+Không gọi các hook API từ màn hình công khai. Khi nối API, thay hành động submit
+trong feature entry bằng các hook xác thực; không thêm HTTP vào file route.
