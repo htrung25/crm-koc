@@ -1,322 +1,230 @@
 'use client';
-
-import { useMemo, useState } from 'react';
-import { IconChevron, IconPlus, IconSearch } from '@/components/ui/icons';
-import { MOCK_KOCS } from '../mock-data';
-import type { KocFilterStatus, KocItem, KocViewMode } from '../types';
-import { KocTableView } from './koc-table-view';
-import { KocCardsView } from './koc-cards-view';
-import { KocFormModal } from './koc-form-modal';
+import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import {
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryStates,
+} from 'nuqs';
+import { useCreators } from '../hooks/use-creators';
 import { KocDetailModal } from './koc-detail-modal';
-
-const FILTER_TABS: { key: KocFilterStatus; label: string }[] = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'active', label: 'Đang hợp tác' },
-  { key: 'pending', label: 'Chờ duyệt' },
-  { key: 'suspended', label: 'Tạm dừng' },
-];
-
-const CATEGORIES = [
-  'Tất cả',
-  'Làm đẹp',
-  'Đời sống',
-  'Thời trang',
-  'Công nghệ',
-  'Game',
-  'Thể hình',
-  'Ẩm thực',
-  'Du lịch',
-];
-
+import {
+  CreatorAccountStatus,
+  CreatorError,
+  CreatorPagination,
+  creatorButton,
+} from './creator-shared';
 export function AdminKocList() {
-  const [items, setItems] = useState<KocItem[]>(MOCK_KOCS);
-  const [viewMode, setViewMode] = useState<KocViewMode>('table');
-  const [statusFilter, setStatusFilter] = useState<KocFilterStatus>('all');
-  const [selectedCategory, setSelectedCategory] = useState('Tất cả');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Modal states
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingKoc, setEditingKoc] = useState<KocItem | null>(null);
-  const [viewingKoc, setViewingKoc] = useState<KocItem | null>(null);
-
-  // Filter logic
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      if (statusFilter !== 'all' && item.status !== statusFilter) {
-        return false;
-      }
-      if (selectedCategory !== 'Tất cả' && item.category !== selectedCategory) {
-        return false;
-      }
-      if (searchTerm.trim()) {
-        const term = searchTerm.toLowerCase().trim();
-        const matchName = item.name.toLowerCase().includes(term);
-        const matchHandle = item.handle.toLowerCase().includes(term);
-        const matchCategory = item.category.toLowerCase().includes(term);
-        if (!matchName && !matchHandle && !matchCategory) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [items, statusFilter, selectedCategory, searchTerm]);
-
-  // Counts for tabs
-  const tabCounts = useMemo(() => {
-    return {
-      all: items.length,
-      active: items.filter((k) => k.status === 'active').length,
-      pending: items.filter((k) => k.status === 'pending').length,
-      suspended: items.filter((k) => k.status === 'suspended').length,
-    };
-  }, [items]);
-
-  // Handlers
-  const handleOpenAdd = () => {
-    setEditingKoc(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEdit = (koc: KocItem) => {
-    setEditingKoc(koc);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = (koc: KocItem) => {
-    if (window.confirm(`Xoá hồ sơ KOC "${koc.name}" khỏi hệ thống?`)) {
-      setItems((prev) => prev.filter((i) => i.id !== koc.id));
-    }
-  };
-
-  const handleSave = (saved: Partial<KocItem>) => {
-    if (saved.id) {
-      // Update
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === saved.id ? ({ ...item, ...saved } as KocItem) : item
-        )
-      );
-    } else {
-      // Create new
-      const newItem: KocItem = {
-        id: `koc-${Date.now()}`,
-        name: saved.name || 'KOC Mới',
-        handle: saved.handle || '@newkoc',
-        initials: (saved.name || 'NK')
-          .split(' ')
-          .map((n) => n[0])
-          .slice(0, 2)
-          .join('')
-          .toUpperCase(),
-        avatarGradient: 'from-[#EF4623] to-[#F49E4C]',
-        followers: saved.followers || [{ platform: 'TikTok', count: '50K' }],
-        engagement: saved.engagement || [{ platform: 'TikTok', rate: '4.5%' }],
-        category: saved.category || 'Làm đẹp',
-        campaigns: 1,
-        revenue: '10M',
-        status: saved.status || 'active',
-      };
-      setItems((prev) => [newItem, ...prev]);
-    }
-  };
-
+  const t = useTranslations('creatorProfile');
+  const locale = useLocale();
+  const [params, setParams] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    search: parseAsString.withDefault(''),
+    status: parseAsStringLiteral(['', '1', '2', '3', '4'] as const).withDefault(
+      ''
+    ),
+  });
+  const [draft, setDraft] = useState(params.search);
+  const [previousSearch, setPreviousSearch] = useState(params.search);
+  if (params.search !== previousSearch) {
+    setPreviousSearch(params.search);
+    setDraft(params.search);
+  }
+  const [view, setView] = useState<'table' | 'cards'>('table');
+  const [creatorId, setCreatorId] = useState<string | null>(null);
+  useEffect(() => {
+    if (draft === params.search) return;
+    const timer = setTimeout(() => {
+      void setParams({ search: draft.trim(), page: 1 });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [draft, params.search, setParams]);
+  const query = useCreators({
+    page: Math.max(1, params.page),
+    limit: 10,
+    search: params.search,
+    status: params.status,
+  });
+  const date = (value: string) =>
+    Number.isNaN(Date.parse(value))
+      ? '—'
+      : new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
+          new Date(value)
+        );
   return (
-    <section className="space-y-4">
-      {/* Top Header Section matching Mockup */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <section className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#2D3B42]">
-            Danh sách KOC
-          </h1>
-          <p className="mt-0.5 text-xs font-semibold text-[#8A7768]">
-            Quản lý toàn bộ KOC/KOL đang hợp tác.
-          </p>
+          <h1 className="text-2xl font-extrabold text-ink">{t('title')}</h1>
+          <p className="mt-1 text-sm text-ink-light">{t('subtitle')}</p>
         </div>
-
-        <div className="flex items-center gap-3">
-          {/* View Toggle: Bảng / Thẻ */}
-          <div className="inline-flex rounded-2xl bg-white/70 p-1 ring-1 ring-[#2D3B42]/10 backdrop-blur-xs">
+        <div className="flex gap-2">
+          {(['table', 'cards'] as const).map((mode) => (
             <button
+              key={mode}
               type="button"
-              onClick={() => setViewMode('table')}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
-                viewMode === 'table'
-                  ? 'bg-white text-[#2D3B42] shadow-xs ring-1 ring-[#2D3B42]/5 font-extrabold'
-                  : 'text-[#8A7768] hover:text-[#2D3B42]'
-              }`}
+              aria-pressed={view === mode}
+              className={`${creatorButton} ${view === mode ? 'bg-white' : ''}`}
+              onClick={() => setView(mode)}
             >
-              Bảng
+              {t(mode)}
             </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('cards')}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
-                viewMode === 'cards'
-                  ? 'bg-white text-[#2D3B42] shadow-xs ring-1 ring-[#2D3B42]/5 font-extrabold'
-                  : 'text-[#8A7768] hover:text-[#2D3B42]'
-              }`}
-            >
-              Thẻ
-            </button>
-          </div>
-
-          {/* Primary CTA: + Thêm KOC */}
-          <button
-            type="button"
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-br from-[#EF4623] to-[#D8410F] px-4 py-2.5 text-xs font-extrabold text-white shadow-md shadow-[#EF4623]/25 transition-all hover:shadow-lg hover:shadow-[#EF4623]/35 active:scale-[0.98]"
+          ))}
+        </div>
+      </div>
+      <div className="glass grid gap-4 rounded-[26px] p-5 sm:grid-cols-[1fr_220px]">
+        <label className="space-y-2 text-sm font-bold text-ink">
+          <span className="block">{t('search')}</span>
+          <input
+            type="search"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            className="w-full rounded-xl bg-white/80 px-4 py-3 font-normal outline-none ring-1 ring-ink/15 focus:ring-2 focus:ring-primary"
+          />
+        </label>
+        <label className="space-y-2 text-sm font-bold text-ink">
+          <span className="block">{t('status')}</span>
+          <select
+            value={params.status}
+            onChange={(e) => {
+              void setParams({
+                status: e.target.value as typeof params.status,
+                page: 1,
+              });
+            }}
+            className="w-full rounded-xl bg-white/80 px-4 py-3 outline-none ring-1 ring-ink/15 focus:ring-2 focus:ring-primary"
           >
-            <IconPlus className="h-4 w-4" />
-            <span>Thêm KOC</span>
-          </button>
-        </div>
+            <option value="">{t('all')}</option>
+            {[1, 2, 3, 4].map((code) => (
+              <option key={code} value={code}>
+                {t(`accountStatus.${code}`)}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
-
-      {/* Filter Tabs matching mockup */}
-      <div className="flex flex-wrap items-center gap-2 pt-1">
-        {FILTER_TABS.map((tab) => {
-          const isActive = statusFilter === tab.key;
-          const count = tabCounts[tab.key];
-
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setStatusFilter(tab.key)}
-              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-extrabold transition-all duration-200 ${
-                isActive
-                  ? 'border-2 border-[#EF4623] bg-[#EF4623]/10 text-[#EF4623] shadow-xs'
-                  : 'border border-transparent bg-white/70 text-[#5C5049] hover:bg-white hover:text-[#2D3B42] ring-1 ring-[#2D3B42]/8'
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span
-                className={`rounded-full px-1.5 py-0.2 text-[10px] font-mono font-bold ${
-                  isActive
-                    ? 'bg-[#EF4623] text-white'
-                    : 'bg-[#2D3B42]/8 text-[#8A7768]'
-                }`}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Search & Category Filter Toolbar */}
-      <div className="glass rounded-[26px] p-4 sm:p-5">
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
-          <label className="block">
-            <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.14em] text-[#8A7768]">
-              Tìm kiếm KOC
-            </span>
-            <span className="flex h-12 items-center gap-3 rounded-2xl bg-white/65 px-4 ring-1 ring-[#2D3B42]/10 focus-within:ring-2 focus-within:ring-[#EF4623]/35">
-              <IconSearch className="h-4 w-4 shrink-0 text-[#8A7768]" />
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Tìm theo tên, handle, lĩnh vực…"
-                className="h-full w-full bg-transparent text-sm font-semibold text-[#2D3B42] outline-none placeholder:font-medium placeholder:text-[#8A7768]/70"
-              />
-            </span>
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.14em] text-[#8A7768]">
-              Lĩnh vực
-            </span>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="h-12 w-full rounded-2xl bg-white/65 px-4 text-sm font-bold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35"
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </div>
-
-      {/* Main Content: Table or Cards View */}
-      <div className="glass overflow-hidden rounded-[26px]">
-        {filteredItems.length === 0 ? (
-          <div className="px-5 py-14 text-center sm:px-6">
-            <p className="text-sm font-extrabold text-[#2D3B42]">
-              Không tìm thấy KOC nào
-            </p>
-            <p className="mt-1 text-xs font-semibold text-[#8A7768]">
-              Thử bỏ bớt bộ lọc hoặc từ khoá tìm kiếm.
-            </p>
-          </div>
-        ) : viewMode === 'table' ? (
-          <KocTableView
-            items={filteredItems}
-            onView={(koc) => setViewingKoc(koc)}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ) : (
-          <KocCardsView
-            items={filteredItems}
-            onView={(koc) => setViewingKoc(koc)}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        )}
-
-        {/* Pagination bar consistent with project */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#2D3B42]/10 px-5 py-3.5 text-xs text-[#8A7768] sm:px-6">
-          <p className="font-semibold">
-            Hiển thị{' '}
-            <span className="font-bold text-[#2D3B42]">
-              1–{filteredItems.length}
-            </span>{' '}
-            trên{' '}
-            <span className="font-bold text-[#2D3B42]">
-              {filteredItems.length}
-            </span>{' '}
-            KOC
+      <div
+        className="glass overflow-hidden rounded-[26px]"
+        aria-busy={query.isFetching}
+      >
+        {query.isPending ? (
+          <p role="status" className="p-12 text-center text-sm text-ink-light">
+            {t('loading')}
           </p>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled
-              className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/40 text-[#8A7768] ring-1 ring-[#2D3B42]/10 opacity-50 cursor-not-allowed"
-            >
-              <IconChevron direction="left" className="h-3.5 w-3.5" />
-            </button>
-            <span className="font-mono font-bold text-[#2D3B42] px-1">1</span>
-            <button
-              type="button"
-              disabled
-              className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/40 text-[#8A7768] ring-1 ring-[#2D3B42]/10 opacity-50 cursor-not-allowed"
-            >
-              <IconChevron direction="right" className="h-3.5 w-3.5" />
-            </button>
+        ) : query.isError ? (
+          <CreatorError
+            error={query.error}
+            retry={() => {
+              void query.refetch();
+            }}
+          />
+        ) : query.data.data.length === 0 ? (
+          <div className="p-12 text-center text-ink">
+            <p className="font-bold">{t('empty')}</p>
+            <p className="mt-2 text-sm">{t('emptyHint')}</p>
           </div>
-        </div>
+        ) : view === 'table' ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[740px] text-left text-sm">
+              <caption className="sr-only">{t('title')}</caption>
+              <thead className="bg-white/40 text-xs text-ink-light">
+                <tr>
+                  {['name', 'phone', 'joined', 'status', 'view'].map((key) => (
+                    <th key={key} scope="col" className="px-5 py-4">
+                      {t(key)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink/10">
+                {query.data.data.map((creator) => (
+                  <tr key={creator.id} className="hover:bg-white/40">
+                    <td className="px-5 py-4">
+                      <button
+                        type="button"
+                        onClick={() => setCreatorId(creator.id)}
+                        className="rounded text-left font-bold text-ink hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+                      >
+                        {creator.name || creator.email}
+                      </button>
+                      <p className="mt-1 text-xs text-ink-light">
+                        {creator.email}
+                      </p>
+                    </td>
+                    <td className="px-5 py-4">{creator.phone || '—'}</td>
+                    <td className="px-5 py-4">{date(creator.createdAt)}</td>
+                    <td className="px-5 py-4">
+                      <CreatorAccountStatus status={creator.status} />
+                    </td>
+                    <td className="px-5 py-4">
+                      <button
+                        type="button"
+                        aria-label={t('viewName', {
+                          name: creator.name || creator.email,
+                        })}
+                        onClick={() => setCreatorId(creator.id)}
+                        className={creatorButton}
+                      >
+                        {t('view')}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
+            {query.data.data.map((creator) => (
+              <article
+                key={creator.id}
+                className="space-y-4 rounded-2xl bg-white/75 p-5 ring-1 ring-ink/10"
+              >
+                <CreatorAccountStatus status={creator.status} />
+                <h2 className="font-extrabold text-ink">
+                  {creator.name || creator.email}
+                </h2>
+                <p className="break-all text-sm text-ink-light">
+                  {creator.email}
+                </p>
+                <p className="text-xs text-ink-light">
+                  {t('joined')}: {date(creator.createdAt)}
+                </p>
+                <button
+                  type="button"
+                  aria-label={t('viewName', {
+                    name: creator.name || creator.email,
+                  })}
+                  className={creatorButton}
+                  onClick={() => setCreatorId(creator.id)}
+                >
+                  {t('view')}
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
+        {query.data && !query.isError ? (
+          <CreatorPagination
+            page={query.data.page}
+            pages={query.data.totalPages}
+            total={query.data.total}
+            disabled={query.isFetching}
+            onChange={(page) => {
+              void setParams({ page });
+            }}
+          />
+        ) : null}
       </div>
-
-      {/* Modals */}
-      <KocFormModal
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSave={handleSave}
-        initialData={editingKoc}
-      />
-
-      <KocDetailModal
-        koc={viewingKoc}
-        onClose={() => setViewingKoc(null)}
-        onEdit={handleEdit}
-      />
+      {creatorId ? (
+        <KocDetailModal
+          key={creatorId}
+          creatorId={creatorId}
+          onClose={() => setCreatorId(null)}
+        />
+      ) : null}
     </section>
   );
 }
