@@ -1,6 +1,6 @@
 'use client';
 
-import { IconBin, IconEye, IconPencil } from '@/components/ui/icons';
+import { IconBin, IconEye } from '@/components/ui/icons';
 import { KocPlatformBadge } from './koc-platform-badge';
 import { KocStatusBadge } from './koc-status-badge';
 import type { KocItem } from '../types';
@@ -8,16 +8,10 @@ import type { KocItem } from '../types';
 type KocCardsViewProps = {
   items: KocItem[];
   onView: (koc: KocItem) => void;
-  onEdit: (koc: KocItem) => void;
   onDelete: (koc: KocItem) => void;
 };
 
-export function KocCardsView({
-  items,
-  onView,
-  onEdit,
-  onDelete,
-}: KocCardsViewProps) {
+export function KocCardsView({ items, onView, onDelete }: KocCardsViewProps) {
   return (
     <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-2 xl:grid-cols-4">
       {items.map((koc) => (
@@ -36,12 +30,13 @@ export function KocCardsView({
                   {koc.initials}
                 </span>
                 <div className="min-w-0">
-                  <h3
+                  <button
+                    type="button"
                     onClick={() => onView(koc)}
-                    className="truncate font-bold text-[#2D3B42] hover:text-[#EF4623] cursor-pointer"
+                    className="max-w-full truncate rounded text-left font-bold text-[#2D3B42] hover:text-[#EF4623] focus-visible:outline-2 focus-visible:outline-[#EF4623]"
                   >
                     {koc.name}
-                  </h3>
+                  </button>
                   <p className="truncate font-mono text-xs font-semibold text-[#8A7768]">
                     {koc.handle}
                   </p>
@@ -127,16 +122,6 @@ export function KocCardsView({
               >
                 <IconEye className="h-4 w-4" />
                 <span>Xem</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onEdit(koc)}
-                title="Chỉnh sửa"
-                className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#5C5049] transition-colors hover:bg-white hover:text-[#EF4623]"
-              >
-                <IconPencil className="h-4 w-4" />
-                <span>Sửa</span>
               </button>
 
               <button

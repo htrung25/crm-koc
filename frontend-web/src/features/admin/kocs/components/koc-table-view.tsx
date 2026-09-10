@@ -1,6 +1,6 @@
 'use client';
 
-import { IconBin, IconEye, IconPencil } from '@/components/ui/icons';
+import { IconBin, IconEye } from '@/components/ui/icons';
 import { KocPlatformBadge } from './koc-platform-badge';
 import { KocStatusBadge } from './koc-status-badge';
 import type { KocItem } from '../types';
@@ -8,16 +8,10 @@ import type { KocItem } from '../types';
 type KocTableViewProps = {
   items: KocItem[];
   onView: (koc: KocItem) => void;
-  onEdit: (koc: KocItem) => void;
   onDelete: (koc: KocItem) => void;
 };
 
-export function KocTableView({
-  items,
-  onView,
-  onEdit,
-  onDelete,
-}: KocTableViewProps) {
+export function KocTableView({ items, onView, onDelete }: KocTableViewProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[780px] border-collapse text-left">
@@ -62,12 +56,13 @@ export function KocTableView({
                     {koc.initials}
                   </span>
                   <div className="leading-tight">
-                    <p
-                      className="font-bold text-[#2D3B42] hover:text-[#EF4623] cursor-pointer"
+                    <button
+                      type="button"
+                      className="rounded text-left font-bold text-[#2D3B42] hover:text-[#EF4623] focus-visible:outline-2 focus-visible:outline-[#EF4623]"
                       onClick={() => onView(koc)}
                     >
                       {koc.name}
-                    </p>
+                    </button>
                     <p className="font-mono text-xs font-medium text-[#8A7768]">
                       {koc.handle}
                     </p>
@@ -138,16 +133,6 @@ export function KocTableView({
                     className="grid h-8 w-8 place-items-center rounded-xl text-[#8A7768] transition-colors hover:bg-white/80 hover:text-[#2D3B42] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EF4623]/30"
                   >
                     <IconEye className="h-4 w-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onEdit(koc)}
-                    title="Chỉnh sửa"
-                    aria-label={`Chỉnh sửa ${koc.name}`}
-                    className="grid h-8 w-8 place-items-center rounded-xl text-[#8A7768] transition-colors hover:bg-white/80 hover:text-[#EF4623] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EF4623]/30"
-                  >
-                    <IconPencil className="h-4 w-4" />
                   </button>
 
                   <button
