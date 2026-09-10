@@ -27,6 +27,35 @@ export type KocItem = {
   status: KocStatus;
   email?: string;
   phone?: string;
+  bio?: string;
+  platformMetrics?: {
+    platform: SocialPlatform;
+    averageViews?: string;
+    totalLikes?: string;
+    averageLikes?: string;
+  }[];
+  brandReviews?: {
+    averageRating: number;
+    contentQuality: number;
+    timeliness: number;
+    professionalism: number;
+    reviews: {
+      id: string;
+      brand: string;
+      campaign: string;
+      date: string;
+      rating: number;
+      comment: string;
+    }[];
+  };
+  campaignHistory?: {
+    id: string;
+    campaign: string;
+    brand: string;
+    period: string;
+    revenue: string;
+    status: KocStatus;
+  }[];
 };
 
 export type KocViewMode = 'table' | 'cards';
