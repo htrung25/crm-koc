@@ -30,8 +30,11 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# env files (can opt-in for committing if needed)
+.env*
+
+# Template phải lên git: nó là tài liệu biến môi trường để dựng máy mới.
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -41,7 +44,3 @@ example
 # generated native folders
 /ios
 /android
-
-# local env
-.env
-.env.local
