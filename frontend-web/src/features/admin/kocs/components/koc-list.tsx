@@ -1,19 +1,20 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { IconChevron, IconPlus, IconSearch } from '@/components/ui/icons';
+import { IconChevron, IconSearch } from '@/components/ui/icons';
 import { MOCK_KOCS } from '../mock-data';
+import { CREATOR_ACCOUNT_STATES } from '../creator-domain';
 import type { KocFilterStatus, KocItem, KocViewMode } from '../types';
 import { KocTableView } from './koc-table-view';
 import { KocCardsView } from './koc-cards-view';
-import { KocFormModal } from './koc-form-modal';
 import { KocPreviewModal } from './koc-preview-modal';
 
 const FILTER_TABS: { key: KocFilterStatus; label: string }[] = [
   { key: 'all', label: 'Tất cả' },
-  { key: 'active', label: 'Đang hợp tác' },
-  { key: 'pending', label: 'Chờ duyệt' },
-  { key: 'suspended', label: 'Tạm dừng' },
+  { key: 'active', label: CREATOR_ACCOUNT_STATES.active.label },
+  { key: 'pending', label: CREATOR_ACCOUNT_STATES.pending.label },
+  { key: 'suspended', label: CREATOR_ACCOUNT_STATES.suspended.label },
+  { key: 'banned', label: CREATOR_ACCOUNT_STATES.banned.label },
 ];
 
 const CATEGORIES = [
@@ -29,15 +30,13 @@ const CATEGORIES = [
 ];
 
 export function AdminKocList() {
-  const [items, setItems] = useState<KocItem[]>(MOCK_KOCS);
+  const items = MOCK_KOCS;
   const [viewMode, setViewMode] = useState<KocViewMode>('table');
   const [statusFilter, setStatusFilter] = useState<KocFilterStatus>('all');
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modal states
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingKoc, setEditingKoc] = useState<KocItem | null>(null);
   const [viewingKoc, setViewingKoc] = useState<KocItem | null>(null);
 
   // Filter logic
@@ -66,58 +65,18 @@ export function AdminKocList() {
   const tabCounts = useMemo(() => {
     return {
       all: items.length,
+      banned: items.filter((k) => k.status === 'banned').length,
       active: items.filter((k) => k.status === 'active').length,
       pending: items.filter((k) => k.status === 'pending').length,
       suspended: items.filter((k) => k.status === 'suspended').length,
     };
   }, [items]);
 
-  // Handlers
-  const handleOpenAdd = () => {
-    setEditingKoc(null);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = (koc: KocItem) => {
-    if (window.confirm(`Xoá hồ sơ KOC "${koc.name}" khỏi hệ thống?`)) {
-      setItems((prev) => prev.filter((i) => i.id !== koc.id));
-    }
-  };
-
-  const handleSave = (saved: Partial<KocItem>) => {
-    if (saved.id) {
-      // Update
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === saved.id ? ({ ...item, ...saved } as KocItem) : item
-        )
-      );
-    } else {
-      // Create new
-      const newItem: KocItem = {
-        id: `koc-${Date.now()}`,
-        name: saved.name || 'KOC Mới',
-        handle: saved.handle || '@newkoc',
-        initials: (saved.name || 'NK')
-          .split(' ')
-          .map((n) => n[0])
-          .slice(0, 2)
-          .join('')
-          .toUpperCase(),
-        avatarGradient: 'from-[#EF4623] to-[#F49E4C]',
-        followers: saved.followers || [{ platform: 'TikTok', count: '50K' }],
-        engagement: saved.engagement || [{ platform: 'TikTok', rate: '4.5%' }],
-        category: saved.category || 'Làm đẹp',
-        campaigns: 1,
-        revenue: '10M',
-        status: saved.status || 'active',
-      };
-      setItems((prev) => [newItem, ...prev]);
-    }
-  };
-
   return (
     <section className="space-y-4">
+      <p className="rounded-xl bg-amber-50 px-4 py-2 text-xs text-amber-900">
+        Dữ liệu minh họa — các chỉ số chưa được cung cấp hiển thị “—”.
+      </p>
       {/* Top Header Section matching Mockup */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -125,7 +84,7 @@ export function AdminKocList() {
             Danh sách KOC
           </h1>
           <p className="mt-0.5 text-xs font-semibold text-[#8A7768]">
-            Quản lý toàn bộ KOC/KOL đang hợp tác.
+            Tra cứu hồ sơ và trạng thái tài khoản Creator.
           </p>
         </div>
 
@@ -155,16 +114,6 @@ export function AdminKocList() {
               Thẻ
             </button>
           </div>
-
-          {/* Primary CTA: + Thêm KOC */}
-          <button
-            type="button"
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-br from-[#EF4623] to-[#D8410F] px-4 py-2.5 text-xs font-extrabold text-white shadow-md shadow-[#EF4623]/25 transition-all hover:shadow-lg hover:shadow-[#EF4623]/35 active:scale-[0.98]"
-          >
-            <IconPlus className="h-4 w-4" />
-            <span>Thêm KOC</span>
-          </button>
         </div>
       </div>
 
@@ -253,13 +202,11 @@ export function AdminKocList() {
           <KocTableView
             items={filteredItems}
             onView={(koc) => setViewingKoc(koc)}
-            onDelete={handleDelete}
           />
         ) : (
           <KocCardsView
             items={filteredItems}
             onView={(koc) => setViewingKoc(koc)}
-            onDelete={handleDelete}
           />
         )}
 
@@ -298,12 +245,6 @@ export function AdminKocList() {
       </div>
 
       {/* Modals */}
-      <KocFormModal
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSave={handleSave}
-        initialData={editingKoc}
-      />
 
       {viewingKoc ? (
         <KocPreviewModal

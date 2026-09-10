@@ -1,6 +1,8 @@
 'use client';
+import { formatCreatorMetric } from '../creator-format';
+import { CREATOR_REVENUE_DESCRIPTION } from '../creator-domain';
 
-import { IconBin, IconEye } from '@/components/ui/icons';
+import { IconEye } from '@/components/ui/icons';
 import { KocPlatformBadge } from './koc-platform-badge';
 import { KocStatusBadge } from './koc-status-badge';
 import type { KocItem } from '../types';
@@ -8,10 +10,9 @@ import type { KocItem } from '../types';
 type KocTableViewProps = {
   items: KocItem[];
   onView: (koc: KocItem) => void;
-  onDelete: (koc: KocItem) => void;
 };
 
-export function KocTableView({ items, onView, onDelete }: KocTableViewProps) {
+export function KocTableView({ items, onView }: KocTableViewProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[780px] border-collapse text-left">
@@ -30,13 +31,13 @@ export function KocTableView({ items, onView, onDelete }: KocTableViewProps) {
               Lĩnh vực
             </th>
             <th scope="col" className="px-4 py-4 text-center whitespace-nowrap">
-              Chiến dịch
+              Chiến dịch hoàn thành
             </th>
             <th scope="col" className="px-4 py-4 text-right whitespace-nowrap">
-              Doanh thu
+              Doanh thu (VND)
             </th>
             <th scope="col" className="px-4 py-4 text-center whitespace-nowrap">
-              Trạng thái
+              Tài khoản
             </th>
             <th scope="col" className="px-5 py-4 text-right whitespace-nowrap">
               Thao tác
@@ -109,12 +110,16 @@ export function KocTableView({ items, onView, onDelete }: KocTableViewProps) {
 
               {/* Campaigns */}
               <td className="px-4 py-4.5 text-center whitespace-nowrap font-mono text-sm font-extrabold text-[#2D3B42] tnum">
-                {koc.campaigns}
+                {koc.completedCampaigns ?? '—'}
               </td>
 
               {/* Revenue */}
               <td className="px-4 py-4.5 text-right whitespace-nowrap font-mono text-sm font-extrabold text-[#2D3B42] tnum">
-                {koc.revenue}
+                <span title={CREATOR_REVENUE_DESCRIPTION}>
+                  {koc.totalRevenue == null
+                    ? '—'
+                    : `${formatCreatorMetric(koc.totalRevenue, 'vi')} ₫`}
+                </span>
               </td>
 
               {/* Status */}
@@ -133,16 +138,6 @@ export function KocTableView({ items, onView, onDelete }: KocTableViewProps) {
                     className="grid h-8 w-8 place-items-center rounded-xl text-[#8A7768] transition-colors hover:bg-white/80 hover:text-[#2D3B42] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EF4623]/30"
                   >
                     <IconEye className="h-4 w-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onDelete(koc)}
-                    title="Xoá"
-                    aria-label={`Xoá ${koc.name}`}
-                    className="grid h-8 w-8 place-items-center rounded-xl text-[#8A7768] transition-colors hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/30"
-                  >
-                    <IconBin className="h-4 w-4" />
                   </button>
                 </div>
               </td>

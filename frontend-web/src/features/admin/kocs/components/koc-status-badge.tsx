@@ -1,21 +1,27 @@
 import type { KocStatus } from '../types';
+import { CREATOR_ACCOUNT_STATES } from '../creator-domain';
 
 const STATUS_CONFIG: Record<
   KocStatus,
   { label: string; className: string; dot: string }
 > = {
   active: {
-    label: 'Đang hợp tác',
+    label: CREATOR_ACCOUNT_STATES.active.label,
     className: 'bg-emerald-500/15 text-emerald-700',
     dot: 'bg-emerald-600',
   },
   pending: {
-    label: 'Chờ duyệt',
+    label: CREATOR_ACCOUNT_STATES.pending.label,
     className: 'bg-amber-400/25 text-amber-800',
     dot: 'bg-amber-600',
   },
+  banned: {
+    label: CREATOR_ACCOUNT_STATES.banned.label,
+    className: 'bg-slate-500/15 text-slate-700',
+    dot: 'bg-slate-600',
+  },
   suspended: {
-    label: 'Tạm dừng',
+    label: CREATOR_ACCOUNT_STATES.suspended.label,
     className: 'bg-rose-500/15 text-rose-600',
     dot: 'bg-rose-600',
   },
