@@ -26,6 +26,10 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
+# IDE — cấu hình riêng từng máy, team dùng cả VS Code lẫn JetBrains
+/.idea
+/.vscode
+
 # macOS
 .DS_Store
 *.pem
