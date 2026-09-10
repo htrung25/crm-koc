@@ -1,6 +1,8 @@
 'use client';
+import { formatCreatorMetric } from '../creator-format';
+import { CREATOR_REVENUE_DESCRIPTION } from '../creator-domain';
 
-import { IconBin, IconEye } from '@/components/ui/icons';
+import { IconEye } from '@/components/ui/icons';
 import { KocPlatformBadge } from './koc-platform-badge';
 import { KocStatusBadge } from './koc-status-badge';
 import type { KocItem } from '../types';
@@ -8,10 +10,9 @@ import type { KocItem } from '../types';
 type KocCardsViewProps = {
   items: KocItem[];
   onView: (koc: KocItem) => void;
-  onDelete: (koc: KocItem) => void;
 };
 
-export function KocCardsView({ items, onView, onDelete }: KocCardsViewProps) {
+export function KocCardsView({ items, onView }: KocCardsViewProps) {
   return (
     <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-2 xl:grid-cols-4">
       {items.map((koc) => (
@@ -96,19 +97,23 @@ export function KocCardsView({ items, onView, onDelete }: KocCardsViewProps) {
             <div className="grid grid-cols-2 gap-2 text-center">
               <div className="rounded-xl bg-[#2D3B42]/4 p-2">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#8A7768]">
-                  Chiến dịch
+                  Chiến dịch hoàn thành
                 </p>
                 <p className="font-mono text-base font-extrabold text-[#2D3B42] tnum">
-                  {koc.campaigns}
+                  {koc.completedCampaigns ?? '—'}
                 </p>
               </div>
 
               <div className="rounded-xl bg-[#2D3B42]/4 p-2">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#8A7768]">
-                  Doanh thu
+                  Doanh thu (VND)
                 </p>
                 <p className="font-mono text-base font-extrabold text-[#EF4623] tnum">
-                  {koc.revenue}
+                  <span title={CREATOR_REVENUE_DESCRIPTION}>
+                    {koc.totalRevenue == null
+                      ? '—'
+                      : `${formatCreatorMetric(koc.totalRevenue, 'vi')} ₫`}
+                  </span>
                 </p>
               </div>
             </div>
@@ -122,15 +127,6 @@ export function KocCardsView({ items, onView, onDelete }: KocCardsViewProps) {
               >
                 <IconEye className="h-4 w-4" />
                 <span>Xem</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onDelete(koc)}
-                title="Xoá"
-                className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-bold text-rose-600 transition-colors hover:bg-rose-50"
-              >
-                <IconBin className="h-4 w-4" />
               </button>
             </div>
           </div>

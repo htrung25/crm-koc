@@ -13,7 +13,9 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "contract:creator": "node scripts/generate-creator-contract.mjs",
+    "contract:creator:check": "node scripts/generate-creator-contract.mjs --check"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",

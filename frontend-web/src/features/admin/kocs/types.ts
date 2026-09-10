@@ -1,3 +1,8 @@
+import type {
+  CreatorAccountState,
+  CollaborationStatus,
+} from './creator-domain';
+
 export type SocialPlatform = 'TikTok' | 'Instagram' | 'YouTube' | 'Facebook';
 
 export type PlatformFollower = {
@@ -10,7 +15,7 @@ export type PlatformEngagement = {
   rate: string;
 };
 
-export type KocStatus = 'active' | 'pending' | 'suspended';
+export type KocStatus = CreatorAccountState;
 
 export type KocItem = {
   id: string;
@@ -22,8 +27,8 @@ export type KocItem = {
   followers: PlatformFollower[];
   engagement: PlatformEngagement[];
   category: string;
-  campaigns: number;
-  revenue: string;
+  completedCampaigns: number | null;
+  totalRevenue: string | null;
   status: KocStatus;
   email?: string;
   phone?: string;
@@ -53,8 +58,9 @@ export type KocItem = {
     campaign: string;
     brand: string;
     period: string;
-    revenue: string;
-    status: KocStatus;
+    campaignId: string | null;
+    agreedPrice: string | null;
+    status: CollaborationStatus;
   }[];
 };
 

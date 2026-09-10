@@ -4,6 +4,9 @@ import { useEffect, useId, useRef } from 'react';
 import { KocPlatformBadge } from './koc-platform-badge';
 import { KocStatusBadge } from './koc-status-badge';
 import type { KocItem } from '../types';
+import { CREATOR_REVENUE_DESCRIPTION } from '../creator-domain';
+import { formatCreatorMetric } from '../creator-format';
+import { CollaborationStatusBadge } from './collaboration-status-badge';
 
 const card = 'rounded-2xl border border-[#ECECF3] bg-white shadow-sm';
 const empty = 'Chưa có dữ liệu';
@@ -127,7 +130,7 @@ export function KocPreviewModal({
             {koc.bio?.trim() || 'Creator chưa cập nhật giới thiệu bản thân.'}
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#F0F0F6] pt-4">
-            <span className="text-sm text-[#75748A]">Trạng thái</span>
+            <span className="text-sm text-[#75748A]">Trạng thái tài khoản</span>
             <KocStatusBadge status={koc.status} />
           </div>
           {koc.email || koc.phone ? (
@@ -145,15 +148,20 @@ export function KocPreviewModal({
           className="grid grid-cols-1 gap-4 sm:grid-cols-2"
         >
           <div className={`${card} p-5`}>
-            <h3 className="text-sm text-[#89889F]">Chiến dịch</h3>
+            <h3 className="text-sm text-[#89889F]">Chiến dịch hoàn thành</h3>
             <p className="mt-2 text-3xl font-extrabold tabular-nums">
-              {koc.campaigns}
+              {koc.completedCampaigns ?? '—'}
             </p>
           </div>
           <div className={`${card} p-5`}>
             <h3 className="text-sm text-[#89889F]">Tổng doanh thu</h3>
             <p className="mt-2 text-3xl font-extrabold tabular-nums">
-              {koc.revenue}
+              {koc.totalRevenue == null
+                ? '—'
+                : `${formatCreatorMetric(koc.totalRevenue, 'vi')} ₫`}
+            </p>
+            <p className="mt-2 text-xs text-[#89889F]">
+              {CREATOR_REVENUE_DESCRIPTION}
             </p>
           </div>
         </section>
@@ -324,8 +332,8 @@ export function KocPreviewModal({
                     'Chiến dịch',
                     'Thương hiệu',
                     'Thời gian',
-                    'Doanh thu',
-                    'Trạng thái',
+                    'Giá trị thỏa thuận (VND)',
+                    'Trạng thái hợp tác',
                   ].map((label) => (
                     <th
                       key={label}
@@ -349,10 +357,12 @@ export function KocPreviewModal({
                         {row.period}
                       </td>
                       <td className="px-5 py-4 font-bold tabular-nums">
-                        {row.revenue}
+                        {row.agreedPrice == null
+                          ? '—'
+                          : `${formatCreatorMetric(row.agreedPrice, 'vi')} ₫`}
                       </td>
                       <td className="px-5 py-4">
-                        <KocStatusBadge status={row.status} />
+                        <CollaborationStatusBadge status={row.status} />
                       </td>
                     </tr>
                   ))
