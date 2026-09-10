@@ -57,6 +57,8 @@ export const API_ROUTES = {
     avatar: '/api/admin/profile/avatar',
     brands: '/api/admin/brands',
     auditLogs: '/api/admin/audit-logs',
+    creators: '/api/admin/creators',
+    creator: (id: string) => `/api/admin/creators/${encodeURIComponent(id)}`,
   },
 } as const;
 
@@ -81,6 +83,8 @@ export const BACKEND_ROUTES = {
     brandList: '/admin/brands-list',
     brandDetail: (id: string) => `/admin/brands-list/${id}`,
     creatorList: '/admin/creators-list',
+    creatorDetail: (id: string) =>
+      `/admin/creators-list/${encodeURIComponent(id)}`,
     profileMe: '/admin/profile/me',
     profileAvatar: '/admin/profile/me/avatar',
     profileAvatarStream: '/admin/profile/avatar',

@@ -7,7 +7,7 @@ import type { KocFilterStatus, KocItem, KocViewMode } from '../types';
 import { KocTableView } from './koc-table-view';
 import { KocCardsView } from './koc-cards-view';
 import { KocFormModal } from './koc-form-modal';
-import { KocDetailModal } from './koc-detail-modal';
+import { KocPreviewModal } from './koc-preview-modal';
 
 const FILTER_TABS: { key: KocFilterStatus; label: string }[] = [
   { key: 'all', label: 'Tất cả' },
@@ -75,11 +75,6 @@ export function AdminKocList() {
   // Handlers
   const handleOpenAdd = () => {
     setEditingKoc(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEdit = (koc: KocItem) => {
-    setEditingKoc(koc);
     setIsFormOpen(true);
   };
 
@@ -258,14 +253,12 @@ export function AdminKocList() {
           <KocTableView
             items={filteredItems}
             onView={(koc) => setViewingKoc(koc)}
-            onEdit={handleEdit}
             onDelete={handleDelete}
           />
         ) : (
           <KocCardsView
             items={filteredItems}
             onView={(koc) => setViewingKoc(koc)}
-            onEdit={handleEdit}
             onDelete={handleDelete}
           />
         )}
@@ -312,11 +305,13 @@ export function AdminKocList() {
         initialData={editingKoc}
       />
 
-      <KocDetailModal
-        koc={viewingKoc}
-        onClose={() => setViewingKoc(null)}
-        onEdit={handleEdit}
-      />
+      {viewingKoc ? (
+        <KocPreviewModal
+          key={viewingKoc.id}
+          koc={viewingKoc}
+          onClose={() => setViewingKoc(null)}
+        />
+      ) : null}
     </section>
   );
 }
