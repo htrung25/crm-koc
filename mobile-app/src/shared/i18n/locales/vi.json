@@ -1,0 +1,146 @@
+{
+  "common": {
+    "retry": "Thử lại",
+    "cancel": "Huỷ",
+    "continue": "Tiếp tục",
+    "loading": "Đang tải...",
+    "errorTitle": "Đã có lỗi xảy ra"
+  },
+  "auth": {
+    "login": {
+      "title": "Đăng nhập",
+      "subtitle": "Dùng tài khoản CRM KOC của bạn",
+      "email": "Email",
+      "emailPlaceholder": "ban@congty.com",
+      "password": "Mật khẩu",
+      "submit": "Đăng nhập",
+      "invalidEmail": "Email không hợp lệ",
+      "passwordTooShort": "Mật khẩu tối thiểu 8 ký tự"
+    },
+    "otp": {
+      "title": "Nhập mã xác thực",
+      "subtitle": "Mã gồm 6 chữ số đã gửi tới {{email}}",
+      "code": "Mã OTP",
+      "submit": "Xác nhận",
+      "resend": "Gửi lại mã",
+      "invalidCode": "Mã OTP gồm 6 chữ số"
+    },
+    "logout": "Đăng xuất",
+    "sessionExpired": "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại."
+  },
+  "home": {
+    "greeting": "Xin chào, {{name}}",
+    "roleLabel": "Vai trò"
+  },
+  "redsun": {
+    "back": "Quay lại",
+    "login": "Đăng nhập",
+    "start": "Bắt đầu ngay",
+    "skip": "Bỏ qua",
+    "free": "Miễn phí vĩnh viễn cho KOC · Không cần thẻ",
+    "search": "Tìm KOC, chiến dịch, ngành hàng…",
+    "clear": "Xóa tìm kiếm",
+    "notifications": "Thông báo",
+    "live": "ĐANG DIỄN RA",
+    "match": "32 KOC được AI ghép cặp · độ khớp 99.4%",
+    "billion": "{{value}} tỷ",
+    "gmv": "GMV tuần",
+    "participants": "KOC tham gia",
+    "conversion": "Chuyển đổi",
+    "featured": "Chiến dịch nổi bật",
+    "viewAll": "Xem tất cả",
+    "topKoc": "Top KOC tuần này",
+    "sevenDays": "GMV 7 ngày",
+    "commission": "Hoa hồng {{value}}%",
+    "open": "Đang mở",
+    "soon": "Sắp mở",
+    "productImage": "ảnh sản phẩm",
+    "emptyCampaigns": "Chưa có chiến dịch phù hợp. Thử ngành hàng hoặc từ khóa khác.",
+    "emptyCreators": "Chưa tìm thấy KOC phù hợp.",
+    "promoTitle": "Bắt đầu chiến dịch KOC chỉ trong 5 phút",
+    "promoBody": "Gia nhập 1,200 nhãn hàng và 15,000 KOC đang dùng CRM-KOC.",
+    "exploreIntro": "Khám phá RedSun",
+    "home": "Trang chủ",
+    "campaignsTab": "Chiến dịch",
+    "wallet": "Ví",
+    "account": "Tài khoản",
+    "slideNumber": "Trang giới thiệu {{number}}",
+    "createAccount": "Tạo tài khoản",
+    "join": "Tham gia Red Sun Network",
+    "joinSubtitle": "Tham gia hệ sinh thái kết nối 15,000+ KOC hàng đầu và 1,200+ Thương hiệu uy tín.",
+    "koc": "✨ KOC / Creator",
+    "brandRole": "🏢 Thương hiệu",
+    "googleRegister": "Đăng ký nhanh với Google",
+    "tiktokRegister": "Đăng ký nhanh với TikTok",
+    "googleLogin": "Tiếp tục với Google",
+    "socialTitle": "Kết nối tài khoản",
+    "socialBody": "Đăng nhập mạng xã hội sẽ được bổ sung khi kết nối dịch vụ xác thực. Bạn có thể trải nghiệm form bên dưới.",
+    "orDetails": "HOẶC ĐIỀN THÔNG TIN",
+    "orEmail": "HOẶC EMAIL",
+    "name": "Họ và tên",
+    "email": "Địa chỉ Email",
+    "phone": "Số điện thoại / Zalo",
+    "password": "Mật khẩu",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "passwordPlaceholder": "Tối thiểu 8 ký tự",
+    "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+    "show": "Hiện",
+    "hide": "Ẩn",
+    "terms": "Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật",
+    "termsLink": "Điều khoản dịch vụ",
+    "privacyLink": "Chính sách bảo mật",
+    "policyBody": "Nội dung chính thức sẽ được cập nhật trước khi mở đăng ký. Bản xem thử này không thu thập thông tin tài khoản.",
+    "registerNow": "Tạo tài khoản ngay",
+    "haveAccount": "Đã có tài khoản? Đăng nhập ngay",
+    "noAccount": "Chưa có tài khoản? Đăng ký hợp tác ngay",
+    "welcomeBack": "Chào mừng trở lại",
+    "loginSubtitle": "Không gian quản trị chiến dịch sáng tạo, tự động hóa seeding mẫu thử và tối ưu doanh số Affiliate.",
+    "forgot": "Quên mật khẩu?",
+    "forgotBody": "Chức năng khôi phục mật khẩu sẽ có khi kết nối dịch vụ xác thực.",
+    "remember": "Duy trì đăng nhập trong 30 ngày",
+    "loginNow": "Đăng nhập ngay",
+    "loginComplete": "Hoàn tất bước đăng nhập",
+    "registerComplete": "Thông tin đã sẵn sàng",
+    "completeBody": "Bạn đã hoàn tất trải nghiệm giao diện. Đây là bản xem thử: chưa tạo tài khoản, gửi email hay lưu thông tin đăng nhập.",
+    "backHome": "Về trang chủ",
+    "categories": {
+      "all": "Tất cả",
+      "beauty": "Beauty",
+      "fashion": "Thời trang",
+      "tech": "Công nghệ",
+      "home": "Gia dụng"
+    },
+    "campaigns": {
+      "skincare": "Seeding sample skincare",
+      "accessories": "Live chốt đơn phụ kiện"
+    },
+    "errors": {
+      "email": "Email chưa đúng định dạng.",
+      "password": "Mật khẩu cần tối thiểu 8 ký tự.",
+      "name": "Vui lòng nhập họ và tên.",
+      "phone": "Số điện thoại chưa đúng định dạng.",
+      "terms": "Bạn cần đồng ý với Điều khoản dịch vụ.",
+      "confirm": "Hai mật khẩu chưa khớp nhau."
+    },
+    "slides": [
+      {
+        "tag": "SEEDING SAMPLE",
+        "title": "Nhận mẫu thử chỉ với 1 lần chạm",
+        "body": "Tự động duyệt địa chỉ nhận mẫu thử, xuất kho và đồng bộ trạng thái giao vận real-time.",
+        "image": "ảnh: KOC nhận sample"
+      },
+      {
+        "tag": "LIVE COMMERCE",
+        "title": "Theo dõi doanh số từng giây",
+        "body": "Cập nhật từng giây đơn hàng thành công trong suốt phiên chốt đơn của KOC.",
+        "image": "ảnh: phiên TikTok Live"
+      },
+      {
+        "tag": "HỢP ĐỒNG & HOA HỒNG",
+        "title": "Ký số 3 phút, hoa hồng tự động",
+        "body": "Ký điện tử tức thì và tính toán chi hoa hồng tự động theo từng cấp bậc KOC.",
+        "image": "ảnh: ký hợp đồng điện tử"
+      }
+    ]
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "common": {
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "loading": "Loading...",
+    "errorTitle": "Something went wrong"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Use your CRM KOC account",
+      "email": "Email",
+      "emailPlaceholder": "you@company.com",
+      "password": "Password",
+      "submit": "Sign in",
+      "invalidEmail": "Invalid email address",
+      "passwordTooShort": "Password must be at least 8 characters"
+    },
+    "otp": {
+      "title": "Enter verification code",
+      "subtitle": "We sent a 6-digit code to {{email}}",
+      "code": "OTP code",
+      "submit": "Verify",
+      "resend": "Resend code",
+      "invalidCode": "The OTP code has 6 digits"
+    },
+    "logout": "Sign out",
+    "sessionExpired": "Your session has expired, please sign in again."
+  },
+  "home": {
+    "greeting": "Hello, {{name}}",
+    "roleLabel": "Role"
+  },
+  "redsun": {
+    "back": "Back",
+    "login": "Log in",
+    "start": "Get started",
+    "skip": "Skip",
+    "free": "Always free for KOCs · No card required",
+    "search": "Find KOCs, campaigns, categories…",
+    "clear": "Clear search",
+    "notifications": "Notifications",
+    "live": "LIVE NOW",
+    "match": "32 AI-matched KOCs · 99.4% match",
+    "billion": "{{value}}B",
+    "gmv": "Weekly GMV",
+    "participants": "KOCs joined",
+    "conversion": "Conversion",
+    "featured": "Featured campaigns",
+    "viewAll": "View all",
+    "topKoc": "Top KOCs this week",
+    "sevenDays": "7-day GMV",
+    "commission": "Commission {{value}}%",
+    "open": "Open",
+    "soon": "Coming soon",
+    "productImage": "product image",
+    "emptyCampaigns": "No matching campaigns. Try another category or keyword.",
+    "emptyCreators": "No matching creators.",
+    "promoTitle": "Launch a KOC campaign in just 5 minutes",
+    "promoBody": "Join 1,200 brands and 15,000 KOCs using CRM-KOC.",
+    "exploreIntro": "Discover RedSun",
+    "home": "Home",
+    "campaignsTab": "Campaigns",
+    "wallet": "Wallet",
+    "account": "Account",
+    "slideNumber": "Introduction slide {{number}}",
+    "createAccount": "Create account",
+    "join": "Join Red Sun Network",
+    "joinSubtitle": "Connect with 15,000+ leading KOCs and 1,200+ trusted brands.",
+    "koc": "✨ KOC / Creator",
+    "brandRole": "🏢 Brand",
+    "googleRegister": "Sign up with Google",
+    "tiktokRegister": "Sign up with TikTok",
+    "googleLogin": "Continue with Google",
+    "socialTitle": "Connect an account",
+    "socialBody": "Social sign-in will be available once authentication is connected. You can try the form below.",
+    "orDetails": "OR ENTER YOUR DETAILS",
+    "orEmail": "OR EMAIL",
+    "name": "Full name",
+    "email": "Email address",
+    "phone": "Phone / Zalo",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "passwordPlaceholder": "At least 8 characters",
+    "confirmPasswordPlaceholder": "Enter password again",
+    "show": "Show",
+    "hide": "Hide",
+    "terms": "I agree to the Terms of Service and Privacy Policy",
+    "termsLink": "Terms of Service",
+    "privacyLink": "Privacy Policy",
+    "policyBody": "Official policies will be available before registration opens. This preview does not collect account information.",
+    "registerNow": "Create account",
+    "haveAccount": "Already have an account? Log in",
+    "noAccount": "New here? Sign up to collaborate",
+    "welcomeBack": "Welcome back",
+    "loginSubtitle": "Manage creative campaigns, automate sample seeding and grow affiliate sales.",
+    "forgot": "Forgot password?",
+    "forgotBody": "Password recovery will be available once authentication is connected.",
+    "remember": "Keep me signed in for 30 days",
+    "loginNow": "Log in now",
+    "loginComplete": "Sign-in step completed",
+    "registerComplete": "Your details are ready",
+    "completeBody": "You have completed the interface preview. No account was created, email sent or login details saved.",
+    "backHome": "Back to home",
+    "categories": {
+      "all": "All",
+      "beauty": "Beauty",
+      "fashion": "Fashion",
+      "tech": "Technology",
+      "home": "Home"
+    },
+    "campaigns": {
+      "skincare": "Skincare sample seeding",
+      "accessories": "Accessories live sale"
+    },
+    "errors": {
+      "email": "Enter a valid email address.",
+      "password": "Use at least 8 characters.",
+      "name": "Enter your full name.",
+      "phone": "Enter a valid phone number.",
+      "terms": "Please accept the Terms of Service.",
+      "confirm": "Passwords do not match."
+    },
+    "slides": [
+      {
+        "tag": "SEEDING SAMPLE",
+        "title": "Get samples with just one tap",
+        "body": "Automate sample addresses, fulfillment and real-time shipment updates.",
+        "image": "image: KOC receiving samples"
+      },
+      {
+        "tag": "LIVE COMMERCE",
+        "title": "Track sales every second",
+        "body": "Follow successful orders in real time throughout each KOC live session.",
+        "image": "image: TikTok Live session"
+      },
+      {
+        "tag": "CONTRACTS & COMMISSIONS",
+        "title": "Sign in 3 minutes. Earn automatically.",
+        "body": "Sign digitally and calculate commissions automatically for every KOC tier.",
+        "image": "image: electronic contract signing"
+      }
+    ]
+  }
+}
