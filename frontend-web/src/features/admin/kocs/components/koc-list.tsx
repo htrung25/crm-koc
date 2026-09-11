@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconChevron, IconSearch } from '@/components/ui/icons';
-import { MOCK_KOCS } from '../mock-data';
+import { useCreators } from '../hooks/use-creators';
+import { creatorListItem } from '../creator-list-adapter';
 import { CREATOR_ACCOUNT_STATES } from '../creator-domain';
 import type { KocFilterStatus, KocItem, KocViewMode } from '../types';
 import { KocTableView } from './koc-table-view';
@@ -17,65 +18,40 @@ const FILTER_TABS: { key: KocFilterStatus; label: string }[] = [
   { key: 'banned', label: CREATOR_ACCOUNT_STATES.banned.label },
 ];
 
-const CATEGORIES = [
-  'Tất cả',
-  'Làm đẹp',
-  'Đời sống',
-  'Thời trang',
-  'Công nghệ',
-  'Game',
-  'Thể hình',
-  'Ẩm thực',
-  'Du lịch',
-];
-
 export function AdminKocList() {
-  const items = MOCK_KOCS;
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<KocViewMode>('table');
   const [statusFilter, setStatusFilter] = useState<KocFilterStatus>('all');
-  const [selectedCategory, setSelectedCategory] = useState('Tất cả');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modal states
   const [viewingKoc, setViewingKoc] = useState<KocItem | null>(null);
 
-  // Filter logic
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      if (statusFilter !== 'all' && item.status !== statusFilter) {
-        return false;
-      }
-      if (selectedCategory !== 'Tất cả' && item.category !== selectedCategory) {
-        return false;
-      }
-      if (searchTerm.trim()) {
-        const term = searchTerm.toLowerCase().trim();
-        const matchName = item.name.toLowerCase().includes(term);
-        const matchHandle = item.handle.toLowerCase().includes(term);
-        const matchCategory = item.category.toLowerCase().includes(term);
-        if (!matchName && !matchHandle && !matchCategory) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [items, statusFilter, selectedCategory, searchTerm]);
-
-  // Counts for tabs
-  const tabCounts = useMemo(() => {
-    return {
-      all: items.length,
-      banned: items.filter((k) => k.status === 'banned').length,
-      active: items.filter((k) => k.status === 'active').length,
-      pending: items.filter((k) => k.status === 'pending').length,
-      suspended: items.filter((k) => k.status === 'suspended').length,
-    };
-  }, [items]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchTerm.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  const query = useCreators({
+    page,
+    limit: 10,
+    search,
+    status:
+      statusFilter === 'all'
+        ? ''
+        : String(CREATOR_ACCOUNT_STATES[statusFilter].code),
+  });
+  const filteredItems = query.data?.data.map(creatorListItem) ?? [];
+  const total = query.data?.total ?? 0;
+  const totalPages = Math.max(1, query.data?.totalPages ?? 1);
 
   return (
     <section className="space-y-4">
       <p className="rounded-xl bg-amber-50 px-4 py-2 text-xs text-amber-900">
-        Dữ liệu minh họa — các chỉ số chưa được cung cấp hiển thị “—”.
+        Các chỉ số và lĩnh vực chưa được cung cấp hiển thị “—”.
       </p>
       {/* Top Header Section matching Mockup */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -121,13 +97,15 @@ export function AdminKocList() {
       <div className="flex flex-wrap items-center gap-2 pt-1">
         {FILTER_TABS.map((tab) => {
           const isActive = statusFilter === tab.key;
-          const count = tabCounts[tab.key];
 
           return (
             <button
               key={tab.key}
               type="button"
-              onClick={() => setStatusFilter(tab.key)}
+              onClick={() => {
+                setStatusFilter(tab.key);
+                setPage(1);
+              }}
               className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-extrabold transition-all duration-200 ${
                 isActive
                   ? 'border-2 border-[#EF4623] bg-[#EF4623]/10 text-[#EF4623] shadow-xs'
@@ -135,15 +113,6 @@ export function AdminKocList() {
               }`}
             >
               <span>{tab.label}</span>
-              <span
-                className={`rounded-full px-1.5 py-0.2 text-[10px] font-mono font-bold ${
-                  isActive
-                    ? 'bg-[#EF4623] text-white'
-                    : 'bg-[#2D3B42]/8 text-[#8A7768]'
-                }`}
-              >
-                {count}
-              </span>
             </button>
           );
         })}
@@ -162,7 +131,7 @@ export function AdminKocList() {
                 type="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Tìm theo tên, handle, lĩnh vực…"
+                placeholder="Tìm theo tên hoặc email…"
                 className="h-full w-full bg-transparent text-sm font-semibold text-[#2D3B42] outline-none placeholder:font-medium placeholder:text-[#8A7768]/70"
               />
             </span>
@@ -173,15 +142,12 @@ export function AdminKocList() {
               Lĩnh vực
             </span>
             <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              disabled
+              value=""
+              title="API chưa cung cấp bộ lọc lĩnh vực"
               className="h-12 w-full rounded-2xl bg-white/65 px-4 text-sm font-bold text-[#2D3B42] outline-none ring-1 ring-[#2D3B42]/10 focus:ring-2 focus:ring-[#EF4623]/35"
             >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
+              <option value="">Chưa có dữ liệu lĩnh vực</option>
             </select>
           </label>
         </div>
@@ -189,7 +155,20 @@ export function AdminKocList() {
 
       {/* Main Content: Table or Cards View */}
       <div className="glass overflow-hidden rounded-[26px]">
-        {filteredItems.length === 0 ? (
+        {query.isPending ? (
+          <p className="p-8 text-center">Đang tải Creator…</p>
+        ) : query.isError ? (
+          <div role="alert" className="p-6 text-red-700">
+            <p>{query.error.message}</p>
+            <button
+              type="button"
+              onClick={() => void query.refetch()}
+              className="mt-3 underline"
+            >
+              Thử lại
+            </button>
+          </div>
+        ) : filteredItems.length === 0 ? (
           <div className="px-5 py-14 text-center sm:px-6">
             <p className="text-sm font-extrabold text-[#2D3B42]">
               Không tìm thấy KOC nào
@@ -201,11 +180,13 @@ export function AdminKocList() {
         ) : viewMode === 'table' ? (
           <KocTableView
             items={filteredItems}
+            onStatusChanged={() => setPage(1)}
             onView={(koc) => setViewingKoc(koc)}
           />
         ) : (
           <KocCardsView
             items={filteredItems}
+            onStatusChanged={() => setPage(1)}
             onView={(koc) => setViewingKoc(koc)}
           />
         )}
@@ -215,28 +196,28 @@ export function AdminKocList() {
           <p className="font-semibold">
             Hiển thị{' '}
             <span className="font-bold text-[#2D3B42]">
-              1–{filteredItems.length}
+              {total ? (page - 1) * 10 + 1 : 0}–{Math.min(page * 10, total)}
             </span>{' '}
-            trên{' '}
-            <span className="font-bold text-[#2D3B42]">
-              {filteredItems.length}
-            </span>{' '}
-            KOC
+            trên <span className="font-bold text-[#2D3B42]">{total}</span> KOC
           </p>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
-              disabled
-              className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/40 text-[#8A7768] ring-1 ring-[#2D3B42]/10 opacity-50 cursor-not-allowed"
+              disabled={page <= 1 || query.isFetching}
+              onClick={() => setPage(page - 1)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/40 text-[#8A7768] ring-1 ring-[#2D3B42]/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevron direction="left" className="h-3.5 w-3.5" />
             </button>
-            <span className="font-mono font-bold text-[#2D3B42] px-1">1</span>
+            <span className="font-mono font-bold text-[#2D3B42] px-1">
+              {page}
+            </span>
             <button
               type="button"
-              disabled
-              className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/40 text-[#8A7768] ring-1 ring-[#2D3B42]/10 opacity-50 cursor-not-allowed"
+              disabled={page >= totalPages || query.isFetching}
+              onClick={() => setPage(page + 1)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/40 text-[#8A7768] ring-1 ring-[#2D3B42]/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevron direction="right" className="h-3.5 w-3.5" />
             </button>

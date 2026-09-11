@@ -53,6 +53,8 @@ export const API_ROUTES = {
   admin: {
     accounts: '/api/admin/accounts',
     account: (id: string) => `/api/admin/accounts/${id}`,
+    accountStatus: (id: string) =>
+      `/api/admin/accounts/${encodeURIComponent(id)}/status`,
     profile: '/api/admin/profile',
     avatar: '/api/admin/profile/avatar',
     brands: '/api/admin/brands',
@@ -79,6 +81,8 @@ export const BACKEND_ROUTES = {
     detail: (id: string) => `/admin/admin-user/${id}`,
     adminUser: '/admin/admin-user',
     adminUserDetail: (id: string) => `/admin/admin-user/${id}`,
+    accountStatus: (id: string) =>
+      `/admin/admin-user/${encodeURIComponent(id)}/status`,
     adminList: '/admin/admin-user',
     brandList: '/admin/brands-list',
     brandDetail: (id: string) => `/admin/brands-list/${id}`,

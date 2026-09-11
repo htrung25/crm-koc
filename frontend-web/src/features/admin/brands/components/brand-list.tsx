@@ -16,6 +16,7 @@ import {
 import { useBrands } from '@/features/admin/brands/hooks/use-brands';
 import { useBrandQueryParams } from '@/features/admin/brands/hooks/use-brand-query-params';
 import { type BrandQuery, type BrandRow } from '@/features/admin/brands/types';
+import { AccountStatusAction } from '@/features/admin/components/account-status-action';
 import { STATUS_CODES } from '@/features/admin/types';
 import { ApiRequestError } from '@/lib/api/browser-client';
 
@@ -293,6 +294,15 @@ export function AdminBrandList() {
                   </dl>
 
                   <div className="mt-5 flex items-center gap-2 border-t border-[#2D3B42]/8 pt-4">
+                    <AccountStatusAction
+                      id={brand.id}
+                      name={brand.name}
+                      status={brand.status}
+                      kind="brand"
+                      onChanged={() =>
+                        void setQuery((q) => ({ ...q, page: 1 }))
+                      }
+                    />
                     <button
                       type="button"
                       disabled

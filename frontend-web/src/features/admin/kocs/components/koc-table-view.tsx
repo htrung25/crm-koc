@@ -1,6 +1,10 @@
 'use client';
 import { formatCreatorMetric } from '../creator-format';
-import { CREATOR_REVENUE_DESCRIPTION } from '../creator-domain';
+import { AccountStatusAction } from '@/features/admin/components/account-status-action';
+import {
+  CREATOR_ACCOUNT_STATES,
+  CREATOR_REVENUE_DESCRIPTION,
+} from '../creator-domain';
 
 import { IconEye } from '@/components/ui/icons';
 import { KocPlatformBadge } from './koc-platform-badge';
@@ -10,9 +14,14 @@ import type { KocItem } from '../types';
 type KocTableViewProps = {
   items: KocItem[];
   onView: (koc: KocItem) => void;
+  onStatusChanged: () => void;
 };
 
-export function KocTableView({ items, onView }: KocTableViewProps) {
+export function KocTableView({
+  items,
+  onView,
+  onStatusChanged,
+}: KocTableViewProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[780px] border-collapse text-left">
@@ -74,6 +83,7 @@ export function KocTableView({ items, onView }: KocTableViewProps) {
               {/* Nền tảng MXH (xếp hàng dọc) */}
               <td className="px-4 py-4.5 whitespace-nowrap">
                 <div className="flex flex-col items-start gap-1">
+                  {koc.followers.length === 0 ? '—' : null}
                   {koc.followers.map((f) => (
                     <KocPlatformBadge
                       key={f.platform}
@@ -87,6 +97,7 @@ export function KocTableView({ items, onView }: KocTableViewProps) {
               {/* Engagement */}
               <td className="px-4 py-4.5 whitespace-nowrap">
                 <div className="space-y-1">
+                  {koc.engagement.length === 0 ? '—' : null}
                   {koc.engagement.map((eng) => (
                     <div
                       key={eng.platform}
@@ -130,6 +141,13 @@ export function KocTableView({ items, onView }: KocTableViewProps) {
               {/* Actions */}
               <td className="px-5 py-4.5 text-right whitespace-nowrap">
                 <div className="flex items-center justify-end gap-1">
+                  <AccountStatusAction
+                    id={koc.id}
+                    name={koc.name}
+                    status={CREATOR_ACCOUNT_STATES[koc.status].code}
+                    kind="creator"
+                    onChanged={onStatusChanged}
+                  />
                   <button
                     type="button"
                     onClick={() => onView(koc)}
