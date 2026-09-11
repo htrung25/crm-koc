@@ -1,6 +1,10 @@
 'use client';
 import { formatCreatorMetric } from '../creator-format';
-import { CREATOR_REVENUE_DESCRIPTION } from '../creator-domain';
+import { AccountStatusAction } from '@/features/admin/components/account-status-action';
+import {
+  CREATOR_ACCOUNT_STATES,
+  CREATOR_REVENUE_DESCRIPTION,
+} from '../creator-domain';
 
 import { IconEye } from '@/components/ui/icons';
 import { KocPlatformBadge } from './koc-platform-badge';
@@ -10,9 +14,14 @@ import type { KocItem } from '../types';
 type KocCardsViewProps = {
   items: KocItem[];
   onView: (koc: KocItem) => void;
+  onStatusChanged: () => void;
 };
 
-export function KocCardsView({ items, onView }: KocCardsViewProps) {
+export function KocCardsView({
+  items,
+  onView,
+  onStatusChanged,
+}: KocCardsViewProps) {
   return (
     <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-2 xl:grid-cols-4">
       {items.map((koc) => (
@@ -61,6 +70,7 @@ export function KocCardsView({ items, onView }: KocCardsViewProps) {
                 Nền tảng MXH
               </p>
               <div className="flex flex-wrap gap-1.5">
+                {koc.followers.length === 0 ? '—' : null}
                 {koc.followers.map((f) => (
                   <KocPlatformBadge
                     key={f.platform}
@@ -77,6 +87,7 @@ export function KocCardsView({ items, onView }: KocCardsViewProps) {
                 Tương tác trung bình
               </p>
               <div className="flex flex-wrap gap-2">
+                {koc.engagement.length === 0 ? '—' : null}
                 {koc.engagement.map((eng) => (
                   <span
                     key={eng.platform}
@@ -119,6 +130,13 @@ export function KocCardsView({ items, onView }: KocCardsViewProps) {
             </div>
 
             <div className="mt-3 flex items-center justify-end gap-1.5 border-t border-[#2D3B42]/6 pt-3">
+              <AccountStatusAction
+                id={koc.id}
+                name={koc.name}
+                status={CREATOR_ACCOUNT_STATES[koc.status].code}
+                kind="creator"
+                onChanged={onStatusChanged}
+              />
               <button
                 type="button"
                 onClick={() => onView(koc)}

@@ -198,18 +198,33 @@ body {
   pointer-events: none;
 }
 
-/* Custom Scrollbar */
+/* Thanh cuộn dùng chung, đồng bộ với tông chữ phụ. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #8a7768 rgba(138, 119, 104, 0.1);
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ef4623;
-  border-radius: 20px;
+  background: #8a7768;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5c5049;
 }
 
 ::-webkit-scrollbar-track {
-  background: #2d3b42;
+  background: rgba(138, 119, 104, 0.1);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Link Underline Hover Effect */
