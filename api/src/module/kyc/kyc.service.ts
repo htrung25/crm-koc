@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -9,7 +10,12 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { EBusinessCode } from '../../common/enum/business-code.enum';
-import { EKycDocumentType, EKycStatus } from '../../common/enum/kyc.enum';
+import {
+  EKycDocumentType,
+  EKycRejectReason,
+  EKycStatus,
+} from '../../common/enum/kyc.enum';
+import { ERole } from '../../common/enum/roles.enum';
 import { PaginatedResult, paginate } from '../../common/util/pagination.util';
 import {
   StorageService,
@@ -21,6 +27,13 @@ import { EmailQueueService } from '../../queue/email/email-queue.service';
 import { StorageQueueService } from '../../queue/storage/storage-queue.service';
 import {
   ALLOWED_DOCUMENTS_BY_ROLE,
+  ALL_KYC_STATUSES,
+  KYC_STATUS_LABEL,
+  KYC_TRANSITIONS,
+  OPEN_KYC_STATUSES,
+  KycOpeningPlan,
+  KycReviewCommand,
+  KycTransitionActor,
   MAX_KYC_ATTEMPTS,
   REQUIRED_DOCUMENTS,
 } from './constants/kyc.constants';
@@ -35,12 +48,6 @@ import { KycDocumentView } from './entities/kyc-document-view.entity';
 import { KycSubmission } from './entities/kyc-submission.entity';
 import { KycFilterDto, ReviewKycDto } from './dto/kyc.dto';
 import { inspectDocument } from './util/kyc-document.util';
-import {
-  planKycOpening,
-  requireEditableKyc,
-  reviewKyc,
-  submitKyc,
-} from './kyc-state-machine';
 
 export interface DocumentStreamPayload {
   document: KycDocument;
@@ -83,7 +90,7 @@ export class KycService {
     role: KycRole,
   ): Promise<KycSubmission> {
     const latest = await this.findLatest(accountId, role);
-    const plan = planKycOpening(latest);
+    const plan = this.planKycOpening(latest);
     if (plan.kind === 'reuse') {
       return plan.submission;
     }
@@ -119,7 +126,7 @@ export class KycService {
     buffer: Buffer,
     originalName: string | null,
   ): Promise<KycDocument> {
-    const submission = requireEditableKyc(
+    const submission = this.requireEditableKyc(
       await this.findLatest(accountId, role),
     );
 
@@ -194,7 +201,7 @@ export class KycService {
 
   /** Chuyển hồ sơ sang PENDING. Thiếu giấy tờ bắt buộc thì không cho nộp. */
   async submit(accountId: string, role: KycRole): Promise<KycSubmission> {
-    const submission = requireEditableKyc(
+    const submission = this.requireEditableKyc(
       await this.findLatest(accountId, role),
     );
 
@@ -212,12 +219,20 @@ export class KycService {
       });
     }
 
-    return this.submissionRepository.save(submitKyc(submission, role));
+    const saved = await this.submissionRepository.save(
+      this.submitKyc(submission, role),
+    );
+    return this.withoutNotificationClaim(saved);
   }
 
   async isVerified(accountId: string, role: KycRole): Promise<boolean> {
     const latest = await this.findLatest(accountId, role);
-    return latest?.status === EKycStatus.VERIFIED;
+    // Quyền nghiệp vụ hết hiệu lực ngay tại expiresAt, không chờ job đổi status.
+    return (
+      latest?.status === EKycStatus.VERIFIED &&
+      latest.expiresAt != null &&
+      latest.expiresAt.getTime() > Date.now()
+    );
   }
 
   /** Hồ sơ mới nhất của người gọi, kèm số lượt còn lại. */
@@ -353,7 +368,7 @@ export class KycService {
       }
 
       return submissionRepo.save(
-        reviewKyc(submission, dto, reviewerId, this.validityDays),
+        this.reviewKyc(submission, dto, reviewerId, this.validityDays),
       );
     });
 
@@ -374,7 +389,7 @@ export class KycService {
       }
     }
 
-    return saved;
+    return this.withoutNotificationClaim(saved);
   }
 
   /** Ghi audit TRƯỚC khi trả nội dung: request đứt giữa chừng vẫn để lại vết. */
@@ -394,7 +409,172 @@ export class KycService {
     );
   }
 
+  // ---------------------------------------------------------------- KYC rules
+
+  private planKycOpening(latest: KycSubmission | null): KycOpeningPlan {
+    if (!latest) {
+      return {
+        kind: 'create',
+        attemptNo: 1,
+        carryOverFromSubmissionId: null,
+      };
+    }
+
+    if (OPEN_KYC_STATUSES.includes(latest.status)) {
+      return { kind: 'reuse', submission: latest };
+    }
+
+    if (
+      latest.status === EKycStatus.LOCKED ||
+      (latest.status === EKycStatus.REJECTED &&
+        latest.attemptNo >= MAX_KYC_ATTEMPTS)
+    ) {
+      throw new ForbiddenException({
+        businessCode: EBusinessCode.KYC_ATTEMPTS_EXHAUSTED,
+        message: 'kyc attempts exhausted, contact support',
+      });
+    }
+
+    if (latest.status === EKycStatus.VERIFIED) {
+      throw new ConflictException('kyc is already verified for this role');
+    }
+
+    return {
+      kind: 'create',
+      attemptNo:
+        latest.status === EKycStatus.REJECTED ? latest.attemptNo + 1 : 1,
+      carryOverFromSubmissionId: latest.id,
+    };
+  }
+
+  private requireEditableKyc(latest: KycSubmission | null): KycSubmission {
+    if (!latest || !OPEN_KYC_STATUSES.includes(latest.status)) {
+      throw new NotFoundException('no open kyc submission');
+    }
+    if (latest.status === EKycStatus.PENDING) {
+      throw new ConflictException('kyc submission is under review');
+    }
+    return latest;
+  }
+
+  private submitKyc(
+    submission: KycSubmission,
+    actor: KycRole,
+    occurredAt = new Date(),
+  ): KycSubmission {
+    KycService.assertKycTransition(
+      submission.status,
+      EKycStatus.PENDING,
+      actor,
+    );
+    submission.status = EKycStatus.PENDING;
+    submission.notificationClaimToken = null;
+    submission.notificationClaimUntil = null;
+    submission.submittedAt = occurredAt;
+    return submission;
+  }
+
+  private reviewKyc(
+    submission: KycSubmission,
+    command: KycReviewCommand,
+    reviewerId: string,
+    validityDays: number,
+    occurredAt = new Date(),
+  ): KycSubmission {
+    KycService.assertKycTransition(
+      submission.status,
+      command.status,
+      ERole.ADMIN,
+    );
+    this.assertReviewCommand(command);
+
+    const next =
+      command.status === EKycStatus.REJECTED &&
+      submission.attemptNo >= MAX_KYC_ATTEMPTS
+        ? EKycStatus.LOCKED
+        : command.status;
+
+    submission.status = next;
+    submission.reviewedAt = occurredAt;
+    submission.reviewedBy = reviewerId;
+    submission.rejectReason = command.rejectReason ?? null;
+    submission.reviewNote = command.reviewNote ?? null;
+    submission.notifiedAt = null;
+    submission.notificationClaimToken = null;
+    submission.notificationClaimUntil = null;
+
+    if (next === EKycStatus.VERIFIED) {
+      const expiresAt = new Date(occurredAt);
+      expiresAt.setDate(expiresAt.getDate() + validityDays);
+      submission.expiresAt = expiresAt;
+    }
+
+    return submission;
+  }
+
+  static assertKycTransition(
+    current: EKycStatus,
+    next: EKycStatus,
+    actor: KycTransitionActor,
+  ): void {
+    const transitions = KYC_TRANSITIONS[current];
+    const actors = transitions[next];
+    const from = KYC_STATUS_LABEL[current];
+    const to = KYC_STATUS_LABEL[next];
+
+    if (!actors) {
+      const allowed = ALL_KYC_STATUSES.filter(
+        (status) => transitions[status],
+      ).map((status) => KYC_STATUS_LABEL[status]);
+      throw new BadRequestException(
+        allowed.length === 0
+          ? `${from} is a final status and cannot be changed`
+          : `cannot change status from ${from} to ${to}; allowed: ${allowed.join(', ')}`,
+      );
+    }
+
+    if (!actors.includes(actor)) {
+      throw new ForbiddenException(
+        `only ${actors.join(' or ')} can change status from ${from} to ${to}`,
+      );
+    }
+  }
+
+  /** Chỉ dùng khi duyệt hồ sơ. */
+  private assertReviewCommand(command: KycReviewCommand): void {
+    if (
+      command.status === EKycStatus.MORE_INFO &&
+      !command.reviewNote?.trim()
+    ) {
+      throw new BadRequestException(
+        'reviewNote is required when asking for more info',
+      );
+    }
+
+    if (command.status !== EKycStatus.REJECTED) {
+      return;
+    }
+    if (command.rejectReason === undefined) {
+      throw new BadRequestException('rejectReason is required when rejecting');
+    }
+    if (
+      command.rejectReason === EKycRejectReason.OTHER &&
+      !command.reviewNote?.trim()
+    ) {
+      throw new BadRequestException(
+        "reviewNote is required when rejectReason is 'other'",
+      );
+    }
+  }
+
   // -------------------------------------------------------------------- private
+
+  /** save() giữ cả field select:false vừa gán; không trả lease nội bộ ra API. */
+  private withoutNotificationClaim(submission: KycSubmission): KycSubmission {
+    const { notificationClaimToken, notificationClaimUntil, ...result } =
+      submission;
+    return result;
+  }
 
   private findLatest(
     accountId: string,

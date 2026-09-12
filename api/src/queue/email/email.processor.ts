@@ -1,11 +1,12 @@
+import { randomUUID } from 'node:crypto';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { Job } from 'bullmq';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import { EmailService } from '../../common/services/email.service';
-import { EKycRejectReason, EKycStatus } from '../../common/enum/kyc.enum';
+import { EKycRejectReason } from '../../common/enum/kyc.enum';
 import { AuthEntity } from '../../module/auth/entities/auth.entity';
 import { KYC_STATUS_LABEL } from '../../module/kyc/constants/kyc.constants';
 import { KycSubmission } from '../../module/kyc/entities/kyc-submission.entity';
@@ -14,6 +15,8 @@ import { JOB_SEND_KYC_STATUS, JOB_SEND_OTP, QUEUE_EMAIL } from '../queue-names';
 import type { SendKycStatusJob, SendOtpJob } from './email-job.types';
 
 const EMAIL_PROCESSOR_CONCURRENCY = 5;
+// Dài hơn timeout SendGrid 10s; mọi ghi hoàn tất/nhả lease đều ràng token.
+const KYC_NOTIFICATION_LEASE_SECONDS = 60;
 
 @Processor(QUEUE_EMAIL, { concurrency: EMAIL_PROCESSOR_CONCURRENCY })
 export class EmailProcessor extends WorkerHost {
@@ -97,41 +100,45 @@ export class EmailProcessor extends WorkerHost {
   private async sendKycStatus(job: Job): Promise<void> {
     const { submissionId, status } = job.data as SendKycStatusJob;
 
-    // Giành quyền bằng một câu ghi trước khi gửi; ràng `status` để job của lần
-    // đổi cũ tự nhận ra mình lỗi thời và bỏ qua.
+    const claimToken = randomUUID();
     const claimed = await this.submissionRepository
       .createQueryBuilder()
       .update(KycSubmission)
-      .set({ notifiedAt: new Date() })
+      .set({
+        notificationClaimToken: claimToken,
+        notificationClaimUntil: () =>
+          `CURRENT_TIMESTAMP + interval '${KYC_NOTIFICATION_LEASE_SECONDS} seconds'`,
+      })
       .where(
         'id = :submissionId AND status = :status AND notified_at IS NULL',
         { submissionId, status },
       )
+      .andWhere(
+        '(notification_claim_until IS NULL OR notification_claim_until <= CURRENT_TIMESTAMP)',
+      )
       .execute();
     if (!claimed.affected) return;
 
-    const submission = await this.submissionRepository.findOne({
-      where: { id: submissionId },
-      relations: { account: true },
-    });
-    if (!submission) {
-      this.logger.warn(`KYC submission ${submissionId} no longer exists`);
-      return;
-    }
-
-    const email = submission.account?.email;
-    if (!email) {
-      this.logger.warn(
-        `KYC submission ${submissionId} has no email address to send`,
-      );
-      return;
-    }
-
-    // Đã đánh dấu trước khi gửi, nên hỏng thì phải trả lại để BullMQ retry còn
-    // tác dụng — không trả lại là thông báo mất luôn.
-    let sent = false;
     try {
-      sent = await this.emailService.sendKycStatusNotification({
+      // Status có thể đã đổi sau khi claim; không gửi nội dung của lần cũ.
+      const submission = await this.submissionRepository.findOne({
+        where: {
+          id: submissionId,
+          status,
+          notificationClaimToken: claimToken,
+          notificationClaimUntil: Raw(
+            (column) => `${column} > CURRENT_TIMESTAMP`,
+          ),
+        },
+        relations: { account: true },
+      });
+      if (!submission) return;
+      const email = submission.account?.email;
+      if (!email) {
+        throw new Error(`KYC submission ${submissionId} has no email address`);
+      }
+
+      const sent = await this.emailService.sendKycStatusNotification({
         to: email,
         displayName: submission.account.name || 'Valued User',
         status: KYC_STATUS_LABEL[status],
@@ -140,29 +147,44 @@ export class EmailProcessor extends WorkerHost {
           : null,
         reviewNote: submission.reviewNote,
       });
-    } catch (error) {
-      await this.releaseClaim(submissionId, status);
-      throw error;
-    }
-
-    // sent=false nghĩa là toggle email đang tắt — tình trạng tạm thời, nhả ra
-    // để reconcile gửi lại khi bật.
-    if (!sent) {
-      await this.releaseClaim(submissionId, status);
+      if (sent) {
+        const completed = await this.submissionRepository
+          .createQueryBuilder()
+          .update(KycSubmission)
+          .set({
+            notifiedAt: () => 'CURRENT_TIMESTAMP',
+            notificationClaimToken: null,
+            notificationClaimUntil: null,
+          })
+          .where(
+            'id = :submissionId AND status = :status AND notification_claim_token = :claimToken',
+            { submissionId, status, claimToken },
+          )
+          .execute();
+        if (!completed.affected) {
+          this.logger.warn(
+            `KYC email accepted after claim was superseded: submission=${submissionId} claim=${claimToken}`,
+          );
+        }
+      }
+    } finally {
+      // Bao gồm DB read lỗi, toggle tắt, SendGrid lỗi và completion lỗi.
+      // Không nhả claim mới của worker khác. Nếu DB chết, lease tự hết hạn.
+      await this.releaseClaim(submissionId, claimToken);
     }
   }
 
   private async releaseClaim(
     submissionId: string,
-    status: EKycStatus,
+    claimToken: string,
   ): Promise<void> {
     await this.submissionRepository
       .createQueryBuilder()
       .update(KycSubmission)
-      .set({ notifiedAt: null })
-      .where('id = :submissionId AND status = :status', {
+      .set({ notificationClaimToken: null, notificationClaimUntil: null })
+      .where('id = :submissionId AND notification_claim_token = :claimToken', {
         submissionId,
-        status,
+        claimToken,
       })
       .execute();
   }

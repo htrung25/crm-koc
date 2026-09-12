@@ -16,6 +16,7 @@ import {
   assertNumericEnum,
 } from '../../common/util/enum-assert.util';
 import { PaginatedResult, paginate } from '../../common/util/pagination.util';
+import { uniqueViolationOf } from '../../common/util/pg-error.util';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { ERole } from '../../common/enum/roles.enum';
 import {
@@ -45,12 +46,10 @@ import {
   CollaborationFilterDto,
   CreateCollaborationDto,
 } from './dto/collaboration.dto';
-import {
-  CollaborationListItem,
-  assertSortField,
-} from './constants/collaboration.constants';
+import { assertSortField } from './constants/collaboration.constants';
 import { Collaboration } from './entities/collaboration.entity';
 import { CollaborationActor } from './types/collaboration.types';
+import { CollaborationListItem } from './types/collaboration.types';
 
 @Injectable()
 export class CollaborationService {
@@ -122,7 +121,7 @@ export class CollaborationService {
       warnings = await this.creatorCriteriaWarnings(campaign, dto.creatorId);
     }
 
-    // 5. Chặn trùng khi hợp tác trước còn dở. Đã completed/cancelled thì hợp tác lại được
+    // Kiểm tra sớm để trả lỗi rõ ràng; unique index mới là chốt chống race.
     const open = await this.collaborationRepository.findOne({
       where: {
         brandId,
@@ -149,8 +148,21 @@ export class CollaborationService {
     });
 
     // 8. Entity trùng khít CollaborationDto nên trả thẳng, không map lại.
-    const saved = await this.collaborationRepository.save(collaboration);
-    return { ...saved, warnings };
+    try {
+      const saved = await this.collaborationRepository.save(collaboration);
+      return { ...saved, warnings };
+    } catch (error) {
+      const constraint = uniqueViolationOf(error);
+      if (
+        constraint === 'UQ_collaborations_open_campaign' ||
+        constraint === 'UQ_collaborations_open_direct'
+      ) {
+        throw new ConflictException(
+          'an open collaboration with this creator already exists',
+        );
+      }
+      throw error;
+    }
   }
 
   /*Chỉ campaign ĐÃ DUYỆT mới gắn hợp tác được*/

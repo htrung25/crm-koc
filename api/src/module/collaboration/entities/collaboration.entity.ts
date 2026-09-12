@@ -14,6 +14,19 @@ import { CreatorProfile } from '../../creator/entities/creator-profile.entity';
 
 @Index('idx_collaborations_brand_status', ['brandId', 'status'])
 @Index('idx_collaborations_creator_status', ['creatorId', 'status'])
+// Đồng bộ với OPEN_STATUSES và migration AddOpenCollaborationUniqueness.
+@Index(
+  'UQ_collaborations_open_campaign',
+  ['brandId', 'creatorId', 'campaignId'],
+  {
+    unique: true,
+    where: '"campaign_id" IS NOT NULL AND "status" IN (1, 2, 3)',
+  },
+)
+@Index('UQ_collaborations_open_direct', ['brandId', 'creatorId'], {
+  unique: true,
+  where: '"campaign_id" IS NULL AND "status" IN (1, 2, 3)',
+})
 @Entity('collaborations')
 export class Collaboration {
   @PrimaryGeneratedColumn('uuid')
