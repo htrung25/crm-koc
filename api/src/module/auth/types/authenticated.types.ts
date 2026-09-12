@@ -22,3 +22,5 @@ export interface VerifiedJwtPayload extends JwtPayload {
   iat: number;
   exp: number;
 }
+
+export type PublicRole = ERole.BRAND | ERole.CREATOR;

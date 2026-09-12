@@ -2,14 +2,17 @@ import { BadRequestException } from '@nestjs/common';
 import { ECollaborationStatus } from '../../../common/enum/collaboration-status.enum';
 import { ERole } from '../../../common/enum/roles.enum';
 import { ESortField } from '../../../common/enum/sort-fields.enum';
-import { Collaboration } from '../entities/collaboration.entity';
+import { CollaborationTimestamp } from '../types/collaboration.types';
 
 /** Enum số nên Object.values trả cả tên lẫn số; lọc lấy phần số có kiểu. */
 export const ALL_STATUSES = Object.values(ECollaborationStatus).filter(
   (value): value is ECollaborationStatus => typeof value === 'number',
 );
 
-/** Hợp tác đang dở: chặn tạo trùng. Xong hoặc huỷ rồi thì hợp tác lại được. */
+/**
+ * Hợp tác đang dở: chặn tạo trùng. Xong hoặc huỷ rồi thì hợp tác lại được.
+ * Đổi tập này phải thêm migration cập nhật hai UQ_collaborations_open_* index.
+ */
 export const OPEN_STATUSES = [
   ECollaborationStatus.PENDING,
   ECollaborationStatus.ACTIVE,
@@ -26,10 +29,8 @@ export const STATUS_LABEL: Record<ECollaborationStatus, string> = {
   [ECollaborationStatus.DISPUTED]: 'disputed',
 };
 
-/**
- * Chuyển trạng thái hợp lệ.
- */
-const BOTH_PARTIES = [ERole.BRAND, ERole.CREATOR];
+// Chuyển trạng thái hợp lệ.
+export const BOTH_PARTIES = [ERole.BRAND, ERole.CREATOR];
 
 export const TRANSITION_ACTORS: Record<
   ECollaborationStatus,
@@ -62,13 +63,8 @@ export const TRANSITION_ACTORS: Record<
   },
 };
 
-export type CollaborationTimestamp =
-  'startedAt' | 'submittedAt' | 'completedAt' | 'cancelledAt';
-
-/**
- * Mốc thời gian gắn với từng trạng thái.
- * PENDING không có mốc riêng (đã có created_at), DISPUTED chưa có cột.
- */
+/** Mốc thời gian gắn với từng trạng thái.
+ * PENDING không có mốc riêng (đã có created_at), DISPUTED chưa có cột. */
 export const STATUS_TIMESTAMP: Partial<
   Record<ECollaborationStatus, CollaborationTimestamp>
 > = {
@@ -101,12 +97,6 @@ export const COLLABORATION_SORT_FIELDS = [
   ESortField.AGREED_PRICE,
   ESortField.COMPLETED_AT,
 ] as const;
-
-/** Kiểu của một dòng trong danh sách: đúng bằng các cột đã select. */
-export type CollaborationListItem = Pick<
-  Collaboration,
-  (typeof COLLABORATION_LIST_FIELDS)[number]
->;
 
 /** sortBy đi thẳng vào SQL nên phải khớp danh sách cột cho phép. */
 export function assertSortField(

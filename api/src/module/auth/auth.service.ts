@@ -24,12 +24,10 @@ import {
   EAuditLogCategory,
   ELoginAction,
 } from '../../common/enum/audit-log.enum';
+import { PublicRole } from './types/authenticated.types';
 import { AuditLogService } from '../admin/audit-log.service';
 
 const PG_UNIQUE_VIOLATION = '23505';
-
-export type PublicRole = ERole.BRAND | ERole.CREATOR;
-
 @Injectable()
 export class AuthService {
   constructor(

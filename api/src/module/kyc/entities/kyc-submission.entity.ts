@@ -59,9 +59,16 @@ export class KycSubmission {
   @Column({ type: 'timestamptz', nullable: true })
   expiresAt: Date | null;
 
-  /** Đã báo cho người dùng về TRẠNG THÁI HIỆN TẠI chưa. Đổi status thì set null. */
+  /** SendGrid đã nhận email cho trạng thái hiện tại; không phải xác nhận delivery. */
   @Column({ type: 'timestamptz', nullable: true })
   notifiedAt: Date | null;
+
+  /** Token sở hữu lease, chặn worker cũ ghi vào claim đã được thu hồi. */
+  @Column({ type: 'uuid', nullable: true, select: false })
+  notificationClaimToken?: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true, select: false })
+  notificationClaimUntil?: Date | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
