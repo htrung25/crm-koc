@@ -1,16 +1,10 @@
 import { clientIpOf, type ClientContext } from './client-context';
 
-// Đọc lúc gọi, KHÔNG đọc ở top-level: `next build` chạy với
-// NODE_ENV=production và có thu thập page data, nên throw ở top-level là chết
-// ngay lúc build — trong khi image được build một lần rồi dùng chung cho
-// staging lẫn prod, lúc đó chưa biết API_URL. Đây là ràng buộc runtime.
 function apiBaseUrl(): string {
   const url = process.env.API_URL;
   if (!url) {
-    // Thiếu biến ở production mà vẫn chạy nghĩa là mọi request lặng lẽ đi tới
-    // localhost và hỏng theo kiểu khó truy nguyên. Chết sớm dễ sửa hơn.
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('Thiếu biến môi trường API_URL');
+      throw new Error('Missing environment variable API_URL');
     }
     return 'http://localhost:3000';
   }
@@ -21,13 +15,6 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
-    /**
-     * Body lỗi đã parse. Backend trả HAI hình dạng:
-     *   { message, businessCode }                  <- lỗi nghiệp vụ
-     *   { message, error, statusCode }             <- Nest mặc định
-     * Giữ nguyên bản thô vì chỉ `message` + `status` là không đủ: dialog tự
-     * khoá cần `clientIp`, và highlight chip sai cần `businessCode`.
-     */
     public readonly body: unknown = null
   ) {
     super(message);
@@ -70,11 +57,9 @@ type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   token?: string;
-  /**
-   * IP + User-Agent của người dùng cuối. Bắt buộc với các endpoint mà backend
-   * xét nguồn: /login/admin (IP whitelist), /login, /verify-otp (throttle theo
-   * email+IP) và /refresh (đối chiếu IP/UA với lúc đăng nhập).
-   */
+  /* Bắt buộc với các endpoint mà backend xét nguồn: /login/admin (IP whitelist),
+    /login, /verify-otp (throttle theo email+IP) và /refresh (đối chiếu IP/UA 
+    với lúc đăng nhập). */
   clientContext?: ClientContext;
 };
 

@@ -62,6 +62,15 @@ export async function POST(request: Request) {
         { status: error.status }
       );
     }
-    throw error;
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Xác thực OTP thất bại. Vui lòng thử lại.',
+        businessCode: 'INTERNAL_ERROR',
+      },
+      { status: 500 }
+    );
   }
 }

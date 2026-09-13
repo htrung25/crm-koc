@@ -67,11 +67,31 @@ export async function POST(request: Request) {
     return await establishSession(result, expectedRole, clientContext);
   } catch (error) {
     if (error instanceof ApiError) {
+      let friendlyMessage = error.message;
+      const lower = error.message.toLowerCase();
+      if (lower.includes('invalid credentials')) {
+        friendlyMessage = 'Email hoặc mật khẩu không chính xác';
+      } else if (lower.includes('banned') || lower.includes('inactive')) {
+        friendlyMessage = 'Tài khoản của bạn đã bị vô hiệu hoá hoặc tạm khoá';
+      } else if (lower.includes('ip') && lower.includes('whitelist')) {
+        friendlyMessage = 'Địa chỉ IP của bạn không được cấp phép truy cập quản trị';
+      }
+
       return NextResponse.json(
-        { message: error.message },
+        {
+          message: friendlyMessage,
+          businessCode: error.businessCode,
+          clientIp: error.clientIp,
+        },
         { status: error.status }
       );
     }
-    throw error;
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error ? error.message : 'Đăng nhập thất bại',
+      },
+      { status: 500 }
+    );
   }
 }

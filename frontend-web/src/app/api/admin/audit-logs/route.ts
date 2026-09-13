@@ -4,9 +4,6 @@ import { BACKEND_ROUTES } from '@/constants/routes';
 import { apiRequest } from '@/lib/api/server-client';
 import { errorResponse, requireSession } from '@/lib/api/route-session';
 
-/**
- * Danh sách Audit Logs của hệ thống, phân trang và lọc ở phía server.
- */
 const ALLOWED_PARAMS = [
   'page',
   'limit',

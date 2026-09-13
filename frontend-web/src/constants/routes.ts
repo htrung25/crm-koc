@@ -44,6 +44,7 @@ export const APP_ROUTES = {
 export const API_ROUTES = {
   auth: {
     login: '/api/auth/login',
+    register: '/api/auth/register',
     logout: '/api/auth/logout',
     refresh: '/api/auth/refresh',
     verifyOtp: '/api/auth/verify-otp',
@@ -76,6 +77,8 @@ export const BACKEND_ROUTES = {
   resendOtp: '/resend-otp',
   loginAdmin: '/login/admin',
   loginBrandCreator: '/login/brand-creator',
+  registerBrand: '/register/brand',
+  registerCreator: '/register/creator',
 
   admin: {
     detail: (id: string) => `/admin/admin-user/${id}`,

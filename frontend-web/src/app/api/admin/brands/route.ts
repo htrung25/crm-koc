@@ -4,12 +4,6 @@ import { BACKEND_ROUTES } from '@/constants/routes';
 import { apiRequest } from '@/lib/api/server-client';
 import { errorResponse, requireSession } from '@/lib/api/route-session';
 
-/**
- * Danh sách brand, phân trang và lọc Ở PHÍA SERVER.
- *
- * Chỉ chuyển tiếp đúng những tham số backend khai trong BrandFilterDto:
- * gửi thừa sẽ bị ValidationPipe (forbidNonWhitelisted) từ chối cả request.
- */
 const ALLOWED = [
   'page',
   'limit',
