@@ -1,14 +1,22 @@
 'use client';
 
-import { APP_ROUTES } from '@/constants/routes';
+import { API_ROUTES, APP_ROUTES } from '@/constants/routes';
 import { useTranslations } from 'next-intl';
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { RedSunNav } from '@/components/layout/red-sun-nav';
+import { postJson } from '@/lib/api/browser-client';
+import type { LoginResult } from '@/features/auth/types';
+
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?]).{8,}$/;
 
 export function EditorialRegister() {
   const t = useTranslations('auth.register');
+  const router = useRouter();
+  const [step, setStep] = useState<'form' | 'otp' | 'success'>('form');
   const [accountType, setAccountType] = useState<'CREATOR' | 'BRAND'>(
     'CREATOR'
   );
@@ -17,25 +25,46 @@ export function EditorialRegister() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedTerms, setAgreedTerms] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [redirectTo, setRedirectTo] = useState<string>(APP_ROUTES.home);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setNotice(null);
+
+    const trimmedName = fullName.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedName) {
+      setError(t('fullNamePlaceholder'));
+      return;
+    }
+
+    if (!trimmedEmail || !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+      setError('Email không hợp lệ.');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError(t('passwordMismatch'));
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       setError(t('passwordTooShort'));
+      return;
+    }
+
+    if (!PASSWORD_REGEX.test(password)) {
+      setError(t('passwordWeak'));
       return;
     }
 
@@ -46,11 +75,92 @@ export function EditorialRegister() {
 
     setIsSubmitting(true);
 
-    // Giả lập gửi form đăng ký UI
-    setTimeout(() => {
+    try {
+      const result = await postJson<{
+        status: string;
+        message: string;
+        email: string;
+      }>(
+        API_ROUTES.auth.register,
+        {
+          name: trimmedName,
+          email: trimmedEmail,
+          password,
+          phone: phone.trim() || undefined,
+          role: accountType,
+        },
+        { skipRefresh: true }
+      );
+
+      if (result.status === 'otp_required') {
+        setStep('otp');
+        setNotice(result.message);
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
       setIsSubmitting(false);
-      setSuccess(true);
-    }, 1000);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setNotice(null);
+
+    if (otp.length !== 6) {
+      setError('Mã OTP gồm 6 chữ số.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await postJson<LoginResult>(
+        API_ROUTES.auth.verifyOtp,
+        {
+          email: email.trim().toLowerCase(),
+          otp,
+          expectedRole: accountType,
+        },
+        { skipRefresh: true }
+      );
+
+      if (result.status === 'authenticated') {
+        setRedirectTo(result.redirectTo || APP_ROUTES.home);
+        setStep('success');
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError(null);
+    setNotice(null);
+    setIsSubmitting(true);
+
+    try {
+      const result = await postJson<{ message: string }>(
+        API_ROUTES.auth.resendOtp,
+        { email: email.trim().toLowerCase() },
+        { skipRefresh: true }
+      );
+      setNotice(result.message);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBackToForm = () => {
+    setStep('form');
+    setOtp('');
+    setError(null);
+    setNotice(null);
   };
 
   return (
@@ -176,50 +286,49 @@ export function EditorialRegister() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#EF4623]/8 rounded-full blur-[100px] pointer-events-none" />
 
             <div className="relative z-10 w-full max-w-[420px] space-y-5">
-              {/* Header Row: Title & Index Numeral '01' */}
+              {/* Header Row: Title & Index Numeral */}
               <div className="flex items-start justify-between gap-4 border-b border-[#2D3B42]/10 pb-4">
                 <div>
                   <span className="block mb-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#EF4623]">
-                    {t('eyebrow')}
+                    {step === 'form'
+                      ? t('eyebrow')
+                      : step === 'otp'
+                        ? t('eyebrowOtp')
+                        : t('eyebrow')}
                   </span>
                   <h2 className="font-serif text-3xl font-normal text-[#2D3B42]">
-                    {t('title')}
+                    {step === 'form'
+                      ? t('title')
+                      : step === 'otp'
+                        ? t('titleOtp')
+                        : t('successTitle')}
                   </h2>
                 </div>
 
                 <span className="font-serif text-4xl leading-none text-[#EF4623]/30 select-none tabular-nums">
-                  01
+                  {step === 'form' ? '01' : step === 'otp' ? '02' : '03'}
                 </span>
               </div>
 
-              {/* Role Switcher Tabs */}
-              <div className="p-1.5 rounded-2xl bg-[#FDF1EE] border border-[#EF4623]/20 grid grid-cols-2 gap-1">
-                <button
-                  type="button"
-                  onClick={() => setAccountType('CREATOR')}
-                  className={`py-2 px-3 rounded-xl text-xs font-extrabold transition-all duration-300 flex items-center justify-center gap-1.5 ${
-                    accountType === 'CREATOR'
-                      ? 'bg-white text-[#EF4623] shadow-md shadow-[#EF4623]/10'
-                      : 'text-slate-600 hover:text-[#2D3B42]'
-                  }`}
-                >
-                  <span>✨</span> KOC / Creator
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAccountType('BRAND')}
-                  className={`py-2 px-3 rounded-xl text-xs font-extrabold transition-all duration-300 flex items-center justify-center gap-1.5 ${
-                    accountType === 'BRAND'
-                      ? 'bg-white text-[#EF4623] shadow-md shadow-[#EF4623]/10'
-                      : 'text-slate-600 hover:text-[#2D3B42]'
-                  }`}
-                >
-                  <span>🏢</span> {t('brand')}
-                </button>
-              </div>
+              {/* Notice Message */}
+              {notice && (
+                <p className="text-xs font-semibold text-[#2D3B42] bg-[#FDF1EE] border border-[#EF4623]/20 rounded-xl px-4 py-2.5">
+                  {notice}
+                </p>
+              )}
 
-              {/* Success Message */}
-              {success ? (
+              {/* Error Message */}
+              {error && (
+                <p
+                  role="alert"
+                  className="text-xs font-semibold text-[#EF4623] bg-[#FDF1EE] border border-[#EF4623]/30 rounded-xl px-4 py-2.5"
+                >
+                  {error}
+                </p>
+              )}
+
+              {/* Step 3: Success Screen */}
+              {step === 'success' && (
                 <div className="bg-[#FDF1EE] border border-[#EF4623]/30 rounded-2xl p-6 text-center space-y-4">
                   <div className="w-12 h-12 rounded-full bg-[#EF4623] text-white flex items-center justify-center text-xl mx-auto shadow-lg shadow-[#EF4623]/30">
                     ✓
@@ -239,15 +348,117 @@ export function EditorialRegister() {
                       })}
                     </p>
                   </div>
-                  <Link
-                    href={APP_ROUTES.login}
-                    className="inline-block w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 transition-all duration-300"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      router.replace(redirectTo);
+                      router.refresh();
+                    }}
+                    className="inline-block w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300"
                   >
-                    {t('signInNow')}
-                  </Link>
+                    {t('exploreNow')}
+                  </button>
                 </div>
-              ) : (
+              )}
+
+              {/* Step 2: OTP Verification */}
+              {step === 'otp' && (
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {t.rich('otpSent', {
+                      email,
+                      strong: (chunks) => (
+                        <span className="font-bold text-[#2D3B42]">
+                          {chunks}
+                        </span>
+                      ),
+                    })}
+                  </p>
+
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="register-otp"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-slate-600"
+                    >
+                      {t('verificationCode')}
+                    </label>
+                    <input
+                      id="register-otp"
+                      name="otp"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      required
+                      pattern="\d{6}"
+                      maxLength={6}
+                      autoFocus
+                      value={otp}
+                      onChange={(e) =>
+                        setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                      }
+                      placeholder="000000"
+                      className="w-full px-4 py-3 rounded-2xl bg-[#FDF1EE]/50 focus:bg-white border border-[#2D3B42]/15 text-[#2D3B42] text-center text-2xl font-bold tracking-[0.5em] tabular-nums placeholder:text-slate-300 placeholder:tracking-[0.5em] focus:outline-none focus:border-[#EF4623] focus:ring-4 focus:ring-[#EF4623]/20 transition-all duration-300"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || otp.length !== 6}
+                    className="w-full py-3.5 px-6 rounded-[30px] bg-[#EF4623] hover:bg-[#D83B19] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#EF4623]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? t('verifying') : t('verifyAndComplete')}
+                  </button>
+
+                  <div className="flex items-center justify-between gap-3 text-xs font-semibold pt-1">
+                    <button
+                      type="button"
+                      onClick={handleBackToForm}
+                      disabled={isSubmitting}
+                      className="text-slate-500 hover:text-[#2D3B42] transition-colors"
+                    >
+                      {t('backToForm')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={isSubmitting}
+                      className="text-[#EF4623] hover:underline disabled:opacity-50 disabled:no-underline"
+                    >
+                      {t('resend')}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Step 1: Registration Form */}
+              {step === 'form' && (
                 <>
+                  {/* Role Switcher Tabs */}
+                  <div className="p-1.5 rounded-2xl bg-[#FDF1EE] border border-[#EF4623]/20 grid grid-cols-2 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setAccountType('CREATOR')}
+                      className={`py-2 px-3 rounded-xl text-xs font-extrabold transition-all duration-300 flex items-center justify-center gap-1.5 ${
+                        accountType === 'CREATOR'
+                          ? 'bg-white text-[#EF4623] shadow-md shadow-[#EF4623]/10'
+                          : 'text-slate-600 hover:text-[#2D3B42]'
+                      }`}
+                    >
+                      <span>✨</span> KOC / Creator
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAccountType('BRAND')}
+                      className={`py-2 px-3 rounded-xl text-xs font-extrabold transition-all duration-300 flex items-center justify-center gap-1.5 ${
+                        accountType === 'BRAND'
+                          ? 'bg-white text-[#EF4623] shadow-md shadow-[#EF4623]/10'
+                          : 'text-slate-600 hover:text-[#2D3B42]'
+                      }`}
+                    >
+                      <span>🏢</span> {t('brand')}
+                    </button>
+                  </div>
+
                   {/* SSO Buttons */}
                   <div className="space-y-2">
                     {/* Google SSO Button */}
@@ -280,7 +491,7 @@ export function EditorialRegister() {
                       {t('google')}
                     </button>
 
-                    {/* TikTok SSO Button (Chỉ hiển thị khi chọn role KOC / Creator) */}
+                    {/* TikTok SSO Button */}
                     {accountType === 'CREATOR' && (
                       <button
                         type="button"
@@ -306,15 +517,6 @@ export function EditorialRegister() {
                     </span>
                     <div className="h-px bg-[#2D3B42]/10 flex-1" />
                   </div>
-
-                  {error && (
-                    <p
-                      role="alert"
-                      className="text-xs font-semibold text-[#EF4623] bg-[#FDF1EE] border border-[#EF4623]/30 rounded-xl px-4 py-2.5"
-                    >
-                      {error}
-                    </p>
-                  )}
 
                   {/* Form */}
                   <form onSubmit={handleSubmit} className="space-y-3.5">
@@ -370,7 +572,6 @@ export function EditorialRegister() {
                           id="register-phone"
                           name="phone"
                           type="tel"
-                          required
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="0987 654 321"
@@ -441,6 +642,10 @@ export function EditorialRegister() {
                         </div>
                       </div>
                     </div>
+
+                    <p className="text-[10px] text-slate-500">
+                      * Tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
+                    </p>
 
                     {/* Terms agreement checkbox */}
                     <label

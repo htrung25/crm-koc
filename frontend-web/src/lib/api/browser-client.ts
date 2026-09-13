@@ -97,10 +97,6 @@ export class ApiRequestError extends Error {
     message: string,
     public readonly status: number,
     public readonly businessCode?: string,
-    /**
-     * Chỉ có ở 422 IP_WHITELIST_WOULD_LOCK_YOU_OUT: IP thật của người đang
-     * thao tác, để dialog tự khoá mời họ thêm chính IP đó vào danh sách.
-     */
     public readonly clientIp?: string
   ) {
     super(message);
@@ -108,7 +104,7 @@ export class ApiRequestError extends Error {
   }
 }
 
-/** Nest trả message dạng string hoặc string[] (ValidationPipe). */
+// Nest trả message dạng string hoặc string[] (ValidationPipe).
 function messageOf(body: unknown, fallback: string): string {
   const raw =
     typeof body === 'object' && body !== null && 'message' in body
@@ -125,13 +121,7 @@ function messageOf(body: unknown, fallback: string): string {
   return fallback;
 }
 
-/**
- * Đọc body JSON của Route Handler; ném ApiRequestError khi status không ok.
- *
- * Mọi màn hình đều cần đúng ba mảnh này để xử lý lỗi — status (401 thì đá về
- * trang đăng nhập), businessCode (để dịch) và clientIp (dialog tự khoá) — nên
- * chúng nằm trên error thay vì mỗi nơi tự bóc lại từ body.
- */
+// Đọc body JSON của Route Handler; ném ApiRequestError khi status không ok.
 export async function readJson<T>(
   response: Response,
   fallbackMessage = 'Yêu cầu thất bại'

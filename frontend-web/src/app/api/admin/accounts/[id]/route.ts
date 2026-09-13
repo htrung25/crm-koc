@@ -10,10 +10,6 @@ import { errorResponse, requireSession } from '@/lib/api/route-session';
 
 type Context = { params: Promise<{ id: string }> };
 
-/**
- * SuperAdminGuard ném ForbiddenException nên Nest không kèm businessCode.
- * Chuẩn hoá ở đây để UI so mã, không phải so chuỗi tiếng Anh của backend.
- */
 function adminErrorResponse(error: unknown) {
   if (
     error instanceof ApiError &&

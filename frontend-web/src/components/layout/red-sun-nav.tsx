@@ -8,10 +8,6 @@ import Link from 'next/link';
 import { LocaleToggle } from '@/components/ui/locale-toggle';
 
 interface RedSunNavProps {
-  /**
-   * Nền của trang bên dưới nav. "light" = chữ ink (landing hero trắng),
-   * "dark" = chữ trắng (các trang login nền #2D3B42).
-   */
   tone?: 'light' | 'dark';
 }
 

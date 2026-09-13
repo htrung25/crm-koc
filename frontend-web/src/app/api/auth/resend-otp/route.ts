@@ -39,10 +39,19 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ApiError) {
       return NextResponse.json(
-        { message: error.message },
+        { message: error.message, businessCode: error.businessCode },
         { status: error.status }
       );
     }
-    throw error;
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Gửi lại OTP thất bại. Vui lòng thử lại sau.',
+        businessCode: 'INTERNAL_ERROR',
+      },
+      { status: 500 }
+    );
   }
 }

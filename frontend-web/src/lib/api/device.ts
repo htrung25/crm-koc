@@ -2,11 +2,7 @@ import { DEVICE_ID_COOKIE } from '@/features/auth/session';
 
 export { DEVICE_ID_COOKIE };
 
-/**
- * Đọc deviceId từ cookie trình duyệt do proxy.ts khởi tạo.
- * Trả chuỗi rỗng nếu chưa có: proxy.ts là nơi DUY NHẤT sinh và ghi cookie
- * device_id, để cờ Secure/SameSite chỉ do một chỗ quyết định.
- */
+// Đọc deviceId từ cookie trình duyệt do proxy.ts khởi tạo.
 export function getDeviceId(): string {
   if (typeof document === 'undefined') return '';
 
