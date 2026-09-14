@@ -10,6 +10,7 @@ import { createClient } from 'redis';
 // import type: isolatedModules + emitDecoratorMetadata cấm dùng type thường
 // trong chữ ký constructor đã decorate
 import type { RedisClientType } from 'redis';
+import { loadAuthRedisFunctions } from './redis-functions';
 
 export const REDIS_CLIENT = 'REDIS_CLIENT';
 
@@ -48,6 +49,13 @@ export const redisKeys = {
         );
 
         await client.connect();
+        try {
+          await loadAuthRedisFunctions(client);
+        } catch (error) {
+          // Failed startup must not leave a reconnecting Redis socket alive.
+          client.destroy();
+          throw error;
+        }
         logger.log('Redis connected');
 
         return client;
