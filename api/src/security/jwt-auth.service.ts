@@ -10,7 +10,11 @@ import { ESessionEventType } from '../common/enum/session-event-types.enum';
 import { SessionService } from './session.service';
 import type { AdminSession } from './session.service';
 import { SessionEventService } from './session-event.service';
-import { EDeviceCheck, checkDevice } from '../common/util/device-binding.util';
+import {
+  EDeviceCheck,
+  checkDevice,
+  requireDeviceId,
+} from '../common/util/device-binding.util';
 
 /** Chỉ chứa thứ thật sự cần: client đọc được payload nên không nhét gì nhạy cảm. */
 interface BaseJwtPayload {
@@ -109,6 +113,7 @@ export class JwtAuthService {
     accountId: string,
     context: LoginContext,
   ): Promise<TokenPair & { sessionId: string }> {
+    const deviceId = requireDeviceId(context.deviceId);
     const sessionId = uuidv7();
     const jti = uuidv7();
 
@@ -120,7 +125,7 @@ export class JwtAuthService {
       role: context.role,
       csrfToken: uuidv7(),
       currentJti: jti,
-      deviceId: context.deviceId ?? undefined,
+      deviceId,
       loginIp: context.ipAddress ?? undefined,
       loginUserAgent: context.userAgent ?? undefined,
     });
@@ -179,6 +184,27 @@ export class JwtAuthService {
       throw new UnauthorizedException('session is no longer valid');
     }
 
+    const device = checkDevice(session.deviceId, context.deviceId ?? null);
+    if (device === EDeviceCheck.BACKFILL && context.deviceId) {
+      await this.sessionService.attachDevice(session, context.deviceId);
+    }
+    // Chặn cả MISSING, không chỉ MISMATCH: bỏ header là cách lách rẻ nhất.
+    if (
+      this.deviceBindingEnforced &&
+      (device === EDeviceCheck.MISMATCH || device === EDeviceCheck.MISSING)
+    ) {
+      this.logger.warn(
+        `Refresh bị từ chối vì thiết bị (${device}) account=${session.adminId} session=${payload.session_id}`,
+      );
+      throw new UnauthorizedException({
+        businessCode: EBusinessCode.DEVICE_MISMATCH,
+        message:
+          device === EDeviceCheck.MISSING
+            ? 'device id header is required'
+            : 'token is not valid for this device',
+      });
+    }
+
     const newJti = uuidv7();
     const rotated = await this.sessionService.rotateJti(
       payload.sub,
@@ -205,27 +231,6 @@ export class JwtAuthService {
         `Refresh token bị dùng lại, đã huỷ phiên ${payload.session_id}`,
       );
       throw new UnauthorizedException('session is no longer valid');
-    }
-
-    const device = checkDevice(session.deviceId, context.deviceId ?? null);
-    if (device === EDeviceCheck.BACKFILL && context.deviceId) {
-      await this.sessionService.attachDevice(session, context.deviceId);
-    }
-    // Chặn cả MISSING, không chỉ MISMATCH: bỏ header là cách lách rẻ nhất.
-    if (
-      this.deviceBindingEnforced &&
-      (device === EDeviceCheck.MISMATCH || device === EDeviceCheck.MISSING)
-    ) {
-      this.logger.warn(
-        `Refresh bị từ chối vì thiết bị (${device}) account=${session.adminId} session=${payload.session_id}`,
-      );
-      throw new UnauthorizedException({
-        businessCode: EBusinessCode.DEVICE_MISMATCH,
-        message:
-          device === EDeviceCheck.MISSING
-            ? 'device id header is required'
-            : 'token is not valid for this device',
-      });
     }
 
     await this.logRefreshIfSuspicious(session, context);

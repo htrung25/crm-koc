@@ -18,6 +18,7 @@ import {
   ApiBody,
   ApiConflictResponse,
   ApiForbiddenResponse,
+  ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -54,7 +55,10 @@ import { LoginDto, LoginAdminDto } from './dto/login.dto';
 import { LoginResponseDto, RegisterResponseDto } from './dto/auth.dto';
 import { RefreshTokenDto, TokenPairResponseDto } from './dto/refresh-token.dto';
 import { extractClientIp } from '../../common/util/ip.util';
-import { readDeviceId } from '../../common/util/device-binding.util';
+import {
+  readDeviceId,
+  requireDeviceId,
+} from '../../common/util/device-binding.util';
 // import type: isolatedModules + emitDecoratorMetadata cấm type thường trong
 // chữ ký đã decorate
 import type { Request as ExpressRequest } from 'express';
@@ -128,6 +132,13 @@ export class AuthController {
   @Post('/verify-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify the login OTP and receive a JWT token' })
+  @ApiHeader({
+    name: 'x-device-id',
+    required: true,
+    description:
+      'Stable browser/app installation identifier, 1–128 letters, digits, dots, underscores, colons or hyphens',
+  })
+  @ApiBadRequestResponse({ description: 'Missing or invalid device id header' })
   @ApiOkResponse({ type: LoginResponseDto })
   @ApiUnauthorizedResponse({ description: 'OTP is wrong or has expired' })
   @ApiForbiddenResponse({
@@ -137,6 +148,8 @@ export class AuthController {
     @Body() dto: AuthVerifyOtpDto,
     @Request() request: ExpressRequest,
   ): Promise<LoginResponseDto> {
+    // Reject an invalid device header before consuming the one-use OTP.
+    requireDeviceId(readDeviceId(request.headers));
     const account = await this.requireAccountByEmail(dto.email);
     const result = await this.otpService.verify(account.id, dto.otp);
     const ipAddress = extractClientIp(request);

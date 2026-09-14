@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { RedisClientType } from 'redis';
 import { ERole } from '../common/enum/roles.enum';
@@ -8,13 +14,15 @@ import {
 } from '../common/constants/session.constants';
 import { ESessionEventType } from '../common/enum/session-event-types.enum';
 import { SessionEventService } from './session-event.service';
+import { SESSION_FUNCTIONS } from '../../scripts/session.scripts.js';
+import { callAuthRedisFunction } from '../infra/redis-functions';
+import { requireDeviceId } from '../common/util/device-binding.util';
 
 export interface AdminSession {
   sessionId: string;
   adminId: string;
   email: string;
   displayName: string;
-  /** null = chưa chọn vai trò; trần phiên khi đó tính theo mức brand/creator. */
   role: ERole | null;
   csrfToken: string;
   currentJti: string;
@@ -43,220 +51,183 @@ export class SessionService {
     private readonly configService: ConfigService,
     private readonly sessionEventService: SessionEventService,
   ) {
-    this.ttlSeconds = this.configService.get<number>(
+    this.ttlSeconds = this.positiveConfig(
       'SESSION_TTL_SECONDS',
       7 * 24 * 60 * 60,
     );
-    this.absoluteTtlSeconds = this.configService.get<number>(
+    this.absoluteTtlSeconds = this.positiveConfig(
       'SESSION_ABSOLUTE_TTL_SECONDS',
       7 * 24 * 60 * 60,
     );
-    this.touchIntervalSeconds = Number(
-      this.configService.get('SESSION_TOUCH_INTERVAL_SECONDS', 5 * 60),
+    this.touchIntervalSeconds = this.positiveConfig(
+      'SESSION_TOUCH_INTERVAL_SECONDS',
+      5 * 60,
     );
-    this.cookieName = this.configService.get<string>(
+    this.cookieName = configService.get<string>(
       SESSION_COOKIE_NAME_KEY,
       SESSION_COOKIE_DEFAULT_NAME,
     );
-    // Admin siết chặt hơn: ít thiết bị hơn, thiệt hại khi lộ token cũng nhỏ hơn.
-    this.maxSessionsAdmin = this.configService.get<number>(
-      'SESSION_MAX_PER_ADMIN',
-      3,
-    );
-    this.maxSessionsUser = this.configService.get<number>(
-      'SESSION_MAX_PER_USER',
-      10,
-    );
+    this.maxSessionsAdmin = this.positiveConfig('SESSION_MAX_PER_ADMIN', 3);
+    this.maxSessionsUser = this.positiveConfig('SESSION_MAX_PER_USER', 10);
+    if (/[{}]/.test(this.cookieName))
+      throw new Error(
+        'SESSION_COOKIE_NAME must not contain Redis hash-tag braces',
+      );
+  }
+
+  private positiveConfig(key: string, fallback: number): number {
+    const value = Number(this.configService.get(key, fallback));
+    if (!Number.isSafeInteger(value) || value < 1 || value > 2147483647) {
+      throw new Error(`${key} must be a positive integer <= 2147483647`);
+    }
+    return value;
   }
 
   private getUserKey(adminId: string): string {
     return `${this.cookieName}:user:${adminId}`;
   }
 
+  /** Keep the legacy sessions key; hashing its full name puts the index in the same cluster slot. */
+  private keys(accountId: string): string[] {
+    if (!accountId || /[{}]/.test(accountId))
+      throw new BadRequestException('invalid account id');
+    const key = this.getUserKey(accountId);
+    return [key, `{${key}}:devices`];
+  }
+
+  private run(
+    functionName: string,
+    accountId: string,
+    payload: Record<string, unknown>,
+  ) {
+    return callAuthRedisFunction(this.redis, functionName, {
+      keys: this.keys(accountId),
+      arguments: [JSON.stringify({ ...payload, accountId })],
+    });
+  }
+
   async createSession(
     data: Omit<AdminSession, 'createdAt' | 'expiresAt' | 'absoluteExpiresAt'>,
   ): Promise<AdminSession> {
+    const deviceId = requireDeviceId(data.deviceId);
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + this.ttlSeconds * 1000);
     const absoluteExpiresAt = new Date(
       now.getTime() + this.absoluteTtlSeconds * 1000,
     );
     const session: AdminSession = {
       ...data,
+      deviceId,
       createdAt: now.toISOString(),
-      expiresAt: expiresAt.toISOString(),
+      expiresAt: new Date(
+        Math.min(
+          now.getTime() + this.ttlSeconds * 1000,
+          absoluteExpiresAt.getTime(),
+        ),
+      ).toISOString(),
       absoluteExpiresAt: absoluteExpiresAt.toISOString(),
     };
-
-    await this.writeSession(session, this.ttlSeconds);
-    await this.enforceSessionCap(session);
-    return session;
-  }
-
-  private async enforceSessionCap(current: AdminSession): Promise<void> {
     const cap =
-      current.role === ERole.ADMIN
+      session.role === ERole.ADMIN
         ? this.maxSessionsAdmin
         : this.maxSessionsUser;
-
-    const key = this.getUserKey(current.adminId);
-    const all = await this.redis.hGetAll(key);
-    const now = Date.now();
-
-    // Dọn xác TRƯỚC khi đếm: phiên quá hạn tuyệt đối vẫn còn field trong hash,
-    // để nguyên thì chúng chiếm slot và đá phiên đang sống thay mình.
-    const dead: string[] = [];
-    const live: { id: string; at: number }[] = [];
-    for (const [id, raw] of Object.entries(all)) {
-      const session = this.parseSession(raw);
-      if (!session || this.isExpired(session, now)) {
-        dead.push(id);
-        continue;
-      }
-      live.push({
-        id,
-        at: Date.parse(session.lastSeenAt ?? session.createdAt) || 0,
-      });
+    const raw = await this.run(SESSION_FUNCTIONS.create, session.adminId, {
+      session,
+      cap,
+    });
+    const result = JSON.parse(raw as string) as {
+      removed:
+        | {
+            sessionId: string;
+            replacedBy: string;
+            reason: 'same_device_login' | 'duplicate_device' | 'device_limit';
+          }[]
+        | Record<string, never>;
+    };
+    // Redis cjson encodes an empty Lua list as {}.
+    const removed = Array.isArray(result.removed) ? result.removed : [];
+    const evicted = removed.filter((item) => item.reason === 'device_limit');
+    if (evicted.length) {
+      this.logger.warn(
+        `Account ${session.adminId} vượt trần ${cap} thiết bị, thu hồi ${evicted.length} phiên`,
+      );
     }
-    if (dead.length) await this.redis.hDel(key, dead);
-    if (live.length <= cap) return;
-
-    // Đá thiết bị lâu không dùng nhất, không phải đăng nhập sớm nhất: máy dùng
-    // hằng ngày từ tuần trước đáng giữ hơn điện thoại đăng nhập hôm qua rồi bỏ.
-    const victims = live
-      .filter((s) => s.id !== current.sessionId)
-      .sort((a, b) => a.at - b.at)
-      .slice(0, live.length - cap)
-      .map((s) => s.id);
-
-    if (!victims.length) return;
-    await this.redis.hDel(key, victims);
-    this.logger.warn(
-      `Account ${current.adminId} vượt trần ${cap} phiên, đá ${victims.length}`,
-    );
-
-    // Ghi từng phiên bị đá để còn lần được thiết bị nào biến mất lúc nào.
     await Promise.all(
-      victims.map((sessionId) =>
+      removed.map((item) =>
         this.sessionEventService.record({
           eventType: ESessionEventType.EVICTED,
-          accountId: current.adminId,
-          sessionId,
-          metadata: { cap, replacedBy: current.sessionId },
+          accountId: session.adminId,
+          sessionId: item.sessionId,
+          metadata: {
+            cap,
+            replacedBy: item.replacedBy,
+            triggeredBy: session.sessionId,
+            reason: item.reason,
+          },
         }),
       ),
     );
-  }
-
-  /** HSET + HEXPIRE luôn đi cùng nhau: field không TTL sẽ sống mãi. */
-  private async writeSession(
-    session: AdminSession,
-    ttlSeconds: number,
-  ): Promise<void> {
-    const key = this.getUserKey(session.adminId);
-    await this.redis.hSet(key, session.sessionId, JSON.stringify(session));
-    await this.redis.hExpire(key, session.sessionId, ttlSeconds);
+    return session;
   }
 
   async getSession(
     adminId: string,
     sessionId: string,
   ): Promise<AdminSession | null> {
-    const key = this.getUserKey(adminId);
-    const raw = await this.redis.hGet(key, sessionId);
-    if (!raw) return null;
-
-    const session = this.parseSession(raw);
-    if (!session || this.isExpired(session, Date.now())) {
-      await this.redis.hDel(key, sessionId);
-      return null;
-    }
-    return session;
+    const raw = await this.run(SESSION_FUNCTIONS.read, adminId, { sessionId });
+    return typeof raw === 'string' ? (JSON.parse(raw) as AdminSession) : null;
   }
 
-  /** JSON hỏng coi như phiên chết: không đọc được thì không tin được. */
-  private parseSession(raw: string): AdminSession | null {
-    try {
-      return JSON.parse(raw) as AdminSession;
-    } catch {
-      return null;
-    }
-  }
-
-  private isExpired(session: AdminSession, nowMs: number): boolean {
-    if (Date.parse(session.expiresAt) < nowMs) return true;
-    return (
-      session.absoluteExpiresAt !== undefined &&
-      Date.parse(session.absoluteExpiresAt) < nowMs
-    );
-  }
-
+  /** Read/patch the latest Redis value, never write a caller's stale session snapshot. */
   async refreshSession(session: AdminSession): Promise<void> {
-    const now = new Date();
-
-    // lastSeenAt là mốc lần ghi gần nhất; phiên mới tạo thì lấy createdAt.
-    const lastTouch = new Date(session.lastSeenAt ?? session.createdAt);
-    const sinceLastTouchMs = now.getTime() - lastTouch.getTime();
-    if (sinceLastTouchMs < this.touchIntervalSeconds * 1000) {
-      return;
-    }
-
-    const expiresAt = new Date(now.getTime() + this.ttlSeconds * 1000);
-    session.lastSeenAt = now.toISOString();
-    session.expiresAt = expiresAt.toISOString();
-    await this.writeSession(session, this.ttlSeconds);
+    const raw = await this.update(session.adminId, session.sessionId, {
+      operation: 'touch',
+      touchIntervalMs: this.touchIntervalSeconds * 1000,
+    });
+    this.acceptUpdate(session, raw);
   }
 
-  /**
-   * Gắn deviceId cho phiên chưa có (phiên tạo trước khi bật device-binding).
-   * KHÔNG đụng expiresAt: đây là backfill, không phải hoạt động của người dùng
-   * nên không được kéo dài hạn phiên. TTL Redis đặt theo thời gian còn lại.
-   */
   async attachDevice(session: AdminSession, deviceId: string): Promise<void> {
-    const remainingMs = Date.parse(session.expiresAt) - Date.now();
-    if (remainingMs <= 0) {
-      return;
+    const raw = await this.update(session.adminId, session.sessionId, {
+      operation: 'attach',
+      deviceId: requireDeviceId(deviceId),
+    });
+    this.acceptUpdate(session, raw);
+  }
+
+  private acceptUpdate(session: AdminSession, raw: string): void {
+    if (raw === 'missing' || raw === 'device_mismatch') {
+      throw new UnauthorizedException(
+        'session is no longer valid; sign in again',
+      );
     }
-    session.deviceId = deviceId;
-    await this.writeSession(session, Math.ceil(remainingMs / 1000));
+    Object.assign(session, JSON.parse(raw) as AdminSession);
+  }
+
+  private async update(
+    adminId: string,
+    sessionId: string,
+    payload: Record<string, unknown>,
+  ): Promise<string> {
+    const now = new Date();
+    return (await this.run(SESSION_FUNCTIONS.update, adminId, {
+      ...payload,
+      sessionId,
+      nowIso: now.toISOString(),
+      expiresAt: new Date(now.getTime() + this.ttlSeconds * 1000).toISOString(),
+    })) as string;
   }
 
   async deleteSession(adminId: string, sessionId: string): Promise<void> {
-    await this.redis.hDel(this.getUserKey(adminId), sessionId);
+    await this.run(SESSION_FUNCTIONS.delete, adminId, { sessionId });
   }
 
-  /**
-   * Xoa moi phien cua mot account. Tra ve so phien da xoa.
-   */
   async deleteAllByAccount(
     adminId: string,
     exceptSessionId?: string,
   ): Promise<number> {
-    const key = this.getUserKey(adminId);
-    const all = await this.redis.hGetAll(key);
-    const now = Date.now();
-
-    // Xác cũng xoá, nhưng không tính vào số trả về: con số đó dùng để báo đã
-    // đá bao nhiêu thiết bị ĐANG hoạt động.
-    const targets: string[] = [];
-    let revoked = 0;
-    for (const [id, raw] of Object.entries(all)) {
-      const session = this.parseSession(raw);
-      const expired = !session || this.isExpired(session, now);
-      // Phiên được giữ mà đã chết thì vẫn xoá, giữ lại chẳng để làm gì.
-      if (id === exceptSessionId && !expired) continue;
-      targets.push(id);
-      if (!expired) revoked++;
-    }
-    if (!targets.length) return 0;
-
-    // Xoá cả hash khi không giữ lại gì: rẻ hơn HDEL từng field.
-    if (targets.length === Object.keys(all).length) {
-      await this.redis.del(key);
-    } else {
-      await this.redis.hDel(key, targets);
-    }
-    return revoked;
+    return (await this.run(SESSION_FUNCTIONS.deleteAccount, adminId, {
+      exceptSessionId,
+    })) as number;
   }
 
   async rotateJti(
@@ -265,31 +236,11 @@ export class SessionService {
     expectedJti: string,
     newJti: string,
   ): Promise<'ok' | 'mismatch' | 'missing'> {
-    const script = `
-      local raw = redis.call('HGET', KEYS[1], ARGV[1])
-      if not raw then return 'missing' end
-      local session = cjson.decode(raw)
-      if session.currentJti ~= ARGV[2] then return 'mismatch' end
-      session.currentJti = ARGV[3]
-      session.lastSeenAt = ARGV[4]
-      session.expiresAt = ARGV[5]
-      redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(session))
-      redis.call('HEXPIRE', KEYS[1], ARGV[6], 'FIELDS', 1, ARGV[1])
-      return 'ok'
-    `;
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + this.ttlSeconds * 1000);
-    const result = await this.redis.eval(script, {
-      keys: [this.getUserKey(adminId)],
-      arguments: [
-        sessionId,
-        expectedJti,
-        newJti,
-        now.toISOString(),
-        expiresAt.toISOString(),
-        String(this.ttlSeconds),
-      ],
+    const raw = await this.update(adminId, sessionId, {
+      operation: 'rotate',
+      expectedJti,
+      newJti,
     });
-    return result as 'ok' | 'mismatch' | 'missing';
+    return raw === 'missing' || raw === 'mismatch' ? raw : 'ok';
   }
 }

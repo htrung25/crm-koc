@@ -12,6 +12,7 @@ FROM deps AS build
 COPY tsconfig.json tsconfig.build.json nest-cli.json ./
 COPY src ./src
 COPY migrations ./migrations
+COPY scripts/otp.scripts.js scripts/session.scripts.js ./scripts/
 RUN npm run build
 FROM deps AS prod-deps
 RUN npm prune --omit=dev

@@ -9,6 +9,8 @@ import {
 } from '../common/constants/otp.constants';
 import { EOtpResult } from '../common/enum/otp-result.enum';
 import { REDIS_CLIENT } from '../infra/redis.module';
+import { OTP_FUNCTIONS } from '../../scripts/otp.scripts.js';
+import { callAuthRedisFunction } from '../infra/redis-functions';
 
 @Injectable()
 export class OtpService {
@@ -69,38 +71,22 @@ export class OtpService {
     | EOtpResult.LOCKED
     | EOtpResult.INVALID
   > {
-    const raw = await this.redis.get(`${OTP_PENDING_PREFIX}${accountId}`);
-    if (!raw) return EOtpResult.EXPIRED;
-
-    const data = JSON.parse(raw) as { otp: string; attempts: number };
-
-    // Dùng get thay vì exists vì Redis cluster proxy không hỗ trợ exists
-    const lockValue = await this.redis.get(`${OTP_LOCK_PREFIX}${accountId}`);
-    if (lockValue !== null) return EOtpResult.LOCKED;
-
-    if (inputOtp === data.otp) {
-      await this.redis.del(`${OTP_PENDING_PREFIX}${accountId}`);
-      await this.redis.del(`${OTP_RESEND_PREFIX}${accountId}`);
-      return { accountId };
-    }
-
-    data.attempts += 1;
-
-    if (data.attempts >= this.maxAttempts) {
-      await this.redis.set(`${OTP_LOCK_PREFIX}${accountId}`, '1', {
-        EX: this.lockTtl,
-      });
-      return EOtpResult.LOCKED;
-    }
-
-    // Cập nhật lại số lần thử, giữ nguyên TTL còn lại
-    await this.redis.set(
-      `${OTP_PENDING_PREFIX}${accountId}`,
-      JSON.stringify(data),
-      { EX: this.otpTtl },
+    const result = await callAuthRedisFunction(
+      this.redis,
+      OTP_FUNCTIONS.verify,
+      {
+        keys: [
+          `${OTP_PENDING_PREFIX}${accountId}`,
+          `${OTP_LOCK_PREFIX}${accountId}`,
+          `${OTP_RESEND_PREFIX}${accountId}`,
+        ],
+        arguments: [inputOtp, String(this.maxAttempts), String(this.lockTtl)],
+      },
     );
-
-    return EOtpResult.INVALID;
+    if (result === 'ok') return { accountId };
+    if (result === EOtpResult.LOCKED) return EOtpResult.LOCKED;
+    if (result === EOtpResult.INVALID) return EOtpResult.INVALID;
+    return EOtpResult.EXPIRED;
   }
 
   /**
