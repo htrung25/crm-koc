@@ -48,35 +48,41 @@ export class SessionService {
   constructor(
     @Inject('REDIS_CLIENT')
     private readonly redis: RedisClientType,
-    private readonly configService: ConfigService,
+    configService: ConfigService,
     private readonly sessionEventService: SessionEventService,
   ) {
-    this.ttlSeconds = this.positiveConfig(
+    this.ttlSeconds = this.positiveInteger(
       'SESSION_TTL_SECONDS',
-      7 * 24 * 60 * 60,
+      configService.get('SESSION_TTL_SECONDS', 7 * 24 * 60 * 60),
     );
-    this.absoluteTtlSeconds = this.positiveConfig(
+    this.absoluteTtlSeconds = this.positiveInteger(
       'SESSION_ABSOLUTE_TTL_SECONDS',
-      7 * 24 * 60 * 60,
+      configService.get('SESSION_ABSOLUTE_TTL_SECONDS', 7 * 24 * 60 * 60),
     );
-    this.touchIntervalSeconds = this.positiveConfig(
+    this.touchIntervalSeconds = this.positiveInteger(
       'SESSION_TOUCH_INTERVAL_SECONDS',
-      5 * 60,
+      configService.get('SESSION_TOUCH_INTERVAL_SECONDS', 5 * 60),
     );
     this.cookieName = configService.get<string>(
       SESSION_COOKIE_NAME_KEY,
       SESSION_COOKIE_DEFAULT_NAME,
     );
-    this.maxSessionsAdmin = this.positiveConfig('SESSION_MAX_PER_ADMIN', 3);
-    this.maxSessionsUser = this.positiveConfig('SESSION_MAX_PER_USER', 10);
+    this.maxSessionsAdmin = this.positiveInteger(
+      'SESSION_MAX_PER_ADMIN',
+      configService.get('SESSION_MAX_PER_ADMIN', 3),
+    );
+    this.maxSessionsUser = this.positiveInteger(
+      'SESSION_MAX_PER_USER',
+      configService.get('SESSION_MAX_PER_USER', 10),
+    );
     if (/[{}]/.test(this.cookieName))
       throw new Error(
         'SESSION_COOKIE_NAME must not contain Redis hash-tag braces',
       );
   }
 
-  private positiveConfig(key: string, fallback: number): number {
-    const value = Number(this.configService.get(key, fallback));
+  private positiveInteger(key: string, raw: unknown): number {
+    const value = Number(raw);
     if (!Number.isSafeInteger(value) || value < 1 || value > 2147483647) {
       throw new Error(`${key} must be a positive integer <= 2147483647`);
     }
