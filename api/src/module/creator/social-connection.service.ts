@@ -23,7 +23,7 @@ import {
   HandleCallbackInput,
   NormalizedSocialProfile,
   OAuthStatePayload,
-} from './types/social.types';
+} from './interfaces/social.interfaces';
 
 const STATE_TTL_SECONDS = 10 * 60;
 
@@ -54,10 +54,7 @@ const CONNECTION_COLUMNS = {
   createdAt: true,
 } as const;
 
-export type SocialConnection = Pick<
-  SocialAccount,
-  keyof typeof CONNECTION_COLUMNS
->;
+import type { SocialConnection } from './types/social.types';
 
 @Injectable()
 export class SocialConnectionsService {

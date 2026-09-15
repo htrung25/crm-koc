@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { AuthEntity } from '../../auth/entities/auth.entity';
 import { AdminStatus } from '../constants/status.enum';
-import { EAdminRole } from '../enum/admin-roles.enum';
+import { EAdminRole } from '../constants/admin-roles.enum';
 
 @Entity('admin_users')
 export class AdminUser {

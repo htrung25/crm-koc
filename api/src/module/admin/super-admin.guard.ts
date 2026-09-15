@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import type { Request } from 'express';
 import { AdminUser } from './entities/admin-user.entity';
-import { EAdminRole } from './enum/admin-roles.enum';
+import { EAdminRole } from './constants/admin-roles.enum';
 
 /** JwtAuthGuard gắn req.user trước khi guard này chạy. */
 type RequestWithUser = Request & { user?: { id?: string } };

@@ -24,18 +24,7 @@ import {
 import { KafkaService } from '../../infra/kafka.service';
 import { AUDIT_LOG_TOPIC, AuditLogEvent } from './constants/audit-log.kafka';
 
-export interface WriteAuditLogDto {
-  category: EAuditLogCategory;
-  action: EAuditLogAction;
-  accountId?: string | null;
-  emailAttempted?: string | null;
-  ipAddress?: string | null;
-  userAgent?: string | null;
-  resourceType?: string | null;
-  resourceId?: string | null;
-  businessCode?: number | null;
-  metadata?: Record<string, unknown> | null;
-}
+import type { WriteAuditLogDto } from './interfaces/admin.interfaces';
 
 @Injectable()
 export class AuditLogService {
