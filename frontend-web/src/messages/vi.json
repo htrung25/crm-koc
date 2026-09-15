@@ -293,6 +293,10 @@
     "kocs": {
       "title": "Danh sách KOC",
       "greeting": "Tra cứu hồ sơ và trạng thái tài khoản Creator."
+    },
+    "campaigns": {
+      "title": "Quản lý chiến dịch",
+      "greeting": "Duyệt, theo dõi và xử lý toàn bộ chiến dịch của các thương hiệu."
     }
   },
   "marketing": {
