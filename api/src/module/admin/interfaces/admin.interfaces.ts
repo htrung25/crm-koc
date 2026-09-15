@@ -1,4 +1,3 @@
-import { AuditLog } from '../entities/audit-log.entity';
 import { AuthEntity } from '../../auth/entities/auth.entity';
 import { EAdminRole } from '../constants/admin-roles.enum';
 
@@ -11,7 +10,8 @@ export interface WriteAuditLogDto {
   userAgent?: string | null;
   resourceType?: string | null;
   resourceId?: string | null;
-  businessCode?: import('../../../common/enum/business-code.enum').EBusinessCode | null;
+  businessCode?:
+    import('../../../common/enum/business-code.enum').EBusinessCode | null;
   metadata?: Record<string, unknown> | null;
 }
 

@@ -17,10 +17,6 @@ import {
 } from './constants/audit-log.constants';
 import { AuditLogFilterDto } from './dto/audit-log.dto';
 import { AuditLog } from './entities/audit-log.entity';
-import {
-  EAuditLogAction,
-  EAuditLogCategory,
-} from '../../common/enum/audit-log.enum';
 import { KafkaService } from '../../infra/kafka.service';
 import { AUDIT_LOG_TOPIC, AuditLogEvent } from './constants/audit-log.kafka';
 

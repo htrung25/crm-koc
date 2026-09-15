@@ -1,4 +1,3 @@
-import { ERole } from 'src/common/enum/roles.enum';
 import { EKycStatus } from 'src/common/enum/kyc.enum';
 import { EKycRejectReason } from 'src/common/enum/kyc.enum';
 import { KycDocument } from '../entities/kyc-document.entity';
