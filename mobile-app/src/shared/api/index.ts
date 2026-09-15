@@ -1,4 +1,9 @@
-export { apiClient } from './client';
-export { ApiError, toApiError, type ApiErrorKind } from './errors';
-export { createQueryClient } from './query-client';
-export { setSessionExpiredHandler } from './session-bridge';
+export { apiClient } from '@/shared/api/client';
+export {
+  ApiError,
+  toApiError,
+  type ApiErrorKind,
+  type ApiErrorIssue,
+} from '@/shared/api/errors';
+export { queryClient } from '@/shared/api/query-client';
+export { setSessionExpiredHandler } from '@/shared/api/session-bridge';

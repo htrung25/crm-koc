@@ -1,8 +1,8 @@
 /** Khớp ERole / EAccountStatus của API — giữ tay, không sinh tự động. */
-export const ROLES = ['ADMIN', 'BRAND', 'CREATOR'] as const;
+export const ROLES = ['admin', 'brand', 'creator'] as const;
 export type Role = (typeof ROLES)[number];
 
-export const ACCOUNT_STATUSES = ['ACTIVE', 'PENDING', 'SUSPENDED', 'BANNED'] as const;
+export const ACCOUNT_STATUSES = [1, 2, 3, 4] as const;
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
 
 export type Account = {
@@ -27,4 +27,14 @@ export type LoginResponse = TokenPair & {
 export type OtpChallenge = {
   requireOtp: boolean;
   message: string;
+};
+
+/** Vai trò nằm trong đường dẫn: POST /register/brand | /register/creator. */
+export type RegisterRole = 'brand' | 'creator';
+
+export type RegisterInput = {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
 };

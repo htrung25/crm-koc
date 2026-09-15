@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 
-import { ApiError } from './errors';
+import { ApiError } from '@/shared/api/errors';
 
 export function createQueryClient(): QueryClient {
   return new QueryClient({
@@ -9,7 +9,11 @@ export function createQueryClient(): QueryClient {
         staleTime: 30_000,
         // Retry 4xx là vô ích: lỗi do request chứ không do đường truyền.
         retry: (failureCount, error) => {
-          if (error instanceof ApiError && error.kind !== 'network' && error.kind !== 'server') {
+          if (
+            error instanceof ApiError &&
+            error.kind !== 'network' &&
+            error.kind !== 'server'
+          ) {
             return false;
           }
           return failureCount < 2;
@@ -21,3 +25,6 @@ export function createQueryClient(): QueryClient {
     },
   });
 }
+
+// App chỉ có một cache; session store phải dọn đúng cache mà Provider đang dùng.
+export const queryClient = createQueryClient();
