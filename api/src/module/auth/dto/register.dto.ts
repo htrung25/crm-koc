@@ -18,18 +18,18 @@ export class RegisterDto {
   @IsNotEmpty()
   @MaxLength(255)
   @ApiProperty({ example: 'Huu Trung', maxLength: 255 })
-  name!: string;
+  name: string;
 
   @IsEmail()
   @MaxLength(255)
   @ApiProperty({ example: 'admin@gmail.com', format: 'email' })
-  email!: string;
+  email: string;
 
   @IsString()
   @MinLength(8)
   @Matches(PASSWORD_REGEX, { message: PASSWORD_REGEX_MESSAGE })
   @ApiProperty({ example: 'abc@12345', minLength: 8, format: 'password' })
-  password!: string;
+  password: string;
 
   // Định dạng số do normalizePhone() kiểm tra, ở đây chỉ chặn kiểu và độ dài
   @IsOptional()

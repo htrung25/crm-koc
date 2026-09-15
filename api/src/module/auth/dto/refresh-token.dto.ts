@@ -11,16 +11,16 @@ export class RefreshTokenDto {
     description: 'Refresh token nhận được khi đăng nhập',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
-  refreshToken!: string;
+  refreshToken: string;
 }
 
 export class TokenPairResponseDto {
   @ApiProperty({ description: 'Sống ngắn, dùng cho mọi request thường' })
-  accessToken!: string;
+  accessToken: string;
 
   @ApiProperty({
     description:
       'Token mới; token cũ lập tức vô hiệu. Client PHẢI thay thế token đang giữ.',
   })
-  refreshToken!: string;
+  refreshToken: string;
 }
