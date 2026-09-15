@@ -4,12 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { useTheme } from '@/shared/theme';
-import { Button, Input } from '@/shared/ui';
+import { Button, OtpInput } from '@/shared/ui';
 
-import { useResendOtp, useVerifyOtp } from '../hooks/use-auth';
-import { verifyOtpSchema, type VerifyOtpInput } from '../model/schemas';
+import { useResendOtp, useVerifyOtp } from '@/features/auth/hooks/use-auth';
+import {
+  verifyOtpSchema,
+  type VerifyOtpInput,
+} from '@/features/auth/model/schemas';
 
-import { FormError } from './form-error';
+import { FormError } from '@/features/auth/components/form-error';
 
 export function OtpForm({ email }: { email: string }) {
   const { t } = useTranslation();
@@ -30,21 +33,25 @@ export function OtpForm({ email }: { email: string }) {
         control={control}
         name="otp"
         render={({ field }) => (
-          <Input
+          <OtpInput
             label={t('auth.otp.code')}
-            keyboardType="number-pad"
-            maxLength={6}
-            autoComplete="one-time-code"
-            textContentType="oneTimeCode"
+            length={6}
+            autoFocus
             value={field.value}
             onChangeText={field.onChange}
             onBlur={field.onBlur}
-            error={formState.errors.otp && t(formState.errors.otp.message ?? '')}
+            error={
+              formState.errors.otp && t(formState.errors.otp.message ?? '')
+            }
           />
         )}
       />
       <FormError error={verifyOtp.error ?? resendOtp.error} />
-      <Button title={t('auth.otp.submit')} loading={verifyOtp.isPending} onPress={submit} />
+      <Button
+        title={t('auth.otp.submit')}
+        loading={verifyOtp.isPending}
+        onPress={submit}
+      />
       <Button
         title={t('auth.otp.resend')}
         variant="ghost"

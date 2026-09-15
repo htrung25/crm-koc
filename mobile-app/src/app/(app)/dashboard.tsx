@@ -1,1 +1,1 @@
-export { AccountScreen as default } from '@/features/auth';
+export { RoleRedirect as default } from '@/features/auth';

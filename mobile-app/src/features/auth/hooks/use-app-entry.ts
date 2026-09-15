@@ -2,7 +2,7 @@ import { router, useRootNavigationState } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
-import { useSessionStore } from '../model/session-store';
+import { useSessionStore } from '@/features/auth/model/session-store';
 
 /** Check once per launch, then whenever the app returns from the background. */
 export function useAppEntry(ready: boolean) {

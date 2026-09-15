@@ -2,9 +2,15 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { brand } from '@/shared/theme';
 import { Artwork, Text } from '@/shared/ui';
-import type { Campaign } from '../model/fixtures';
+import type { Campaign } from '@/features/creator/model/discover-fixtures';
 
-export function CampaignCard({ campaign, onPress }: { campaign: Campaign; onPress: () => void }) {
+export function CampaignCard({
+  campaign,
+  onPress,
+}: {
+  campaign: Campaign;
+  onPress: () => void;
+}) {
   const { t } = useTranslation();
   const open = campaign.status === 'open';
   return (
@@ -13,7 +19,11 @@ export function CampaignCard({ campaign, onPress }: { campaign: Campaign; onPres
       onPress={onPress}
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.75 : 1 }]}
     >
-      <Artwork label={t('redsun.productImage')} tone={campaign.tone} style={{ height: 112 }} />
+      <Artwork
+        label={t('redsun.productImage')}
+        tone={campaign.tone}
+        style={{ height: 112 }}
+      />
       <View style={styles.body}>
         <Text style={styles.title}>{t(campaign.titleKey)}</Text>
         <Text style={styles.meta}>{campaign.brand}</Text>

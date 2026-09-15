@@ -1,47 +1,61 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { brand } from '@/shared/theme';
-import { BrandLogo, Choice, Text, TextAction } from '@/shared/ui';
-import { campaigns, categories, creators, normalizeSearch, type Category } from '../model/fixtures';
-import { CampaignCard } from './campaign-card';
+import { useAccountInitial } from '@/features/auth';
+import { AppHeader, Choice, Text, TextAction } from '@/shared/ui';
+import {
+  campaigns,
+  categories,
+  creators,
+  normalizeSearch,
+  type Category,
+} from '@/features/creator/model/discover-fixtures';
+import { CampaignCard } from '@/features/creator/components/campaign-card';
 
-export function DiscoverScreen() {
+export function CreatorFeedScreen() {
   const { t, i18n } = useTranslation();
   const [category, setCategory] = useState<Category>('all');
   const [search, setSearch] = useState('');
   const query = normalizeSearch(search);
-  const register = () => router.push('/register');
-  const login = () => router.push('/sign-in');
+  const initial = useAccountInitial();
+  const showComingSoon = () =>
+    Alert.alert(t('common.comingSoonTitle'), t('common.comingSoonBody'));
+  const viewCampaigns = () => router.push('/creator/campaigns');
   const matches = (itemCategory: string, value: string) =>
-    (category === 'all' || category === itemCategory) && normalizeSearch(value).includes(query);
+    (category === 'all' || category === itemCategory) &&
+    normalizeSearch(value).includes(query);
   const visibleCampaigns = campaigns.filter((c) =>
-    matches(c.category, `${t(c.titleKey)} ${c.brand} ${t(`redsun.categories.${c.category}`)}`),
+    matches(
+      c.category,
+      `${t(c.titleKey)} ${c.brand} ${t(`redsun.categories.${c.category}`)}`
+    )
   );
   const visibleCreators = creators.filter((c) =>
-    matches(c.category, `${c.name} ${c.platform} ${t(`redsun.categories.${c.category}`)}`),
+    matches(
+      c.category,
+      `${c.name} ${c.platform} ${t(`redsun.categories.${c.category}`)}`
+    )
   );
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView edges={['top']} style={styles.screen}>
       <View style={styles.header}>
-        <View style={styles.row}>
-          <BrandLogo />
-          <View style={[styles.row, { gap: 8 }]}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('redsun.notifications')}
-              onPress={login}
-              style={styles.bell}
-            >
-              <Text style={{ color: brand.ink }}>🔔</Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" onPress={login} style={styles.login}>
-              <Text style={styles.loginText}>{t('redsun.login')}</Text>
-            </Pressable>
-          </View>
-        </View>
+        <AppHeader
+          initial={initial}
+          avatarLabel={t('tabs.account')}
+          onAvatarPress={() => router.push('/creator/account')}
+          notificationsLabel={t('redsun.notifications')}
+          onNotificationsPress={showComingSoon}
+        />
         <View style={styles.search}>
           <Text style={{ color: brand.muted, fontSize: 24 }}>⌕</Text>
           <TextInput
@@ -92,7 +106,10 @@ export function DiscoverScreen() {
                 ['184', 'participants'],
                 ['4.85%', 'conversion'],
               ].map(([value, label], index) => (
-                <View key={label} style={[styles.metric, index > 0 && styles.metricBorder]}>
+                <View
+                  key={label}
+                  style={[styles.metric, index > 0 && styles.metricBorder]}
+                >
                   <Text style={styles.metricValue}>
                     {label === 'gmv' ? t('redsun.billion', { value }) : value}
                   </Text>
@@ -105,7 +122,9 @@ export function DiscoverScreen() {
         <View>
           <View style={styles.sectionHeading}>
             <Text style={styles.sectionTitle}>{t('redsun.featured')}</Text>
-            <TextAction onPress={register}>{t('redsun.viewAll')}</TextAction>
+            <TextAction onPress={viewCampaigns}>
+              {t('redsun.viewAll')}
+            </TextAction>
           </View>
           {visibleCampaigns.length ? (
             <ScrollView
@@ -116,7 +135,11 @@ export function DiscoverScreen() {
               decelerationRate="fast"
             >
               {visibleCampaigns.map((c) => (
-                <CampaignCard key={c.id} campaign={c} onPress={register} />
+                <CampaignCard
+                  key={c.id}
+                  campaign={c}
+                  onPress={showComingSoon}
+                />
               ))}
             </ScrollView>
           ) : (
@@ -132,10 +155,15 @@ export function DiscoverScreen() {
             <Pressable
               key={c.id}
               accessibilityRole="button"
-              onPress={register}
-              style={({ pressed }) => [styles.creator, { opacity: pressed ? 0.7 : 1 }]}
+              onPress={showComingSoon}
+              style={({ pressed }) => [
+                styles.creator,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
             >
-              <View style={[styles.avatar, { backgroundColor: brand[c.color] }]}>
+              <View
+                style={[styles.avatar, { backgroundColor: brand[c.color] }]}
+              >
                 <Text style={styles.avatarText}>{c.initial}</Text>
               </View>
               <View style={{ flex: 1 }}>
@@ -162,7 +190,14 @@ export function DiscoverScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.brands}
         >
-          {['VINAMILK', 'SUNHOUSE', 'COOLMATE', 'LEMONADE', 'ANKER', 'BASEUS'].map((name) => (
+          {[
+            'VINAMILK',
+            'SUNHOUSE',
+            'COOLMATE',
+            'LEMONADE',
+            'ANKER',
+            'BASEUS',
+          ].map((name) => (
             <Text key={name} style={styles.brand}>
               {name}
             </Text>
@@ -170,52 +205,27 @@ export function DiscoverScreen() {
         </ScrollView>
         <View style={styles.promo}>
           <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>
-            {t('redsun.promoTitle')}
+            {t('creator.hero.title')}
           </Text>
           <Text style={[styles.meta, { textAlign: 'center', lineHeight: 21 }]}>
-            {t('redsun.promoBody')}
+            {t('creator.hero.subtitle')}
           </Text>
-          <TextAction onPress={() => router.push('/welcome')}>
-            {t('redsun.exploreIntro')} →
+          <TextAction onPress={viewCampaigns}>
+            {t('tabs.myCampaigns')} →
           </TextAction>
         </View>
       </ScrollView>
-      <View style={styles.footer}>
-        <View style={styles.tabs}>
-          {[
-            ['⌂', 'home'],
-            ['◎', 'campaignsTab'],
-            ['◫', 'wallet'],
-            ['☺', 'account'],
-          ].map(([icon, key], i) => (
-            <Pressable
-              key={key}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: i === 0 }}
-              onPress={
-                i
-                  ? login
-                  : () => {
-                      setSearch('');
-                      setCategory('all');
-                    }
-              }
-              style={styles.tab}
-            >
-              <Text style={{ fontSize: 21, color: i ? brand.muted : brand.primary }}>{icon}</Text>
-              <Text style={{ fontSize: 10.5, color: i ? brand.muted : brand.primary }}>
-                {t(`redsun.${key}`)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
     </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: brand.paper },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   header: {
     paddingHorizontal: 18,
     paddingTop: 6,
@@ -224,23 +234,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: brand.border,
   },
-  bell: {
-    width: 40,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: brand.canvas,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  login: {
-    minHeight: 44,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: brand.border,
-    borderRadius: 12,
-    justifyContent: 'center',
-  },
-  loginText: { fontSize: 12, fontWeight: '600', color: brand.ink },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -252,11 +245,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: brand.border,
   },
-  searchInput: { flex: 1, minWidth: 0, color: brand.ink, fontSize: 13, paddingVertical: 12 },
-  feed: { backgroundColor: brand.canvas, paddingTop: 16, paddingBottom: 24, gap: 22 },
-  hero: { marginHorizontal: 18, padding: 18, borderRadius: 18, backgroundColor: brand.hero },
-  live: { fontSize: 10.5, fontWeight: '600', letterSpacing: 1.2, color: brand.live },
-  heroTitle: { marginTop: 10, fontSize: 19, fontWeight: '600', color: brand.heroText },
+  searchInput: {
+    flex: 1,
+    minWidth: 0,
+    color: brand.ink,
+    fontSize: 13,
+    paddingVertical: 12,
+  },
+  feed: {
+    backgroundColor: brand.canvas,
+    paddingTop: 16,
+    paddingBottom: 24,
+    gap: 22,
+  },
+  hero: {
+    marginHorizontal: 18,
+    padding: 18,
+    borderRadius: 18,
+    backgroundColor: brand.hero,
+  },
+  live: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    letterSpacing: 1.2,
+    color: brand.live,
+  },
+  heroTitle: {
+    marginTop: 10,
+    fontSize: 19,
+    fontWeight: '600',
+    color: brand.heroText,
+  },
   heroSubtitle: { marginTop: 6, fontSize: 12.5, color: brand.heroMuted },
   metrics: { flexDirection: 'row', marginTop: 16 },
   metric: { flex: 1, gap: 3 },
@@ -312,7 +331,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   empty: { color: brand.muted, padding: 18, fontSize: 13 },
-  footer: { paddingHorizontal: 18, borderTopWidth: 1, borderColor: brand.border },
-  tabs: { flexDirection: 'row', paddingTop: 8 },
-  tab: { flex: 1, alignItems: 'center', paddingVertical: 4, minHeight: 50 },
 });

@@ -3,8 +3,13 @@ import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Alert, View, type TextInputProps } from 'react-native';
+import { FormError } from '@/features/auth/components/form-error';
+import { useRegister } from '@/features/auth/hooks/use-auth';
 import { BrandButton, Choice, TextAction } from '@/shared/ui';
-import { registerSchema, type RegisterValues } from '../model/schemas';
+import {
+  registerSchema,
+  type RegisterValues,
+} from '@/features/auth/model/form-schemas';
 import {
   Checkbox,
   Divider,
@@ -12,7 +17,7 @@ import {
   EntryHeading,
   EntryShell,
   SocialButtons,
-} from './form-parts';
+} from '@/features/auth/components/form-parts';
 
 const fields: {
   name: 'name' | 'email' | 'phone' | 'password' | 'confirmPassword';
@@ -28,16 +33,32 @@ const fields: {
     keyboardType: 'email-address',
     autoComplete: 'email',
   },
-  { name: 'phone', placeholder: '0912 345 678', keyboardType: 'phone-pad', autoComplete: 'tel' },
-  { name: 'password', placeholder: '', password: true, autoComplete: 'new-password' },
-  { name: 'confirmPassword', placeholder: '', password: true, autoComplete: 'new-password' },
+  {
+    name: 'phone',
+    placeholder: '0912 345 678',
+    keyboardType: 'phone-pad',
+    autoComplete: 'tel',
+  },
+  {
+    name: 'password',
+    placeholder: '',
+    password: true,
+    autoComplete: 'new-password',
+  },
+  {
+    name: 'confirmPassword',
+    placeholder: '',
+    password: true,
+    autoComplete: 'new-password',
+  },
 ];
 export function RegisterScreen() {
   const { t } = useTranslation();
+  const registerAccount = useRegister();
   const { control, handleSubmit } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      role: 'koc',
+      role: 'creator',
       name: '',
       email: '',
       phone: '',
@@ -46,12 +67,22 @@ export function RegisterScreen() {
       terms: false,
     },
   });
-  const submit = handleSubmit(() =>
-    router.replace({ pathname: '/complete', params: { kind: 'register' } }),
-  );
+  const submit = handleSubmit(({ role, name, email, phone, password }) => {
+    if (registerAccount.isPending) return;
+    registerAccount.mutate(
+      { role, input: { name, email, phone, password } },
+      {
+        onSuccess: () =>
+          router.push({ pathname: '/verify-otp', params: { email } }),
+      }
+    );
+  });
   return (
     <EntryShell title={t('redsun.createAccount')} step="01 / 02">
-      <EntryHeading title={t('redsun.join')} subtitle={t('redsun.joinSubtitle')} />
+      <EntryHeading
+        title={t('redsun.join')}
+        subtitle={t('redsun.joinSubtitle')}
+      />
       <Controller
         control={control}
         name="role"
@@ -60,8 +91,8 @@ export function RegisterScreen() {
             <View style={{ flex: 1 }}>
               <Choice
                 label={t('redsun.koc')}
-                selected={field.value === 'koc'}
-                onPress={() => field.onChange('koc')}
+                selected={field.value === 'creator'}
+                onPress={() => field.onChange('creator')}
               />
             </View>
             <View style={{ flex: 1 }}>
@@ -86,7 +117,9 @@ export function RegisterScreen() {
               <EntryField
                 label={t(`redsun.${config.name}`)}
                 placeholder={
-                  config.password ? t(`redsun.${config.name}Placeholder`) : config.placeholder
+                  config.password
+                    ? t(`redsun.${config.name}Placeholder`)
+                    : config.placeholder
                 }
                 password={config.password}
                 keyboardType={config.keyboardType}
@@ -118,13 +151,20 @@ export function RegisterScreen() {
         {['termsLink', 'privacyLink'].map((key) => (
           <TextAction
             key={key}
-            onPress={() => Alert.alert(t(`redsun.${key}`), t('redsun.policyBody'))}
+            onPress={() =>
+              Alert.alert(t(`redsun.${key}`), t('redsun.policyBody'))
+            }
           >
             {t(`redsun.${key}`)}
           </TextAction>
         ))}
       </View>
-      <BrandButton title={t('redsun.registerNow')} onPress={submit} />
+      <FormError error={registerAccount.error} />
+      <BrandButton
+        title={t('redsun.registerNow')}
+        disabled={registerAccount.isPending}
+        onPress={submit}
+      />
       <View style={{ alignItems: 'center' }}>
         <TextAction onPress={() => router.replace('/sign-in')}>
           {t('redsun.haveAccount')}

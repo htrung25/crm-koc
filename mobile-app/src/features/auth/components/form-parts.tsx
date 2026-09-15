@@ -30,20 +30,31 @@ export function EntryShell({
       <PageHeader
         title={title}
         trailing={step}
-        onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        onBack={() =>
+          router.canGoBack() ? router.back() : router.replace('/welcome')
+        }
       />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.content}
+        >
           {children}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-export function EntryHeading({ title, subtitle }: { title: string; subtitle: string }) {
+export function EntryHeading({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle: string;
+}) {
   return (
     <View style={{ gap: 8 }}>
       <Text style={styles.title}>{title}</Text>
@@ -66,7 +77,13 @@ export function EntryField({
       <View
         style={[
           styles.field,
-          { borderColor: error ? brand.primary : focused ? brand.primary : brand.border },
+          {
+            borderColor: error
+              ? brand.primary
+              : focused
+                ? brand.primary
+                : brand.border,
+          },
         ]}
       >
         <TextInput
@@ -121,8 +138,15 @@ export function Checkbox({
         onPress={onPress}
         style={styles.checkboxRow}
       >
-        <View style={[styles.checkbox, { backgroundColor: checked ? brand.primary : brand.paper }]}>
-          <Text style={{ color: brand.paper, fontSize: 12 }}>{checked ? '✓' : ''}</Text>
+        <View
+          style={[
+            styles.checkbox,
+            { backgroundColor: checked ? brand.primary : brand.paper },
+          ]}
+        >
+          <Text style={{ color: brand.paper, fontSize: 12 }}>
+            {checked ? '✓' : ''}
+          </Text>
         </View>
         <Text style={styles.checkLabel}>{label}</Text>
       </Pressable>
@@ -136,7 +160,8 @@ export function Checkbox({
 }
 export function SocialButtons({ register = false }: { register?: boolean }) {
   const { t } = useTranslation();
-  const inform = () => Alert.alert(t('redsun.socialTitle'), t('redsun.socialBody'));
+  const inform = () =>
+    Alert.alert(t('redsun.socialTitle'), t('redsun.socialBody'));
   return (
     <View style={{ gap: 9 }}>
       <BrandButton
@@ -145,7 +170,11 @@ export function SocialButtons({ register = false }: { register?: boolean }) {
         onPress={inform}
       />
       {register ? (
-        <BrandButton title={`♪   ${t('redsun.tiktokRegister')}`} secondary onPress={inform} />
+        <BrandButton
+          title={`♪   ${t('redsun.tiktokRegister')}`}
+          secondary
+          onPress={inform}
+        />
       ) : null}
     </View>
   );
@@ -161,8 +190,19 @@ export function Divider({ label }: { label: string }) {
 }
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: brand.paper },
-  content: { paddingHorizontal: 18, paddingTop: 24, paddingBottom: 40, gap: 18 },
-  title: { color: brand.ink, fontSize: 25, lineHeight: 32, fontWeight: '600', letterSpacing: -0.4 },
+  content: {
+    paddingHorizontal: 18,
+    paddingTop: 24,
+    paddingBottom: 40,
+    gap: 18,
+  },
+  title: {
+    color: brand.ink,
+    fontSize: 25,
+    lineHeight: 32,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+  },
   subtitle: { color: brand.muted, fontSize: 13.5, lineHeight: 22 },
   label: { color: brand.muted, fontSize: 12, fontWeight: '500' },
   field: {
@@ -174,9 +214,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     gap: 8,
   },
-  input: { flex: 1, minWidth: 0, color: brand.ink, fontSize: 15, paddingVertical: 14 },
+  input: {
+    flex: 1,
+    minWidth: 0,
+    color: brand.ink,
+    fontSize: 15,
+    paddingVertical: 14,
+  },
   error: { color: brand.strong, fontSize: 12, lineHeight: 18 },
-  checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: 11, minHeight: 44 },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    minHeight: 44,
+  },
   checkbox: {
     width: 22,
     height: 22,

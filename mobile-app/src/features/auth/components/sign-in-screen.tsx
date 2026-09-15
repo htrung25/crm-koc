@@ -3,29 +3,45 @@ import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
+import { FormError } from '@/features/auth/components/form-error';
+import { useLogin } from '@/features/auth/hooks/use-auth';
 import { BrandButton, TextAction } from '@/shared/ui';
-import { signInSchema, type SignInValues } from '../model/schemas';
 import {
-  Checkbox,
+  signInSchema,
+  type SignInValues,
+} from '@/features/auth/model/form-schemas';
+import {
   Divider,
   EntryField,
   EntryHeading,
   EntryShell,
   SocialButtons,
-} from './form-parts';
+} from '@/features/auth/components/form-parts';
 
 export function SignInScreen() {
   const { t } = useTranslation();
+  const login = useLogin();
   const { control, handleSubmit } = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
-    defaultValues: { email: '', password: '', remember: true },
+    defaultValues: { email: '', password: '' },
   });
-  const submit = handleSubmit(() =>
-    router.replace({ pathname: '/complete', params: { kind: 'login' } }),
-  );
+  const submit = handleSubmit((values) => {
+    // Mỗi lần gửi là một email OTP; phím "done" vẫn gọi được khi nút đã khoá.
+    if (login.isPending) return;
+    login.mutate(values, {
+      onSuccess: () =>
+        router.push({
+          pathname: '/verify-otp',
+          params: { email: values.email },
+        }),
+    });
+  });
   return (
     <EntryShell title={t('redsun.login')}>
-      <EntryHeading title={t('redsun.welcomeBack')} subtitle={t('redsun.loginSubtitle')} />
+      <EntryHeading
+        title={t('redsun.welcomeBack')}
+        subtitle={t('redsun.loginSubtitle')}
+      />
       <SocialButtons />
       <Divider label={t('redsun.orEmail')} />
       <Controller
@@ -66,25 +82,26 @@ export function SignInScreen() {
           )}
         />
         <View style={{ alignItems: 'flex-end' }}>
-          <TextAction onPress={() => Alert.alert(t('redsun.forgot'), t('redsun.forgotBody'))}>
+          <TextAction
+            onPress={() =>
+              Alert.alert(t('redsun.forgot'), t('redsun.forgotBody'))
+            }
+          >
             {t('redsun.forgot')}
           </TextAction>
         </View>
       </View>
-      <Controller
-        control={control}
-        name="remember"
-        render={({ field }) => (
-          <Checkbox
-            label={t('redsun.remember')}
-            checked={field.value}
-            onPress={() => field.onChange(!field.value)}
-          />
-        )}
+      <FormError error={login.error} />
+      <BrandButton
+        title={t('redsun.loginNow')}
+        dark
+        disabled={login.isPending}
+        onPress={submit}
       />
-      <BrandButton title={t('redsun.loginNow')} dark onPress={submit} />
       <View style={{ alignItems: 'center' }}>
-        <TextAction onPress={() => router.replace('/register')}>{t('redsun.noAccount')}</TextAction>
+        <TextAction onPress={() => router.replace('/register')}>
+          {t('redsun.noAccount')}
+        </TextAction>
       </View>
     </EntryShell>
   );

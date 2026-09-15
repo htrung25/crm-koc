@@ -1,1 +1,1 @@
-export { OnboardingScreen } from './components/onboarding-screen';
+export { OnboardingScreen } from '@/features/onboarding/components/onboarding-screen';
