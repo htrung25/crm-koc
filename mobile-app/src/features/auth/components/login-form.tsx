@@ -6,12 +6,16 @@ import { View } from 'react-native';
 import { useTheme } from '@/shared/theme';
 import { Button, Input } from '@/shared/ui';
 
-import { useLogin } from '../hooks/use-auth';
-import { loginSchema, type LoginInput } from '../model/schemas';
+import { useLogin } from '@/features/auth/hooks/use-auth';
+import { loginSchema, type LoginInput } from '@/features/auth/model/schemas';
 
-import { FormError } from './form-error';
+import { FormError } from '@/features/auth/components/form-error';
 
-export function LoginForm({ onOtpRequired }: { onOtpRequired: (email: string) => void }) {
+export function LoginForm({
+  onOtpRequired,
+}: {
+  onOtpRequired: (email: string) => void;
+}) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const login = useLogin();
@@ -40,7 +44,9 @@ export function LoginForm({ onOtpRequired }: { onOtpRequired: (email: string) =>
             value={field.value}
             onChangeText={field.onChange}
             onBlur={field.onBlur}
-            error={formState.errors.email && t(formState.errors.email.message ?? '')}
+            error={
+              formState.errors.email && t(formState.errors.email.message ?? '')
+            }
           />
         )}
       />
@@ -57,12 +63,19 @@ export function LoginForm({ onOtpRequired }: { onOtpRequired: (email: string) =>
             onChangeText={field.onChange}
             onBlur={field.onBlur}
             onSubmitEditing={submit}
-            error={formState.errors.password && t(formState.errors.password.message ?? '')}
+            error={
+              formState.errors.password &&
+              t(formState.errors.password.message ?? '')
+            }
           />
         )}
       />
       <FormError error={login.error} />
-      <Button title={t('auth.login.submit')} loading={login.isPending} onPress={submit} />
+      <Button
+        title={t('auth.login.submit')}
+        loading={login.isPending}
+        onPress={submit}
+      />
     </View>
   );
 }

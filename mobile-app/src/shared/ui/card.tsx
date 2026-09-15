@@ -3,7 +3,13 @@ import { View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '@/shared/theme';
 
-export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
+export function Card({
+  children,
+  style,
+}: {
+  children: ReactNode;
+  style?: ViewStyle;
+}) {
   const { colors, radius, spacing } = useTheme();
   return (
     <View

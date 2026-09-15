@@ -9,7 +9,7 @@ import {
 
 import { useTheme } from '@/shared/theme';
 
-import { Text } from './text';
+import { Text } from '@/shared/ui/text';
 
 export type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   title: string;
@@ -33,7 +33,11 @@ export function Button({
     variant === 'primary'
       ? { backgroundColor: colors.primary }
       : variant === 'secondary'
-        ? { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }
+        ? {
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }
         : { backgroundColor: 'transparent' };
 
   return (

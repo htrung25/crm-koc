@@ -1,6 +1,13 @@
 import { useColorScheme } from 'react-native';
 
-import { darkColors, lightColors, radius, spacing, typography, type Colors } from './tokens';
+import {
+  darkColors,
+  lightColors,
+  radius,
+  spacing,
+  typography,
+  type Colors,
+} from '@/shared/theme/tokens';
 
 export type Theme = {
   isDark: boolean;

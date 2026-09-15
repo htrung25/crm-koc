@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, View } from 'react-native';
 
-import { useLogout, useMe } from '../hooks/use-auth';
+import { useLogout, useMe } from '@/features/auth/hooks/use-auth';
 import { useTheme } from '@/shared/theme';
 import { Button, Card, Screen, Text } from '@/shared/ui';
 
@@ -20,11 +20,17 @@ export function AccountScreen() {
           <Card>
             <Text variant="heading">{t('common.errorTitle')}</Text>
             <Text tone="muted">{me.error.message}</Text>
-            <Button title={t('common.retry')} variant="secondary" onPress={() => me.refetch()} />
+            <Button
+              title={t('common.retry')}
+              variant="secondary"
+              onPress={() => me.refetch()}
+            />
           </Card>
         ) : (
           <Card>
-            <Text variant="heading">{t('home.greeting', { name: me.data?.name })}</Text>
+            <Text variant="heading">
+              {t('home.greeting', { name: me.data?.name })}
+            </Text>
             <Text tone="muted">
               {t('home.roleLabel')}: {me.data?.accountRole ?? '—'}
             </Text>

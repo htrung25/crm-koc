@@ -10,7 +10,10 @@ export function useCarousel(count: number) {
     void AccessibilityInfo.isReduceMotionEnabled().then((value) => {
       if (mounted) setReduceMotion(value);
     });
-    const listener = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    const listener = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      setReduceMotion
+    );
     return () => {
       mounted = false;
       listener.remove();
@@ -20,10 +23,11 @@ export function useCarousel(count: number) {
     useCallback(() => {
       if (reduceMotion) return;
       const timer = setInterval(() => {
-        if (AppState.currentState === 'active') setSlide((s) => (s + 1) % count);
+        if (AppState.currentState === 'active')
+          setSlide((s) => (s + 1) % count);
       }, 4200);
       return () => clearInterval(timer);
-    }, [count, reduceMotion]),
+    }, [count, reduceMotion])
   );
   return { slide, setSlide };
 }

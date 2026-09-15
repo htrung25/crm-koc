@@ -11,7 +11,14 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: '404' }} />
       <Screen>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: spacing.md,
+          }}
+        >
           <Text variant="heading">404</Text>
           <Link href="/">
             <Text tone="primary">/</Text>

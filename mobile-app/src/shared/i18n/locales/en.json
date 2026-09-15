@@ -4,7 +4,10 @@
     "cancel": "Cancel",
     "continue": "Continue",
     "loading": "Loading...",
-    "errorTitle": "Something went wrong"
+    "errorTitle": "Something went wrong",
+    "comingSoonTitle": "Coming soon",
+    "comingSoonBody": "This feature is still being built.",
+    "thousandsSeparator": ","
   },
   "auth": {
     "login": {
@@ -20,7 +23,7 @@
     "otp": {
       "title": "Enter verification code",
       "subtitle": "We sent a 6-digit code to {{email}}",
-      "code": "OTP code",
+      "code": "Verification code",
       "submit": "Verify",
       "resend": "Resend code",
       "invalidCode": "The OTP code has 6 digits"
@@ -31,6 +34,94 @@
   "home": {
     "greeting": "Hello, {{name}}",
     "roleLabel": "Role"
+  },
+  "tabs": {
+    "discover": "Discover",
+    "myCampaigns": "Campaigns",
+    "wallet": "Wallet",
+    "account": "Account",
+    "overview": "Overview",
+    "campaigns": "Campaigns",
+    "creators": "Creators"
+  },
+  "creator": {
+    "search": "Search campaigns, brands…",
+    "allCategories": "All",
+    "hero": {
+      "eyebrow": "FOR YOU",
+      "title": "Campaigns recruiting creators",
+      "subtitle": "Campaigns that match your profile come first",
+      "total": "Campaigns",
+      "eligible": "Eligible",
+      "upcoming": "Opening soon"
+    },
+    "forYou": "Matched for you",
+    "allCampaigns": "All campaigns",
+    "empty": "No matching campaigns. Try another category or keyword.",
+    "recruitment": {
+      "open": "Open",
+      "upcoming": "Soon"
+    },
+    "compensation": {
+      "cash": "₫{{amount}}",
+      "cashRange": "₫{{min}} – ₫{{max}}",
+      "hybrid": "₫{{amount}} + product",
+      "hybridRange": "₫{{min}} – ₫{{max}} + product",
+      "product": "Free product",
+      "negotiable": "Negotiable fee"
+    },
+    "criteria": {
+      "CONTENT_CATEGORY": "Content category doesn't match",
+      "CITY": "Only creators in {{required}}",
+      "PLATFORM": "Needs a {{required}} channel",
+      "MIN_FOLLOWERS": "Needs at least {{required}} followers",
+      "MIN_ENGAGEMENT_RATE": "Needs at least {{required}}% engagement"
+    },
+    "moreCriteria": "+{{total}} more",
+    "myCampaignsSoon": "Campaigns you join will show up here.",
+    "walletSoon": "Earnings and payouts will show up here."
+  },
+  "brand": {
+    "createCampaign": "Create campaign",
+    "status": {
+      "draft": "Draft",
+      "pendingApproval": "In review",
+      "changesRequested": "Changes requested",
+      "rejected": "Rejected",
+      "approved": "Approved",
+      "cancelled": "Cancelled"
+    },
+    "overview": {
+      "eyebrow": "OVERVIEW",
+      "title": "Your brand's campaigns",
+      "subtitle": "Track progress and what needs your attention",
+      "running": "Running",
+      "pending": "In review",
+      "collaborating": "Active creators",
+      "attention": "Needs attention",
+      "hint": {
+        "changesRequested": "Admin asked for changes before approval",
+        "rejected": "Check the reason and resubmit",
+        "draft": "Finish it and submit for review"
+      },
+      "recent": "Recently updated"
+    },
+    "campaigns": {
+      "search": "Search by name or CMP-… code",
+      "all": "All ({{total}})",
+      "statusCount": "{{status}} ({{total}})",
+      "empty": "No campaigns match this filter.",
+      "untitled": "Untitled campaign",
+      "step": "Draft · on step {{step}}",
+      "deadline": "Applications close {{date}}",
+      "updated": "Updated {{date}}"
+    },
+    "creators": {
+      "search": "Search creators by name, platform…",
+      "allCategories": "All",
+      "reach": "{{platform}} · {{followers}} followers",
+      "empty": "No matching creators yet."
+    }
   },
   "redsun": {
     "back": "Back",
@@ -97,7 +188,6 @@
     "loginSubtitle": "Manage creative campaigns, automate sample seeding and grow affiliate sales.",
     "forgot": "Forgot password?",
     "forgotBody": "Password recovery will be available once authentication is connected.",
-    "remember": "Keep me signed in for 30 days",
     "loginNow": "Log in now",
     "loginComplete": "Sign-in step completed",
     "registerComplete": "Your details are ready",
@@ -117,6 +207,7 @@
     "errors": {
       "email": "Enter a valid email address.",
       "password": "Use at least 8 characters.",
+      "passwordStrength": "Use at least 8 characters with uppercase, lowercase, a number and a special character.",
       "name": "Enter your full name.",
       "phone": "Enter a valid phone number.",
       "terms": "Please accept the Terms of Service.",

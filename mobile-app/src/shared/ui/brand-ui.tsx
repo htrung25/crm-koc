@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { brand } from '@/shared/theme';
-import { Text } from './text';
+import { Text } from '@/shared/ui/text';
 
 export function BrandLogo() {
   return (
@@ -37,13 +37,22 @@ export function BrandButton({
       style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor: secondary ? brand.paper : dark ? brand.ink : brand.primary,
+          backgroundColor: secondary
+            ? brand.paper
+            : dark
+              ? brand.ink
+              : brand.primary,
           borderColor: secondary ? brand.border : 'transparent',
           opacity: pressed || disabled ? 0.65 : 1,
         },
       ]}
     >
-      <Text style={[styles.buttonText, { color: secondary ? brand.ink : brand.heroText }]}>
+      <Text
+        style={[
+          styles.buttonText,
+          { color: secondary ? brand.ink : brand.heroText },
+        ]}
+      >
         {title}
       </Text>
     </Pressable>
@@ -90,10 +99,17 @@ export function Choice({
       accessibilityRole="radio"
       accessibilityState={{ checked: selected }}
       onPress={onPress}
-      style={[styles.choice, { backgroundColor: selected ? brand.ink : brand.canvas }]}
+      style={[
+        styles.choice,
+        { backgroundColor: selected ? brand.ink : brand.canvas },
+      ]}
     >
       <Text
-        style={{ fontSize: 13, fontWeight: '500', color: selected ? brand.paper : brand.muted }}
+        style={{
+          fontSize: 13,
+          fontWeight: '500',
+          color: selected ? brand.paper : brand.muted,
+        }}
       >
         {label}
       </Text>
@@ -126,7 +142,12 @@ export function Artwork({
         {Array.from({ length: 40 }, (_, i) => (
           <View
             key={i}
-            style={{ width: 14, height: '200%', backgroundColor: colors[1], marginRight: 14 }}
+            style={{
+              width: 14,
+              height: '200%',
+              backgroundColor: colors[1],
+              marginRight: 14,
+            }}
           />
         ))}
       </View>
@@ -197,7 +218,12 @@ const styles = StyleSheet.create({
     height: '200%',
     transform: [{ rotate: '25deg' }],
   },
-  artLabel: { color: brand.muted, fontSize: 11, letterSpacing: 0.8, textAlign: 'center' },
+  artLabel: {
+    color: brand.muted,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    textAlign: 'center',
+  },
   header: {
     minHeight: 66,
     flexDirection: 'row',
