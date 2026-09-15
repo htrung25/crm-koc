@@ -32,7 +32,6 @@ export class SessionEvent {
   @Column({ type: 'text', nullable: true })
   userAgent!: string | null;
 
-  /** Ngữ cảnh thêm tuỳ sự kiện: lý do thu hồi, IP cũ khi refresh bất thường... */
   @Column({ type: 'jsonb', nullable: true })
   metadata!: Record<string, unknown> | null;
 

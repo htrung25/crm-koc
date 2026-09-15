@@ -34,15 +34,12 @@ export class CreatorProfile {
   @Column({ type: 'text', nullable: true })
   avatarUrl: string | null;
 
-  /** Ngày sinh thay vì tuổi: tuổi tự già đi, ngày sinh thì không. */
   @Column({ type: 'date', nullable: true })
   dateOfBirth: string | null;
 
-  // smallint => driver trả về number, không phải GenderEnum (string '1'|'2'|'3')
   @Column({ type: 'smallint', nullable: true })
   gender: number | null;
 
-  /** Khu vực hoạt động, brand lọc KOC theo địa bàn. */
   @Index()
   @Column({ type: 'varchar', length: 128, nullable: true })
   city: string | null;

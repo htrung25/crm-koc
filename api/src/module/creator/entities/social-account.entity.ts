@@ -35,10 +35,6 @@ export class SocialAccount {
   @JoinColumn({ name: 'creator_profile_id' })
   creatorProfile?: CreatorProfile;
 
-  // varchar + CHECK ở migration, KHÔNG dùng enum type của Postgres: thêm nền
-  // tảng mới chỉ cần sửa CHECK, còn ALTER TYPE ... ADD VALUE thì nhãn vừa thêm
-  // chưa dùng được trong cùng transaction, mà TypeORM bọc mỗi migration trong
-  // một transaction. Và enum type không bao giờ xoá được nhãn.
   @Column({ type: 'varchar', length: 32 })
   platform!: ESocialPlatform;
 
