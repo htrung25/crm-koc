@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -38,6 +39,7 @@ import type {
 export interface CampaignSubmitResult {
   campaign: Campaign;
   revisionNumber: number;
+  submissionId: string;
 }
 
 @Injectable()
@@ -67,9 +69,19 @@ export class CampaignSubmitService {
   ): Promise<CampaignSubmitResult> {
     const campaign = await this.campaignRepository.findOne({
       where: { id, brandId },
+      // Same lock as asset writes: snapshot and historical retention are atomic.
+      lock: { mode: 'pessimistic_write' },
     });
     if (!campaign) {
       throw new NotFoundException('campaign does not exist');
+    }
+
+    if (campaign.version !== expectedVersion) {
+      throw new ConflictException({
+        businessCode: EBusinessCode.CAMPAIGN_VERSION_CONFLICT,
+        message: 'campaign version has changed',
+        version: campaign.version,
+      });
     }
 
     this.assertSubmittable(campaign);
@@ -120,7 +132,7 @@ export class CampaignSubmitService {
     const revisionNumber = await this.nextRevisionNumber(id);
     // save() thay vì insert(): insert() nhận QueryDeepPartialEntity nên nó bóc
     // cả object jsonb ra thành từng khoá, và kiểu của snapshot không khớp nữa.
-    await this.submissionRepository.save(
+    const submission = await this.submissionRepository.save(
       this.submissionRepository.create({
         campaignId: id,
         revisionNumber,
@@ -132,7 +144,7 @@ export class CampaignSubmitService {
       }),
     );
 
-    return { campaign: updated, revisionNumber };
+    return { campaign: updated, revisionNumber, submissionId: submission.id };
   }
 
   private assertSubmittable(campaign: Campaign): void {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { StorageObject } from '../entities/storage-object.entity';
@@ -19,15 +19,25 @@ export class StorageLedgerService {
     return this.write(key, EStorageObjectState.LINKED, manager);
   }
 
+  /** A sweep that has claimed an expired upload makes it permanently unlinkable. */
+  async linkPending(key: string, manager: EntityManager): Promise<void> {
+    const result = await manager
+      .getRepository(StorageObject)
+      .update(
+        { storageKey: key, state: EStorageObjectState.PENDING },
+        { state: EStorageObjectState.LINKED, updatedAt: new Date() },
+      );
+    if (result.affected !== 1) {
+      throw new ConflictException(
+        'upload expired or was reclaimed; upload the file again',
+      );
+    }
+  }
+
   markGarbage(key: string, manager?: EntityManager): Promise<void> {
     return this.write(key, EStorageObjectState.GARBAGE, manager);
   }
 
-  /**
-   * LUÔN upsert. Job retry sau khi đã ghi ledger ở lượt trước sẽ đụng
-   * UQ_storage_objects_key nếu đây là insert, và chết vì một lỗi khác hẳn lỗi
-   * gốc — không bao giờ hoàn thành được.
-   */
   private async write(
     storageKey: string,
     state: EStorageObjectState,

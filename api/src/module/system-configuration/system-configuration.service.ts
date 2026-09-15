@@ -71,6 +71,18 @@ export class SystemConfigurationService {
       return JSON.parse(cached) as Record<string, unknown>;
     }
 
+    const parsed = await this.getByGroupFromDatabase(group);
+
+    await this.redis.set(cacheKey, JSON.stringify(parsed), {
+      EX: this.cacheTtl,
+    });
+    return parsed;
+  }
+
+  /** Quyết định duyệt phải đọc policy hiện hành, không tin cache Redis. */
+  async getByGroupFromDatabase(
+    group: string,
+  ): Promise<Record<string, unknown>> {
     const rows = await this.configRepository.find({
       where: { group },
       order: { key: 'ASC' },
@@ -79,9 +91,6 @@ export class SystemConfigurationService {
       rows.map((row) => [row.key, this.parse(row.value, row.type)]),
     );
 
-    await this.redis.set(cacheKey, JSON.stringify(parsed), {
-      EX: this.cacheTtl,
-    });
     return parsed;
   }
 

@@ -39,7 +39,7 @@ import {
   UploadKycDocumentDto,
 } from './dto/kyc.dto';
 import { KycService } from './kyc.service';
-import { KycRole } from './constants/kyc.constants';
+import { KycRole } from './types/kyc.types';
 
 @ApiTags('KYC')
 @ApiBearerAuth('access-token')

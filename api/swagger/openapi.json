@@ -80,7 +80,17 @@
     "/verify-otp": {
       "post": {
         "operationId": "AuthController_verifyOtp",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "x-device-id",
+            "in": "header",
+            "description": "Stable browser/app installation identifier, 1–128 letters, digits, dots, underscores, colons or hyphens",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -101,6 +111,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Missing or invalid device id header"
           },
           "401": {
             "description": "OTP is wrong or has expired"
@@ -2165,6 +2178,386 @@
           }
         ],
         "summary": "Submit a campaign for admin review",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      }
+    },
+    "/admin/campaign-reviews/{submissionId}/decision": {
+      "post": {
+        "description": "Currently supports decision=approve only. Any admin with an allowed IP may approve.",
+        "operationId": "CampaignReviewController_approve",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveCampaignDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignApprovedResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body or unsupported decision"
+          },
+          "401": {
+            "description": "Invalid or expired session"
+          },
+          "403": {
+            "description": "Admin role/IP required, or brand KYC no longer verified"
+          },
+          "404": {
+            "description": "Campaign review does not exist"
+          },
+          "409": {
+            "description": "Stale revision/version or already decided"
+          },
+          "422": {
+            "description": "Current policy or restricted category checklist is not satisfied"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Approve the latest open campaign review against current policy",
+        "tags": [
+          "Admin-Campaign"
+        ]
+      }
+    },
+    "/brand/campaigns/{campaignId}/assets": {
+      "get": {
+        "operationId": "CampaignAssetController_list",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAssetsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List current assets and campaign version",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      },
+      "post": {
+        "operationId": "CampaignAssetController_upload",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "kind",
+                  "expectedVersion"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "product_image",
+                      "reference_file"
+                    ]
+                  },
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "replaceAssetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Existing asset of the same kind; retains id and position"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAssetUploadedResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Upload or replace an asset; separate from text autosave",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      }
+    },
+    "/brand/campaigns/{campaignId}/assets/order": {
+      "put": {
+        "operationId": "CampaignAssetController_reorder",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderCampaignAssetsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAssetsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Reorder the complete list of one asset kind atomically",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      }
+    },
+    "/brand/campaigns/{campaignId}/assets/{assetId}": {
+      "delete": {
+        "operationId": "CampaignAssetController_delete",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expectedVersion",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAssetDeletedResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Delete a current asset; historical objects are retained",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      },
+      "get": {
+        "operationId": "CampaignAssetController_read",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File stream",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Read current asset content with ownership authentication",
+        "tags": [
+          "Brand-Campaign"
+        ]
+      }
+    },
+    "/brand/campaigns/{campaignId}/reviews/{submissionId}/asset": {
+      "get": {
+        "operationId": "CampaignAssetController_readRevision",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "submissionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "product_image",
+                "reference_file"
+              ]
+            }
+          },
+          {
+            "name": "position",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historical file stream",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Read frozen revision content by kind and original position",
         "tags": [
           "Brand-Campaign"
         ]
@@ -4825,6 +5218,12 @@
             "type": "object",
             "format": "uuid"
           },
+          "productDescription": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 20000,
+            "description": "Sanitized HTML: p, br, strong, em, u, ul, ol, li, a (HTTPS href only)"
+          },
           "keyMessage": {
             "type": "object",
             "maxLength": 2000
@@ -5084,6 +5483,11 @@
       "CampaignSubmittedResponseDto": {
         "type": "object",
         "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Review submission to use for the admin decision"
+          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -5106,11 +5510,187 @@
           }
         },
         "required": [
+          "submissionId",
           "id",
           "status",
           "version",
           "revisionNumber",
           "submittedAt"
+        ]
+      },
+      "CampaignApprovalChecklistDto": {
+        "type": "object",
+        "properties": {
+          "restrictedCategoryReviewed": {
+            "type": "boolean",
+            "description": "Explicit manual review of a restricted category"
+          }
+        }
+      },
+      "ApproveCampaignDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve"
+            ]
+          },
+          "expectedCampaignVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "checklistResult": {
+            "$ref": "#/components/schemas/CampaignApprovalChecklistDto"
+          }
+        },
+        "required": [
+          "decision",
+          "expectedCampaignVersion"
+        ]
+      },
+      "CampaignApprovedResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revisionNumber": {
+            "type": "number"
+          },
+          "status": {
+            "type": "number",
+            "description": "APPROVED (5)"
+          },
+          "version": {
+            "type": "number"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "submissionId",
+          "revisionNumber",
+          "status",
+          "version",
+          "approvedAt"
+        ]
+      },
+      "CampaignAssetResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "product_image",
+              "reference_file"
+            ]
+          },
+          "position": {
+            "type": "number"
+          },
+          "originalName": {
+            "type": "string",
+            "nullable": true
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "position",
+          "originalName",
+          "mimeType",
+          "sizeBytes"
+        ]
+      },
+      "CampaignAssetsResponseDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignAssetResponseDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "assets"
+        ]
+      },
+      "CampaignAssetUploadedResponseDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "asset": {
+            "$ref": "#/components/schemas/CampaignAssetResponseDto"
+          }
+        },
+        "required": [
+          "version",
+          "asset"
+        ]
+      },
+      "ReorderCampaignAssetsDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "product_image",
+              "reference_file"
+            ]
+          },
+          "assetIds": {
+            "description": "Complete list of current asset ids for this kind, in display order",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "kind",
+          "assetIds"
+        ]
+      },
+      "CampaignAssetDeletedResponseDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "version"
         ]
       },
       "EKycStatus": {

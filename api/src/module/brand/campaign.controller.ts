@@ -224,17 +224,15 @@ export class CampaignController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: SubmitCampaignDto,
   ): Promise<CampaignSubmittedResponseDto> {
-    const { campaign, revisionNumber } = await this.submitService.submit(
-      request.user.id,
-      id,
-      dto.expectedVersion,
-    );
+    const { campaign, revisionNumber, submissionId } =
+      await this.submitService.submit(request.user.id, id, dto.expectedVersion);
 
     return {
       id: campaign.id,
       status: campaign.status,
       version: campaign.version,
       revisionNumber,
+      submissionId,
       submittedAt: campaign.submittedAt,
     };
   }

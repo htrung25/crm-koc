@@ -117,28 +117,38 @@ export class StorageGcService {
     return this.dataSource.transaction(async (manager) => {
       const repo = manager.getRepository(StorageObject);
 
-      return (
-        repo
-          .createQueryBuilder('obj')
-          // SKIP LOCKED để nhiều worker không giành nhau cùng một dòng trong
-          // lúc claim. Transaction này chỉ dùng để lock+đọc, không gọi mạng.
-          .setLock('pessimistic_write')
-          .setOnLocked('skip_locked')
-          .where(
-            "(obj.state = :garbage) OR (obj.state = :pending AND obj.updatedAt < now() - (:grace || ' minutes')::interval)",
-            {
-              garbage: EStorageObjectState.GARBAGE,
-              pending: EStorageObjectState.PENDING,
-              grace: this.graceMinutes,
-            },
-          )
-          // Dòng chờ lâu nhất lên trước, để một key lỗi liên tục (bị bump
-          // updatedAt mỗi lần thất bại) không chiếm chỗ của các dòng khác qua
-          // nhiều chu kỳ liên tiếp.
-          .orderBy('obj.updatedAt', 'ASC')
-          .limit(SWEEP_BATCH)
-          .getMany()
-      );
+      const rows = await repo
+        .createQueryBuilder('obj')
+        // SKIP LOCKED để nhiều worker không giành nhau cùng một dòng trong
+        // lúc claim. Transaction này chỉ dùng để lock+đọc, không gọi mạng.
+        .setLock('pessimistic_write')
+        .setOnLocked('skip_locked')
+        .where(
+          "(obj.state = :garbage) OR (obj.state = :pending AND obj.updatedAt < now() - (:grace || ' minutes')::interval)",
+          {
+            garbage: EStorageObjectState.GARBAGE,
+            pending: EStorageObjectState.PENDING,
+            grace: this.graceMinutes,
+          },
+        )
+        // Dòng chờ lâu nhất lên trước, để một key lỗi liên tục (bị bump
+        // updatedAt mỗi lần thất bại) không chiếm chỗ của các dòng khác qua
+        // nhiều chu kỳ liên tiếp.
+        .orderBy('obj.updatedAt', 'ASC')
+        .limit(SWEEP_BATCH)
+        .getMany();
+      // Persist the decision before releasing locks. Campaign uploads link only
+      // PENDING rows, so a late PUT cannot resurrect a key already being deleted.
+      if (rows.length) {
+        await repo.update(
+          {
+            id: In(rows.map((row) => row.id)),
+            state: EStorageObjectState.PENDING,
+          },
+          { state: EStorageObjectState.GARBAGE },
+        );
+      }
+      return rows;
     });
   }
 }

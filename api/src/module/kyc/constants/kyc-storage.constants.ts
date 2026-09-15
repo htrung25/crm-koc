@@ -8,5 +8,3 @@ export const ALLOWED_DOCUMENT_MIMES = [
   'image/png',
   'application/pdf',
 ] as const;
-
-export type AllowedDocumentMime = (typeof ALLOWED_DOCUMENT_MIMES)[number];

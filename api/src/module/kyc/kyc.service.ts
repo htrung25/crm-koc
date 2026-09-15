@@ -17,10 +17,7 @@ import {
 } from '../../common/enum/kyc.enum';
 import { ERole } from '../../common/enum/roles.enum';
 import { PaginatedResult, paginate } from '../../common/util/pagination.util';
-import {
-  StorageService,
-  StorageStreamResult,
-} from '../../common/services/storage.service';
+import { StorageService } from '../../common/services/storage.service';
 import { StorageLedgerService } from '../../common/services/storage-ledger.service';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { EmailQueueService } from '../../queue/email/email-queue.service';
@@ -31,28 +28,26 @@ import {
   KYC_STATUS_LABEL,
   KYC_TRANSITIONS,
   OPEN_KYC_STATUSES,
-  KycOpeningPlan,
-  KycReviewCommand,
-  KycTransitionActor,
   MAX_KYC_ATTEMPTS,
   REQUIRED_DOCUMENTS,
 } from './constants/kyc.constants';
-import { STORAGE_PREFIX_PENDING } from './constants/kyc-storage.constants';
 import {
-  KYC_LIST_FIELDS,
-  KycListItem,
-  KycRole,
-} from './constants/kyc.constants';
+  KycOpeningPlan,
+  KycReviewCommand,
+  KycTransitionActor,
+} from './types/kyc.types';
+import {
+  ALLOWED_DOCUMENT_MIMES,
+  STORAGE_PREFIX_PENDING,
+} from './constants/kyc-storage.constants';
+import { KYC_LIST_FIELDS } from './constants/kyc.constants';
+import { KycListItem, KycRole } from './types/kyc.types';
 import { KycDocument } from './entities/kyc-document.entity';
 import { KycDocumentView } from './entities/kyc-document-view.entity';
 import { KycSubmission } from './entities/kyc-submission.entity';
 import { KycFilterDto, ReviewKycDto } from './dto/kyc.dto';
-import { inspectDocument } from './util/kyc-document.util';
-
-export interface DocumentStreamPayload {
-  document: KycDocument;
-  streamResult: StorageStreamResult;
-}
+import { inspectFile } from '../../common/util/file-inspect.util';
+import { DocumentStreamPayload } from './types/kyc.types';
 
 @Injectable()
 export class KycService {
@@ -138,7 +133,11 @@ export class KycService {
     }
 
     // Mime THẬT đọc từ magic bytes, không tin đuôi tên lẫn Content-Type.
-    const inspected = await inspectDocument(buffer, this.maxFileSize);
+    const inspected = await inspectFile(
+      buffer,
+      this.maxFileSize,
+      ALLOWED_DOCUMENT_MIMES,
+    );
 
     // Kiểm tra chống nộp lại đúng file vừa bị từ chối mà không chỉnh sửa
     const previousRejected = await this.submissionRepository.findOne({
