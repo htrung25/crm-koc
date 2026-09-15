@@ -21,22 +21,25 @@ import {
   ELoginAction,
 } from '../../common/enum/audit-log.enum';
 import { ERole } from '../../common/enum/roles.enum';
-import { AuditLogService } from '../admin/audit-log.service';
+import { AuditLogService } from './audit-log.service';
 import { KycService } from '../kyc/kyc.service';
 import { SystemConfigurationService } from '../system-configuration/system-configuration.service';
-import { CampaignService } from './campaign.service';
-import { CampaignTransitionService } from './campaign-transition.service';
-import { CAMPAIGN_CONFIG_GROUP } from './constants/campaign.constants';
+import { CampaignService } from '../brand/campaign.service';
+import { CampaignTransitionService } from '../brand/campaign-transition.service';
+import { CAMPAIGN_CONFIG_GROUP } from '../brand/constants/campaign.constants';
 import {
   ApproveCampaignDto,
   CampaignApprovedResponseDto,
 } from './dto/approve-campaign.dto';
-import { Campaign } from './entities/campaign.entity';
-import { CampaignCategory } from './entities/campaign-category.entity';
-import { CampaignDeliverable } from './entities/campaign-deliverable.entity';
-import { CampaignAsset } from './entities/campaign-asset.entity';
-import { CampaignReviewSubmission } from './entities/campaign-review-submission.entity';
-import { CampaignIssue, CampaignValidationInput } from './types/campaign.types';
+import { Campaign } from '../brand/entities/campaign.entity';
+import { CampaignCategory } from '../brand/entities/campaign-category.entity';
+import { CampaignDeliverable } from '../brand/entities/campaign-deliverable.entity';
+import { CampaignAsset } from '../brand/entities/campaign-asset.entity';
+import { CampaignReviewSubmission } from '../brand/entities/campaign-review-submission.entity';
+import {
+  CampaignIssue,
+  CampaignValidationInput,
+} from '../brand/types/campaign.types';
 
 @Injectable()
 export class CampaignReviewService {

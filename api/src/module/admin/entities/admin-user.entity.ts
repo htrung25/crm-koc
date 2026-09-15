@@ -19,19 +19,12 @@ export class AdminUser {
   @JoinColumn({ name: 'account_id' })
   account: AuthEntity;
 
-  // varchar + CHECK ở migration, không phải enum type của Postgres. Khai
-  // type: 'enum' ở đây sẽ khiến metadata lệch với schema thật mà không báo lỗi.
   @Column({ type: 'varchar', length: 16, default: AdminStatus.ACTIVE })
   status: AdminStatus;
 
-  /**
-   * Chỉ super_admin mới sửa được whitelist của admin khác. Đọc từ DB chứ không
-   * nhét vào JWT: hạ quyền phải có hiệu lực ngay, không chờ token hết hạn.
-   */
   @Column({ type: 'varchar', length: 32, default: EAdminRole.ADMIN })
   adminRole: EAdminRole;
 
-  /** Danh sách IP/CIDR ngăn cách bởi dấu phẩy, NULL nghĩa là không giới hạn */
   @Column({ type: 'text', nullable: true })
   ipWhitelist: string | null;
 

@@ -1,3 +1,10 @@
+import { CampaignReviewController } from './campaign-review.controller';
+import { CampaignReviewService } from './campaign-review.service';
+import { BrandModule } from '../brand/brand.module';
+import { KycModule } from '../kyc/kyc.module';
+import { Campaign } from '../brand/entities/campaign.entity';
+import { CampaignCategory } from '../brand/entities/campaign-category.entity';
+import { CampaignReviewSubmission } from '../brand/entities/campaign-review-submission.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdminService } from './admin-user.service';
@@ -21,10 +28,19 @@ import { AuditLog } from './entities/audit-log.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AdminUser, AuthEntity, AuditLog]),
+    TypeOrmModule.forFeature([
+      AdminUser,
+      AuthEntity,
+      AuditLog,
+      Campaign,
+      CampaignCategory,
+      CampaignReviewSubmission,
+    ]),
     SecurityModule,
     IpWhitelistModule,
     SystemConfigurationModule,
+    BrandModule,
+    KycModule,
   ],
   controllers: [
     AdminController,
@@ -33,6 +49,7 @@ import { AuditLog } from './entities/audit-log.entity';
     CreatorListController,
     SystemConfigurationController,
     AuditLogController,
+    CampaignReviewController,
   ],
   providers: [
     AdminService,
@@ -41,6 +58,7 @@ import { AuditLog } from './entities/audit-log.entity';
     CreatorListService,
     SuperAdminGuard,
     AuditLogService,
+    CampaignReviewService,
   ],
   exports: [AdminService, AdminProfileService, AuditLogService],
 })

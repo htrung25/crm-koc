@@ -24,7 +24,7 @@ import { ERole } from '../../common/enum/roles.enum';
 import { JwtAuthGuard } from '../../security/jwt-auth.guard';
 import { Roles } from '../../security/roles.decorator';
 import { RolesGuard } from '../../security/roles.guard';
-import { IpWhitelistGuard } from '../admin/ip-whitelist.guard';
+import { IpWhitelistGuard } from './ip-whitelist.guard';
 import { AuthenticatedAccount } from '../auth/types/authenticated.types';
 import { CampaignReviewService } from './campaign-review.service';
 import {
