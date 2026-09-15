@@ -4,8 +4,8 @@ import { initReactI18next } from 'react-i18next';
 
 import { secureStorage } from '@/shared/storage/secure-storage';
 
-import en from './locales/en.json';
-import vi from './locales/vi.json';
+import en from '@/shared/i18n/locales/en.json';
+import vi from '@/shared/i18n/locales/vi.json';
 
 const LANGUAGE_KEY = 'app.language';
 

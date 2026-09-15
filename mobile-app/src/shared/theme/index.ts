@@ -1,4 +1,4 @@
-export { useTheme, type Theme } from './use-theme';
+export { useTheme, type Theme } from '@/shared/theme/use-theme';
 export {
   darkColors,
   lightColors,
@@ -7,5 +7,5 @@ export {
   typography,
   type Colors,
   type TypographyVariant,
-} from './tokens';
-export { brand } from './brand';
+} from '@/shared/theme/tokens';
+export { brand } from '@/shared/theme/brand';

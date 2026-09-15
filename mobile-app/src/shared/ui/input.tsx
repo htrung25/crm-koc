@@ -3,7 +3,7 @@ import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { useTheme } from '@/shared/theme';
 
-import { Text } from './text';
+import { Text } from '@/shared/ui/text';
 
 export type InputProps = TextInputProps & {
   label?: string;
@@ -12,7 +12,7 @@ export type InputProps = TextInputProps & {
 
 export const Input = forwardRef<TextInput, InputProps>(function Input(
   { label, error, style, ...rest },
-  ref,
+  ref
 ) {
   const { colors, radius, spacing, typography } = useTheme();
 

@@ -11,6 +11,7 @@ export const brand = {
   hero: '#2C1913',
   heroText: '#FFF6F1',
   heroMuted: '#C1A99F',
+  heroDivider: '#61453B',
   live: '#FF9C7A',
   success: '#1C7A4A',
   successSoft: '#E8F2EB',

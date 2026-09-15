@@ -1,4 +1,8 @@
-import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'react-native';
+import {
+  Text as RNText,
+  type TextProps as RNTextProps,
+  type TextStyle,
+} from 'react-native';
 
 import { useTheme, type TypographyVariant } from '@/shared/theme';
 
@@ -7,7 +11,12 @@ export type TextProps = RNTextProps & {
   tone?: 'default' | 'muted' | 'danger' | 'primary' | 'onPrimary';
 };
 
-export function Text({ variant = 'body', tone = 'default', style, ...rest }: TextProps) {
+export function Text({
+  variant = 'body',
+  tone = 'default',
+  style,
+  ...rest
+}: TextProps) {
   const { colors, typography } = useTheme();
 
   const color = {
@@ -18,5 +27,10 @@ export function Text({ variant = 'body', tone = 'default', style, ...rest }: Tex
     onPrimary: colors.onPrimary,
   }[tone];
 
-  return <RNText style={[typography[variant] as TextStyle, { color }, style]} {...rest} />;
+  return (
+    <RNText
+      style={[typography[variant] as TextStyle, { color }, style]}
+      {...rest}
+    />
+  );
 }
