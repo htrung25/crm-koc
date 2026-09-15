@@ -17,6 +17,13 @@ import { CampaignReviewSubmission } from './entities/campaign-review-submission.
 import { CampaignStatusHistory } from './entities/campaign-status-history.entity';
 import { KycModule } from '../kyc/kyc.module';
 import { SystemConfigurationModule } from '../system-configuration/system-configuration.module';
+import { AdminModule } from '../admin/admin.module';
+import { IpWhitelistModule } from '../admin/ip-whitelist.module';
+import { CampaignReviewService } from './campaign-review.service';
+import { CampaignReviewController } from './campaign-review.controller';
+import { CampaignAssetController } from './campaign-asset.controller';
+import { CampaignAssetService } from './campaign-asset.service';
+import { CampaignAssetUploadInterceptor } from '../../common/interceptors/campaign-asset-upload.interceptor';
 
 @Module({
   imports: [
@@ -34,14 +41,24 @@ import { SystemConfigurationModule } from '../system-configuration/system-config
     // Gửi duyệt campaign đòi KYC đã VERIFIED và giá sàn từ system config.
     KycModule,
     SystemConfigurationModule,
+    AdminModule,
+    IpWhitelistModule,
   ],
-  controllers: [BrandProfileController, CampaignController],
+  controllers: [
+    BrandProfileController,
+    CampaignController,
+    CampaignReviewController,
+    CampaignAssetController,
+  ],
 
   providers: [
     BrandProfileService,
     CampaignService,
     CampaignTransitionService,
     CampaignSubmitService,
+    CampaignReviewService,
+    CampaignAssetService,
+    CampaignAssetUploadInterceptor,
   ],
 
   exports: [BrandProfileService, CampaignService],

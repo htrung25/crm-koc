@@ -1,3 +1,7 @@
+import {
+  SanitizeRichText,
+  SanitizeText,
+} from '../../../common/decorator/sanitize.decorator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -50,12 +54,27 @@ export class UpdateCampaignDto {
   categoryId?: string | null;
 
   @IsOptional()
+  @SanitizeRichText()
+  @IsString()
+  @MaxLength(20000)
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: 20000,
+    description:
+      'Sanitized HTML: p, br, strong, em, u, ul, ol, li, a (HTTPS href only)',
+  })
+  productDescription?: string | null;
+
+  @IsOptional()
+  @SanitizeText()
   @IsString()
   @MaxLength(2000)
   @ApiPropertyOptional({ maxLength: 2000 })
   keyMessage?: string | null;
 
   @IsOptional()
+  @SanitizeText({ each: true })
   @IsArray()
   @IsString({ each: true })
   @ArrayMaxSize(50)
@@ -63,6 +82,7 @@ export class UpdateCampaignDto {
   sellingPoints?: string[] | null;
 
   @IsOptional()
+  @SanitizeText({ each: true })
   @IsArray()
   @IsString({ each: true })
   @ArrayMaxSize(50)
@@ -186,6 +206,7 @@ export class UpdateCampaignDto {
   productBenefit?: Record<string, unknown> | null;
 
   @IsOptional()
+  @SanitizeText()
   @IsString()
   @MaxLength(2000)
   @ApiPropertyOptional({ maxLength: 2000 })
@@ -202,6 +223,7 @@ export class UpdateCampaignDto {
   usageRightsUntil?: string | null;
 
   @IsOptional()
+  @SanitizeText()
   @IsString()
   @MaxLength(5000)
   @ApiPropertyOptional({ maxLength: 5000 })

@@ -9,6 +9,12 @@ export class SubmitCampaignDto {
 }
 
 export class CampaignSubmittedResponseDto {
+  @ApiProperty({
+    format: 'uuid',
+    description: 'Review submission to use for the admin decision',
+  })
+  submissionId!: string;
+
   @ApiProperty({ format: 'uuid' })
   id!: string;
 

@@ -52,9 +52,9 @@ export interface CashFloorResolution {
 
 /**
  * `draft` biến mọi phát hiện thành warnings và không chặn; `submit` biến chúng
- * thành errors. Cùng một bộ luật, khác đúng mức nghiêm khắc.
+ * thành errors. Approve dùng chung luật, cho phép mốc mở tuyển đã trôi qua.
  */
-export type CampaignValidationMode = 'draft' | 'submit';
+export type CampaignValidationMode = 'draft' | 'submit' | 'approve';
 
 export interface CampaignIssue {
   /** Tên constraint cho lỗi field, tên hằng EBusinessCode cho luật nghiệp vụ. */

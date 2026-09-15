@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Transactional, runOnTransactionCommit } from 'typeorm-transactional';
 import { ERole } from '../../common/enum/roles.enum';
 import { ESortOrder } from '../../common/enum/sort-fields.enum';
 import { assertEnum } from '../../common/util/enum-assert.util';
@@ -46,11 +47,6 @@ export class AuditLogService {
     private readonly kafkaService: KafkaService,
   ) {}
 
-  /**
-   * Cổng cho các luồng dùng chung ba vai trò (login, OTP, logout): audit_logs
-   * chỉ chứa hoạt động của admin. role null/undefined cũng bỏ qua — email lạ
-   * chưa xác định được vai trò thì không có cơ sở để coi là admin.
-   */
   async writeIfAdmin(
     role: ERole | null | undefined,
     data: WriteAuditLogDto,
@@ -92,6 +88,14 @@ export class AuditLogService {
     this.publish(saved);
   }
 
+  // Audit quyết định là bắt buộc: lỗi DB phải rollback cả nghiệp vụ.
+  // Kafka chỉ fan-out sau commit, không phát quyết định đã bị rollback.
+  @Transactional()
+  async writeRequired(data: WriteAuditLogDto): Promise<void> {
+    const saved = await this.auditLog.save(this.auditLog.create(data));
+    runOnTransactionCommit(() => this.publish(saved));
+  }
+
   /** Bọc try/catch: publish chạy ngoài khối lưu, ném ở đây là hỏng nghiệp vụ. */
   private publish(log: AuditLog): void {
     if (!this.kafkaService.isEnabled()) return;
@@ -117,7 +121,7 @@ export class AuditLogService {
     }
   }
 
-  /** @deprecated findAll() đã tự đọc query.search. Giữ cho call site cũ. */
+  // findAll() đã tự đọc query.search. Giữ cho call site cũ.
   async search(
     query: AuditLogFilterDto,
   ): Promise<PaginatedResult<AuditLogListItem>> {
@@ -127,6 +131,17 @@ export class AuditLogService {
   async findAll(
     query: AuditLogFilterDto,
   ): Promise<PaginatedResult<AuditLogListItem>> {
+    if (query.resourceId && !query.resourceType) {
+      throw new BadRequestException(
+        'resourceType is required when filtering by resourceId',
+      );
+    }
+
+    const sortOrder =
+      query.sortOrder === undefined
+        ? ESortOrder.DESC
+        : assertEnum(ESortOrder, query.sortOrder, 'sortOrder');
+
     const qb = this.auditLog
       .createQueryBuilder('log')
       .select(AUDIT_LOG_LIST_FIELDS.map((f) => `log.${f}`));
@@ -141,38 +156,18 @@ export class AuditLogService {
       });
     }
 
-    if (query.category !== undefined) {
-      qb.andWhere('log.category = :category', { category: query.category });
-    }
-
-    if (query.action !== undefined) {
-      qb.andWhere('log.action = :action', { action: query.action });
-    }
-
-    if (query.accountId) {
-      qb.andWhere('log.accountId = :accountId', { accountId: query.accountId });
-    }
-
-    if (query.emailAttempted?.trim()) {
-      qb.andWhere('log.emailAttempted = :emailAttempted', {
-        emailAttempted: query.emailAttempted.trim(),
-      });
-    }
-
-    if (query.resourceId && !query.resourceType) {
-      throw new BadRequestException(
-        'resourceType is required when filtering by resourceId',
-      );
-    }
-    if (query.resourceType) {
-      qb.andWhere('log.resourceType = :resourceType', {
-        resourceType: query.resourceType,
-      });
-    }
-    if (query.resourceId) {
-      qb.andWhere('log.resourceId = :resourceId', {
-        resourceId: query.resourceId,
-      });
+    const filters = {
+      category: query.category,
+      action: query.action,
+      accountId: query.accountId || undefined,
+      emailAttempted: query.emailAttempted?.trim() || undefined,
+      resourceType: query.resourceType || undefined,
+      resourceId: query.resourceId || undefined,
+    };
+    for (const [field, value] of Object.entries(filters)) {
+      if (value !== undefined) {
+        qb.andWhere(`log.${field} = :${field}`, { [field]: value });
+      }
     }
 
     if (query.createdFrom) {
@@ -183,11 +178,6 @@ export class AuditLogService {
       to.setDate(to.getDate() + 1);
       qb.andWhere('log.createdAt < :to', { to });
     }
-
-    const sortOrder =
-      query.sortOrder === undefined
-        ? ESortOrder.DESC
-        : assertEnum(ESortOrder, query.sortOrder, 'sortOrder');
 
     qb.orderBy('log.createdAt', sortOrder);
     qb.addOrderBy('log.id', sortOrder);

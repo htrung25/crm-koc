@@ -1,7 +1,6 @@
 import { EKycDocumentType, EKycStatus } from '../../../common/enum/kyc.enum';
 import { ERole } from '../../../common/enum/roles.enum';
-import { KycSubmission } from '../entities/kyc-submission.entity';
-import { EKycRejectReason } from '../../../common/enum/kyc.enum';
+import { KycTransitionMap } from '../types/kyc.types';
 
 /** Enum là số nên thông điệp lỗi phải tự dịch, không thì FE nhận "3" trơ trọi. */
 export const KYC_STATUS_LABEL: Record<EKycStatus, string> = {
@@ -43,9 +42,6 @@ export const REQUIRED_DOCUMENTS: Record<
 /** Loại giấy tờ hợp lệ theo vai trò: brand không nộp CCCD và ngược lại. */
 export const ALLOWED_DOCUMENTS_BY_ROLE = REQUIRED_DOCUMENTS;
 
-/** Vai trò nộp KYC. Admin không nộp. */
-export type KycRole = ERole.BRAND | ERole.CREATOR;
-
 export const KYC_LIST_FIELDS = [
   'id',
   'accountId',
@@ -62,15 +58,7 @@ export const KYC_LIST_FIELDS = [
   'updatedAt',
 ] as const;
 
-export type KycListItem = Pick<KycSubmission, (typeof KYC_LIST_FIELDS)[number]>;
-
 export const KYC_SYSTEM_ACTOR = 'system' as const;
-export type KycTransitionActor = ERole | typeof KYC_SYSTEM_ACTOR;
-
-type KycTransitionMap = Record<
-  EKycStatus,
-  Partial<Record<EKycStatus, readonly KycTransitionActor[]>>
->;
 
 export const ALL_KYC_STATUSES = Object.values(EKycStatus).filter(
   (value): value is EKycStatus => typeof value === 'number',
@@ -95,17 +83,3 @@ export const KYC_TRANSITIONS: KycTransitionMap = {
   [EKycStatus.LOCKED]: {},
   [EKycStatus.EXPIRED]: {},
 };
-
-export interface KycReviewCommand {
-  status: EKycStatus;
-  rejectReason?: EKycRejectReason;
-  reviewNote?: string;
-}
-
-export type KycOpeningPlan =
-  | { kind: 'reuse'; submission: KycSubmission }
-  | {
-      kind: 'create';
-      attemptNo: number;
-      carryOverFromSubmissionId: string | null;
-    };

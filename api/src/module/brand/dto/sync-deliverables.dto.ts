@@ -1,3 +1,4 @@
+import { SanitizeText } from '../../../common/decorator/sanitize.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -47,6 +48,7 @@ export class DeliverableItemDto {
   durationOrLength?: Record<string, unknown> | null;
 
   @IsOptional()
+  @SanitizeText()
   @IsString()
   @MaxLength(2000)
   @ApiPropertyOptional({ maxLength: 2000 })

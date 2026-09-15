@@ -1,23 +1,20 @@
 import { createHash } from 'node:crypto';
 import { BadRequestException } from '@nestjs/common';
 import { fileTypeFromBuffer } from 'file-type';
-import {
-  ALLOWED_DOCUMENT_MIMES,
-  AllowedDocumentMime,
-} from '../constants/kyc-storage.constants';
 
-export interface InspectedDocument {
+export interface InspectedFile {
   /** Mime THẬT, đọc từ magic bytes. */
-  mimeType: AllowedDocumentMime;
+  mimeType: string;
   sizeBytes: number;
   /** SHA-256, để phát hiện nộp lại đúng file vừa bị từ chối. */
   checksum: string;
 }
 
-export async function inspectDocument(
+export async function inspectFile(
   buffer: Buffer,
   maxSizeBytes: number,
-): Promise<InspectedDocument> {
+  allowedMimes: readonly string[],
+): Promise<InspectedFile> {
   if (buffer.length === 0) {
     throw new BadRequestException('file is empty');
   }
@@ -27,10 +24,11 @@ export async function inspectDocument(
     );
   }
 
-  const detected = await fileTypeFromBuffer(buffer);
-  if (!detected || !isAllowed(detected.mime)) {
+  // Truncated signatures can make file-type throw instead of returning undefined.
+  const detected = await fileTypeFromBuffer(buffer).catch(() => undefined);
+  if (!detected || !allowedMimes.includes(detected.mime)) {
     throw new BadRequestException(
-      `unsupported file type; allowed: ${ALLOWED_DOCUMENT_MIMES.join(', ')}`,
+      `unsupported file type; allowed: ${allowedMimes.join(', ')}`,
     );
   }
 
@@ -39,8 +37,4 @@ export async function inspectDocument(
     sizeBytes: buffer.length,
     checksum: createHash('sha256').update(buffer).digest('hex'),
   };
-}
-
-function isAllowed(mime: string): mime is AllowedDocumentMime {
-  return (ALLOWED_DOCUMENT_MIMES as readonly string[]).includes(mime);
 }

@@ -284,7 +284,7 @@ export class CampaignService {
   ): Promise<CampaignValidationResult> {
     const groups = await Promise.all([
       this.requiredFieldIssues(input),
-      this.scheduleIssues(input, now),
+      this.scheduleIssues(input, now, mode),
       this.deliverableIssues(input),
       this.platformCoverageIssue(input),
       this.moneyIssues(input),
@@ -292,7 +292,7 @@ export class CampaignService {
     ]);
     const issues = groups.flat();
 
-    return mode === 'submit'
+    return mode !== 'draft'
       ? { errors: issues, warnings: [] }
       : { errors: [], warnings: issues };
   }
@@ -353,10 +353,9 @@ export class CampaignService {
     const { campaign, deliverables, assets, config } = input;
     const issues: CampaignIssue[] = [];
 
-    // productDescription CHƯA kiểm: nó là rich text, chưa lưu được cho tới khi
-    // T04 có sanitize, nên bắt buộc lúc này sẽ khoá cứng mọi lượt gửi duyệt.
     const always: [string, unknown][] = [
       ['title', campaign.title],
+      ['productDescription', campaign.productDescription],
       ['objective', campaign.objective],
       ['categoryId', campaign.categoryId],
       ['keyMessage', campaign.keyMessage],
@@ -445,11 +444,17 @@ export class CampaignService {
   private async scheduleIssues(
     input: CampaignValidationInput,
     now: Date,
+    mode: CampaignValidationMode,
   ): Promise<CampaignIssue[]> {
     const { recruitingStartAt, applicationDeadline } = input.campaign;
     const issues: CampaignIssue[] = [];
 
-    if (recruitingStartAt && recruitingStartAt.getTime() < now.getTime()) {
+    // Chờ duyệt có thể làm mốc mở tuyển trôi qua; deadline còn lại vẫn kiểm.
+    if (
+      mode !== 'approve' &&
+      recruitingStartAt &&
+      recruitingStartAt.getTime() < now.getTime()
+    ) {
       issues.push({
         code: 'minDate',
         fieldPath: 'recruitingStartAt',
