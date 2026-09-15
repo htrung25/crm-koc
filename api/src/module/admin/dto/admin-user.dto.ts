@@ -5,7 +5,7 @@ import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { ERole } from '../../../common/enum/roles.enum';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
 import { ESortField, ESortOrder } from '../../../common/enum/sort-fields.enum';
-import { EAdminRole } from '../enum/admin-roles.enum';
+import { EAdminRole } from '../constants/admin-roles.enum';
 
 export class AdminUserDto {
   @ApiProperty({ format: 'uuid' })

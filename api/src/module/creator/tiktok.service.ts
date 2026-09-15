@@ -9,7 +9,7 @@ import {
   NormalizedSocialProfile,
   SocialOAuthTokens,
   SocialProvider,
-} from './types/social.types';
+} from './interfaces/social.interfaces';
 
 /**
  * user.info.profile cần thiết để lấy `username` thật. Thiếu scope này thì

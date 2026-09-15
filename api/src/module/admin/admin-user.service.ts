@@ -21,7 +21,7 @@ import { AuthEntity } from '../auth/entities/auth.entity';
 import { AuthenticatedAccount } from '../auth/types/authenticated.types';
 import { AdminFilterDto } from './dto/admin-user.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
-import { EAdminRole } from './enum/admin-roles.enum';
+import { EAdminRole } from './constants/admin-roles.enum';
 import { AdminUser } from './entities/admin-user.entity';
 import { IpWhitelistService } from './ip-whitelist.service';
 import { SessionService } from '../../security/session.service';
@@ -37,10 +37,7 @@ import {
 } from '../../common/enum/audit-log.enum';
 import { AuditLogService } from './audit-log.service';
 
-export type AdminListRow = AuthEntity & {
-  ipWhitelist: string | null;
-  adminRole: EAdminRole;
-};
+import type { AdminListRow } from './interfaces/admin.interfaces';
 
 @Injectable()
 export class AdminService {

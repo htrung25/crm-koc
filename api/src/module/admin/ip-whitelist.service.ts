@@ -9,7 +9,7 @@ import { In, Repository } from 'typeorm';
 import { Netmask } from 'netmask';
 import { EBusinessCode } from './../../common/enum/business-code.enum';
 import { AdminUser } from './entities/admin-user.entity';
-import { EAdminRole } from './enum/admin-roles.enum';
+import { EAdminRole } from './constants/admin-roles.enum';
 
 @Injectable()
 export class IpWhitelistService {

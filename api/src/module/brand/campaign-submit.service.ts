@@ -36,11 +36,7 @@ import type {
   CampaignSnapshot,
 } from './types/campaign.types';
 
-export interface CampaignSubmitResult {
-  campaign: Campaign;
-  revisionNumber: number;
-  submissionId: string;
-}
+import type { CampaignSubmitResult } from './interfaces/campaign-submit.interfaces';
 
 @Injectable()
 export class CampaignSubmitService {

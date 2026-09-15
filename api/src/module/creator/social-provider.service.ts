@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ESocialPlatform } from '../../common/enum/social-platform.enum';
-import { SocialProvider } from './types/social.types';
+import { SocialProvider } from './interfaces/social.interfaces';
 import { TikTokService } from './tiktok.service';
 
 /**

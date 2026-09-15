@@ -20,7 +20,7 @@ import { UpdateSystemConfigurationItemDto } from './dto/system-configuration.dto
 import {
   SystemConfigurationUpsert,
   CachedConfig,
-} from './types/system-config.types';
+} from './interfaces/system-config.interfaces';
 
 @Injectable()
 export class SystemConfigurationService {

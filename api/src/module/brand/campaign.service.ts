@@ -53,10 +53,8 @@ import type {
 } from './types/campaign.types';
 
 /** Campaign kèm deliverables, cho màn khôi phục phiên làm việc. */
-export interface CampaignDetail {
-  campaign: Campaign;
-  deliverables: CampaignDeliverable[];
-}
+import type { CampaignDetail } from './interfaces/campaign-service.interfaces';
+export type { CampaignDetail } from './interfaces/campaign-service.interfaces';
 
 @Injectable()
 export class CampaignService {
