@@ -10,7 +10,7 @@ import {
   EPaymentMethod,
   EPaymentStatus,
   ECurency,
-} from 'src/common/enum/payment.enum';
+} from '../../../common/enum/payment.enum';
 @Entity()
 export class Payment {
   @PrimaryGeneratedColumn()

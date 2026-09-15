@@ -1,4 +1,7 @@
-import { EPaymentMethod, EPaymentStatus } from 'src/common/enum/payment.enum';
+import {
+  EPaymentMethod,
+  EPaymentStatus,
+} from '../../../common/enum/payment.enum';
 import {
   IsNumber,
   IsString,

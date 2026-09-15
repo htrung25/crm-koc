@@ -4,7 +4,7 @@ import { Payment } from './entities/payment.entity';
 import { Repository } from 'typeorm';
 import { PaymentDto } from './dto/payment.dto';
 import { PublicRole } from '../auth/types/authenticated.types';
-import { ECurency } from 'src/common/enum/payment.enum';
+import { ECurency } from '../../common/enum/payment.enum';
 
 @Injectable()
 export class PaymentService {
@@ -28,7 +28,7 @@ export class PaymentService {
     return payment;
   }
 
-  async findAll(query: PaymentDto): Promise<Payment[]> {
+  async findAll(): Promise<Payment[]> {
     const data = await this.paymentRepository.find();
     return data;
   }
