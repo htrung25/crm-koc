@@ -219,9 +219,7 @@ export class AuthService {
       account.password === null ||
       !(await bcrypt.compare(password, account.password))
     ) {
-      // Email lạ (account null) không ghi: chưa biết vai trò thì không có cơ sở
-      // coi là admin. Đổi lại, dò mật khẩu vào email admin không tồn tại sẽ
-      // không để lại vết ở đây.
+      // Email lạ (account null) không ghi
       await this.auditLogService.writeIfAdmin(account?.accountRole, {
         category: EAuditLogCategory.LOGIN,
         action: ELoginAction.FAIL_CREDENTIALS,

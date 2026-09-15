@@ -21,6 +21,7 @@ import { HealthModule } from './module/health/health.module';
 import { SystemConfigurationModule } from './module/system-configuration/system-configuration.module';
 import { QueueModule } from './queue/queue.module';
 import { KafkaModule } from './infra/kafka.module';
+import { PaymentModule } from './module/payment/payment.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { KafkaModule } from './infra/kafka.module';
     CreatorModule,
     CollaborationModule,
     KycModule,
+    PaymentModule,
     SystemConfigurationModule,
     IpWhitelistModule,
     HealthModule,

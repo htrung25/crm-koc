@@ -20,4 +20,3 @@ export interface VerifiedJwtPayload extends JwtPayload {
   iat: number;
   exp: number;
 }
-

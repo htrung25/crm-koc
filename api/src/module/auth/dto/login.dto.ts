@@ -14,24 +14,24 @@ export class LoginDto {
   @IsEmail()
   @MaxLength(255)
   @ApiProperty({ example: 'test@gmail.com', format: 'email' })
-  email!: string;
+  email: string;
 
   @IsString()
   @MinLength(8)
   @Matches(PASSWORD_REGEX, { message: PASSWORD_REGEX_MESSAGE })
   @ApiProperty({ example: 'test@12345', minLength: 8, format: 'password' })
-  password!: string;
+  password: string;
 }
 
 export class LoginAdminDto {
   @IsEmail()
   @MaxLength(255)
   @ApiProperty({ example: 'admin@gmail.com', format: 'email' })
-  email!: string;
+  email: string;
 
   @IsString()
   @MinLength(8)
   @Matches(PASSWORD_REGEX, { message: PASSWORD_REGEX_MESSAGE })
   @ApiProperty({ example: 'abc@12345', minLength: 8, format: 'password' })
-  password!: string;
+  password: string;
 }
