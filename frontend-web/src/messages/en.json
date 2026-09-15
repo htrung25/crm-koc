@@ -293,6 +293,10 @@
     "kocs": {
       "title": "KOC List",
       "greeting": "Browse Creator profiles and account statuses."
+    },
+    "campaigns": {
+      "title": "Campaign Management",
+      "greeting": "Review, track and manage brand campaigns."
     }
   },
   "marketing": {

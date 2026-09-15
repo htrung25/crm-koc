@@ -204,6 +204,15 @@ body {
   scrollbar-color: #8a7768 rgba(138, 119, 104, 0.1);
 }
 
+/* Trình duyệt hỗ trợ WebKit dùng kích thước và trạng thái hover bên dưới.
+   Giữ thuộc tính chuẩn phía trên làm fallback cho Firefox. */
+@supports selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
