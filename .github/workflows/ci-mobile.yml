@@ -1,0 +1,98 @@
+name: ci-mobile
+
+on:
+  pull_request:
+  push:
+    branches: [develop, staging, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: '24.14.1'
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      mobile: ${{ steps.filter.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            base="origin/$BASE_REF"
+          else
+            base="$PUSH_BEFORE"
+          fi
+          if ! git rev-parse --verify --quiet "$base" >/dev/null; then
+            echo "mobile=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --name-only "$base"...HEAD | grep -qE '^(mobile-app/|\.github/workflows/ci-mobile\.yml)'; then
+            echo "mobile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "mobile=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  lint:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile-app/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+  typecheck:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile-app/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+
+  ci-mobile-gate:
+    needs: [lint, typecheck]
+    # !cancelled() thay cho always(): run bị huỷ thì gate SKIP thay vì đỏ.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any job failed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "results: $RESULTS"
+          for r in $RESULTS; do
+            case "$r" in
+              success|skipped) ;;
+              *) echo "job result: $r"; exit 1 ;;
+            esac
+          done

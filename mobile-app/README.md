@@ -36,6 +36,16 @@ src/
 
 ### Quy ước
 
+- Import và re-export nội bộ dùng alias `@/` (trỏ tới `src/`), không dùng
+  `./` hoặc `../`. Ví dụ: `@/shared/ui`, `@/features/auth/model/types`.
+  Package bên ngoài vẫn dùng tên package như `react`, `axios`.
+- Trong cùng feature được import trực tiếp file bằng `@/features/<name>/...`.
+- `.prettierrc` nạp plugin cục bộ `scripts/prettier-plugin-import-alias.cjs`:
+  khi format file TypeScript/TSX trong `src/`, import/re-export tương đối tự đổi
+  sang alias theo `tsconfig.json`, bao gồm `import()` và `require()` với chuỗi
+  đường dẫn cố định. Giữ nguyên thứ tự import và tên package bên ngoài.
+  Chạy `npm run format` để áp dụng toàn bộ mobile project; editor cần dùng
+  Prettier của project và cấu hình `.prettierrc` này.
 - **Không đặt logic trong `src/app`.** Route chỉ lắp ráp; màn hình thật nằm ở
   `features/<name>/components`.
 - **Import chéo feature phải qua public API**: `@/features/auth`, không phải
@@ -62,34 +72,49 @@ mọi request 401 về đúng một lần gọi `/refresh` (single-flight) rồi
 Token nằm trong `expo-secure-store`. Mỗi máy có một `X-Device-Id` bền vững,
 server đối chiếu khi refresh.
 
-## Giao diện RedSun (dữ liệu mẫu)
+Logout chủ động và hết phiên tự động đều đi qua `session-store.signOut()`:
+xóa account, token và toàn bộ query/mutation cache của app. Query đang chạy
+được hủy; response và refresh thuộc phiên cũ không được cập nhật phiên mới.
+`/auth/me` có query key theo phiên để lần đăng nhập sau không dùng dữ liệu cũ.
+Device ID được giữ lại vì thuộc thiết bị, không thuộc tài khoản.
 
-Khi mở app, chờ khôi phục session: khách được chuyển tới `/welcome`, người đã đăng
-nhập tới `/dashboard`. Mỗi lần app từ background trở lại foreground, nếu chưa đăng
-nhập sẽ quay về `/welcome` và đóng các form khách đang mở. Không lưu cờ “đã xem
-onboarding”. Mở hộp thoại hệ thống/Notification Center (chỉ `inactive`) không reset
-màn hình. Nút “Bỏ qua” vẫn cho phép xem Discover tại `/` trong lần sử dụng hiện tại.
+## Giao diện theo vai trò
 
-Các route công khai:
+Khách mở app vào `/welcome`; nút bỏ qua dẫn tới `/login`. `/login` và `/sign-in`
+cùng dùng form RedSun trong `features/auth`; `/register` gọi API đăng ký và chuyển
+sang OTP. Các route này được guard, người đã đăng nhập được chuyển về `/dashboard`.
 
-- `/`: tìm kiếm và lọc chiến dịch/KOC, banner thống kê, thanh điều hướng khách.
-- `/welcome`: 3 slide onboarding, tự chuyển mỗi 4,2 giây; có điều khiển thủ công,
-  dừng khi màn hình mất focus và tôn trọng Reduce Motion.
-- `/register`: chọn KOC/Thương hiệu, kiểm tra thông tin và điều khoản bằng Zod.
-- `/sign-in`: form đăng nhập mô phỏng, hiện/ẩn mật khẩu, lựa chọn ghi nhớ.
-- `/complete`: hoàn tất xem thử; không gửi email, tạo session hoặc lưu mật khẩu.
+Sau OTP hoặc khôi phục session, app nạp account và điều hướng theo `accountRole`
+của API: `creator` → `/creator`, `brand` → `/brand`. Role dùng chữ thường; trạng
+thái account là số: PENDING=1, ACTIVE=2, SUSPENDED=3, BANNED=4. Response OTP và
+`/auth/me` được kiểm tra bằng Zod trước khi lưu vào session.
 
-Các tab khách và thẻ nội dung dẫn đến form theo bản phác thảo. Google/TikTok,
-khôi phục mật khẩu và nội dung pháp lý hiện có thông báo về trạng thái chưa kết nối.
-Ảnh sọc là placeholder có chủ đích từ HTML. Dùng font hệ thống native; chưa kèm
-font Be Vietnam Pro hoặc ảnh sản phẩm chính thức.
+- Creator: feed Discover theo thiết kế, tìm kiếm/lọc chiến dịch và KOC, banner
+  thống kê, avatar tài khoản và các tab riêng. Feed thuộc `features/creator`, chỉ
+  truy cập sau đăng nhập đúng role. Danh sách đang dùng dữ liệu mẫu; chi tiết,
+  chiến dịch của tôi và ví chưa nối API.
+- Brand: màn tổng quan, chiến dịch, danh sách Creator và tài khoản trong
+  `features/brand`, với dữ liệu mẫu. Creator không truy cập được khu vực Brand
+  và ngược lại.
+- `features/auth` sở hữu form đăng nhập/đăng ký, OTP và session. Không còn
+  `features/discover`, `features/entry` hoặc màn hoàn tất mô phỏng `/complete`.
+- Onboarding vẫn ở `features/onboarding`. App trở lại từ background khi chưa
+  đăng nhập sẽ đóng các form khách và trở về `/welcome`.
 
-`features/discover` sở hữu fixtures và bộ lọc; `features/onboarding` sở hữu carousel;
-`features/entry` sở hữu form mô phỏng, tách biệt `features/auth` đang dùng REST API.
-Các màn dùng token `shared/theme/brand.ts` và thành phần dùng chung ở `shared/ui`.
-Toàn bộ chuỗi giao diện có bản dịch `vi` và `en`. Giao diện công khai giữ bảng màu
-sáng như thiết kế, không phụ thuộc chế độ tối của thiết bị.
+Ảnh sản phẩm đang là placeholder; Google/TikTok, quên mật khẩu và các nội dung
+chưa kết nối hiển thị thông báo. Các màn dùng token `shared/theme/brand.ts` và
+các thành phần ở `shared/ui`; bản dịch có `vi` và `en`.
 
-Luồng API cũ vẫn ở `/login` → `/verify-otp` → `/dashboard` (có session guard).
-Không gọi các hook API từ màn hình công khai. Khi nối API, thay hành động submit
-trong feature entry bằng các hook xác thực; không thêm HTTP vào file route.
+### Lỗi API trên mobile
+
+`toApiError()` giữ toàn bộ response body trong `ApiError.payload` (kiểu `unknown`).
+Các trường đã chuẩn hóa: `businessCode`, `errors` (mỗi lỗi giữ `code`, `fieldPath`,
+`message`, `metadata`), `resourceStatus` và `version`. `status` luôn là HTTP status;
+HTTP 409 có `kind: 'conflict'`. Dùng `businessCode` để phân nhánh nghiệp vụ, không
+so khớp chuỗi thông báo. Trường mở rộng hoặc dữ liệu không đúng schema vẫn còn
+trong `payload`; cần kiểm tra kiểu trước khi sử dụng.
+
+`details` giữ mảng thông báo validation của Nest. `messages` tổng hợp thông báo
+chung, `details` và thông báo theo trường, bỏ trùng; `FormError` hiển thị danh sách
+này. Không hiển thị hoặc log toàn bộ payload vì có thể chứa dữ liệu nhạy cảm.
+Chạy `npm run test:api-errors` để kiểm tra contract và hiển thị form.
