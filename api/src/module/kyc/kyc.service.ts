@@ -1,4 +1,8 @@
 import {
+  validateListQuery,
+  applyEqualityFilters,
+} from '../../common/util/list-query.util';
+import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
@@ -292,16 +296,12 @@ export class KycService {
 
   /** Hàng đợi: ưu tiên trước, còn lại theo thứ tự nộp. */
   async findAll(query: KycFilterDto): Promise<PaginatedResult<KycListItem>> {
+    query = validateListQuery(KycFilterDto, query);
     const qb = this.submissionRepository
       .createQueryBuilder('kyc')
       .select(KYC_LIST_FIELDS.map((field) => `kyc.${field}`));
 
-    if (query.status !== undefined) {
-      qb.andWhere('kyc.status = :status', { status: query.status });
-    }
-    if (query.role) {
-      qb.andWhere('kyc.role = :role', { role: query.role });
-    }
+    applyEqualityFilters(qb, 'kyc', { status: query.status, role: query.role });
 
     qb.orderBy('kyc.priority', 'DESC')
       .addOrderBy('kyc.submittedAt', 'ASC')

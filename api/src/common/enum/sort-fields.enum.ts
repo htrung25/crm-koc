@@ -11,3 +11,11 @@ export enum ESortOrder {
   ASC = 'ASC',
   DESC = 'DESC',
 }
+
+export const ACCOUNT_SORT_FIELDS = [
+  ESortField.CREATED_AT,
+  ESortField.UPDATED_AT,
+  ESortField.NAME,
+  ESortField.EMAIL,
+  ESortField.STATUS,
+] as const;

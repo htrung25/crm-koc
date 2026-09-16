@@ -1,3 +1,9 @@
+import {
+  validateListQuery,
+  applyEqualityFilters,
+  assertCreatedAtRange,
+  applyCreatedAtRange,
+} from '../../common/util/list-query.util';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -116,6 +122,8 @@ export class AuditLogService {
   async findAll(
     query: AuditLogFilterDto,
   ): Promise<PaginatedResult<AuditLogListItem>> {
+    query = validateListQuery(AuditLogFilterDto, query);
+    assertCreatedAtRange(query);
     if (query.resourceId && !query.resourceType) {
       throw new BadRequestException(
         'resourceType is required when filtering by resourceId',
@@ -149,20 +157,9 @@ export class AuditLogService {
       resourceType: query.resourceType || undefined,
       resourceId: query.resourceId || undefined,
     };
-    for (const [field, value] of Object.entries(filters)) {
-      if (value !== undefined) {
-        qb.andWhere(`log.${field} = :${field}`, { [field]: value });
-      }
-    }
+    applyEqualityFilters(qb, 'log', filters);
 
-    if (query.createdFrom) {
-      qb.andWhere('log.createdAt >= :from', { from: query.createdFrom });
-    }
-    if (query.createdTo) {
-      const to = new Date(query.createdTo);
-      to.setDate(to.getDate() + 1);
-      qb.andWhere('log.createdAt < :to', { to });
-    }
+    applyCreatedAtRange(qb, 'log', query);
 
     qb.orderBy('log.createdAt', sortOrder);
     qb.addOrderBy('log.id', sortOrder);

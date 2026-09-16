@@ -1,3 +1,4 @@
+import { BankAccount } from '../module/payment/entities/bank-account.entity';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SnakeNamingStrategy } from './snake-naming.strategy';
 import { AuthEntity } from '../module/auth/entities/auth.entity';
@@ -27,6 +28,7 @@ import { CampaignReviewSubmission } from '../module/brand/entities/campaign-revi
  */
 
 const entities = [
+  BankAccount,
   AuthEntity,
   BrandProfile,
   CreatorProfile,

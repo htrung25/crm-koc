@@ -110,12 +110,18 @@ export class AuditLogFilterDto extends PaginationDto {
   resourceId?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'createdFrom must be an ISO date string' })
+  @IsDateString(
+    { strict: true },
+    { message: 'createdFrom must be an ISO date string' },
+  )
   @ApiPropertyOptional({ example: '2026-01-01', format: 'date' })
   createdFrom?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'createdTo must be an ISO date string' })
+  @IsDateString(
+    { strict: true },
+    { message: 'createdTo must be an ISO date string' },
+  )
   @ApiPropertyOptional({ example: '2026-12-31', format: 'date' })
   createdTo?: string;
 

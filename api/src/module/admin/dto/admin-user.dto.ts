@@ -1,10 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { ERole } from '../../../common/enum/roles.enum';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
-import { ESortField, ESortOrder } from '../../../common/enum/sort-fields.enum';
+import {
+  ACCOUNT_SORT_FIELDS,
+  ESortField,
+  ESortOrder,
+} from '../../../common/enum/sort-fields.enum';
 import { EAdminRole } from '../constants/admin-roles.enum';
 
 export class AdminUserDto {
@@ -80,12 +84,11 @@ export class AdminFilterDto extends PaginationDto {
   status?: EAccountStatus;
 
   @IsOptional()
-  @IsEnum(ESortField, {
+  @IsIn(ACCOUNT_SORT_FIELDS, {
     message: 'sortBy must be createdAt, updatedAt, name, email or status',
   })
   @ApiPropertyOptional({
-    enum: ESortField,
-    enumName: 'ESortField',
+    enum: ACCOUNT_SORT_FIELDS,
     default: ESortField.CREATED_AT,
   })
   sortBy?: ESortField;
