@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsDateString,
   IsEnum,
@@ -124,25 +124,35 @@ export class CollaborationFilterDto extends PaginationDto {
   campaignId?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'createdFrom must be an ISO date string' })
+  @IsDateString(
+    { strict: true },
+    { message: 'createdFrom must be an ISO date string' },
+  )
   @ApiPropertyOptional({ example: '2026-01-01', format: 'date' })
   createdFrom?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'createdTo must be an ISO date string' })
+  @IsDateString(
+    { strict: true },
+    { message: 'createdTo must be an ISO date string' },
+  )
   @ApiPropertyOptional({ example: '2026-12-31', format: 'date' })
   createdTo?: string;
 
   // query string luôn là chuỗi: '500000' phải thành số thì @IsNumber mới pass
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' && value.trim() !== '' ? Number(value) : value,
+  )
   @IsNumber()
   @Min(0)
   @ApiPropertyOptional({ minimum: 0, example: 500000 })
   minPrice?: number;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' && value.trim() !== '' ? Number(value) : value,
+  )
   @IsNumber()
   @Min(0)
   @ApiPropertyOptional({ minimum: 0, example: 5000000 })

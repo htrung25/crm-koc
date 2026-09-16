@@ -1,4 +1,11 @@
 import {
+  validateListQuery,
+  applyEqualityFilters,
+  assertCreatedAtRange,
+  applyCreatedAtRange,
+} from '../../common/util/list-query.util';
+import { isUUID } from 'class-validator';
+import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
@@ -11,10 +18,7 @@ import { In, IsNull, Repository } from 'typeorm';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { ECollaborationStatus } from '../../common/enum/collaboration-status.enum';
 import { ESortField, ESortOrder } from '../../common/enum/sort-fields.enum';
-import {
-  assertEnum,
-  assertNumericEnum,
-} from '../../common/util/enum-assert.util';
+import { assertEnum } from '../../common/util/enum-assert.util';
 import { PaginatedResult, paginate } from '../../common/util/pagination.util';
 import { uniqueViolationOf } from '../../common/util/pg-error.util';
 import { AuthEntity } from '../auth/entities/auth.entity';
@@ -308,55 +312,22 @@ export class CollaborationService {
     actor: CollaborationActor,
     query: CollaborationFilterDto,
   ): Promise<PaginatedResult<CollaborationListItem>> {
-    const scopeColumn = actor.role === ERole.CREATOR ? 'creatorId' : 'brandId';
-
-    const qb = this.collaborationRepository
-      .createQueryBuilder('collaboration')
-      .select(COLLABORATION_LIST_FIELDS.map((f) => `collaboration.${f}`))
-      .where(`collaboration.${scopeColumn} = :actorId`, { actorId: actor.id });
-
-    if (query.status !== undefined) {
-      qb.andWhere('collaboration.status = :status', {
-        status: assertNumericEnum(ECollaborationStatus, query.status, 'status'),
-      });
+    query = validateListQuery(CollaborationFilterDto, query);
+    assertCreatedAtRange(query);
+    if (
+      !actor ||
+      !isUUID(actor.id) ||
+      ![ERole.BRAND, ERole.CREATOR].includes(actor.role)
+    ) {
+      throw new BadRequestException('invalid collaboration actor');
     }
-
-    if (query.creatorId) {
-      qb.andWhere('collaboration.creatorId = :creatorId', {
-        creatorId: query.creatorId,
-      });
+    if (
+      query.minPrice !== undefined &&
+      query.maxPrice !== undefined &&
+      query.minPrice > query.maxPrice
+    ) {
+      throw new BadRequestException('minPrice must not exceed maxPrice');
     }
-
-    if (query.campaignId) {
-      qb.andWhere('collaboration.campaignId = :campaignId', {
-        campaignId: query.campaignId,
-      });
-    }
-
-    if (query.createdFrom) {
-      qb.andWhere('collaboration.createdAt >= :from', {
-        from: query.createdFrom,
-      });
-    }
-    if (query.createdTo) {
-      const to = new Date(query.createdTo);
-      to.setDate(to.getDate() + 1);
-      qb.andWhere('collaboration.createdAt < :to', { to });
-    }
-
-    // So sánh ở SQL để numeric không phải đi vòng qua float của JS.
-    if (query.minPrice !== undefined) {
-      qb.andWhere('collaboration.agreedPrice >= :minPrice', {
-        minPrice: query.minPrice,
-      });
-    }
-    if (query.maxPrice !== undefined) {
-      qb.andWhere('collaboration.agreedPrice <= :maxPrice', {
-        maxPrice: query.maxPrice,
-      });
-    }
-
-    // orderBy ghép chuỗi raw vào SQL => bắt buộc whitelist, không tin input
     const sortBy =
       query.sortBy === undefined
         ? ESortField.CREATED_AT
@@ -365,6 +336,32 @@ export class CollaborationService {
       query.sortOrder === undefined
         ? ESortOrder.DESC
         : assertEnum(ESortOrder, query.sortOrder, 'sortOrder');
+
+    const scopeColumn = actor.role === ERole.CREATOR ? 'creatorId' : 'brandId';
+
+    const qb = this.collaborationRepository
+      .createQueryBuilder('collaboration')
+      .select(COLLABORATION_LIST_FIELDS.map((f) => `collaboration.${f}`))
+      .where(`collaboration.${scopeColumn} = :actorId`, { actorId: actor.id });
+
+    applyEqualityFilters(qb, 'collaboration', {
+      status: query.status,
+      creatorId: query.creatorId,
+      campaignId: query.campaignId,
+    });
+
+    applyCreatedAtRange(qb, 'collaboration', query);
+
+    // So sánh ở SQL để numeric không phải đi vòng qua float của JS.
+    const priceBounds = { minPrice: '>=', maxPrice: '<=' } as const;
+    for (const [field, operator] of Object.entries(priceBounds)) {
+      const value = query[field as keyof typeof priceBounds];
+      if (value !== undefined) {
+        qb.andWhere(`collaboration.agreedPrice ${operator} :${field}`, {
+          [field]: value,
+        });
+      }
+    }
 
     qb.orderBy(`collaboration.${sortBy}`, sortOrder);
     // khoá thứ tự bằng id để phân trang ổn định khi trùng giá trị sort

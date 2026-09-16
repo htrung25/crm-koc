@@ -1,3 +1,5 @@
+import { validateListQuery } from '../../common/util/list-query.util';
+import { applyAccountListFilters } from './util/account-list.util';
 import {
   BadRequestException,
   ConflictException,
@@ -11,11 +13,7 @@ import { ERole } from '../../common/enum/roles.enum';
 import { ESortField } from '../../common/enum/sort-fields.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { ESortOrder } from '../../common/enum/sort-fields.enum';
-import {
-  PaginatedResult,
-  escapeLike,
-  paginate,
-} from '../../common/util/pagination.util';
+import { PaginatedResult, paginate } from '../../common/util/pagination.util';
 import { AccountCacheService } from '../../security/account-cache.service';
 import { AuthEntity } from '../auth/entities/auth.entity';
 import { AuthenticatedAccount } from '../auth/types/authenticated.types';
@@ -26,10 +24,7 @@ import { AdminUser } from './entities/admin-user.entity';
 import { IpWhitelistService } from './ip-whitelist.service';
 import { SessionService } from '../../security/session.service';
 import { uniqueViolationOf } from '../../common/util/pg-error.util';
-import {
-  assertEnum,
-  assertNumericEnum,
-} from '../../common/util/enum-assert.util';
+import { assertNumericEnum } from '../../common/util/enum-assert.util';
 
 import {
   EAuditLogCategory,
@@ -56,29 +51,17 @@ export class AdminService {
   ) {}
 
   async findAll(query: AdminFilterDto): Promise<PaginatedResult<AdminListRow>> {
+    query = validateListQuery(AdminFilterDto, query);
+    const sortBy =
+      query.sortBy === undefined ? ESortField.CREATED_AT : query.sortBy;
+    const sortOrder =
+      query.sortOrder === undefined ? ESortOrder.DESC : query.sortOrder;
+
     const qb = this.authRepository
       .createQueryBuilder('account')
       .where('account.accountRole = :role', { role: ERole.ADMIN });
 
-    if (query.search?.trim()) {
-      qb.andWhere('(account.name ILIKE :s OR account.email ILIKE :s)', {
-        s: `%${escapeLike(query.search.trim())}%`,
-      });
-    }
-
-    if (query.status !== undefined) {
-      const status = assertNumericEnum(EAccountStatus, query.status, 'status');
-      qb.andWhere('account.status = :status', { status });
-    }
-
-    const sortBy =
-      query.sortBy === undefined
-        ? ESortField.CREATED_AT
-        : assertEnum(ESortField, query.sortBy, 'sortBy');
-    const sortOrder =
-      query.sortOrder === undefined
-        ? ESortOrder.DESC
-        : assertEnum(ESortOrder, query.sortOrder, 'sortOrder');
+    applyAccountListFilters(qb, query);
 
     qb.orderBy(`account.${sortBy}`, sortOrder);
     // khoá thứ tự bằng id để phân trang ổn định khi nhiều dòng trùng giá trị sort

@@ -1,3 +1,4 @@
+import { BankAccount } from '../module/payment/entities/bank-account.entity';
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -40,6 +41,7 @@ import { CampaignReviewSubmission } from '../module/brand/entities/campaign-revi
             type: 'postgres',
             url: databaseURL,
             entities: [
+              BankAccount,
               AuthEntity,
               BrandProfile,
               CreatorProfile,
@@ -84,6 +86,7 @@ import { CampaignReviewSubmission } from '../module/brand/entities/campaign-revi
           password,
           database,
           entities: [
+            BankAccount,
             AuthEntity,
             BrandProfile,
             CreatorProfile,

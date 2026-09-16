@@ -481,7 +481,15 @@
             "required": false,
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/ESortField"
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "updatedAt",
+                "name",
+                "email",
+                "status"
+              ]
             }
           },
           {
@@ -1025,7 +1033,15 @@
             "required": false,
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/ESortField"
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "updatedAt",
+                "name",
+                "email",
+                "status"
+              ]
             }
           },
           {
@@ -1262,7 +1278,15 @@
             "required": false,
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/ESortField"
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "updatedAt",
+                "name",
+                "email",
+                "status"
+              ]
             }
           },
           {
@@ -1718,6 +1742,71 @@
         "summary": "List and search audit logs, paginated",
         "tags": [
           "Admin-AuditLogs"
+        ]
+      }
+    },
+    "/admin/campaign-reviews/{submissionId}/decision": {
+      "post": {
+        "description": "Currently supports decision=approve only. Any admin with an allowed IP may approve.",
+        "operationId": "CampaignReviewController_approve",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveCampaignDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignApprovedResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body or unsupported decision"
+          },
+          "401": {
+            "description": "Invalid or expired session"
+          },
+          "403": {
+            "description": "Admin role/IP required, or brand KYC no longer verified"
+          },
+          "404": {
+            "description": "Campaign review does not exist"
+          },
+          "409": {
+            "description": "Stale revision/version or already decided"
+          },
+          "422": {
+            "description": "Current policy or restricted category checklist is not satisfied"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Approve the latest open campaign review against current policy",
+        "tags": [
+          "Admin-Campaign"
         ]
       }
     },
@@ -2180,71 +2269,6 @@
         "summary": "Submit a campaign for admin review",
         "tags": [
           "Brand-Campaign"
-        ]
-      }
-    },
-    "/admin/campaign-reviews/{submissionId}/decision": {
-      "post": {
-        "description": "Currently supports decision=approve only. Any admin with an allowed IP may approve.",
-        "operationId": "CampaignReviewController_approve",
-        "parameters": [
-          {
-            "name": "submissionId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ApproveCampaignDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CampaignApprovedResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid body or unsupported decision"
-          },
-          "401": {
-            "description": "Invalid or expired session"
-          },
-          "403": {
-            "description": "Admin role/IP required, or brand KYC no longer verified"
-          },
-          "404": {
-            "description": "Campaign review does not exist"
-          },
-          "409": {
-            "description": "Stale revision/version or already decided"
-          },
-          "422": {
-            "description": "Current policy or restricted category checklist is not satisfied"
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "Approve the latest open campaign review against current policy",
-        "tags": [
-          "Admin-Campaign"
         ]
       }
     },
@@ -3842,6 +3866,145 @@
         ]
       }
     },
+    "/payment/bank-accounts": {
+      "post": {
+        "description": "Creates a new bank account for the authenticated user",
+        "operationId": "BankAccountController_createBankAccount",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Create a new bank account",
+        "tags": [
+          "Bank Accounts"
+        ]
+      },
+      "get": {
+        "description": "Retrieves a list of all bank accounts for the authenticated user",
+        "operationId": "BankAccountController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "bankCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 32,
+              "type": "string"
+            }
+          },
+          {
+            "name": "bankNumber",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 34,
+              "type": "string"
+            }
+          },
+          {
+            "name": "bankName",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 255,
+              "type": "string"
+            }
+          },
+          {
+            "name": "isDefault",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "updatedAt",
+                "bankCode",
+                "bankName",
+                "isDefault"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "DESC",
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of all bank accounts"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Get all bank accounts",
+        "tags": [
+          "Bank Accounts"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_liveness",
@@ -4504,18 +4667,6 @@
           "adminRole"
         ]
       },
-      "ESortField": {
-        "type": "string",
-        "enum": [
-          "createdAt",
-          "updatedAt",
-          "name",
-          "email",
-          "status",
-          "agreedPrice",
-          "completedAt"
-        ]
-      },
       "ESortOrder": {
         "type": "string",
         "enum": [
@@ -4992,6 +5143,72 @@
           "resourceId",
           "businessCode",
           "createdAt"
+        ]
+      },
+      "CampaignApprovalChecklistDto": {
+        "type": "object",
+        "properties": {
+          "restrictedCategoryReviewed": {
+            "type": "boolean",
+            "description": "Explicit manual review of a restricted category"
+          }
+        }
+      },
+      "ApproveCampaignDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve"
+            ]
+          },
+          "expectedCampaignVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "checklistResult": {
+            "$ref": "#/components/schemas/CampaignApprovalChecklistDto"
+          }
+        },
+        "required": [
+          "decision",
+          "expectedCampaignVersion"
+        ]
+      },
+      "CampaignApprovedResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revisionNumber": {
+            "type": "number"
+          },
+          "status": {
+            "type": "number",
+            "description": "APPROVED (5)"
+          },
+          "version": {
+            "type": "number"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "submissionId",
+          "revisionNumber",
+          "status",
+          "version",
+          "approvedAt"
         ]
       },
       "BrandProfileResponseDto": {
@@ -5516,72 +5733,6 @@
           "version",
           "revisionNumber",
           "submittedAt"
-        ]
-      },
-      "CampaignApprovalChecklistDto": {
-        "type": "object",
-        "properties": {
-          "restrictedCategoryReviewed": {
-            "type": "boolean",
-            "description": "Explicit manual review of a restricted category"
-          }
-        }
-      },
-      "ApproveCampaignDto": {
-        "type": "object",
-        "properties": {
-          "decision": {
-            "type": "string",
-            "enum": [
-              "approve"
-            ]
-          },
-          "expectedCampaignVersion": {
-            "type": "number",
-            "minimum": 1
-          },
-          "checklistResult": {
-            "$ref": "#/components/schemas/CampaignApprovalChecklistDto"
-          }
-        },
-        "required": [
-          "decision",
-          "expectedCampaignVersion"
-        ]
-      },
-      "CampaignApprovedResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "submissionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "revisionNumber": {
-            "type": "number"
-          },
-          "status": {
-            "type": "number",
-            "description": "APPROVED (5)"
-          },
-          "version": {
-            "type": "number"
-          },
-          "approvedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "submissionId",
-          "revisionNumber",
-          "status",
-          "version",
-          "approvedAt"
         ]
       },
       "CampaignAssetResponseDto": {
@@ -6311,6 +6462,10 @@
         "required": [
           "status"
         ]
+      },
+      "BankAccountDto": {
+        "type": "object",
+        "properties": {}
       }
     }
   }
