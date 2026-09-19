@@ -7,7 +7,13 @@ import {
 } from 'typeorm';
 import { ECampaignContentType } from '../../../common/enum/campaign.enum';
 import { ESocialPlatform } from '../../../common/enum/social-platform.enum';
-import { CampaignDeliverableDuration } from '../types/campaign.types';
+
+/** Đơn vị tuỳ contentType: giây cho video, chữ cho bài viết. Để mở một đầu được. */
+export interface CampaignDeliverableDuration {
+  unit: string;
+  min: number | null;
+  max: number | null;
+}
 
 @Entity('campaign_deliverables')
 export class CampaignDeliverable {
@@ -24,10 +30,6 @@ export class CampaignDeliverable {
   @Column({ type: 'varchar', length: 32, nullable: true })
   contentType: ECampaignContentType | null;
 
-  /**
-   * Nơi công việc phải đăng. Khác Campaign.creatorPlatforms — cái kia là nền
-   * tảng Creator phải có tài khoản, và phải bao hàm tập này.
-   */
   @Column({ type: 'varchar', length: 32, nullable: true })
   platform: ESocialPlatform | null;
 

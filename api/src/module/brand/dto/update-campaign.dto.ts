@@ -1,7 +1,7 @@
 import {
   SanitizeRichText,
   SanitizeText,
-} from '../../../common/decorator/sanitize.decorator';
+} from '../../../common/decorators/sanitize.decorator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {

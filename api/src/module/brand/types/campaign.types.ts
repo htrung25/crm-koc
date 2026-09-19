@@ -1,5 +1,5 @@
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { Campaign } from '../entities/campaign.entity';
+import type { Campaign } from '../entities/campaign.entity';
 
 export type {
   CampaignDeliverableDuration,
