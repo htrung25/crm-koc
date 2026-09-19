@@ -1,4 +1,4 @@
-import { SanitizeText } from '../../../common/decorator/sanitize.decorator';
+import { SanitizeText } from '../../../common/decorators/sanitize.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {

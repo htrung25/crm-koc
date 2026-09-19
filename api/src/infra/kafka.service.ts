@@ -7,12 +7,18 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Consumer, Kafka, KafkaConfig, Producer, SASLOptions } from 'kafkajs';
 
+const RECONNECT_INTERVAL_MS = 15_000;
+
 @Injectable()
 export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(KafkaService.name);
   private kafka: Kafka | null = null;
   private producer: Producer | null = null;
   private readonly consumers: Consumer[] = [];
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private isConnecting = false;
+  private isDestroyed = false;
+  private brokers: string[] = [];
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -36,14 +42,14 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
     const port = this.configService.get<string>('KAFKA_PORT') ?? '9092';
     const clientId =
-      this.configService.get<string>('KAFKA_CLIENT_ID') ?? 'starpay-admin';
-    const brokers = brokersRaw
+      this.configService.get<string>('KAFKA_CLIENT_ID') || 'crm-koc-api';
+    this.brokers = brokersRaw
       .split(',')
       .map((host) => host.trim())
       .filter(Boolean)
       .map((host) => (host.includes(':') ? host : `${host}:${port}`));
 
-    const config: KafkaConfig = { clientId, brokers };
+    const config: KafkaConfig = { clientId, brokers: this.brokers };
     const username = this.configService.get<string>('KAFKA_USERNAME');
     const password = this.configService.get<string>('KAFKA_PASSWORD');
     const mechanism = this.configService.get<string>('KAFKA_SASL_MECHANISM') as
@@ -55,23 +61,69 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     }
 
     this.kafka = new Kafka(config);
-    this.producer = this.kafka.producer();
+    await this.connectProducer();
+  }
+
+  private async connectProducer(): Promise<boolean> {
+    if (!this.kafka || this.isConnecting || this.isDestroyed) {
+      return false;
+    }
+    this.isConnecting = true;
 
     try {
-      await this.producer.connect();
-      this.logger.log(`Kafka producer connected: ${brokers.join(', ')}`);
+      const producer = this.kafka.producer();
+      await producer.connect();
+      this.producer = producer;
+      this.logger.log(`Kafka producer connected: ${this.brokers.join(', ')}`);
+      this.clearReconnectTimer();
+      return true;
     } catch (error) {
-      this.logger.error('Failed to connect Kafka producer', error as Error);
+      this.logger.error(
+        `Failed to connect Kafka producer (${this.brokers.join(', ')}). Retrying in ${RECONNECT_INTERVAL_MS / 1000}s...`,
+        error as Error,
+      );
       this.producer = null;
+      this.scheduleReconnect();
+      return false;
+    } finally {
+      this.isConnecting = false;
+    }
+  }
+
+  private scheduleReconnect(): void {
+    if (this.reconnectTimer || this.isDestroyed || !this.kafka) {
+      return;
+    }
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.connectProducer();
+    }, RECONNECT_INTERVAL_MS);
+
+    if (this.reconnectTimer.unref) {
+      this.reconnectTimer.unref();
+    }
+  }
+
+  private clearReconnectTimer(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
   }
 
   async onModuleDestroy(): Promise<void> {
+    this.isDestroyed = true;
+    this.clearReconnectTimer();
+
     await Promise.allSettled(
       this.consumers.map((consumer) => consumer.disconnect()),
     );
     if (this.producer) {
-      await this.producer.disconnect();
+      await this.producer.disconnect().catch((err: Error) => {
+        this.logger.warn(`Error disconnecting Kafka producer: ${err.message}`);
+      });
+      this.producer = null;
     }
   }
 
@@ -99,6 +151,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         `Failed to publish Kafka topic=${topic}`,
         error as Error,
       );
+      this.producer = null;
+      this.scheduleReconnect();
     }
   }
 
