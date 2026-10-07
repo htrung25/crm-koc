@@ -11,11 +11,9 @@ import {
 } from 'class-validator';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { EAccountStatus } from '../../../common/enum/account-statuses.enum';
-import {
-  ACCOUNT_SORT_FIELDS,
-  ESortField,
-  ESortOrder,
-} from '../../../common/enum/sort-fields.enum';
+import { ESortField, ESortOrder } from '../../../common/enum/sort-fields.enum';
+import { ACCOUNT_SORT_FIELDS } from '../constants/user-list.constants';
+import type { AccountSortField } from '../types/admin.types';
 
 export class AccountFilterDto extends PaginationDto {
   @IsOptional()
@@ -44,7 +42,7 @@ export class AccountFilterDto extends PaginationDto {
     enum: ACCOUNT_SORT_FIELDS,
     default: ESortField.CREATED_AT,
   })
-  sortBy?: ESortField;
+  sortBy?: AccountSortField;
 
   @IsOptional()
   @IsEnum(ESortOrder, { message: 'sortOrder must be ASC or DESC' })

@@ -1,7 +1,19 @@
-import { Controller, Get, Post, Query, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Request,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOperation,
   ApiTags,
   ApiOkResponse,
@@ -15,7 +27,7 @@ import { BankAccountService } from './bank-account.service';
 import { ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { BankAccountFilterDto } from './dto/bank-account-filter.dto';
 import type { AuthenticatedAccount } from '../auth/types/authenticated.types';
-import { BankAccountDto } from './dto/bank-account.dto';
+import { BankAccountDto, UpdateBankAccountDto } from './dto/bank-account.dto';
 
 @ApiTags('Bank Accounts')
 @ApiBearerAuth('access-token')
@@ -34,8 +46,15 @@ export class BankAccountController {
   @ApiUnauthorizedResponse({
     description: 'Token is missing, invalid or expired',
   })
-  async createBankAccount() {
-    // Implementation for creating a new bank account
+  async createBankAccount(
+    @Request() request: { user: AuthenticatedAccount },
+    @Body() dto: BankAccountDto,
+  ) {
+    return this.bankAccountService.createBankAccount(
+      request.user.id,
+      request.user.accountRole,
+      dto,
+    );
   }
 
   @Get()
@@ -53,5 +72,41 @@ export class BankAccountController {
     @Query() dto: BankAccountFilterDto,
   ) {
     return this.bankAccountService.findAll(request.user.id, dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Update a bank account',
+    description: 'Only the owner can update. Absent fields are left untouched.',
+  })
+  @ApiOkResponse({ description: 'Bank account updated' })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiNotFoundResponse({
+    description: 'Bank account does not exist or belongs to another account',
+  })
+  async updateBankAccount(
+    @Request() request: { user: AuthenticatedAccount },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateBankAccountDto,
+  ) {
+    return this.bankAccountService.updateBankAccount(id, request.user.id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a bank account' })
+  @ApiOkResponse({ description: 'Bank account deleted' })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiNotFoundResponse({
+    description: 'Bank account does not exist or belongs to another account',
+  })
+  async removeBankAccount(
+    @Request() request: { user: AuthenticatedAccount },
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.bankAccountService.removeBankAccount(id, request.user.id);
   }
 }

@@ -2,75 +2,43 @@ import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
-  IsInt,
+  IsIn,
+  IsOptional,
   IsString,
-  Max,
   MaxLength,
-  Min,
   MinLength,
-  ValidateIf,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { MAX_LIMIT } from '../../../common/dto/pagination.dto';
-import { ESortOrder } from '../../../common/enum/sort-fields.enum';
+import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { ESortField, ESortOrder } from '../../../common/enum/sort-fields.enum';
+import { BANK_ACCOUNT_SORT_FIELDS } from '../constants/payment.constants';
+import type { BankAccountSortField } from '../types/payment.types';
 
-export enum EBankAccountSortField {
-  CREATED_AT = 'createdAt',
-  UPDATED_AT = 'updatedAt',
-  BANK_CODE = 'bankCode',
-  BANK_NAME = 'bankName',
-  IS_DEFAULT = 'isDefault',
-}
-
-const present = (_object: unknown, value: unknown) => value !== undefined;
-const integerQuery = ({ value }: { value: unknown }): unknown =>
-  typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value;
-const trimQuery = ({ value }: { value: unknown }): unknown =>
-  typeof value === 'string' ? value.trim() : value;
-
-export class BankAccountFilterDto {
-  @ApiPropertyOptional({ minimum: 1, default: 1 })
-  @ValidateIf(present)
-  @Transform(integerQuery)
-  @IsInt()
-  @Min(1)
-  @Max(Number.MAX_SAFE_INTEGER)
-  page?: number;
-
-  @ApiPropertyOptional({ minimum: 1, maximum: MAX_LIMIT, default: 20 })
-  @ValidateIf(present)
-  @Transform(integerQuery)
-  @IsInt()
-  @Min(1)
-  @Max(MAX_LIMIT)
-  limit?: number;
-
+export class BankAccountFilterDto extends PaginationDto {
   @ApiPropertyOptional({ maxLength: 32 })
-  @ValidateIf(present)
-  @Transform(trimQuery)
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(32)
   bankCode?: string;
 
   @ApiPropertyOptional({ maxLength: 34 })
-  @ValidateIf(present)
-  @Transform(trimQuery)
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(34)
   bankNumber?: string;
 
   @ApiPropertyOptional({ maxLength: 255 })
-  @ValidateIf(present)
-  @Transform(trimQuery)
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(255)
   bankName?: string;
 
+  // Transform vì query string luôn là 'true'/'false' dạng chuỗi
   @ApiPropertyOptional({ type: Boolean })
-  @ValidateIf(present)
+  @IsOptional()
   @Transform(({ value }: { value: unknown }) =>
     value === 'true' ? true : value === 'false' ? false : value,
   )
@@ -78,15 +46,15 @@ export class BankAccountFilterDto {
   isDefault?: boolean;
 
   @ApiPropertyOptional({
-    enum: EBankAccountSortField,
-    default: EBankAccountSortField.CREATED_AT,
+    enum: BANK_ACCOUNT_SORT_FIELDS,
+    default: ESortField.CREATED_AT,
   })
-  @ValidateIf(present)
-  @IsEnum(EBankAccountSortField)
-  sortBy?: EBankAccountSortField;
+  @IsOptional()
+  @IsIn(BANK_ACCOUNT_SORT_FIELDS)
+  sortBy?: BankAccountSortField;
 
   @ApiPropertyOptional({ enum: ESortOrder, default: ESortOrder.DESC })
-  @ValidateIf(present)
+  @IsOptional()
   @IsEnum(ESortOrder)
   sortOrder?: ESortOrder;
 }
