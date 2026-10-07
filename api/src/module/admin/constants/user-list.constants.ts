@@ -1,4 +1,16 @@
 import { AuthEntity } from '../../auth/entities/auth.entity';
+import {
+  EAccountSortField,
+  ESortField,
+} from '../../../common/enum/sort-fields.enum';
+
+export const ACCOUNT_SORT_FIELDS = [
+  ESortField.CREATED_AT,
+  ESortField.UPDATED_AT,
+  EAccountSortField.NAME,
+  EAccountSortField.EMAIL,
+  EAccountSortField.STATUS,
+] as const;
 
 export const BRAND_LIST_FIELDS = [
   'id',

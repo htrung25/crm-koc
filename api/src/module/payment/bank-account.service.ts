@@ -2,18 +2,21 @@ import {
   validateListQuery,
   applyEqualityFilters,
 } from '../../common/util/list-query.util';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BankAccount } from './entities/bank-account.entity';
 import { Repository } from 'typeorm';
-import { BankAccountDto } from './dto/bank-account.dto';
+import { BankAccountDto, UpdateBankAccountDto } from './dto/bank-account.dto';
 import { paginate, PaginatedResult } from '../../common/util/pagination.util';
 import { isUUID } from 'class-validator';
-import { ESortOrder } from '../../common/enum/sort-fields.enum';
-import {
-  BankAccountFilterDto,
-  EBankAccountSortField,
-} from './dto/bank-account-filter.dto';
+import { ESortField, ESortOrder } from '../../common/enum/sort-fields.enum';
+import { BankAccountFilterDto } from './dto/bank-account-filter.dto';
+import { ERole } from '../../common/enum/roles.enum';
+import { assertPaymentRole } from '../../common/util/payment.util';
 
 @Injectable()
 export class BankAccountService {
@@ -22,12 +25,18 @@ export class BankAccountService {
     private readonly bankAccountRepository: Repository<BankAccount>,
   ) {}
 
-  async createBankAccount(dto: BankAccountDto) {
+  async createBankAccount(
+    accountId: string,
+    role: ERole | null,
+    dto: BankAccountDto,
+  ) {
+    assertPaymentRole(role);
     const payment = this.bankAccountRepository.create({
-      accountId: dto.accountId,
+      accountId,
       bankCode: dto.bankCode,
       bankNumber: dto.bankNumber,
       bankName: dto.bankName,
+      accountHolderName: dto.accountHolderName,
       isDefault: dto.isDefault,
     });
     await this.bankAccountRepository.save(payment);
@@ -43,7 +52,7 @@ export class BankAccountService {
       throw new BadRequestException('invalid accountId');
     }
     const filters = validateListQuery(BankAccountFilterDto, query);
-    const sortBy = filters.sortBy ?? EBankAccountSortField.CREATED_AT;
+    const sortBy = filters.sortBy ?? ESortField.CREATED_AT;
     const sortOrder = filters.sortOrder ?? ESortOrder.DESC;
 
     const qb = this.bankAccountRepository
@@ -64,5 +73,45 @@ export class BankAccountService {
     );
 
     return paginate(qb, filters);
+  }
+
+  async updateBankAccount(
+    id: string,
+    accountId: string,
+    dto: UpdateBankAccountDto,
+  ): Promise<{ message: string }> {
+    const account = await this.bankAccountRepository.findOne({
+      where: { id, accountId },
+    });
+    if (!account) {
+      throw new NotFoundException(
+        'Bank account not found or you do not have ownership rights.',
+      );
+    }
+    // Liệt kê cột tường minh: dto không được ghi đè id/accountId.
+    await this.bankAccountRepository.update(id, {
+      bankCode: dto.bankCode,
+      bankNumber: dto.bankNumber,
+      bankName: dto.bankName,
+      accountHolderName: dto.accountHolderName,
+      isDefault: dto.isDefault,
+    });
+    return { message: 'Bank account successfully updated.' };
+  }
+
+  async removeBankAccount(
+    id: string,
+    accountId: string,
+  ): Promise<{ message: string }> {
+    const account = await this.bankAccountRepository.findOne({
+      where: { id, accountId },
+    });
+    if (!account) {
+      throw new NotFoundException(
+        'Bank account not found or you do not have ownership rights.',
+      );
+    }
+    await this.bankAccountRepository.delete(id);
+    return { message: 'Bank account successfully deleted.' };
   }
 }

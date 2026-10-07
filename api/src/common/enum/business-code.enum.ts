@@ -44,4 +44,7 @@ export enum EBusinessCode {
   CAMPAIGN_PLATFORM_MISMATCH = 7009,
   /** Brand đã chạm trần số campaign chưa kết thúc. */
   CAMPAIGN_LIMIT_REACHED = 7010,
+
+  /** Số tiền rút lớn hơn available_balance, hoặc account chưa có ví. */
+  WITHDRAWAL_INSUFFICIENT_BALANCE = 8000,
 }

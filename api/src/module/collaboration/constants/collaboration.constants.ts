@@ -1,7 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import { ECollaborationStatus } from '../../../common/enum/collaboration-status.enum';
 import { ERole } from '../../../common/enum/roles.enum';
-import { ESortField } from '../../../common/enum/sort-fields.enum';
+import {
+  ECollaborationSortField,
+  ESortField,
+} from '../../../common/enum/sort-fields.enum';
 import { CollaborationTimestamp } from '../types/collaboration.types';
 
 /** Enum số nên Object.values trả cả tên lẫn số; lọc lấy phần số có kiểu. */
@@ -89,13 +92,12 @@ export const COLLABORATION_LIST_FIELDS = [
   'updatedAt',
 ] as const;
 
-/** collaborations không có cột name/email nên không nhận trọn ESortField. */
 export const COLLABORATION_SORT_FIELDS = [
   ESortField.CREATED_AT,
   ESortField.UPDATED_AT,
-  ESortField.STATUS,
-  ESortField.AGREED_PRICE,
-  ESortField.COMPLETED_AT,
+  ECollaborationSortField.STATUS,
+  ECollaborationSortField.AGREED_PRICE,
+  ECollaborationSortField.COMPLETED_AT,
 ] as const;
 
 /** sortBy đi thẳng vào SQL nên phải khớp danh sách cột cho phép. */

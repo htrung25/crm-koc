@@ -87,7 +87,8 @@
             "description": "Stable browser/app installation identifier, 1–128 letters, digits, dots, underscores, colons or hyphens",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "default": "swagger-ui"
             }
           }
         ],
@@ -3871,6 +3872,16 @@
         "description": "Creates a new bank account for the authenticated user",
         "operationId": "BankAccountController_createBankAccount",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankAccountDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "",
@@ -3907,6 +3918,7 @@
             "schema": {
               "minimum": 1,
               "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -3918,6 +3930,7 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20,
+              "example": 20,
               "type": "number"
             }
           },
@@ -4002,6 +4015,211 @@
         "summary": "Get all bank accounts",
         "tags": [
           "Bank Accounts"
+        ]
+      }
+    },
+    "/payment/bank-accounts/{id}": {
+      "patch": {
+        "description": "Only the owner can update. Absent fields are left untouched.",
+        "operationId": "BankAccountController_updateBankAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBankAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bank account updated"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "404": {
+            "description": "Bank account does not exist or belongs to another account"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Update a bank account",
+        "tags": [
+          "Bank Accounts"
+        ]
+      },
+      "delete": {
+        "operationId": "BankAccountController_removeBankAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank account deleted"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "404": {
+            "description": "Bank account does not exist or belongs to another account"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Delete a bank account",
+        "tags": [
+          "Bank Accounts"
+        ]
+      }
+    },
+    "/payment/withdrawals": {
+      "post": {
+        "description": "Moves amount from available to locked balance and creates a pending withdrawal for admin review. Fee is taken from amount at the current rate. Replaying the same Idempotency-Key returns the first withdrawal.",
+        "operationId": "WithdrawalController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "required": false,
+            "in": "header",
+            "description": "Client-generated string, uuid recommended.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Withdrawal created, status pending"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          },
+          "403": {
+            "description": "Not a creator or brand account"
+          },
+          "404": {
+            "description": "Bank account does not exist"
+          },
+          "422": {
+            "description": "Available balance is not enough"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Request a withdrawal",
+        "tags": [
+          "Withdrawals"
+        ]
+      },
+      "get": {
+        "description": "Paginated withdrawal history of the authenticated account",
+        "operationId": "WithdrawalController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "updatedAt",
+                "amount"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "DESC",
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of withdrawals"
+          },
+          "401": {
+            "description": "Token is missing, invalid or expired"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List my withdrawals",
+        "tags": [
+          "Withdrawals"
         ]
       }
     },
@@ -6466,6 +6684,29 @@
       "BankAccountDto": {
         "type": "object",
         "properties": {}
+      },
+      "UpdateBankAccountDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "WithdrawalDto": {
+        "type": "object",
+        "properties": {
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Bank account to receive money"
+          },
+          "amount": {
+            "type": "string",
+            "example": "1000000.00",
+            "description": "Amount deducted from the wallet, fee included"
+          }
+        },
+        "required": [
+          "bankAccountId",
+          "amount"
+        ]
       }
     }
   }

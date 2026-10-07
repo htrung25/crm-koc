@@ -137,6 +137,8 @@ export class AuthController {
     required: true,
     description:
       'Stable browser/app installation identifier, 1–128 letters, digits, dots, underscores, colons or hyphens',
+    // Swagger UI tự điền sẵn để test không phải gõ tay.
+    schema: { type: 'string', default: 'swagger-ui' },
   })
   @ApiBadRequestResponse({ description: 'Missing or invalid device id header' })
   @ApiOkResponse({ type: LoginResponseDto })

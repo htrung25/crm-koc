@@ -11,6 +11,7 @@ export class CreateBankAccount1789516800000 implements MigrationInterface {
         "bank_code" varchar(32),
         "bank_number" varchar(34) NOT NULL,
         "bank_name" varchar(255) NOT NULL,
+        "account_holder_name" varchar(255) NOT NULL,
         "is_default" boolean NOT NULL DEFAULT false,
         "created_at" timestamp NOT NULL DEFAULT now(),
         "updated_at" timestamp NOT NULL DEFAULT now(),

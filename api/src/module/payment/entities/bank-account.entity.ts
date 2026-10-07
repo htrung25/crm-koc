@@ -23,6 +23,9 @@ export class BankAccount {
   @Column({ type: 'varchar', length: 255 })
   bankName: string;
 
+  @Column({ type: 'varchar', length: 255 })
+  accountHolderName: string;
+
   @Column({ type: 'boolean', default: false })
   isDefault: boolean;
 

@@ -1,8 +1,10 @@
-export enum EPaymentStatus {
-  PENDING = 'pending',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  REFUNDED = 'refunded',
+export enum EWithdrawalStatus {
+  PENDING = 1,
+  PROCESSING = 2,
+  COMPLETED = 3,
+  REJECTED = 4,
+  FAILED = 5,
+  CANCELLED = 6,
 }
 
 export enum EPaymentMethod {
@@ -14,4 +16,10 @@ export enum EPaymentMethod {
 
 export enum ECurency {
   VND = 'VND',
+}
+
+export enum EWalletTransactionsStatus {
+  PENDING = 1,
+  COMPLETED = 2,
+  REVERSED = 3,
 }
