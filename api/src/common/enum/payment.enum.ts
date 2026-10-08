@@ -18,6 +18,17 @@ export enum ECurency {
   VND = 'VND',
 }
 
+export enum EDepositMethod {
+  SEPAY = 1,
+  VNPAY = 2,
+  MOMO = 3,
+}
+
+export enum EDepositStatus {
+  PENDING = 1,
+  COMPLETED = 2,
+}
+
 export enum EWalletTransactionsStatus {
   PENDING = 1,
   COMPLETED = 2,

@@ -47,4 +47,8 @@ export enum EBusinessCode {
 
   /** Số tiền rút lớn hơn available_balance, hoặc account chưa có ví. */
   WITHDRAWAL_INSUFFICIENT_BALANCE = 8000,
+  /** Chưa KYC VERIFIED (hoặc đã hết hạn) cho role đang dùng. */
+  WITHDRAWAL_KYC_REQUIRED = 8001,
+  /** Kênh nạp tiền chưa được cấu hình trên server. */
+  DEPOSIT_METHOD_UNAVAILABLE = 8100,
 }

@@ -159,6 +159,9 @@ jobs:
           KAFKA_SASL_MECHANISM: ${{ secrets.KAFKA_SASL_MECHANISM }}
           KAFKA_USERNAME: ${{ secrets.KAFKA_USERNAME }}
           KAFKA_PASSWORD: ${{ secrets.KAFKA_PASSWORD }}
+          SEPAY_WEBHOOK_API_KEY: ${{ secrets.SEPAY_WEBHOOK_API_KEY }}
+          SEPAY_BANK_CODE: ${{ vars.SEPAY_BANK_CODE }}
+          SEPAY_BANK_ACCOUNT_NUMBER: ${{ vars.SEPAY_BANK_ACCOUNT_NUMBER }}
         run: |
           umask 077
           required=(
@@ -235,6 +238,9 @@ jobs:
           KAFKA_SASL_MECHANISM=${KAFKA_SASL_MECHANISM:-}
           KAFKA_USERNAME=${KAFKA_USERNAME:-}
           KAFKA_PASSWORD=${KAFKA_PASSWORD:-}
+          SEPAY_WEBHOOK_API_KEY=${SEPAY_WEBHOOK_API_KEY:-}
+          SEPAY_BANK_CODE=${SEPAY_BANK_CODE:-}
+          SEPAY_BANK_ACCOUNT_NUMBER=${SEPAY_BANK_ACCOUNT_NUMBER:-}
           EOF
           printf 'BACKUP_S3_BUCKET=%s\n' "$BACKUP_S3_BUCKET" >> rendered.env
           node scripts/check-env.js --compare api/.env.example rendered.env

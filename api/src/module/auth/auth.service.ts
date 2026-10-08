@@ -8,6 +8,8 @@ import {
 } from '@nestjs/common';
 import { IsNull, QueryFailedError, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Transactional } from 'typeorm-transactional';
+import { WalletService } from '../payment/wallet.service';
 import * as bcrypt from 'bcrypt';
 import { ERole } from '../../common/enum/roles.enum';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
@@ -38,6 +40,7 @@ export class AuthService {
     private readonly creatorProfileService: CreatorProfileService,
     private readonly accountCache: AccountCacheService,
     private readonly auditLogService: AuditLogService,
+    private readonly walletService: WalletService,
   ) {}
 
   /** Chưa chọn vai trò thì chưa có hồ sơ nào để tạo — PATCH /auth/me lo sau. */
@@ -78,6 +81,9 @@ export class AuthService {
     return this.createAccount(dto, ERole.ADMIN);
   }
 
+  // Account, profile và ví tạo chung một transaction: không có account nào
+  // thiếu ví vì lỗi giữa chừng.
+  @Transactional()
   private async createAccount(
     dto: RegisterDto,
     role: ERole,
@@ -101,6 +107,9 @@ export class AuthService {
     try {
       const saved = await this.authRepository.save(account);
       await this.createProfileFor(saved);
+      if (role === ERole.BRAND || role === ERole.CREATOR) {
+        await this.walletService.ensureWallet(saved.id);
+      }
       // emailVerifiedAt để null: OTP nhập đúng lần đầu mới ghi mốc xác minh.
       const { password: _password, ...result } = saved;
       return result;
@@ -186,6 +195,8 @@ export class AuthService {
     if (!existing) {
       await service.create(account.id, account.name, account.email);
     }
+    // Account đăng nhập Google chọn vai trò ở đây, không qua createAccount.
+    await this.walletService.ensureWallet(account.id);
   }
 
   async findById(id: string): Promise<AuthEntity | null> {

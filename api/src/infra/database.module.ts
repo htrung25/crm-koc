@@ -2,6 +2,7 @@ import { BankAccount } from '../module/payment/entities/bank-account.entity';
 import { Withdrawal } from '../module/payment/entities/withdrawal.entity';
 import { Wallet } from '../module/payment/entities/wallet.entity';
 import { WalletTransaction } from '../module/payment/entities/wallet-transaction.entity';
+import { Deposit } from '../module/payment/entities/deposit.entity';
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -48,6 +49,7 @@ import { CampaignReviewSubmission } from '../module/brand/entities/campaign-revi
               Withdrawal,
               Wallet,
               WalletTransaction,
+              Deposit,
               AuthEntity,
               BrandProfile,
               CreatorProfile,
@@ -96,6 +98,7 @@ import { CampaignReviewSubmission } from '../module/brand/entities/campaign-revi
             Withdrawal,
             Wallet,
             WalletTransaction,
+            Deposit,
             AuthEntity,
             BrandProfile,
             CreatorProfile,

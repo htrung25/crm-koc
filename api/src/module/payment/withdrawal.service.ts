@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
@@ -29,6 +30,7 @@ import {
 import { EBusinessCode } from '../../common/enum/business-code.enum';
 import { ERole } from '../../common/enum/roles.enum';
 import { SystemConfigurationService } from '../system-configuration/system-configuration.service';
+import { KycService } from '../kyc/kyc.service';
 import {
   WITHDRAWAL_CODE_ALPHABET,
   WITHDRAWAL_CODE_LENGTH,
@@ -48,6 +50,7 @@ export class WithdrawalService {
     @InjectRepository(BankAccount)
     private readonly bankAccountRepository: Repository<BankAccount>,
     private readonly configService: SystemConfigurationService,
+    private readonly kycService: KycService,
   ) {}
 
   async createWithdrawal(
@@ -57,6 +60,14 @@ export class WithdrawalService {
     idempotencyKey?: string,
   ): Promise<Withdrawal> {
     assertPaymentRole(role);
+    // KYC tính theo (account, role): account có cả hai vai trò phải KYC đúng
+    // vai trò đang dùng. isVerified đã coi hồ sơ quá expiresAt là chưa KYC.
+    if (!(await this.kycService.isVerified(accountId, role))) {
+      throw new ForbiddenException({
+        businessCode: EBusinessCode.WITHDRAWAL_KYC_REQUIRED,
+        message: 'kyc must be verified before withdrawing',
+      });
+    }
 
     if (idempotencyKey) {
       const existing = await this.withdrawalRepository.findOneBy({
@@ -127,7 +138,7 @@ export class WithdrawalService {
     if (!walletId) {
       throw new UnprocessableEntityException({
         businessCode: EBusinessCode.WITHDRAWAL_INSUFFICIENT_BALANCE,
-        message: 'available balance is not enough for this withdrawal',
+        message: 'available balance is less than the withdrawal amount',
       });
     }
 
