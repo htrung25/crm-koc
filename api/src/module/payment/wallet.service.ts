@@ -4,6 +4,16 @@ import { Repository } from 'typeorm';
 import { Wallet } from './entities/wallet.entity';
 import { WalletTransaction } from './entities/wallet-transaction.entity';
 import { EWalletTransactionsStatus } from '../../common/enum/payment.enum';
+import { ERole } from '../../common/enum/roles.enum';
+import { ESortOrder } from '../../common/enum/sort-fields.enum';
+import { assertPaymentRole } from '../../common/util/payment.util';
+import { validateListQuery } from '../../common/util/list-query.util';
+import { paginate, PaginatedResult } from '../../common/util/pagination.util';
+import { WalletTransactionFilterDto } from './dto/wallet-transaction-filter.dto';
+import type {
+  WalletBalance,
+  WalletTransactionItem,
+} from './types/payment.types';
 
 @Injectable()
 export class WalletService {
@@ -24,6 +34,46 @@ export class WalletService {
       .execute();
     const wallet = await this.walletRepository.findOneByOrFail({ accountId });
     return wallet.id;
+  }
+
+  async getMyWallet(
+    accountId: string,
+    role: ERole | null,
+  ): Promise<WalletBalance> {
+    assertPaymentRole(role);
+    const wallet = await this.walletRepository.findOne({
+      where: { accountId },
+      select: { availableBalance: true, lockedBalance: true },
+    });
+    // Chưa có ví (account trước backfill) coi như số dư 0, không 404.
+    return wallet ?? { availableBalance: '0.00', lockedBalance: '0.00' };
+  }
+
+  async findMyTransactions(
+    accountId: string,
+    role: ERole | null,
+    query: WalletTransactionFilterDto = {},
+  ): Promise<PaginatedResult<WalletTransactionItem>> {
+    assertPaymentRole(role);
+    const filters = validateListQuery(WalletTransactionFilterDto, query);
+    // Ràng qua wallets.account_id: không có ví thì ra trang rỗng.
+    const qb = this.walletTransactionRepository
+      .createQueryBuilder('tx')
+      .innerJoin(Wallet, 'wallet', 'wallet.id = tx.walletId')
+      .select([
+        'tx.id',
+        'tx.amount',
+        'tx.status',
+        'tx.collaborationId',
+        'tx.withdrawalId',
+        'tx.depositId',
+        'tx.completedAt',
+        'tx.createdAt',
+      ])
+      .where('wallet.accountId = :accountId', { accountId })
+      .orderBy('tx.createdAt', ESortOrder.DESC)
+      .addOrderBy('tx.id', ESortOrder.ASC);
+    return paginate(qb, filters);
   }
 
   async creditEarning(
