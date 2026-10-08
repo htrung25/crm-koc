@@ -13,6 +13,7 @@ import { Deposit } from './entities/deposit.entity';
 import { DepositService } from './deposit.service';
 import { DepositController } from './deposit.controller';
 import { SepayWebhookController } from './sepay-webhook.controller';
+import { WalletController } from './wallet.controller';
 import { SystemConfigurationModule } from '../system-configuration/system-configuration.module';
 import { KycModule } from '../kyc/kyc.module';
 
@@ -33,6 +34,7 @@ import { KycModule } from '../kyc/kyc.module';
     WithdrawalController,
     DepositController,
     SepayWebhookController,
+    WalletController,
   ],
   providers: [
     BankAccountService,
