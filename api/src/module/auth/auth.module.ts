@@ -15,6 +15,7 @@ import { OtpService } from '../../security/otp.service';
 import { SessionGuard } from '../../security/session.guard';
 import { RedisCacheService } from '../../common/services/redis.service';
 import { QueueModule } from '../../queue/queue.module';
+import { PaymentModule } from '../payment/payment.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { QueueModule } from '../../queue/queue.module';
     AdminModule,
     BrandModule,
     CreatorModule,
+    PaymentModule,
     PassportModule,
     SecurityModule,
     IpWhitelistModule,

@@ -15,6 +15,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
+import { Transactional } from 'typeorm-transactional';
+import { WalletService } from '../payment/wallet.service';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { ECollaborationStatus } from '../../common/enum/collaboration-status.enum';
 import { ESortField, ESortOrder } from '../../common/enum/sort-fields.enum';
@@ -52,7 +54,7 @@ import {
 } from './dto/collaboration.dto';
 import { assertSortField } from './constants/collaboration.constants';
 import { Collaboration } from './entities/collaboration.entity';
-import { CollaborationActor } from './types/collaboration.types';
+import type { CollaborationActor } from './types/collaboration.types';
 import { CollaborationListItem } from './types/collaboration.types';
 
 @Injectable()
@@ -70,6 +72,7 @@ export class CollaborationService {
     private readonly configService: SystemConfigurationService,
     private readonly brandProfileService: BrandProfileService,
     private readonly creatorProfileService: CreatorProfileService,
+    private readonly walletService: WalletService,
   ) {}
 
   async create(
@@ -370,6 +373,8 @@ export class CollaborationService {
     return paginate(qb, query);
   }
 
+  // Transactional: cộng tiền vào ví hỏng thì trạng thái cũng không được đổi.
+  @Transactional()
   async updateStatus(
     actor: CollaborationActor,
     id: string,
@@ -399,6 +404,14 @@ export class CollaborationService {
     if (result.affected === 0) {
       throw new ConflictException(
         'collaboration was changed by someone else, reload and try again',
+      );
+    }
+
+    if (next === ECollaborationStatus.COMPLETED) {
+      await this.walletService.creditEarning(
+        collab.creatorId,
+        collab.id,
+        collab.agreedPrice as string,
       );
     }
 

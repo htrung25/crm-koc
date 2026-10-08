@@ -34,3 +34,16 @@ export const WITHDRAWAL_AMOUNT_PATTERN = /^\d{1,13}(\.\d{1,2})?$/;
 export const WITHDRAWAL_CODE_PREFIX = 'WD-';
 export const WITHDRAWAL_CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 export const WITHDRAWAL_CODE_LENGTH = 10;
+
+// Chuyển khoản ngân hàng chỉ nhận số nguyên VND.
+export const DEPOSIT_AMOUNT_PATTERN = /^\d{1,13}$/;
+
+// Không dấu gạch, không ký tự dễ nhầm (0/O, 1/I): ngân hàng hay bỏ ký tự đặc
+// biệt trong nội dung chuyển khoản, người dùng gõ tay cũng ít sai.
+export const DEPOSIT_CODE_PREFIX = 'NAP';
+export const DEPOSIT_CODE_LENGTH = 10;
+export const DEPOSIT_CODE_PATTERN = /NAP[23456789A-HJ-NP-Z]{10}/;
+
+export const SEPAY_QR_BASE_URL = 'https://vietqr.app/img';
+export const SEPAY_AUTH_SCHEME = 'Apikey';
+export const SEPAY_TRANSFER_IN = 'in';

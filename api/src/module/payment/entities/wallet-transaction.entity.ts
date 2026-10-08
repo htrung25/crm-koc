@@ -28,6 +28,9 @@ export class WalletTransaction {
   @Column({ type: 'uuid', nullable: true })
   withdrawalId: string | null;
 
+  @Column({ type: 'uuid', nullable: true })
+  depositId: string | null;
+
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
