@@ -14,10 +14,9 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
-import { WalletService } from '../payment/wallet.service';
-import { toCents } from '../../common/util/money.util';
+import { EscrowService } from '../payment/escrow.service';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { ECollaborationStatus } from '../../common/enum/collaboration-status.enum';
 import { ESortField, ESortOrder } from '../../common/enum/sort-fields.enum';
@@ -70,7 +69,7 @@ export class CollaborationService {
     private readonly configService: SystemConfigurationService,
     private readonly brandProfileService: BrandProfileService,
     private readonly creatorProfileService: CreatorProfileService,
-    private readonly walletService: WalletService,
+    private readonly escrowService: EscrowService,
   ) {}
 
   async create(
@@ -112,26 +111,25 @@ export class CollaborationService {
 
     // 4b. Campaign phải thuộc chính brand đang gọi, đã được duyệt, và giá phải
     // khớp cam kết của nó. Một truy vấn cho cả ba việc.
-    let warnings: CampaignIssue[] = [];
-    if (dto.campaignId) {
-      const campaign = await this.campaignRepository.findOne({
-        where: { id: dto.campaignId, brandId },
-      });
-      if (!campaign) {
-        throw new NotFoundException('campaign does not exist');
-      }
-
-      this.assertCampaignApproved(campaign);
-      await this.assertPriceMatchesCampaign(campaign, dto.agreedPrice);
-      warnings = await this.creatorCriteriaWarnings(campaign, dto.creatorId);
+    const campaign = await this.campaignRepository.findOne({
+      where: { id: dto.campaignId, brandId },
+    });
+    if (!campaign) {
+      throw new NotFoundException('campaign does not exist');
     }
+    this.assertCampaignApproved(campaign);
+    await this.assertPriceMatchesCampaign(campaign, dto.agreedPrice);
+    const warnings = await this.creatorCriteriaWarnings(
+      campaign,
+      dto.creatorId,
+    );
 
     // Kiểm tra sớm để trả lỗi rõ ràng; unique index mới là chốt chống race.
     const open = await this.collaborationRepository.findOne({
       where: {
         brandId,
         creatorId: dto.creatorId,
-        campaignId: dto.campaignId ?? IsNull(),
+        campaignId: dto.campaignId,
         status: In(OPEN_STATUSES),
       },
       select: { id: true },
@@ -146,7 +144,7 @@ export class CollaborationService {
     const collaboration = this.collaborationRepository.create({
       brandId,
       creatorId: dto.creatorId,
-      campaignId: dto.campaignId ?? null,
+      campaignId: dto.campaignId,
       status: ECollaborationStatus.PENDING,
       agreedPrice: String(dto.agreedPrice),
     });
@@ -257,8 +255,7 @@ export class CollaborationService {
       });
     }
 
-    // So trên nền tảng TỐT NHẤT của creator, không phải tổng: campaign yêu cầu
-    // một kênh đạt ngưỡng, không phải cộng dồn mọi kênh.
+    // So trên: campaign yêu cầu một kênh đạt ngưỡng, không phải cộng dồn mọi kênh.
     if (minFollowers !== null) {
       const best = accounts.reduce(
         (max, a) =>
@@ -353,7 +350,6 @@ export class CollaborationService {
     return paginate(qb, query);
   }
 
-  // Transactional: cộng tiền vào ví hỏng thì trạng thái cũng không được đổi.
   @Transactional()
   async updateStatus(
     actor: CollaborationActor,
@@ -369,16 +365,11 @@ export class CollaborationService {
 
     this.assertTransition(collab.status, next, actor.role);
 
-    // agreedPrice = null/0 => trả 422
-    const earning =
-      next === ECollaborationStatus.COMPLETED ? collab.agreedPrice : null;
-    if (
-      next === ECollaborationStatus.COMPLETED &&
-      (earning === null || toCents(earning) <= 0n)
-    ) {
-      throw new UnprocessableEntityException(
-        'collaboration has no agreed price and cannot be completed',
-      );
+    if (next === ECollaborationStatus.ACTIVE && collab.proposedPrice !== null) {
+      throw new UnprocessableEntityException({
+        businessCode: EBusinessCode.COLLABORATION_PRICE_PROPOSAL_OPEN,
+        message: `a price of ${collab.proposedPrice} is still proposed, accept or withdraw it first`,
+      });
     }
 
     const patch: Partial<Collaboration> = { status: next };
@@ -399,15 +390,110 @@ export class CollaborationService {
       );
     }
 
-    if (earning !== null) {
-      await this.walletService.creditEarning(
-        collab.creatorId,
-        collab.id,
-        earning,
-      );
+    if (next === ECollaborationStatus.COMPLETED) {
+      await this.escrowService.payout(collab);
+    } else if (next === ECollaborationStatus.CANCELLED) {
+      await this.escrowService.refund(collab);
     }
 
     return this.collaborationRepository.findOneByOrFail({ id });
+  }
+
+  // Thương lượng chỉ khi còn PENDING.
+  async proposePrice(
+    actor: CollaborationActor,
+    id: string,
+    price: number,
+  ): Promise<Collaboration> {
+    const collab = await this.findPendingFor(actor, id);
+    const campaign = await this.campaignRepository.findOneByOrFail({
+      id: collab.campaignId!,
+    });
+    const floor = campaign.cashUnitPrice;
+    if (floor !== null && BigInt(price) < BigInt(floor)) {
+      throw new UnprocessableEntityException({
+        businessCode: EBusinessCode.CAMPAIGN_BUDGET_MISMATCH,
+        message: `proposed price must not be lower than the campaign price of ${floor}`,
+      });
+    }
+
+    const result = await this.collaborationRepository.update(
+      { id, status: ECollaborationStatus.PENDING },
+      { proposedPrice: String(price), proposedBy: this.partyOf(actor) },
+    );
+    if (result.affected === 0) {
+      throw new ConflictException(
+        'collaboration was changed by someone else, reload and try again',
+      );
+    }
+    return this.collaborationRepository.findOneByOrFail({ id });
+  }
+
+  // Bên còn lại chấp nhận: giá chốt có hiệu lực, chênh lệch đi qua ký quỹ.
+  @Transactional()
+  async acceptPrice(
+    actor: CollaborationActor,
+    id: string,
+  ): Promise<Collaboration> {
+    const collab = await this.findPendingFor(actor, id, true);
+    if (collab.proposedPrice === null) {
+      throw new UnprocessableEntityException('there is no price to accept');
+    }
+    if (collab.proposedBy === this.partyOf(actor)) {
+      throw new UnprocessableEntityException(
+        'the other party must accept your proposal',
+      );
+    }
+
+    const delta = BigInt(collab.proposedPrice) - BigInt(collab.agreedPrice!);
+    await this.escrowService.adjust(collab, delta);
+    await this.collaborationRepository.update(id, {
+      agreedPrice: collab.proposedPrice,
+      proposedPrice: null,
+      proposedBy: null,
+    });
+    return this.collaborationRepository.findOneByOrFail({ id });
+  }
+
+  // Người đề xuất rút lại, hoặc bên kia từ chối: giá cũ giữ nguyên.
+  async withdrawPrice(
+    actor: CollaborationActor,
+    id: string,
+  ): Promise<Collaboration> {
+    await this.findPendingFor(actor, id);
+    await this.collaborationRepository.update(
+      { id, status: ECollaborationStatus.PENDING },
+      { proposedPrice: null, proposedBy: null },
+    );
+    return this.collaborationRepository.findOneByOrFail({ id });
+  }
+
+  // lock = true khoá dòng tới hết transaction: hai lần chấp nhận song song không trừ ví hai lần.
+  private async findPendingFor(
+    actor: CollaborationActor,
+    id: string,
+    lock = false,
+  ): Promise<Collaboration> {
+    const collab = await this.collaborationRepository.findOne({
+      where: { id },
+      ...(lock ? { lock: { mode: 'pessimistic_write' as const } } : {}),
+    });
+    if (
+      !collab ||
+      (collab.brandId !== actor.id && collab.creatorId !== actor.id)
+    ) {
+      throw new NotFoundException('collaboration not found');
+    }
+    if (collab.status !== ECollaborationStatus.PENDING) {
+      throw new UnprocessableEntityException(
+        `price can only be negotiated while the collaboration is ${STATUS_LABEL[ECollaborationStatus.PENDING]}`,
+      );
+    }
+    return collab;
+  }
+
+  private partyOf(actor: CollaborationActor): ERole.BRAND | ERole.CREATOR {
+    return actor.role === ERole.BRAND ? ERole.BRAND : ERole.CREATOR;
   }
 
   /** Admin xem được tất cả; hai bên còn lại chỉ xem hợp tác của mình. */

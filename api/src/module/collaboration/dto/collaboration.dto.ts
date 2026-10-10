@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ECollaborationStatus } from '../../../common/enum/collaboration-status.enum';
+import { ERole } from '../../../common/enum/roles.enum';
 
-/** Một dòng hợp tác trong danh sách. */
 export class CollaborationDto {
   @ApiProperty({ format: 'uuid' })
   id: string;
@@ -24,6 +24,16 @@ export class CollaborationDto {
   /** numeric của Postgres về driver pg dưới dạng chuỗi, giữ nguyên để khỏi mất số lẻ. */
   @ApiProperty({ nullable: true, type: String, example: '1500000.00' })
   agreedPrice: string | null;
+
+  @ApiProperty({ nullable: true, type: String, example: '2000000' })
+  proposedPrice: string | null;
+
+  @ApiProperty({
+    nullable: true,
+    enum: [ERole.BRAND, ERole.CREATOR],
+    description: 'Bên đã đề xuất; bên còn lại mới được chấp nhận',
+  })
+  proposedBy: ERole.BRAND | ERole.CREATOR | null;
 
   @ApiProperty({ nullable: true, type: Date, format: 'date-time' })
   startedAt: Date | null;

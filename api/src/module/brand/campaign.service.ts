@@ -587,6 +587,18 @@ export class CampaignService {
     if (!compensationType || !pricingModel) return [];
 
     const issues: CampaignIssue[] = [];
+    // Ký quỹ cần một con số chắc chắn lúc duyệt
+    if (
+      pricingModel === EPricingModel.NEGOTIABLE &&
+      compensationType !== ECompensationType.PRODUCT
+    ) {
+      issues.push({
+        code: EBusinessCode[EBusinessCode.CAMPAIGN_PRICING_UNSUPPORTED],
+        fieldPath: 'pricingModel',
+        message:
+          'negotiable pricing is no longer supported, set a fixed cashUnitPrice',
+      });
+    }
     const min = this.toBigInt(campaign.minCashUnitPrice);
     const max = this.toBigInt(campaign.maxCashUnitPrice);
     const unit = this.toBigInt(campaign.cashUnitPrice);

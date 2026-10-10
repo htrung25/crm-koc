@@ -14,6 +14,8 @@ import { DepositService } from './deposit.service';
 import { DepositController } from './deposit.controller';
 import { SepayWebhookController } from './sepay-webhook.controller';
 import { WalletController } from './wallet.controller';
+import { Escrow } from './entities/escrow.entity';
+import { EscrowService } from './escrow.service';
 import { SystemConfigurationModule } from '../system-configuration/system-configuration.module';
 import { KycModule } from '../kyc/kyc.module';
 
@@ -25,6 +27,7 @@ import { KycModule } from '../kyc/kyc.module';
       Wallet,
       WalletTransaction,
       Deposit,
+      Escrow,
     ]),
     SystemConfigurationModule,
     KycModule,
@@ -41,7 +44,14 @@ import { KycModule } from '../kyc/kyc.module';
     WithdrawalService,
     WalletService,
     DepositService,
+    EscrowService,
   ],
-  exports: [BankAccountService, WithdrawalService, WalletService],
+  exports: [
+    BankAccountService,
+    WithdrawalService,
+    WalletService,
+    DepositService,
+    EscrowService,
+  ],
 })
 export class PaymentModule {}

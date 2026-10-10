@@ -44,6 +44,10 @@ export enum EBusinessCode {
   CAMPAIGN_PLATFORM_MISMATCH = 7009,
   /** Brand đã chạm trần số campaign chưa kết thúc. */
   CAMPAIGN_LIMIT_REACHED = 7010,
+  /** Ví brand không đủ cash_budget lúc gửi duyệt/duyệt, hoặc phần bù thương lượng. */
+  CAMPAIGN_INSUFFICIENT_BALANCE = 7013,
+  /** Pricing NEGOTIABLE không còn được hỗ trợ; chỉ nhận giá cố định. */
+  CAMPAIGN_PRICING_UNSUPPORTED = 7014,
 
   /** Số tiền rút lớn hơn available_balance, hoặc account chưa có ví. */
   WITHDRAWAL_INSUFFICIENT_BALANCE = 8000,
@@ -51,4 +55,9 @@ export enum EBusinessCode {
   WITHDRAWAL_KYC_REQUIRED = 8001,
   /** Kênh nạp tiền chưa được cấu hình trên server. */
   DEPOSIT_METHOD_UNAVAILABLE = 8100,
+  /** Ký quỹ campaign không đủ chi (nhiều hợp tác hơn số suất đã trả). */
+  ESCROW_INSUFFICIENT = 8200,
+
+  /** Còn đề xuất giá chưa chốt: phải chấp nhận/huỷ trước khi bắt đầu. */
+  COLLABORATION_PRICE_PROPOSAL_OPEN = 9000,
 }

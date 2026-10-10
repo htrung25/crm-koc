@@ -23,6 +23,7 @@ import {
 import { ERole } from '../../common/enum/roles.enum';
 import { AuditLogService } from './audit-log.service';
 import { KycService } from '../kyc/kyc.service';
+import { EscrowService } from '../payment/escrow.service';
 import { SystemConfigurationService } from '../system-configuration/system-configuration.service';
 import { CampaignService } from '../brand/campaign.service';
 import { CampaignTransitionService } from '../brand/campaign-transition.service';
@@ -55,6 +56,7 @@ export class CampaignReviewService {
     private readonly configuration: SystemConfigurationService,
     private readonly kyc: KycService,
     private readonly audit: AuditLogService,
+    private readonly escrow: EscrowService,
   ) {}
 
   @Transactional()
@@ -143,6 +145,11 @@ export class CampaignReviewService {
       actor: { type: ECampaignActorType.ADMIN, id: reviewerId },
       patch: { approvedAt: now },
     });
+    // Cùng transaction: ví không đủ thì duyệt rollback, campaign giữ PENDING.
+    const budget = content.campaign.cashBudget;
+    if (budget && BigInt(budget) > 0n) {
+      await this.escrow.lock(current.brandId, current.id, budget);
+    }
     const decided = await this.submissions.update(
       { id: submission.id, status: EReviewSubmissionStatus.OPEN },
       {

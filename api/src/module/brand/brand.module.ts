@@ -16,6 +16,7 @@ import { CampaignDeliverable } from './entities/campaign-deliverable.entity';
 import { CampaignReviewSubmission } from './entities/campaign-review-submission.entity';
 import { CampaignStatusHistory } from './entities/campaign-status-history.entity';
 import { KycModule } from '../kyc/kyc.module';
+import { PaymentModule } from '../payment/payment.module';
 import { SystemConfigurationModule } from '../system-configuration/system-configuration.module';
 import { CampaignAssetController } from './campaign-asset.controller';
 import { CampaignAssetService } from './campaign-asset.service';
@@ -34,9 +35,9 @@ import { CampaignAssetUploadInterceptor } from '../../common/interceptors/campai
       CampaignReviewSubmission,
     ]),
     SecurityModule,
-    // Gửi duyệt campaign đòi KYC đã VERIFIED và giá sàn từ system config.
     KycModule,
     SystemConfigurationModule,
+    PaymentModule,
   ],
   controllers: [
     BrandProfileController,

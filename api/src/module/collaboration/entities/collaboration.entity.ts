@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ECollaborationStatus } from '../../../common/enum/collaboration-status.enum';
+import { ERole } from '../../../common/enum/roles.enum';
 import { BrandProfile } from '../../brand/entities/brand-profile.entity';
 import { CreatorProfile } from '../../creator/entities/creator-profile.entity';
 
@@ -57,6 +58,12 @@ export class Collaboration {
 
   @Column({ type: 'bigint', nullable: true })
   agreedPrice: string | null;
+
+  @Column({ type: 'bigint', nullable: true })
+  proposedPrice: string | null;
+
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  proposedBy: ERole.BRAND | ERole.CREATOR | null;
 
   @Column({ type: 'timestamptz', nullable: true })
   startedAt: Date | null;
