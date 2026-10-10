@@ -29,12 +29,10 @@ import { RolesGuard } from '../../security/roles.guard';
 import { Roles } from '../../security/roles.decorator';
 import { AuthenticatedAccount } from '../auth/types/authenticated.types';
 import { CollaborationService } from './collaboration.service';
-import {
-  CollaborationFilterDto,
-  CollaborationDto,
-  CreateCollaborationDto,
-  UpdateCollaborationStatusDto,
-} from './dto/collaboration.dto';
+import { CollaborationDto } from './dto/collaboration.dto';
+import { CollaborationFilterDto } from './dto/collaboration-filter.dto';
+import { CreateCollaborationDto } from './dto/create-collaboration.dto';
+import { UpdateCollaborationStatusDto } from './dto/update-collaboration-status.dto';
 import { CollaborationActor } from './types/collaboration.types';
 
 @ApiTags('Collaboration')
