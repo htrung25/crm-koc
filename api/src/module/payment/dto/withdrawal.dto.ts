@@ -10,12 +10,13 @@ export class WithdrawalDto {
   bankAccountId: string;
 
   @ApiProperty({
-    example: '1000000.00',
-    description: 'Amount deducted from the wallet, fee included',
+    example: '1000000',
+    description:
+      'Whole VND deducted from the wallet, fee included. Fee is rounded to whole VND.',
   })
   @IsString()
   @Matches(WITHDRAWAL_AMOUNT_PATTERN, {
-    message: 'amount must be a positive number with at most 2 decimals',
+    message: 'amount must be a whole number of VND',
   })
   amount: string;
 }

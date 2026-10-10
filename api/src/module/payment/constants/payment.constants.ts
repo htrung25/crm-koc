@@ -28,8 +28,8 @@ export const WITHDRAWAL_IDEMPOTENCY_HEADER = 'Idempotency-Key';
 /** Khớp varchar(128) của withdrawals.idempotency_key. */
 export const MAX_WITHDRAWAL_IDEMPOTENCY_KEY_LENGTH = 128;
 
-/** numeric(15,2): tối đa 13 chữ số phần nguyên, 2 chữ số thập phân. */
-export const WITHDRAWAL_AMOUNT_PATTERN = /^\d{1,13}(\.\d{1,2})?$/;
+// Số nguyên VND; nhận đuôi ".00" cho client cũ.
+export const WITHDRAWAL_AMOUNT_PATTERN = /^\d{1,13}(\.0{1,2})?$/;
 
 // Const dữ liệu nội bộ của admin và hệ thống.
 export const WITHDRAWAL_USER_FIELDS = [

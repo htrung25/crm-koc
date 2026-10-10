@@ -11,8 +11,8 @@ export function fromCents(cents: bigint): string {
   return `${sign}${abs / 100n}.${(abs % 100n).toString().padStart(2, '0')}`;
 }
 
-//Phí theo phần trăm, làm tròn nửa lên tới xu. 2.5% → 250 phần vạn.
+// Phí theo phần trăm, làm tròn nửa lên tới ĐỒNG (trả về đơn vị xu)
 export function percentOf(cents: bigint, percent: number): bigint {
   const basisPoints = BigInt(Math.round(percent * 100));
-  return (cents * basisPoints + 5000n) / 10000n;
+  return ((cents * basisPoints + 500_000n) / 1_000_000n) * 100n;
 }
