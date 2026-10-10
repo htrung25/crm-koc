@@ -17,6 +17,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
 import { WalletService } from '../payment/wallet.service';
+import { toCents } from '../../common/util/money.util';
 import { EAccountStatus } from '../../common/enum/account-statuses.enum';
 import { ECollaborationStatus } from '../../common/enum/collaboration-status.enum';
 import { ESortField, ESortOrder } from '../../common/enum/sort-fields.enum';
@@ -44,15 +45,12 @@ import { CAMPAIGN_STATUS_LABEL } from '../brand/constants/campaign.constants';
 import { EBusinessCode } from '../../common/enum/business-code.enum';
 import {
   ECampaignStatus,
-  ECompensationType,
   EPricingModel,
 } from '../../common/enum/campaign.enum';
 import type { CampaignIssue } from '../brand/types/campaign.types';
-import {
-  CollaborationFilterDto,
-  CreateCollaborationDto,
-} from './dto/collaboration.dto';
-import { assertSortField } from './constants/collaboration.constants';
+import { CollaborationFilterDto } from './dto/collaboration-filter.dto';
+import { CreateCollaborationDto } from './dto/create-collaboration.dto';
+import { assertSortField } from './util/collaboration.util';
 import { Collaboration } from './entities/collaboration.entity';
 import type { CollaborationActor } from './types/collaboration.types';
 import { CollaborationListItem } from './types/collaboration.types';
@@ -150,8 +148,7 @@ export class CollaborationService {
       creatorId: dto.creatorId,
       campaignId: dto.campaignId ?? null,
       status: ECollaborationStatus.PENDING,
-      agreedPrice:
-        dto.agreedPrice === undefined ? null : String(dto.agreedPrice),
+      agreedPrice: String(dto.agreedPrice),
     });
 
     // 8. Entity trùng khít CollaborationDto nên trả thẳng, không map lại.
@@ -186,25 +183,8 @@ export class CollaborationService {
 
   private async assertPriceMatchesCampaign(
     campaign: Campaign,
-    agreedPrice?: number,
+    agreedPrice: number,
   ): Promise<void> {
-    if (campaign.compensationType === ECompensationType.PRODUCT) {
-      if (agreedPrice) {
-        throw new UnprocessableEntityException({
-          businessCode: EBusinessCode.CAMPAIGN_BUDGET_MISMATCH,
-          message: 'campaign pays in product only, agreedPrice must be empty',
-        });
-      }
-      return;
-    }
-
-    if (agreedPrice === undefined) {
-      throw new UnprocessableEntityException({
-        businessCode: EBusinessCode.CAMPAIGN_BUDGET_MISMATCH,
-        message: 'agreedPrice is required for a campaign that pays cash',
-      });
-    }
-
     const price = BigInt(agreedPrice);
 
     if (campaign.pricingModel === EPricingModel.FIXED) {
@@ -389,6 +369,18 @@ export class CollaborationService {
 
     this.assertTransition(collab.status, next, actor.role);
 
+    // agreedPrice = null/0 => trả 422
+    const earning =
+      next === ECollaborationStatus.COMPLETED ? collab.agreedPrice : null;
+    if (
+      next === ECollaborationStatus.COMPLETED &&
+      (earning === null || toCents(earning) <= 0n)
+    ) {
+      throw new UnprocessableEntityException(
+        'collaboration has no agreed price and cannot be completed',
+      );
+    }
+
     const patch: Partial<Collaboration> = { status: next };
     // Chỉ ghi lần đầu vào trạng thái đó: quay lại qua ngả DISPUTED hay bị trả
     // bài không được ghi đè mốc thật.
@@ -407,11 +399,11 @@ export class CollaborationService {
       );
     }
 
-    if (next === ECollaborationStatus.COMPLETED) {
+    if (earning !== null) {
       await this.walletService.creditEarning(
         collab.creatorId,
         collab.id,
-        collab.agreedPrice as string,
+        earning,
       );
     }
 

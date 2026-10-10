@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { ECollaborationStatus } from '../../../common/enum/collaboration-status.enum';
 import { ERole } from '../../../common/enum/roles.enum';
 import {
@@ -100,15 +99,9 @@ export const COLLABORATION_SORT_FIELDS = [
   ECollaborationSortField.COMPLETED_AT,
 ] as const;
 
-/** sortBy đi thẳng vào SQL nên phải khớp danh sách cột cho phép. */
-export function assertSortField(
-  value: string,
-): (typeof COLLABORATION_SORT_FIELDS)[number] {
-  const allowed = COLLABORATION_SORT_FIELDS as readonly string[];
-  if (!allowed.includes(value)) {
-    throw new BadRequestException(
-      `sortBy must be one of: ${allowed.join(', ')}`,
-    );
-  }
-  return value as (typeof COLLABORATION_SORT_FIELDS)[number];
-}
+// query string luôn là chuỗi: '500000' phải thành số thì @IsNumber mới pass
+export const toNumberQuery = ({ value }: { value: unknown }): unknown =>
+  typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
+
+export const COLLABORATION_STATUS_MESSAGE =
+  'status must be 1 (pending), 2 (active), 3 (submitted), 4 (completed), 5 (cancelled) or 6 (disputed)';
