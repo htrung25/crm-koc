@@ -96,8 +96,6 @@ export class WalletService {
     await this.credit(accountId, amount, { depositId });
   }
 
-  // Ledger trước, số dư sau: nguồn đã được ghi (unique theo nguồn) thì bỏ qua,
-  // nên gọi lại không cộng tiền hai lần.
   async credit(
     accountId: string,
     amount: string,
