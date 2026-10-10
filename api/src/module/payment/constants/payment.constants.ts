@@ -31,6 +31,27 @@ export const MAX_WITHDRAWAL_IDEMPOTENCY_KEY_LENGTH = 128;
 /** numeric(15,2): tối đa 13 chữ số phần nguyên, 2 chữ số thập phân. */
 export const WITHDRAWAL_AMOUNT_PATTERN = /^\d{1,13}(\.\d{1,2})?$/;
 
+// Const dữ liệu nội bộ của admin và hệ thống.
+export const WITHDRAWAL_USER_FIELDS = [
+  'id',
+  'bankAccountId',
+  'bankCode',
+  'bankNumber',
+  'bankName',
+  'accountHolderName',
+  'amount',
+  'fee',
+  'netAmount',
+  'currency',
+  'status',
+  'rejectReason',
+  'transactionCode',
+  'bankTransactionId',
+  'processedAt',
+  'createdAt',
+  'updatedAt',
+] as const;
+
 export const WITHDRAWAL_CODE_PREFIX = 'WD-';
 export const WITHDRAWAL_CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 export const WITHDRAWAL_CODE_LENGTH = 10;
