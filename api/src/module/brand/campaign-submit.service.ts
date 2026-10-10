@@ -267,7 +267,7 @@ export class CampaignSubmitService {
     return {
       capturedAt: new Date().toISOString(),
       cashFloor: {
-        value: floor.value === null ? null : floor.value.toString(),
+        value: floor.value?.toString() ?? null,
         sourceKey: floor.sourceKey,
       },
       category: { id: category?.id ?? null, policy: category?.policy ?? null },

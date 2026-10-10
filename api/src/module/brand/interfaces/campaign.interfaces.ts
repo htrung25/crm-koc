@@ -3,7 +3,6 @@ import {
   ECampaignStatus,
   ECompensationType,
 } from '../../../common/enum/campaign.enum';
-import { ESocialPlatform } from '../../../common/enum/social-platform.enum';
 import { Campaign } from '../entities/campaign.entity';
 import { CampaignAsset } from '../entities/campaign-asset.entity';
 import { CampaignCategory } from '../entities/campaign-category.entity';
@@ -36,15 +35,13 @@ export interface CampaignAppliedPolicy {
 
 export interface CashFloorInput {
   compensationType: ECompensationType;
-  platform?: ESocialPlatform | null;
-  contentType?: string | null;
 }
 
 export interface CashFloorResolution {
-  /** null = không áp sàn tiền mặt (campaign chỉ trả bằng sản phẩm). */
-  value: bigint | null;
+  /** Ngân sách tối thiểu (VND) của cả campaign. */
+  value: bigint;
   /** Khoá đã dùng. Đi kèm value để thông báo lỗi giải thích được. */
-  sourceKey: string | null;
+  sourceKey: string;
 }
 
 /**

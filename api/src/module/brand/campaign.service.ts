@@ -295,18 +295,17 @@ export class CampaignService {
       : { errors: [], warnings: issues };
   }
 
-  /** Dò từ khoá riêng nhất tới `default`. Nhóm cấu hình do caller nạp sẵn. */
+  // Ngân sách tối thiểu của một campaign
   // eslint-disable-next-line @typescript-eslint/require-await
   async resolveCashFloor(
     config: Record<string, unknown>,
     input: CashFloorInput,
   ): Promise<CashFloorResolution> {
-    // PRODUCT không trả tiền mặt nên KHÔNG có sàn. Trả null chứ không phải 0.
-    if (input.compensationType === ECompensationType.PRODUCT) {
-      return { value: null, sourceKey: null };
-    }
-
-    const keys = this.cashFloorKeys(input);
+    const { cashFloorPrefix, cashFloorDefault } = CAMPAIGN_CONFIG_KEY;
+    const keys = [
+      `${cashFloorPrefix}.${input.compensationType}`,
+      cashFloorDefault,
+    ];
     for (const key of keys) {
       const raw = config[key];
       if (raw === undefined || raw === null) {
@@ -319,20 +318,6 @@ export class CampaignService {
     throw new ServiceUnavailableException(
       `missing cash floor configuration, tried: ${keys.join(', ')}`,
     );
-  }
-
-  private cashFloorKeys(input: CashFloorInput): string[] {
-    const { cashFloorPrefix, cashFloorDefault } = CAMPAIGN_CONFIG_KEY;
-    const compensation = `${cashFloorPrefix}.${input.compensationType}`;
-
-    return [
-      input.platform && input.contentType
-        ? `${compensation}.${input.platform}.${input.contentType}`
-        : null,
-      input.platform ? `${compensation}.${input.platform}` : null,
-      compensation,
-      cashFloorDefault,
-    ].filter((key): key is string => key !== null);
   }
 
   /** Sàn phải là số nguyên không âm; sai kiểu thì hỏng to còn hơn bỏ qua. */
@@ -404,19 +389,14 @@ export class CampaignService {
     return [...issues, ...(await this.compensationRequiredIssues(campaign))];
   }
 
-  /** AC-BRA-006-6: PRODUCT không bắt buộc giá tiền mặt, nhưng phải có hiện vật. */
   // eslint-disable-next-line @typescript-eslint/require-await
   private async compensationRequiredIssues(
     campaign: Campaign,
   ): Promise<CampaignIssue[]> {
     const issues: CampaignIssue[] = [];
     const { compensationType, pricingModel } = campaign;
-    const hasCash =
-      compensationType === ECompensationType.CASH ||
-      compensationType === ECompensationType.HYBRID;
-    const hasProduct =
-      compensationType === ECompensationType.PRODUCT ||
-      compensationType === ECompensationType.HYBRID;
+    const hasCash = compensationType !== null;
+    const hasProduct = compensationType === ECompensationType.HYBRID;
 
     if (hasCash && pricingModel === EPricingModel.FIXED) {
       if (this.isBlank(campaign.cashUnitPrice)) {
@@ -588,10 +568,7 @@ export class CampaignService {
 
     const issues: CampaignIssue[] = [];
     // Ký quỹ cần một con số chắc chắn lúc duyệt
-    if (
-      pricingModel === EPricingModel.NEGOTIABLE &&
-      compensationType !== ECompensationType.PRODUCT
-    ) {
+    if (pricingModel === EPricingModel.NEGOTIABLE) {
       issues.push({
         code: EBusinessCode[EBusinessCode.CAMPAIGN_PRICING_UNSUPPORTED],
         fieldPath: 'pricingModel',
@@ -629,19 +606,15 @@ export class CampaignService {
       }
     }
 
-    // §5.5: FIXED so cash_unit_price, NEGOTIABLE so min. max không bị ràng trên.
-    const compared =
-      pricingModel === EPricingModel.FIXED
-        ? { value: unit, fieldPath: 'cashUnitPrice' }
-        : { value: min, fieldPath: 'minCashUnitPrice' };
-
-    if (compared.value !== null) {
+    // Sàn áp cho ngân sách cả campaign (số tiền ký quỹ)
+    const budget = this.toBigInt(campaign.cashBudget);
+    if (budget !== null) {
       const floor = await this.resolveCashFloor(config, { compensationType });
-      if (floor.value !== null && compared.value < floor.value) {
+      if (budget < floor.value) {
         issues.push({
           code: EBusinessCode[EBusinessCode.CAMPAIGN_CASH_BELOW_FLOOR],
-          fieldPath: compared.fieldPath,
-          message: `${compared.value} is below the floor of ${floor.value}`,
+          fieldPath: 'cashBudget',
+          message: `campaign budget ${budget} is below the minimum of ${floor.value}`,
           // sourceKey là thứ khiến thông báo giải thích được: brand thấy ngay
           // con số đó đến từ quy tắc nào.
           metadata: {

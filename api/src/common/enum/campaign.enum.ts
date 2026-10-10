@@ -17,7 +17,6 @@ export enum ECampaignObjective {
 
 export enum ECompensationType {
   CASH = 'cash',
-  PRODUCT = 'product',
   HYBRID = 'hybrid',
 }
 
