@@ -12,6 +12,7 @@ import { paginate, PaginatedResult } from '../../common/util/pagination.util';
 import { WalletTransactionFilterDto } from './dto/wallet-transaction-filter.dto';
 import type {
   WalletBalance,
+  WalletSource,
   WalletTransactionItem,
 } from './types/payment.types';
 
@@ -67,6 +68,7 @@ export class WalletService {
         'tx.collaborationId',
         'tx.withdrawalId',
         'tx.depositId',
+        'tx.campaignId',
         'tx.completedAt',
         'tx.createdAt',
       ])
@@ -76,12 +78,13 @@ export class WalletService {
     return paginate(qb, filters);
   }
 
+  // false = hợp tác này đã được trả trước đó (gọi lại), bên gọi không được chi thêm.
   async creditEarning(
     creatorId: string,
     collaborationId: string,
     agreedPrice: string,
-  ): Promise<void> {
-    await this.credit(creatorId, agreedPrice, { collaborationId });
+  ): Promise<boolean> {
+    return this.credit(creatorId, agreedPrice, { collaborationId });
   }
 
   // Gọi trong transaction đánh dấu lệnh nạp hoàn tất.
@@ -95,11 +98,11 @@ export class WalletService {
 
   // Ledger trước, số dư sau: nguồn đã được ghi (unique theo nguồn) thì bỏ qua,
   // nên gọi lại không cộng tiền hai lần.
-  private async credit(
+  async credit(
     accountId: string,
     amount: string,
-    source: { collaborationId: string } | { depositId: string },
-  ): Promise<void> {
+    source: WalletSource,
+  ): Promise<boolean> {
     const walletId = await this.ensureWallet(accountId);
     const inserted = await this.walletTransactionRepository
       .createQueryBuilder()
@@ -116,7 +119,7 @@ export class WalletService {
       .returning('id')
       .execute();
     if ((inserted.raw as unknown[]).length === 0) {
-      return;
+      return false;
     }
 
     await this.walletRepository
@@ -126,5 +129,43 @@ export class WalletService {
       .where('id = :walletId')
       .setParameters({ walletId, amount })
       .execute();
+    return true;
+  }
+
+  // Brand trả vào ký quỹ campaign
+  async debit(
+    accountId: string,
+    amount: string,
+    campaignId: string,
+  ): Promise<boolean> {
+    const debited = await this.walletRepository
+      .createQueryBuilder()
+      .update(Wallet)
+      .set({ availableBalance: () => 'available_balance - :amount' })
+      .where('account_id = :accountId AND available_balance >= :amount')
+      .setParameters({ accountId, amount })
+      .returning('id')
+      .execute();
+    const walletId = (debited.raw as { id: string }[])[0]?.id;
+    if (!walletId) {
+      return false;
+    }
+
+    await this.walletTransactionRepository.insert({
+      walletId,
+      amount: `-${amount}`,
+      status: EWalletTransactionsStatus.COMPLETED,
+      completedAt: new Date(),
+      campaignId,
+    });
+    return true;
+  }
+
+  async availableBalance(accountId: string): Promise<string> {
+    const wallet = await this.walletRepository.findOne({
+      where: { accountId },
+      select: { availableBalance: true },
+    });
+    return wallet?.availableBalance ?? '0';
   }
 }

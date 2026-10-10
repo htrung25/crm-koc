@@ -15,6 +15,8 @@ import {
 } from '../../common/enum/campaign.enum';
 import { ERole } from '../../common/enum/roles.enum';
 import { KycService } from '../kyc/kyc.service';
+import { DepositService } from '../payment/deposit.service';
+import { EscrowService } from '../payment/escrow.service';
 import { SystemConfigurationService } from '../system-configuration/system-configuration.service';
 import { CampaignService } from './campaign.service';
 import { CampaignTransitionService } from './campaign-transition.service';
@@ -55,10 +57,42 @@ export class CampaignSubmitService {
     private readonly transitionService: CampaignTransitionService,
     private readonly configService: SystemConfigurationService,
     private readonly kycService: KycService,
+    private readonly escrowService: EscrowService,
+    private readonly depositService: DepositService,
   ) {}
 
-  @Transactional()
   async submit(
+    brandId: string,
+    id: string,
+    expectedVersion: number,
+  ): Promise<CampaignSubmitResult> {
+    try {
+      return await this.submitInTransaction(brandId, id, expectedVersion);
+    } catch (error) {
+      throw await this.withTopUp(error, brandId);
+    }
+  }
+
+  // Ví thiếu tiền: kèm lệnh nạp đúng số còn thiếu để brand quét QR rồi gửi lại.
+  private async withTopUp(error: unknown, brandId: string): Promise<unknown> {
+    if (!(error instanceof UnprocessableEntityException)) return error;
+    const body = error.getResponse() as {
+      businessCode?: EBusinessCode;
+      shortfall?: string;
+    };
+    if (body.businessCode !== EBusinessCode.CAMPAIGN_INSUFFICIENT_BALANCE) {
+      return error;
+    }
+    // ponytail: mỗi lần gửi lại khi còn thiếu tạo thêm một lệnh nạp pending;
+    // dùng lại lệnh cùng số tiền nếu thấy rác.
+    const deposit = await this.depositService
+      .createSepayDeposit(brandId, ERole.BRAND, { amount: body.shortfall! })
+      .catch(() => null);
+    return new UnprocessableEntityException({ ...body, deposit });
+  }
+
+  @Transactional()
+  private async submitInTransaction(
     brandId: string,
     id: string,
     expectedVersion: number,
@@ -106,6 +140,7 @@ export class CampaignSubmitService {
     if (errors.length > 0) {
       throw this.validationError(errors);
     }
+    await this.assertBudgetFunded(brandId, campaign);
 
     const appliedPolicy = await this.buildAppliedPolicy(
       campaign,
@@ -113,8 +148,6 @@ export class CampaignSubmitService {
       config,
     );
 
-    // apply() ràng status nguồn ngay trong WHERE nên hai lượt submit song song
-    // chỉ một cái qua; nhờ đó revision_number tính bằng MAX+1 là an toàn.
     const updated = await this.transitionService.apply({
       campaignId: id,
       brandId,
@@ -126,8 +159,7 @@ export class CampaignSubmitService {
     });
 
     const revisionNumber = await this.nextRevisionNumber(id);
-    // save() thay vì insert(): insert() nhận QueryDeepPartialEntity nên nó bóc
-    // cả object jsonb ra thành từng khoá, và kiểu của snapshot không khớp nữa.
+    // save() thay vì insert()
     const submission = await this.submissionRepository.save(
       this.submissionRepository.create({
         campaignId: id,
@@ -141,6 +173,24 @@ export class CampaignSubmitService {
     );
 
     return { campaign: updated, revisionNumber, submissionId: submission.id };
+  }
+
+  // Chỉ kiểm, chưa trừ: tiền chuyển vào ký quỹ lúc admin duyệt.
+  private async assertBudgetFunded(
+    brandId: string,
+    campaign: Campaign,
+  ): Promise<void> {
+    const budget = campaign.cashBudget;
+    if (!budget || BigInt(budget) <= 0n) return;
+    const shortfall = await this.escrowService.shortfall(brandId, budget);
+    if (shortfall > 0n) {
+      throw new UnprocessableEntityException({
+        businessCode: EBusinessCode.CAMPAIGN_INSUFFICIENT_BALANCE,
+        message: `wallet needs ${shortfall} more to cover the campaign budget of ${budget}`,
+        required: budget,
+        shortfall: shortfall.toString(),
+      });
+    }
   }
 
   private assertSubmittable(campaign: Campaign): void {

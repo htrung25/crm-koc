@@ -31,6 +31,9 @@ export class WalletTransaction {
   @Column({ type: 'uuid', nullable: true })
   depositId: string | null;
 
+  @Column({ type: 'uuid', nullable: true })
+  campaignId: string | null;
+
   @Column({ type: 'text', nullable: true })
   description: string | null;
 

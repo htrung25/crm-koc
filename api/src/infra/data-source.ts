@@ -3,6 +3,7 @@ import { Withdrawal } from '../module/payment/entities/withdrawal.entity';
 import { Wallet } from '../module/payment/entities/wallet.entity';
 import { WalletTransaction } from '../module/payment/entities/wallet-transaction.entity';
 import { Deposit } from '../module/payment/entities/deposit.entity';
+import { Escrow } from '../module/payment/entities/escrow.entity';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SnakeNamingStrategy } from './snake-naming.strategy';
 import { AuthEntity } from '../module/auth/entities/auth.entity';
@@ -37,6 +38,7 @@ const entities = [
   Wallet,
   WalletTransaction,
   Deposit,
+  Escrow,
   AuthEntity,
   BrandProfile,
   CreatorProfile,

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -21,6 +22,7 @@ import {
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
+  ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { ApiFilterResponse } from '../../common/dto/filter-response.dto';
 import { ERole } from '../../common/enum/roles.enum';
@@ -33,6 +35,7 @@ import { CollaborationDto } from './dto/collaboration.dto';
 import { CollaborationFilterDto } from './dto/collaboration-filter.dto';
 import { CreateCollaborationDto } from './dto/create-collaboration.dto';
 import { UpdateCollaborationStatusDto } from './dto/update-collaboration-status.dto';
+import { ProposePriceDto } from './dto/propose-price.dto';
 import { CollaborationActor } from './types/collaboration.types';
 
 @ApiTags('Collaboration')
@@ -115,6 +118,62 @@ export class BrandCollaborationController {
       this.actor(request.user),
       id,
       dto.status,
+    );
+  }
+
+  @Post('/:id/price-proposal')
+  @ApiOperation({
+    summary: 'Propose a new price while the collaboration is pending',
+    description:
+      'Không thấp hơn giá campaign. Đề xuất mới đè đề xuất cũ; creator chấp nhận thì giá mới có hiệu lực.',
+  })
+  @ApiOkResponse({ type: CollaborationDto })
+  @ApiNotFoundResponse({ description: 'Collaboration not found, or not yours' })
+  @ApiUnprocessableEntityResponse({
+    description: 'Not pending, or price is below the campaign price',
+  })
+  async proposePrice(
+    @Request() request: { user: AuthenticatedAccount },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ProposePriceDto,
+  ) {
+    return this.collaborationService.proposePrice(
+      this.actor(request.user),
+      id,
+      dto.price,
+    );
+  }
+
+  @Post('/:id/price-proposal/accept')
+  @ApiOperation({
+    summary: "Accept the creator's proposed price",
+    description:
+      'Phần chênh so với giá cũ bị trừ thêm từ ví vào ký quỹ campaign (giảm giá thì hoàn lại).',
+  })
+  @ApiOkResponse({ type: CollaborationDto })
+  @ApiNotFoundResponse({ description: 'Collaboration not found, or not yours' })
+  @ApiUnprocessableEntityResponse({
+    description:
+      'No proposal, own proposal, or wallet cannot cover the difference',
+  })
+  async acceptPrice(
+    @Request() request: { user: AuthenticatedAccount },
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.collaborationService.acceptPrice(this.actor(request.user), id);
+  }
+
+  @Delete('/:id/price-proposal')
+  @ApiOperation({ summary: 'Withdraw or decline the open price proposal' })
+  @ApiOkResponse({ type: CollaborationDto })
+  @ApiNotFoundResponse({ description: 'Collaboration not found, or not yours' })
+  async withdrawPrice(
+    @Request() request: { user: AuthenticatedAccount },
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.collaborationService.withdrawPrice(
+      this.actor(request.user),
+      id,
     );
   }
 

@@ -15,6 +15,10 @@ import type { WalletTransaction } from '../entities/wallet-transaction.entity';
 
 export type WalletBalance = Pick<Wallet, 'availableBalance' | 'lockedBalance'>;
 
+// Mỗi dòng ledger có đúng một nguồn (CHK_wallet_transactions_one_source).
+export type WalletSource =
+  { collaborationId: string } | { depositId: string } | { campaignId: string };
+
 // Dòng sao kê: đủ để biết tiền từ đâu, không lộ walletId hay description nội bộ.
 export type WalletTransactionItem = Pick<
   WalletTransaction,
@@ -24,6 +28,7 @@ export type WalletTransactionItem = Pick<
   | 'collaborationId'
   | 'withdrawalId'
   | 'depositId'
+  | 'campaignId'
   | 'completedAt'
   | 'createdAt'
 >;

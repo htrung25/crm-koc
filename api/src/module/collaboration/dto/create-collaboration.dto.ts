@@ -1,19 +1,16 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsUUID, Min } from 'class-validator';
+import { IsInt, IsUUID, Min } from 'class-validator';
 
 export class CreateCollaborationDto {
   @IsUUID()
   @ApiProperty({ format: 'uuid' })
   creatorId: string;
 
-  @IsOptional()
+  // Mọi hợp tác đều thuộc một campaign để tiền trả creator luôn có ký quỹ.
   @IsUUID()
-  @ApiPropertyOptional({
-    format: 'uuid',
-    description: 'Bỏ trống nếu thoả thuận trực tiếp, không qua chiến dịch',
-  })
-  campaignId?: string;
+  @ApiProperty({ format: 'uuid' })
+  campaignId: string;
 
   @Type(() => Number)
   @IsInt()
