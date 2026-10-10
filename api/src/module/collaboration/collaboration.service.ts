@@ -39,7 +39,6 @@ import { CampaignService } from '../brand/campaign.service';
 import { Campaign } from '../brand/entities/campaign.entity';
 import { SocialAccount } from '../creator/entities/social-account.entity';
 import { SystemConfigurationService } from '../system-configuration/system-configuration.service';
-import { CAMPAIGN_CONFIG_GROUP } from '../brand/constants/campaign.constants';
 import { CAMPAIGN_STATUS_LABEL } from '../brand/constants/campaign.constants';
 import { EBusinessCode } from '../../common/enum/business-code.enum';
 import {
@@ -118,7 +117,7 @@ export class CollaborationService {
       throw new NotFoundException('campaign does not exist');
     }
     this.assertCampaignApproved(campaign);
-    await this.assertPriceMatchesCampaign(campaign, dto.agreedPrice);
+    this.assertPriceMatchesCampaign(campaign, dto.agreedPrice);
     const warnings = await this.creatorCriteriaWarnings(
       campaign,
       dto.creatorId,
@@ -179,10 +178,10 @@ export class CollaborationService {
     });
   }
 
-  private async assertPriceMatchesCampaign(
+  private assertPriceMatchesCampaign(
     campaign: Campaign,
     agreedPrice: number,
-  ): Promise<void> {
+  ): void {
     const price = BigInt(agreedPrice);
 
     if (campaign.pricingModel === EPricingModel.FIXED) {
@@ -205,20 +204,6 @@ export class CollaborationService {
       throw new UnprocessableEntityException({
         businessCode: EBusinessCode.CAMPAIGN_PRICE_RANGE_INVALID,
         message: `agreedPrice must be within [${min ?? '-'}, ${max ?? '-'}]`,
-      });
-    }
-
-    // Sàn đọc theo cấu hình HIỆN HÀNH, không phải applied_policy lúc gửi duyệt:
-    // sàn tăng sau khi campaign được duyệt thì hợp tác mới vẫn phải theo sàn mới.
-    const config = await this.configService.getByGroup(CAMPAIGN_CONFIG_GROUP);
-    const floor = await this.campaignService.resolveCashFloor(config, {
-      compensationType: campaign.compensationType!,
-    });
-    if (floor.value !== null && price < floor.value) {
-      throw new UnprocessableEntityException({
-        businessCode: EBusinessCode.CAMPAIGN_CASH_BELOW_FLOOR,
-        message: `${price} is below the floor of ${floor.value}`,
-        metadata: { floor: floor.value.toString(), sourceKey: floor.sourceKey },
       });
     }
   }
