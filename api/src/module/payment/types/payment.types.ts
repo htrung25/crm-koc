@@ -1,8 +1,15 @@
 import {
   BANK_ACCOUNT_SORT_FIELDS,
   WITHDRAWAL_SORT_FIELDS,
+  WITHDRAWAL_USER_FIELDS,
 } from '../constants/payment.constants';
 import type { Deposit } from '../entities/deposit.entity';
+import type { Withdrawal } from '../entities/withdrawal.entity';
+
+export type WithdrawalItem = Pick<
+  Withdrawal,
+  (typeof WITHDRAWAL_USER_FIELDS)[number]
+>;
 import type { Wallet } from '../entities/wallet.entity';
 import type { WalletTransaction } from '../entities/wallet-transaction.entity';
 

@@ -4,6 +4,8 @@ import {
   Controller,
   Get,
   Headers,
+  Param,
+  ParseUUIDPipe,
   Post,
   Query,
   Request,
@@ -91,6 +93,26 @@ export class WithdrawalController {
     @Query() query: WithdrawalFilterDto,
   ) {
     return this.withdrawalService.findAll(request.user.id, query);
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get one of my withdrawals',
+    description:
+      'Status, fee, net amount and the bank snapshot taken when it was created',
+  })
+  @ApiOkResponse({ description: 'Withdrawal detail' })
+  @ApiUnauthorizedResponse({
+    description: 'Token is missing, invalid or expired',
+  })
+  @ApiNotFoundResponse({
+    description: 'Withdrawal does not exist or belongs to another account',
+  })
+  async findOne(
+    @Request() request: { user: AuthenticatedAccount },
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.withdrawalService.findOne(request.user.id, id);
   }
 
   // Chuỗi rỗng coi như không gửi; quá dài thì vỡ varchar(128) nên chặn trước.

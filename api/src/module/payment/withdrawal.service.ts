@@ -36,7 +36,9 @@ import {
   WITHDRAWAL_CODE_LENGTH,
   WITHDRAWAL_CODE_PREFIX,
   WITHDRAWAL_FEE_PERCENT_KEY,
+  WITHDRAWAL_USER_FIELDS,
 } from './constants/payment.constants';
+import type { WithdrawalItem } from './types/payment.types';
 
 @Injectable()
 export class WithdrawalService {
@@ -196,7 +198,7 @@ export class WithdrawalService {
   async findAll(
     accountId: string,
     query: WithdrawalFilterDto = {},
-  ): Promise<PaginatedResult<Withdrawal>> {
+  ): Promise<PaginatedResult<WithdrawalItem>> {
     if (typeof accountId !== 'string' || !isUUID(accountId)) {
       throw new BadRequestException('invalid accountId');
     }
@@ -207,10 +209,28 @@ export class WithdrawalService {
     // sortBy đã qua IsIn nên chỉ có tên cột do server định nghĩa lọt vào SQL.
     const qb = this.withdrawalRepository
       .createQueryBuilder('withdrawal')
+      .select(WITHDRAWAL_USER_FIELDS.map((f) => `withdrawal.${f}`))
       .where('withdrawal.accountId = :accountId', { accountId })
       .orderBy(`withdrawal.${sortBy}`, sortOrder)
       .addOrderBy('withdrawal.id', ESortOrder.ASC);
 
     return paginate(qb, filters);
+  }
+
+  async findOne(accountId: string, id: string): Promise<WithdrawalItem> {
+    // Ràng accountId trong WHERE: lệnh của người khác trả 404, không 403,
+    // để không xác nhận id đó có tồn tại.
+    const withdrawal = await this.withdrawalRepository
+      .createQueryBuilder('withdrawal')
+      .select(WITHDRAWAL_USER_FIELDS.map((f) => `withdrawal.${f}`))
+      .where('withdrawal.id = :id AND withdrawal.accountId = :accountId', {
+        id,
+        accountId,
+      })
+      .getOne();
+    if (!withdrawal) {
+      throw new NotFoundException('withdrawal does not exist');
+    }
+    return withdrawal;
   }
 }
